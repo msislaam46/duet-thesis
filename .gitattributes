@@ -1,0 +1,8 @@
+# Normalise line endings: store text as LF in the repo, and keep LF in the
+# working tree (eol=lf) so Overleaf and Git see consistent endings and Git
+# stops warning about CRLF conversion on Windows.
+* text=auto eol=lf
+
+# Binary assets — never touch.
+*.png binary
+*.pdf binary
