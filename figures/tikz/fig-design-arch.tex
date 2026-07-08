@@ -1,0 +1,12 @@
+% fig-design-arch.tex — extracted from ch4-design.tex
+% Label: \label{fig:design-arch}
+\begin{tikzpicture}[>=Stealth,font=\small,
+   layer/.style={draw,rounded corners,minimum width=6.4cm,minimum height=11mm,align=center}]
+  \node[layer] (sth) at (0,4) {Signed Tree Head (STH)\\[-1pt]\footnotesize signed commitment};
+  \node[layer] (log) at (0,2) {Append-only Merkle log\\[-1pt]\footnotesize history of directory states};
+  \node[layer] (pt)  at (0,0) {Sparse Merkle prefix tree\\[-1pt]\footnotesize current authenticated directory};
+  \draw[->] (pt) -- (log);
+  \draw[->] (log) -- (sth);
+  \node[draw,rounded corners,align=center,font=\footnotesize] (vrf) at (5.2,0) {VRF\\global labels};
+  \draw[->,dashed] (vrf) -- (pt);
+\end{tikzpicture}

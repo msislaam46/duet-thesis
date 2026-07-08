@@ -1,0 +1,17 @@
+% fig-design-dualindex.tex — extracted from ch4-design.tex
+% Label: \label{fig:design-dualindex}
+\begin{tikzpicture}[font=\small,>=Stealth,
+   slot/.style={draw,rounded corners,minimum width=2.6cm,minimum height=10mm,align=center},
+   sec/.style={draw,rounded corners,fill=black!6,minimum width=1.9cm,minimum height=13mm,align=center}]
+  \node[sec] (S) at (0,0) {$\sharedS$\\[-1pt]\footnotesize shared\\[-3pt]\footnotesize secret};
+  \node[slot] (self) at (4,1.7)  {$\ell_{\mathsf{self}}$\\[-1pt]\footnotesize Alice's key};
+  \node[slot] (peer) at (4,0)    {$\ell_{\mathsf{peer}}$\\[-1pt]\footnotesize Bob's key};
+  \node[slot,fill=black!10] (warn) at (4,-1.7) {$\ell_{\mathsf{warn}}$\\[-1pt]\footnotesize shared tripwire};
+  \draw[->] (S.east) -- node[above,sloped,font=\footnotesize]{HKDF} (self.west);
+  \draw[->] (S.east) -- (peer.west);
+  \draw[->] (S.east) -- node[below,sloped,font=\footnotesize]{HKDF} (warn.west);
+  \node[align=left,font=\footnotesize] at (9.4,-1.6)
+    {Same $\sharedS \Rightarrow$ same $\ell_{\mathsf{warn}}$\\ for both parties: an equivocating\\ server must write it to be seen\\ by \emph{both}, which is what trips.};
+  \node[align=left,font=\footnotesize,gray] at (9.4,1.0)
+    {A party without $\sharedS$ (a\\ different secret $\sharedS'$) derives a\\ \emph{disjoint} label set and cannot\\ address these slots.};
+\end{tikzpicture}

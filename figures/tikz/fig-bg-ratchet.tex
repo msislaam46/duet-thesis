@@ -1,0 +1,18 @@
+% fig-bg-ratchet.tex — extracted from ch2-background.tex
+% Label: \label{fig:bg-ratchet}
+\begin{tikzpicture}[>=Stealth,font=\small,
+   box/.style={draw,rounded corners,minimum width=2cm,minimum height=8mm}]
+  \node[box] (r0) {root key $rk_0$};
+  \node[box,right=1.4cm of r0] (r1) {root key $rk_1$};
+  \node[box,right=1.4cm of r1] (r2) {root key $rk_2$};
+  \draw[->] (r0) -- node[above]{DH} (r1);
+  \draw[->] (r1) -- node[above]{DH} (r2);
+  \node[box,below=1cm of r1] (ck) {sending chain key};
+  \draw[->] (r1) -- (ck);
+  \node[box,below=8mm of ck,minimum width=1.3cm] (m1) {$mk_1$};
+  \node[box,right=8mm of m1,minimum width=1.3cm] (m2) {$mk_2$};
+  \node[box,right=8mm of m2,minimum width=1.3cm] (m3) {$mk_3$};
+  \draw[->] (ck) -- (m1);
+  \draw[->] (m1) -- node[above]{KDF} (m2);
+  \draw[->] (m2) -- node[above]{KDF} (m3);
+\end{tikzpicture}

@@ -1,0 +1,302 @@
+% references.bib — seeded with every reference cited in the chapter
+% skeletons. VERIFY page numbers / years against the PDFs before
+% submission (Master Plan Part F). Add DOIs where available.
+
+% ── Signal specifications ──
+@misc{signaldocs,
+  author = {{Signal Foundation}},
+  title  = {Signal Technical Documentation},
+  year   = {2016},
+  url    = {https://signal.org/docs/},
+}
+@misc{x3dh,
+  author = {Marlinspike, Moxie and Perrin, Trevor},
+  title  = {The {X3DH} Key Agreement Protocol},
+  year   = {2016},
+  url    = {https://signal.org/docs/specifications/x3dh/},
+}
+@misc{doubleratchet,
+  author = {Perrin, Trevor and Marlinspike, Moxie},
+  title  = {The Double Ratchet Algorithm},
+  year   = {2016},
+  url    = {https://signal.org/docs/specifications/doubleratchet/},
+}
+@misc{pqxdh,
+  author = {Kret, Ehren and Schmidt, Rolfe},
+  title  = {The {PQXDH} Key Agreement Protocol},
+  year   = {2023},
+  url    = {https://signal.org/docs/specifications/pqxdh/},
+}
+@misc{safetynumbers,
+  author = {Marlinspike, Moxie},
+  title  = {Safety Number Updates},
+  year   = {2017},
+  url    = {https://signal.org/blog/safety-number-updates/},
+}
+@misc{signal-kt-server,
+  author = {{Signal Foundation}},
+  title  = {key-transparency-server},
+  year   = {2024},
+  url    = {https://github.com/signalapp/key-transparency-server},
+  note   = {Production implementation of draft-ietf-keytrans-protocol with modifications; Go, gRPC. Consulted as a reference implementation},
+}
+@misc{libsignal,
+  author = {{Signal Messenger}},
+  title  = {libsignal: the {Signal} Protocol and supporting cryptographic primitives},
+  year   = {2026},
+  url    = {https://github.com/signalapp/libsignal},
+  note   = {Rust core with Java, Swift, and TypeScript wrappers; the pre-key-bundle path was hooked for integration},
+}
+@misc{signal-desktop,
+  author = {{Signal Messenger}},
+  title  = {{Signal-Desktop}},
+  year   = {2026},
+  url    = {https://github.com/signalapp/Signal-Desktop},
+  note   = {The official Electron client; the prototype embeds its {TypeScript} key-transparency client in a fork of this application},
+}
+
+% ── Professional codes of conduct ──
+@misc{bcs-code,
+  author = {{BCS, The Chartered Institute for IT}},
+  title  = {{BCS} Code of Conduct},
+  year   = {2022},
+  url    = {https://www.bcs.org/membership-and-registrations/become-a-member/bcs-code-of-conduct/},
+  note   = {Four principles: Public Interest; Professional Competence and Integrity; Duty to Relevant Authority; Duty to the Profession},
+}
+@misc{iet-conduct,
+  author = {{Institution of Engineering and Technology}},
+  title  = {Rules of Conduct},
+  year   = {2024},
+  url    = {https://www.theiet.org/about/governance/rules-of-conduct/},
+  note   = {Approved by the Board of Trustees, June 2024; adopts the Engineering Council and Royal Academy of Engineering Statement of Ethical Principles (Rule~2)},
+}
+@misc{signal-akv,
+  author = {{Signal Foundation}},
+  title  = {Automatic Key Verification},
+  year   = {2024},
+  url    = {https://support.signal.org/hc/en-us/articles/10223569377562},
+  note   = {Signal Support article; accessed July 2026},
+}
+
+% ── RFCs and drafts ──
+@misc{rfc6962,
+  author = {Laurie, Ben and Langley, Adam and Kasper, Emilia},
+  title  = {{RFC 6962}: Certificate Transparency},
+  year   = {2013},
+  doi    = {10.17487/RFC6962},
+}
+@misc{rfc9162,
+  author = {Laurie, Ben and Messeri, Eran and Stradling, Rob},
+  title  = {{RFC 9162}: Certificate Transparency Version 2.0},
+  year   = {2021},
+  doi    = {10.17487/RFC9162},
+}
+@misc{rfc9381,
+  author = {Goldberg, Sharon and Reyzin, Leonid and Papadopoulos, Dimitrios and V{\v c}el{\'a}k, Jan},
+  title  = {{RFC 9381}: Verifiable Random Functions ({VRFs})},
+  year   = {2023},
+  doi    = {10.17487/RFC9381},
+}
+@misc{rfc5869,
+  author = {Krawczyk, Hugo and Eronen, Pasi},
+  title  = {{RFC 5869}: {HMAC}-based Extract-and-Expand Key Derivation Function ({HKDF})},
+  year   = {2010},
+  doi    = {10.17487/RFC5869},
+}
+@misc{rfc8032,
+  author = {Josefsson, Simon and Liusvaara, Ilari},
+  title  = {{RFC 8032}: Edwards-Curve Digital Signature Algorithm ({EdDSA})},
+  year   = {2017},
+  doi    = {10.17487/RFC8032},
+}
+@misc{rfc9497,
+  author = {Davidson, Alex and Faz-Hern{\'a}ndez, Armando and Sullivan, Nick and Wood, Christopher A.},
+  title  = {{RFC 9497}: Oblivious Pseudorandom Functions ({OPRFs}) Using Prime-Order Groups},
+  year   = {2023},
+  doi    = {10.17487/RFC9497},
+}
+@misc{ietf-keytrans-protocol,
+  author = {McMillion, Brendan and Linker, Felix},
+  title  = {Key Transparency Protocol},
+  howpublished = {Internet-Draft draft-ietf-keytrans-protocol, IETF},
+  year   = {2026},
+  url    = {https://datatracker.ietf.org/doc/draft-ietf-keytrans-protocol/},
+  note   = {Work in progress; cite the exact draft version used},
+}
+
+% ── Key transparency systems ──
+@inproceedings{melara2015coniks,
+  author    = {Melara, Marcela S. and Blankstein, Aaron and Bonneau, Joseph and Felten, Edward W. and Freedman, Michael J.},
+  title     = {{CONIKS}: Bringing Key Transparency to End Users},
+  booktitle = {24th USENIX Security Symposium},
+  pages     = {383--398},
+  year      = {2015},
+}
+@inproceedings{chase2019seemless,
+  author    = {Chase, Melissa and Deshpande, Apoorvaa and Ghosh, Esha and Malvai, Harjasleen},
+  title     = {{SEEMless}: Secure End-to-End Encrypted Messaging with less Trust},
+  booktitle = {ACM CCS},
+  year      = {2019},
+  note      = {ePrint 2018/607},
+}
+@inproceedings{chase2016overlays,
+  author    = {Chase, Melissa and Meiklejohn, Sarah},
+  title     = {Transparency Overlays and Applications},
+  booktitle = {ACM CCS},
+  pages     = {168--179},
+  year      = {2016},
+}
+@inproceedings{malvai2023parakeet,
+  author    = {Malvai, Harjasleen and Kellaris, Georgios and Sonnino, Alberto and Ghosh, Esha and Ostrovsky, Rafail and Lewi, Kevin and Lawlor, Sean},
+  title     = {Parakeet: Practical Key Transparency for End-to-End Encrypted Messaging},
+  booktitle = {NDSS},
+  year      = {2023},
+}
+@inproceedings{len2023elektra,
+  author    = {Len, Julia and Chase, Melissa and Ghosh, Esha and Jost, Daniel and Kesavan, Balachandar and Marcedone, Antonio},
+  title     = {{ELEKTRA}: Efficient Lightweight multi-dEvice Key TRAnsparency},
+  booktitle = {ACM CCS},
+  year      = {2023},
+}
+@inproceedings{hu2021merkle2,
+  author    = {Hu, Yuncong and Hooshmand, Kian and Kalidhindi, Harika and Yang, Seung Jin and Popa, Raluca Ada},
+  title     = {Merkle\textsuperscript{2}: A Low-Latency Transparency Log System},
+  booktitle = {IEEE S\&P},
+  year      = {2021},
+}
+@inproceedings{optiks2024,
+  author    = {Len, Julia and Chase, Melissa and Ghosh, Esha and Laine, Kim and Cruz Moreno, Radames},
+  title     = {{OPTIKS}: An Optimized Key Transparency System},
+  booktitle = {33rd USENIX Security Symposium},
+  year      = {2024},
+  note      = {Verify author list against the paper before citing},
+}
+@misc{lawlor2023whatsapp,
+  author = {Lawlor, Sean and Lewi, Kevin},
+  title  = {Deploying key transparency at {WhatsApp}},
+  howpublished = {Engineering at Meta blog},
+  year   = {2023},
+  url    = {https://engineering.fb.com/2023/04/13/security/whatsapp-key-transparency/},
+}
+@misc{nccgroup2023akd,
+  author = {{NCC Group}},
+  title  = {Public Report: {WhatsApp} Auditable Key Directory ({AKD}) Implementation Review},
+  year   = {2023},
+}
+@misc{facebook-akd,
+  author = {Meta},
+  title  = {akd: An Auditable Key Directory Library},
+  url    = {https://github.com/facebook/akd},
+  year   = {2023},
+}
+@misc{apple-ckv,
+  author = {{Apple Security Engineering and Architecture}},
+  title  = {{iMessage} Contact Key Verification},
+  year   = {2023},
+  url    = {https://security.apple.com/blog/imessage-contact-key-verification/},
+}
+
+% ── Attacks and usability ──
+@misc{yadav2020poster,
+  author = {Yadav, Tarun Kumar and Gosain, Devashish and Seamons, Kent and Zappala, Daniel},
+  title  = {Automatic Detection and Prevention of Fake Key Attacks in {Signal}},
+  howpublished = {NDSS 2020 Poster},
+  year   = {2020},
+}
+@inproceedings{yadav2022fakekey,
+  author    = {Yadav, Tarun Kumar and Gosain, Devashish and Seamons, Kent and Zappala, Daniel},
+  title     = {Automatic Detection of Fake Key Attacks in Secure Messaging},
+  booktitle = {ACM CCS},
+  year      = {2022},
+  note      = {arXiv:2210.09940},
+}
+@inproceedings{vaziripour2017,
+  author    = {Vaziripour, Elham and Wu, Justin and O'Neill, Mark and Whitehead, Jordan and Heidbrink, Scott and Seamons, Kent and Zappala, Daniel},
+  title     = {Is that you, {Alice}? A Usability Study of the Authentication Ceremony of Secure Messaging Applications},
+  booktitle = {SOUPS},
+  pages     = {29--47},
+  year      = {2017},
+}
+
+% ── Theory (supervisor's line of work) ──
+@misc{dowling2020nocompromise,
+  author = {Dowling, Benjamin and Hale, Britta},
+  title  = {There Can Be No Compromise: The Necessity of Ratcheted Authentication in Secure Messaging},
+  year   = {2020},
+  note   = {ePrint 2020/541},
+}
+@misc{dowling2023acka,
+  author = {Dowling, Benjamin and Hale, Britta},
+  title  = {Authenticated Continuous Key Agreement: Active {MitM} Detection and Prevention},
+  year   = {2023},
+  note   = {ePrint 2023/228},
+}
+@inproceedings{dowling2021meta,
+  author    = {Dowling, Benjamin and Hale, Britta},
+  title     = {Secure Messaging Authentication against Active Man-in-the-Middle Attacks},
+  booktitle = {IEEE European Symposium on Security and Privacy (EuroS\&P)},
+  year      = {2021},
+  note      = {META security model; MoDUSA construction},
+}
+
+% ── Added for the VKD survey (Section 2.3). VERIFY author lists / venues. ──
+@inproceedings{chen2022rzks,
+  author    = {Chen, Brian and Dodis, Yevgeniy and Ghosh, Esha and Goldin, Eli and Kesavan, Balachandar and Marcedone, Antonio and Mou, Merry Ember},
+  title     = {Rotatable Zero Knowledge Sets: Post-Compromise Secure Auditable Dictionaries with Application to Key Transparency},
+  booktitle = {ASIACRYPT},
+  year      = {2022},
+}
+@misc{pusch2025prism,
+  author = {Pusch, Sebastian and Ford, Ryan Q. and von zur Gathen, Joachim and Markowetz, Adam},
+  title  = {Whom do you trust? {PRISM}: Lightweight Key Transparency for All},
+  year   = {2025},
+  note   = {Preprint; verify authors/venue before final},
+}
+@misc{whatsapp2023whitepaper,
+  author = {{WhatsApp/Meta}},
+  title  = {{WhatsApp} Key Transparency Overview},
+  howpublished = {Whitepaper v1},
+  year   = {2023},
+  note   = {Distinct from the Meta engineering blog \cite{lawlor2023whatsapp}},
+}
+@mastersthesis{goebel2023proton,
+  author = {G\"obel, Thore},
+  title  = {Security Analysis of {Proton} Key Transparency},
+  school = {ETH Z\"urich, Applied Cryptography Group},
+  year   = {2023},
+}
+@misc{proton2023ktdeck,
+  author = {{Proton}},
+  title  = {Key Transparency in {Proton Mail}},
+  howpublished = {Transparency Summit slide deck},
+  year   = {2023},
+}
+@misc{google-kt,
+  author = {{Google}},
+  title  = {Key Transparency},
+  howpublished = {Open-source project on Trillian (archived Oct.\ 2024)},
+  url    = {https://github.com/google/keytransparency},
+  year   = {2024},
+}
+
+% ── Disambiguation note only (Section 2.7): unrelated "verifiable quantum key distribution" line ──
+@article{li2022vqkd,
+  author  = {Li, L. and Li, Z.},
+  title   = {A verifiable multi-party quantum key distribution protocol based on repetitive codes},
+  journal = {Information Sciences},
+  volume  = {585},
+  pages   = {232--245},
+  year    = {2022},
+}
+
+% ── Threat model (Chapter 3) ──
+@article{dolevyao1983,
+  author  = {Dolev, Danny and Yao, Andrew C.},
+  title   = {On the Security of Public Key Protocols},
+  journal = {IEEE Transactions on Information Theory},
+  volume  = {29},
+  number  = {2},
+  pages   = {198--208},
+  year    = {1983},
+  doi     = {10.1109/TIT.1983.1056650},
+}

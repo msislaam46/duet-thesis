@@ -1,0 +1,23 @@
+% fig-impl-verify.tex — extracted from ch5-implementation.tex
+% Label: \label{fig:impl-verify}
+\begin{tikzpicture}[>=Stealth,font=\footnotesize,
+   hd/.style={draw,rounded corners,minimum width=3.4cm,minimum height=7mm,align=center,fill=black!6},
+   act/.style={draw,rounded corners,fill=black!4,align=center,font=\scriptsize,inner sep=3pt}]
+  % lifeline heads
+  \node[hd] (c) at (0,0) {\textbf{Client}\\{\scriptsize(Signal Desktop)}};
+  \node[hd] (s) at (7.4,0) {\textbf{Server}};
+  \draw[dashed] (c.south) -- (0,-6.6);
+  \draw[dashed] (s.south) -- (7.4,-6.6);
+  % request key
+  \draw[->] (0,-0.9) -- node[above,font=\scriptsize]{request key at label $\ell$} (7.4,-0.9);
+  % response
+  \draw[<-] (0,-1.8) -- node[below,font=\scriptsize]{value $\,+\,$ prefix proof $\,+\,$ log-inclusion proof $\,+\,$ signed STH} (7.4,-1.8);
+  % client-side verification
+  \node[act] at (0,-3.05)
+     {verify STH signature\\recompute + verify prefix proof\\verify log inclusion\\(and VRF binding on the global path)};
+  % read warning slot
+  \draw[->] (0,-4.25) -- node[above,font=\scriptsize]{read warning slot $\ell_{\mathsf{warn}}$} (7.4,-4.25);
+  \draw[<-] (0,-5.1) -- node[below,font=\scriptsize]{proven (non-)inclusion} (7.4,-5.1);
+  % verdict
+  \node[act,fill=black!8] at (0,-6.15) {verdict:\ \textsc{safe} / \textsc{warning} / \textsc{mitm}};
+\end{tikzpicture}

@@ -1,0 +1,279 @@
+\chapter{Full Benchmark Results}\label{app:benchmarks}
+
+This appendix reproduces the complete benchmark data summarised in \cref{ch:eval}. All figures are
+from a single measurement campaign on the environment recorded below; sizes are exact and
+seed-deterministic, and timings are medians (with the 95th percentile and a 95\% confidence
+half-width where the harness records them). The metric families M1--M13 are as defined by the
+measurement map in \cref{sec:eval-method} (\cref{tab:eval-map}); baselines are named, not coded ---
+\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed} --- and mean the same
+thing here as in the chapter. The code$\to$group$\to$CSV mapping for reproducing each row is given in
+\cref{sec:bench-repro}.
+
+% ----------------------------------------------------------------------------
+\section{Measurement environment}\label{sec:bench-env}
+
+All figures in this appendix were collected on the platform recorded automatically by the
+harness, given in \cref{tab:bench-env}.
+
+\begin{table}[ht]
+\centering
+\caption{Benchmark environment (auto-recorded).}
+\label{tab:bench-env}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Item & Value \\
+\midrule
+CPU & 12th Gen Intel Core i7-12700H (20 logical cores) \\
+RAM & 31.7\,GB \\
+OS / architecture & Windows, x86\_64 \\
+Rust toolchain & \texttt{rustc 1.96.0-nightly} \\
+Build commit & \texttt{46d867c9} \\
+Profile & \texttt{bench} (opt-level 3), single-threaded loops \\
+VRF seed & \texttt{[42;32]} (fixed) \\
+Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Methodology caveats recorded with the run: the server is in-memory (no network, no database); proof
+sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds $32\lceil\lg E\rceil$
+bytes to each lookup proof; memory is resident set size after build, not peak; and the throughput
+figures are single-thread per-operation costs.
+
+% ----------------------------------------------------------------------------
+\section{Proof sizes (M1) and catch-up bandwidth (M4)}\label{sec:bench-sizes}
+
+Lookup proof size against directory size is reported in \cref{tab:bench-m1}, and offline
+catch-up bandwidth against the window in \cref{tab:bench-m4}.
+
+\begin{table}[ht]
+\centering
+\caption{M1 --- lookup proof size versus directory size $N$ (single-epoch log).}
+\label{tab:bench-m1}
+\small
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+$N$ & single-index hashes & single-index bytes & dual-index prefix hashes & dual-index lookup bytes \\
+\midrule
+$10^2$ & 7  & 224 & 7  & 400 \\
+$10^3$ & 10 & 320 & 10 & 496 \\
+$10^4$ & 14 & 448 & 14 & 624 \\
+$10^5$ & 17 & 544 & 17 & 720 \\
+$10^6$ & 20 & 640 & 23 & 912 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{M4 --- catch-up bandwidth, na\"ive sequential versus windowed; identical for
+$N\in\{10^3,10^4,10^5\}$ because catch-up size is independent of $N$.}
+\label{tab:bench-m4}
+\small
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+$W$ (epochs) & na\"ive sequential (bytes) & windowed (bytes) & Ratio \\
+\midrule
+1   & 96      & 96  & $1.00\times$ \\
+24  & 4{,}416   & 192 & $23.00\times$ \\
+168 & 41{,}280  & 256 & $161.25\times$ \\
+720 & 222{,}528 & 320 & $695.40\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The M6 false-positive rate is $0$ over $1{,}000$ clean sessions (a sanity check; a spurious collision
+at a 256-bit HKDF-derived warning label is cryptographically negligible).
+
+% ----------------------------------------------------------------------------
+\section{Latency, throughput, and maintenance (M2, M3, M5, M8--M12)}\label{sec:bench-timings}
+
+The timing families are reported below one per table, each preceded by a one-line statement of what it
+measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the MitM
+detection-check latency (\cref{tab:bench-detection}), throughput and the maintenance operations
+(\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). All values are
+microseconds unless noted: median, 95th percentile, and a 95\% confidence
+half-width ($\pm$) over the manual harness's $2{,}000$ iterations.
+
+\medskip\noindent\emph{Per-lookup latency (M2 generation, M3 verification) --- the server-side cost to
+produce a proof and the client-side cost to check it, broken into its pieces.}
+
+\begin{table}[ht]
+\centering
+\caption{M2/M3 --- proof generation and client verification latency.}
+\label{tab:bench-latency}
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
+\midrule
+M2 search generation (dual-index)    & $10^3$ & 107.2 & 124.2 & 0.48 \\
+M2 search generation (dual-index)    & $10^4$ & 158.9 & 164.1 & 1.09 \\
+M3 prefix verify (dual-index)        & $10^3$ & 26.0  & 26.1  & 0.33 \\
+M3 prefix verify (dual-index)        & $10^4$ & 26.0  & 26.1  & 0.23 \\
+M3 VRF verify (dual-index)           & $10^3$ & 73.8  & 82.7  & 0.59 \\
+M3 VRF verify (dual-index)           & $10^4$ & 73.7  & 76.2  & 0.35 \\
+\textbf{M3 full client verify (windowed)} & $10^3$ & \textbf{132.2} & 136.9 & 0.80 \\
+\textbf{M3 full client verify (windowed)} & $10^4$ & \textbf{132.5} & 145.2 & 0.64 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\medskip\noindent\emph{Detection (M5) --- the marginal cost of the warning-slot read on top of a
+lookup the client already verifies (an unverified read; the security-bearing cost is the full M3
+chain above).}
+
+\begin{table}[ht]
+\centering
+\caption{M5 --- MitM detection check latency.}
+\label{tab:bench-detection}
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
+\midrule
+M5 detection check (dual-index) & $10^3$ & 1.4 & 1.5 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\medskip\noindent\emph{Throughput and maintenance (M8--M11) --- single-thread server op rates, key
+rotation and epoch commit, the VRF in isolation, and the per-handshake client overhead.}
+
+\begin{table}[ht]
+\centering
+\caption{M8--M11 --- throughput, rotation, epoch commit, VRF, and handshake overhead.}
+\label{tab:bench-maint}
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
+\midrule
+M8 lookup throughput (dual-index)    & $10^4$ & 168.6 & 199.4 & 0.75 \\
+M8 update throughput (dual-index)    & $10^4$ & 168.2 & 223.9 & 1.30 \\
+M9 key rotation (dual-index)         & $10^3$ & 134.1 & 151.3 & 0.57 \\
+M9 key rotation (dual-index)         & $10^4$ & 185.5 & 192.5 & 0.61 \\
+M9 epoch commit (windowed)           & $10^3$ & 408.2 & 468.6 & 8.37 \\
+M9 epoch commit (windowed)           & $10^4$ & 3449.2 & 4280.6 & 51.17 \\
+M10 VRF prove (isolated)             & ---    & 106.3 & 109.5 & 0.81 \\
+M10 VRF verify (isolated)            & ---    & 73.4  & 76.0  & 0.47 \\
+M11 handshake overhead (windowed)    & $10^3$ & 132.2 & 136.9 & 0.80 \\
+M11 handshake overhead (windowed)    & $10^4$ & 132.5 & 145.2 & 0.64 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+M8 throughput follows as $10^6 / \text{median}_{\mu s}$: approximately $5{,}930$ lookups/s and
+$5{,}950$ updates/s, single-thread. M9 epoch commit scales roughly linearly in $N$ ($8.5\times$ for a
+$10\times$ increase), reflecting the deep-clone snapshot discussed in \cref{ch:eval}. \emph{M11 is,
+by construction, the same operation as the M3 full client verify} --- the KT cost added per handshake
+\emph{is} one full client verification --- so its rows equal the M3 full-verify rows exactly; they are
+listed separately only because the chapter frames the same measurement two ways.
+
+\medskip\noindent\emph{Auditor (M12) --- the per-epoch append-only audit and the cross-vantage
+fork-detection check; the audit figure times proof generation and verification together, a
+conservative upper bound on the deployed verify-only cost.}
+
+\begin{table}[ht]
+\centering
+\caption{M12 --- auditor per-epoch audit and fork detection.}
+\label{tab:bench-auditor}
+\small
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
+\midrule
+M12 audit epoch (windowed)  & $10^4$ & 28.6 & 29.3 & 0.23 \\
+M12 detect fork (windowed)  & $10^4$ & 27.6 & 29.1 & 0.50 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+\section{CONIKS-scale results (M7)}\label{sec:bench-scale}
+
+The distribution of proof sizes and verification times over one thousand random lookups at each
+directory size is given in \cref{tab:bench-scale}.
+
+\begin{table}[ht]
+\centering
+\caption{M7 --- distribution over $1{,}000$ random lookups per $N$.}
+\label{tab:bench-scale}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Quantity & $N=10^6$ & $N=10^7$ \\
+\midrule
+Leaf depth (median / mean / max) & 20 / 20.28 / 24 & 24 / 23.57 / 27 \\
+Lookup proof bytes (median / max) & 816 / 944 & 944 / 1{,}040 \\
+Server full search (median / p95, \si{\micro\second}) & 149.2 / 199.4 & 154.7 / 214.4 \\
+Prefix verify (median / p95, \si{\micro\second}) & 26.0 / 26.2 & 26.0 / 28.0 \\
+VRF verify (median / p95, \si{\micro\second}) & 74.8 / 87.3 & 74.7 / 90.5 \\
+Build time & 186\,s & 1{,}880\,s \\
+Peak RSS & 2{,}041\,MB & 20{,}381\,MB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+\section{Session versus continuous mode (M13)}\label{sec:bench-modes}
+
+The directory-write cost of the two authentication modes over a conversation of $E$ epochs is
+compared in \cref{tab:bench-modes}.
+
+\begin{table}[ht]
+\centering
+\caption{M13 --- directory writes over a conversation of $E$ hourly epochs, signed-pre-key
+rotation $R=720$.}
+\label{tab:bench-modes}
+\small
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+$E$ (epochs) & Continuous writes & Session writes & Ratio \\
+\midrule
+24    & 24    & 1 & $24.0\times$ \\
+168   & 168   & 1 & $168.0\times$ \\
+720   & 720   & 1 & $720.0\times$ \\
+4{,}320 & 4{,}320 & 6 & $720.0\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Per-check verification cost is $73.6\,\si{\micro\second}$ in session mode and
+$49.4\,\si{\micro\second}$ in continuous mode (Criterion medians).
+
+% ----------------------------------------------------------------------------
+\section{Reproducing each metric}\label{sec:bench-repro}
+
+\Cref{tab:bench-repro} maps every metric family to the Criterion benchmark group that times it and the
+CSV file/column that records the exact values, so any row above can be regenerated and located. The
+harness lives in \texttt{benches/kt\_bench.rs}; run it via \texttt{run-benches.ps1} (the scale family
+M7 is gated behind \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes are seed-deterministic
+and must reproduce byte-for-byte; timings reproduce within noise.
+
+\begin{table}[ht]
+\centering
+\caption{Metric $\to$ Criterion group $\to$ CSV source (for reproduction).}
+\label{tab:bench-repro}
+\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+Metric & Criterion group & CSV source \\
+\midrule
+M1  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M1}) \\
+M2  & \texttt{M2\_proof\_generation}   & \texttt{rust\_benchmark\_timings.csv} (\texttt{M2\_search\_gen}) \\
+M3  & \texttt{M3\_proof\_verification} & \texttt{timings.csv} (\texttt{M3\_prefix\_verify}, \texttt{M3\_vrf\_verify}, \texttt{M3\_full\_client\_verify}) \\
+M4  & \texttt{M4\_catchup\_cost}       & \texttt{rust\_benchmark\_results.csv} (\texttt{M4}) \\
+M5  & \texttt{M5\_mitm\_detection}     & \texttt{timings.csv} (\texttt{M5\_detection}) \\
+M6  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M6}) \\
+M7  & \texttt{M7\_scale\_verification} & \texttt{rust\_benchmark\_m7.csv} \\
+M8  & \texttt{M8\_throughput}          & \texttt{timings.csv} (\texttt{M8\_lookup}, \texttt{M8\_update}) \\
+M9  & \texttt{M9\_key\_rotation}       & \texttt{timings.csv} (\texttt{M9\_rotation}, \texttt{M9\_epoch\_commit}) \\
+M10 & \texttt{M10\_vrf\_isolation}     & \texttt{timings.csv} (\texttt{M10\_vrf\_prove}, \texttt{M10\_vrf\_verify}) \\
+M11 & \texttt{M11\_handshake\_overhead}& \texttt{timings.csv} (\texttt{M11\_handshake\_overhead}) \\
+M12 & \texttt{M12\_auditor}            & \texttt{timings.csv} (\texttt{M12\_audit\_epoch}, \texttt{M12\_detect\_fork}) \\
+M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} \\
+\bottomrule
+\end{tabular}
+\end{table}

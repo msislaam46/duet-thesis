@@ -1,0 +1,70 @@
+% kt-macros.sty — single source of truth for ALL notation (F11).
+% If a symbol is not here, do not use it. If you need a new one, add it
+% here AND to the Notation table in main.tex.
+\ProvidesPackage{kt-macros}[2026/06/10 DUET thesis notation]
+
+% ── Parties and adversary ──
+\newcommand{\A}{\mathsf{A}}                 % Alice
+\newcommand{\B}{\mathsf{B}}                 % Bob
+\newcommand{\Srv}{\mathsf{S}}               % (possibly malicious) server
+\newcommand{\Adv}{\mathcal{M}}              % PPT adversary
+\newcommand{\Aud}{\mathsf{Aud}}             % third-party auditor
+
+% ── Keys (X3DH spec notation, cite signal x3dh §2.2 at first use) ──
+\newcommand{\pkid}[1]{\mathit{pk}^{\mathsf{id}}_{#1}}   % identity public key
+\newcommand{\skid}[1]{\mathit{sk}^{\mathsf{id}}_{#1}}   % identity secret key
+\newcommand{\spk}[1]{\mathit{spk}_{#1}}                 % signed pre-key
+\newcommand{\opk}[2]{\mathit{opk}^{#2}_{#1}}            % one-time pre-key
+\newcommand{\sig}[1]{\sigma(#1)}                        % signature
+\newcommand{\ek}[1]{\mathit{ek}_{#1}}                   % ephemeral key
+\newcommand{\sharedS}{S}                                % X3DH shared secret
+\renewcommand{\DH}[2]{\mathsf{DH}(#1,#2)}% \DH is a built-in LaTeX command (Eth); we repurpose it for the DH operation
+% X3DH specification notation (uppercase), used only in §2.1.3 with the
+% mapping IK=pk^id, SPK=spk, OPK=opk, EK=ek given at first use.
+\newcommand{\xIK}[1]{\mathit{IK}_{#1}}
+\newcommand{\xSPK}[1]{\mathit{SPK}_{#1}}
+\newcommand{\xOPK}[1]{\mathit{OPK}_{#1}}
+\newcommand{\xEK}[1]{\mathit{EK}_{#1}}
+
+% ── Crypto primitives ──
+\newcommand{\Hash}{\mathsf{H}}
+\newcommand{\HKDFex}{\mathsf{HKDF\text{-}Extract}}      % RFC 5869 §2.2
+\newcommand{\HKDFexp}{\mathsf{HKDF\text{-}Expand}}      % RFC 5869 §2.3
+\newcommand{\KDF}{\mathsf{KDF}}
+\newcommand{\concat}{\,\|\,}
+\newcommand{\VRF}{\mathsf{VRF}}
+\newcommand{\VRFkg}{\mathsf{VRF.KeyGen}}
+\newcommand{\VRFeval}{\mathsf{VRF.Eval}}
+\newcommand{\VRFvfy}{\mathsf{VRF.Verify}}
+
+% ── KT structures ──
+% Dual-index labels (subscript role; optional party as superscript, e.g. \ell^\A_{\mathsf{self}}).
+% These match the derivation defined in Chapter 4 (\cref{ssec:design-labels}).
+\newcommand{\lblself}{\ell_{\mathsf{self}}}
+\newcommand{\lblpeer}{\ell_{\mathsf{peer}}}
+\newcommand{\lblwarn}{\ell_{\mathsf{warn}}}
+\newcommand{\STH}{\mathsf{STH}}
+\newcommand{\TreeHead}[1]{\mathsf{TH}_{#1}}
+\newcommand{\logroot}[1]{h_{#1}}            % log root at epoch #1
+\newcommand{\prefroot}[1]{r_{#1}}           % prefix root at epoch #1
+\newcommand{\pincl}{\pi^{\mathsf{incl}}}
+\newcommand{\pcons}{\pi^{\mathsf{cons}}}
+\newcommand{\pvrf}{\pi^{\mathsf{vrf}}}
+\newcommand{\MTH}{\mathsf{MTH}}             % RFC 9162 §2.1.1
+
+% ── ACKA framework (Dowling–Hale) ──
+\newcommand{\CKA}{\mathsf{CKA}}
+\newcommand{\CEA}{\mathsf{CEA}}                 % the CEA primitive
+\newcommand{\CEAsec}{\mathsf{CEAsec}}          % the CEA security experiment/notion
+\newcommand{\Logsec}{\mathsf{Log}}
+\newcommand{\ACKA}{\mathsf{ACKA}}
+
+% ── Security experiments (prof expt style, F25) ──
+\newcommand{\Expt}[2]{\mathsf{Expt}^{\mathsf{#1}}_{#2}}
+\newcommand{\advantage}[2]{\mathsf{Adv}^{\mathsf{#1}}_{#2}}
+\newcommand{\secpar}{\lambda}
+\newcommand{\negl}{\mathsf{negl}}
+
+% ── Convenience ──
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+\newcommand{\citeneeded}{\textcolor{orange}{\textbf{[cite]}}}

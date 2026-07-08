@@ -1,0 +1,11 @@
+% fig-eval-sizes-plot.tex — extracted from ch6-evaluation.tex
+% Label: \label{fig:eval-sizes-plot}
+\begin{tikzpicture}
+\begin{axis}[width=0.82\textwidth,height=6cm,xmode=log,log basis x=10,
+  xlabel={directory size $N$}, ylabel={lookup proof (bytes)},
+  legend pos=north west, grid=both, font=\footnotesize]
+\addplot+[mark=*] coordinates {(100,224)(1000,320)(10000,448)(100000,544)(1000000,640)};
+\addplot+[mark=square*] coordinates {(100,400)(1000,496)(10000,624)(100000,720)(1000000,912)};
+\legend{single-index, dual-index}
+\end{axis}
+\end{tikzpicture}

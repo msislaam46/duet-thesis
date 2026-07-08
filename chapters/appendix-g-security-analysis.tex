@@ -1,0 +1,156 @@
+\chapter{Security Analysis Tables}\label{app:security}
+
+This appendix gives the full security-analysis mapping tables summarised in
+\cref{sec:eval-security}: the MITRE ATT\&CK technique-to-mitigation matrix
+(\cref{sec:sec-mitre}) and the complete STRIDE enumeration (\cref{sec:sec-stride}). Both are drawn
+from the attack scenarios of \cref{ch:threat} and the mechanisms of \cref{ch:design}, and both
+correspond to the runnable adversarial suite of \cref{sec:impl-tests}. The identifiers are real
+MITRE ATT\&CK Enterprise technique IDs; the tables map each to how it manifests against a key
+directory and the key-transparency control that answers it.
+
+% ----------------------------------------------------------------------------
+\section{MITRE ATT\&CK technique-to-mitigation matrix}\label{sec:sec-mitre}
+
+The adversary techniques relevant to a messaging key directory are mapped to their
+key-transparency mitigations in \cref{tab:sec-mitre}.
+
+\begin{table}[ht]
+\centering
+\caption{MITRE ATT\&CK Enterprise techniques mapped to their key-transparency mitigations. Nine
+techniques are mitigated or prevented; T1552 is the explicit endpoint-compromise boundary (X1).}
+\label{tab:sec-mitre}
+\footnotesize
+\begin{tabular}{@{}p{1.05cm}p{2.4cm}p{3.3cm}p{4.6cm}l@{}}
+\toprule
+ID & Technique & Vector in KT & KT mitigation & Scen. \\
+\midrule
+T1557 & Adversary-in-the-Middle & network interception of X3DH & label mismatch (different secret $\Rightarrow$ different label) & A3 \\
+T1557.004 & Evil Twin & rogue Wi-Fi/DNS for bundle interception & shared-secret divergence & A3 \\
+T1565 & Data Manipulation & modify key bindings in the tree & Merkle inclusion-proof verification & A1,A3,A4 \\
+T1565.002 & Transmitted Data Manipulation & replace a key in transit or at rest & self-check + warning-label propagation & A1 \\
+T1040 & Network Sniffing & observe registration patterns & VRF-derived labels hide the identity$\to$slot map & recon \\
+T1573 & Encrypted Channel & attacker's own end-to-end channel & warning propagation breaks the attacker's stealth & A1 \\
+T1553 & Subvert Trust Controls & present inconsistent tree views & consistency proofs + auditor cross-check + signed STHs & A4 \\
+T1199 & Trusted Relationship & exploit the server's write access & dual-index cross-check (self-check + warning) & A1 \\
+T1499 & Endpoint Denial of Service & server censors client writes & compound signal: substitution + censorship & A2 \\
+T1552 & Unsecured Credentials & extract private keys from a device & \emph{none} --- KT boundary (endpoint compromise) & X1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The techniques span the Initial Access, Credential Access, Discovery, Defense Evasion, Command and
+Control, and Impact tactics. Every technique except T1552 is mitigated or prevented by a
+key-transparency control; T1552 is the deliberate endpoint-compromise boundary, out of scope for any
+directory mechanism (\cref{ch:threat}).
+
+% ----------------------------------------------------------------------------
+\section{STRIDE enumeration}\label{sec:sec-stride}
+
+The STRIDE enumeration covers the server (Merkle log, prefix tree, signed tree head), the client
+(registration, verification, warning monitor), and the auditor. Of twenty threats, eighteen are
+fully mitigated and two are residual; the summary is \cref{tab:eval-stride} in \cref{ch:eval}, and
+the per-category detail follows in \cref{tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}.
+
+\begin{table}[ht]
+\centering
+\caption{Spoofing (4/4 mitigated).}
+\label{tab:stride-s}
+\footnotesize
+\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\toprule
+Threat & KT control & Residual \\
+\midrule
+Forge a VRF label & ECVRF-EDWARDS25519-SHA512-TAI binding & none (cryptographic) \\
+Impersonate a user registration & label requires the X3DH shared secret & requires X3DH compromise \\
+Forge a Merkle proof & SHA-256 collision resistance & negligible ($2^{128}$) \\
+Forge an STH signature & Ed25519 verification & none (cryptographic) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Tampering (3/3 mitigated).}
+\label{tab:stride-t}
+\footnotesize
+\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\toprule
+Threat & KT control & Residual \\
+\midrule
+Modify a key at a label & owner's self-check detects the mismatch & detection latency (1--2 epochs) \\
+Alter a historical entry & append-only log + consistency proofs & none (cryptographic) \\
+Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (cryptographic) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Repudiation (3/3 mitigated).}
+\label{tab:stride-r}
+\footnotesize
+\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\toprule
+Threat & KT control & Residual \\
+\midrule
+Deny a key change & append-only log records every mutation & none (immutable log) \\
+Deny an attack occurred & warning entry + inclusion proof & none (cryptographic evidence) \\
+Deny STH issuance & Ed25519 signature is non-repudiable & none (cryptographic) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Information Disclosure (2/3 --- 1 residual).}
+\label{tab:stride-i}
+\footnotesize
+\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\toprule
+Threat & KT control & Residual \\
+\midrule
+Link a label to a user identity & VRF-derived pseudorandom labels & \emph{server knows the mapping (semi-trusted)} \\
+Enumerate registered users & 256-bit pseudorandom labels & \emph{server knows (semi-trusted)} \\
+Leak the shared secret from a label & VRF/HKDF is one-way (preimage-resistant) & none (cryptographic) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Denial of Service (3/4 --- 1 residual).}
+\label{tab:stride-d}
+\footnotesize
+\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\toprule
+Threat & KT control & Residual \\
+\midrule
+Withhold epoch publication & auditor timeout detection & delayed detection \\
+Refuse to serve proofs & gossip with the auditor reveals the omission & requires a social channel \\
+Censor warning writes & compound-signal detection (A2) & client out-of-band alert \\
+Flood with fake registrations & application-level rate limiting & \emph{operational risk} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Elevation of Privilege (3/3 mitigated).}
+\label{tab:stride-e}
+\footnotesize
+\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\toprule
+Threat & KT control & Residual \\
+\midrule
+Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
+Server fabricates a tree head & consistency-proof chain + Ed25519 STH & none (cryptographic) \\
+Client escalates to server writes & server validates write permissions & application-level control \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two residual risks --- the operator learning the label-to-user mapping (Information Disclosure)
+and operational write rate-limiting (Denial of Service) --- are inherent to the semi-trusted-server
+model and are acknowledged by the standard key-transparency literature (CONIKS~\cite{melara2015coniks},
+the IETF Key Transparency architecture~\cite{ietf-keytrans-protocol}); neither is a cryptographic
+weakness, and neither is addressed by ACKA~\cite{dowling2023acka}, which assumes an honest log.

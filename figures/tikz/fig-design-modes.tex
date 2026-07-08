@@ -1,0 +1,19 @@
+% fig-design-modes.tex — extracted from ch4-design.tex
+% Label: \label{fig:design-modes}
+\begin{tikzpicture}[>=Stealth,font=\footnotesize,
+   box/.style={draw,rounded corners,align=center,minimum width=2cm,minimum height=7mm}]
+  \node[font=\small] at (0,1.2) {\textbf{Session mode}};
+  \node[box] (s)  at (0,0.4)  {$\sharedS$};
+  \node[box] (sl) at (0,-0.7) {labels};
+  \node[box] (sk) at (0,-1.8) {identity key};
+  \draw[->] (s) -- (sl); \draw[->] (sl) -- (sk);
+  \node[align=center,font=\footnotesize] at (0,-2.8) {one write per\\pre-key rotation};
+  \node[font=\small] at (5.4,1.2) {\textbf{Continuous mode}};
+  \node[box] (k0) at (4.4,0.4)  {$k_0$};
+  \node[box] (k1) at (4.4,-0.7) {$k_1$};
+  \node[box] (k2) at (4.4,-1.8) {$k_2$};
+  \draw[->] (k0) -- (k1); \draw[->] (k1) -- (k2);
+  \node[box] (f) at (6.6,-0.7) {fingerprints};
+  \draw[->,dashed] (k1) -- (f);
+  \node[align=center,font=\footnotesize] at (5.4,-2.8) {one write per\\ratchet epoch};
+\end{tikzpicture}

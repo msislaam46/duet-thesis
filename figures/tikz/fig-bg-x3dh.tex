@@ -1,0 +1,15 @@
+% fig-bg-x3dh.tex — extracted from ch2-background.tex
+% Label: \label{fig:bg-x3dh}
+\begin{tikzpicture}[>=Stealth,font=\small]
+  \node (A)   at (0,0)   {\textbf{Alice}};
+  \node (Srv) at (5,0)   {\textbf{Server}};
+  \node (B)   at (10,0)  {\textbf{Bob}};
+  \foreach \n in {A,Srv,B}{\draw[dashed] (\n.south) -- ++(0,-5.2);}
+  \draw[->] ($(B)+(0,-0.7)$)  -- node[above]{publish $\xIK{B},\xSPK{B},\sig{\xSPK{B}},\xOPK{B}$} ($(Srv)+(0,-0.7)$);
+  \draw[->] ($(A)+(0,-1.5)$)  -- node[above]{request Bob's bundle} ($(Srv)+(0,-1.5)$);
+  \draw[->] ($(Srv)+(0,-2.3)$)-- node[above]{pre-key bundle} ($(A)+(0,-2.3)$);
+  \node[draw,rounded corners,align=left] at (2.5,-3.5)
+       {Alice samples $\xEK{A}$ and computes\\
+        $\sharedS=\KDF(\mathrm{DH1}\concat\mathrm{DH2}\concat\mathrm{DH3}\concat\mathrm{DH4}^{*})$};
+  \draw[->] ($(A)+(0,-4.8)$)  -- node[above]{initial message ($\xEK{A}$, ciphertext)} ($(B)+(0,-4.8)$);
+\end{tikzpicture}

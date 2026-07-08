@@ -1,0 +1,269 @@
+\chapter{Algorithms}\label{app:algorithms}
+
+\newcommand{\Hleaf}{\Hash_{\mathsf{leaf}}}
+\newcommand{\Hnode}{\Hash_{\mathsf{node}}}
+\newcommand{\lself}{\ell_{\mathsf{self}}}
+\newcommand{\lpeer}{\ell_{\mathsf{peer}}}
+\newcommand{\lwarn}{\ell_{\mathsf{warn}}}
+\SetKwProg{Fn}{function}{:}{}
+\SetKw{Req}{req}
+
+Conventions: $\Hash(\cdot)=$ SHA-256; domain-separated tree hashing per RFC 6962/9162,
+$\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$;
+$\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
+
+\begin{algorithm}[H]
+\caption{Merkle Log Tree (RFC 9162)}\label{alg:merklelog}
+\KwData{$\mathit{leaves}[]\gets[\,]$}
+\Fn{\normalfont\textsf{Append}($\mathit{record}$)}{
+  $\mathit{leaves}.\textsf{append}(\Hleaf(\mathit{record}))$\;
+  \KwRet $|\mathit{leaves}|-1$ \tcp*{index of new leaf}
+}
+\Fn{\normalfont\textsf{MTH}($D[a{:}b]$)}{
+  $n\gets b-a$\;
+  \lIf{$n=0$}{\KwRet $\Hash(\varepsilon)$}
+  \lIf{$n=1$}{\KwRet $\mathit{leaves}[a]$}
+  $k\gets$ largest power of two $<n$ \tcp*{RFC split point}
+  \KwRet $\Hnode(\textsf{MTH}(D[a{:}a{+}k]),\textsf{MTH}(D[a{+}k{:}b]))$\;
+}
+\Fn{\normalfont\textsf{Root}($\mathit{tree\_size}$)}{
+  \KwRet $\textsf{MTH}(D[0{:}\mathit{tree\_size}])$\;
+}
+\Fn{\normalfont\textsf{InclusionProof}($m,\mathit{tree\_size}$)}{
+  \Req $0\le m<\mathit{tree\_size}$\;
+  $\mathit{path}\gets$ sibling subtree hashes along RFC splits, leaf-to-root\;
+  \KwRet $\mathit{path}$\;
+}
+\Fn{\normalfont\textsf{VerifyInclusion}($\mathit{record},m,\mathit{tree\_size},\mathit{root},\mathit{path}$)}{
+  \Req $0\le m<\mathit{tree\_size}$\;
+  $\mathit{fn}\gets m$;\ \ $\mathit{sn}\gets \mathit{tree\_size}-1$;\ \ $r\gets \Hleaf(\mathit{record})$\;
+  \ForEach{$p\in\mathit{path}$}{
+    \Req $\mathit{sn}\ne 0$\;
+    \uIf{$\mathit{fn}$ odd $\vee\ \mathit{fn}=\mathit{sn}$}{
+      $r\gets \Hnode(p,r)$\;
+      \lIf{$\mathit{fn}$ even}{right-shift $\mathit{fn},\mathit{sn}$ until $\mathit{fn}$ odd $\vee\ \mathit{fn}=0$}
+    }
+    \lElse{$r\gets \Hnode(r,p)$}
+    $\mathit{fn}\gets\lfloor \mathit{fn}/2\rfloor$;\ \ $\mathit{sn}\gets\lfloor \mathit{sn}/2\rfloor$\;
+  }
+  \KwRet $\mathit{sn}=0\wedge r=\mathit{root}$ \tcp*{rejects short/padded paths}
+}
+\Fn{\normalfont\textsf{ConsistencyProof}($m,n$)}{
+  \Req $0\le m\le n$\;
+  \lIf{$m=0\vee m=n$}{\KwRet $[\,]$}
+  \KwRet $\textsf{SUBPROOF}(m,D[0{:}n],\mathrm{true})$ \tcp*{\S2.1.4.1}
+}
+\Fn{\normalfont\textsf{VerifyConsistency}($m,n,\mathit{old\_root},\mathit{new\_root},\mathit{proof}$)}{
+  \lIf{$m=n$}{\KwRet $\mathit{old\_root}=\mathit{new\_root}\wedge \mathit{proof}=[\,]$}
+  \lIf{$m=0$}{\KwRet $\mathit{proof}=[\,]$}
+  \Req $\mathit{proof}\ne[\,]$\;
+  \lIf{$m$ is a power of two}{$\mathit{proof}\gets \mathit{old\_root}:\mathit{proof}$}
+  $\mathit{fn}\gets m-1$;\ \ $\mathit{sn}\gets n-1$\;
+  right-shift $\mathit{fn},\mathit{sn}$ while $\mathit{fn}$ odd\;
+  $\mathit{fr}\gets\mathit{proof}[0]$;\ \ $\mathit{sr}\gets\mathit{proof}[0]$\;
+  fold remaining proof entries into $(\mathit{fr},\mathit{sr})$ per \S2.1.4.2\;
+  \KwRet $\mathit{fr}=\mathit{old\_root}\wedge \mathit{sr}=\mathit{new\_root}\wedge \mathit{sn}=0$\;
+}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Sparse Binary Merkle Prefix Tree (label-keyed)}\label{alg:prefix}
+\KwData{path-compressed binary trie over 256-bit labels; empty hash $e=\Hash(\varepsilon)$}
+\Fn{\normalfont\textsf{Insert}($\mathit{label},\mathit{value}$)}{
+  \Req $|\mathit{label}|=32$\;
+  place leaf $\Hleaf(\mathit{label}\concat\mathit{value})$ at the bit-path of $\mathit{label}$\;
+  recompute hashes along the insertion path only \tcp*{$O(256)$}
+  \KwRet \textsf{RootHash}()\;
+}
+\Fn{\normalfont\textsf{Lookup}($\mathit{label}$)}{
+  walk the bit-path of $\mathit{label}$\;
+  $\pi\gets(\mathit{label},\mathit{value}\text{ or }\bot,\mathit{bitmap},\mathit{siblings})$ \tcp*{compressed proof}
+  \KwRet $(\mathit{value}\text{ or }\bot,\ \pi)$\;
+}
+\Fn{\normalfont\textsf{RootFromProof}($\pi$)}{
+  $c\gets e$ \textbf{if} $\pi.\mathit{value}=\bot$ \textbf{else} $\Hleaf(\pi.\mathit{label}\concat\pi.\mathit{value})$\;
+  \For{$i\gets 0$ \KwTo $255$}{
+    $s\gets$ next sibling from $\pi.\mathit{siblings}$ if $\mathit{bitmap}[i]$ set, else $e$\;
+    \lIf{$c=e\wedge s=e$}{\textbf{continue}}
+    $c\gets \Hnode(c,s)$ or $\Hnode(s,c)$ per bit $255-i$ of $\pi.\mathit{label}$\;
+  }
+  \Req all siblings consumed, else \KwRet $\bot$\;
+  \KwRet $c$\;
+}
+\Fn{\normalfont\textsf{VerifyProof}($\pi,\mathit{expected\_root}$)}{
+  \KwRet $\textsf{RootFromProof}(\pi)=\mathit{expected\_root}$\;
+}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Key Transparency Server}\label{alg:server}
+\KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$}
+\Fn{\normalfont\textsf{UpdateByUserId}($\mathit{user\_id},pk$)}{
+  $(\beta,\pi_{\mathrm{vrf}})\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$ \tcp*{ECVRF, RFC 9381}
+  $\mathit{label}\gets\beta[0{:}32]$ \tcp*{32-byte truncation}
+  $\mathit{live}.\textsf{Insert}(\mathit{label},pk)$\;
+  \KwRet $(\mathit{label},\pi_{\mathrm{vrf}})$\;
+}
+\Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
+  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value})$ \tcp*{dual-index labels; PoC unauthenticated}
+}
+\Fn{\normalfont\textsf{CommitEpoch}()}{
+  $r\gets \mathit{live}.\textsf{RootHash}()$\;
+  $i\gets \mathit{log}.\textsf{Append}(r)$ \tcp*{prefix root is a log leaf}
+  $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
+  $\mathit{epoch}\gets \mathit{epoch}+1$\;
+  $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval})$ \tcp*{policy commitment (CONIKS $P$)}
+  $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ \mathit{epoch}{-}1\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{ts}\concat \mathit{ch})$ \tcp*{88-byte LE}
+  $\mathit{sth}\gets(\mathit{epoch}{-}1,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{ts},\mathit{ch},\sigma)$\;
+  \KwRet $\mathit{sth}$\;
+}
+\Fn{\normalfont\textsf{Search}($\mathit{label}$)}{
+  \Req $\mathit{committed}\ne\bot$\;
+  $(v,\pi_{\mathrm{prefix}})\gets \mathit{committed}.\mathit{tree}.\textsf{Lookup}(\mathit{label})$\;
+  $\pi_{\mathrm{incl}}\gets \mathit{log}.\textsf{InclusionProof}(\mathit{committed}.i,\mathit{log}.\mathit{size})$\;
+  \KwRet $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth}_{\mathrm{latest}})$\;
+}
+\Fn{\normalfont\textsf{SearchByUserId}($\mathit{user\_id}$)}{
+  $(\beta,\pi_{\mathrm{vrf}})\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$\;
+  \KwRet $\textsf{Search}(\beta[0{:}32])$ with $\pi_{\mathrm{vrf}}$ attached\;
+}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Dual-Index Label Derivation (HKDF-SHA256, RFC 5869)}\label{alg:dualindex}
+\KwIn{shared secret $\sharedS$ from X3DH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width)}
+\Fn{\normalfont\textsf{DeriveLabels}($\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
+  $\mathit{PRK}\gets \textsf{HKDF-Extract}(\text{salt}=\texttt{"duet-dual-index"},\ \sharedS)$\;
+  $\lself\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"lookup"}\concat \mathit{id_{self}}\concat \mathit{id_{peer}},32)$\;
+  $\lpeer\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"lookup"}\concat \mathit{id_{peer}}\concat \mathit{id_{self}},32)$\;
+  $(\mathit{lo},\mathit{hi})\gets \textsf{sort}(\mathit{id_{self}},\mathit{id_{peer}})$ \tcp*{canonical order: warning only}
+  $\lwarn\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warning"}\concat \mathit{lo}\concat \mathit{hi},32)$\;
+  \KwRet $(\lself,\lpeer,\lwarn)$\;
+}
+\Fn{\normalfont\textsf{WriteWarning}($\mathit{server},\lwarn,\mathit{alert}$)}{
+  $\mathit{server}.\textsf{UpdateRaw}(\lwarn,\mathit{alert})$ \tcp*{any non-$\bot$ value = tripwire}
+}
+\Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth}$)}{
+  $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}
+  \KwRet \textsc{Alert} \textbf{if} $v\ne\bot$ \textbf{else} \textsc{Safe}\;
+}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Client Verification, Registration, Retrieval, Windowed Catch-Up}\label{alg:client}
+\KwData{$\mathit{last\_sth}\gets\bot$}
+\Fn{\normalfont\textsf{VerifiedLookup}($\mathit{server},\mathit{label},\mathit{sth},[\mathit{user\_id},\pi_{\mathrm{vrf}}]$)}{
+  $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
+  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
+  \If{$\mathit{user\_id}$ given}{
+    $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\pi_{\mathrm{prefix}}.\mathit{label}$\;
+  }
+  \Req $\pi_{\mathrm{prefix}}.\mathit{value}=v$\;
+  $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
+  \Req $\textsf{VerifyInclusion}(r,\pi_{\mathrm{incl}}.\mathit{index},\pi_{\mathrm{incl}}.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pi_{\mathrm{incl}}.\mathit{path})$\;
+  \KwRet $v$ \tcp*{$v$ may be $\bot$: proven non-inclusion}
+}
+\Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
+  $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+  $\mathit{server}.\textsf{UpdateRaw}(\lself,pk_{\mathit{self}})$\;
+  $\mathit{sth}\gets \mathit{server}.\textsf{CommitEpoch}()$\;
+  $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth})$;\ \ \Req $v=pk_{\mathit{self}}$\;
+  $\mathit{last\_sth}\gets \mathit{sth}$\;
+  \KwRet $(\lself,\lpeer,\lwarn)$\;
+}
+\Fn{\normalfont\textsf{RetrieveKey}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
+  $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+  $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$;\ \ \Req $pk\ne\bot$\;
+  \KwRet $pk$\;
+}
+\Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server},\lself,\lwarn$)}{
+  $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
+  $W\gets \mathit{sth_{new}}.\mathit{epoch}-\mathit{last\_sth}.\mathit{epoch}$\;
+  \lIf{$W=0$}{\KwRet}
+  $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
+  \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi_{\mathrm{cons}})$\;
+  \tcc{one proof spans the whole window: $O(\log n)$, independent of $W$}
+  $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth_{new}})$;\ \ \Req $v\ne\bot$\;
+  \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
+  $\mathit{last\_sth}\gets \mathit{sth_{new}}$\;
+}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{MitM Detection and Warning}\label{alg:detect}
+\Fn{\normalfont\textsf{DetectMitM}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
+  $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+  \If{$pk\ne\mathit{expected\_pk}$}{
+    $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"mismatch"},pk,\mathit{ts}))$\;
+    \textbf{raise} SecurityAlert\;
+  }
+  \KwRet $pk$\;
+}
+\Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations}$)}{
+  \ForEach{$(\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{own\_pk})\in \mathit{conversations}$}{
+    $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+    $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn)$\;
+    $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$\;
+    \If{$v\ne\mathit{own\_pk}$}{
+      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v,\mathit{ts}))$\;
+      \textbf{raise} SecurityAlert\;
+    }
+  }
+}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Auditor (fork detection)}\label{alg:auditor}
+\KwData{$\mathit{heads}[]\gets[\,]$}
+\Fn{\normalfont\textsf{AuditEpoch}($\mathit{server}$)}{
+  $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
+  \If{$\mathit{heads}\ne[\,]$}{
+    $\mathit{sth_{old}}\gets \mathit{heads}.\textsf{last}$\;
+    $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
+    \Req $\textsf{VerifyConsistency}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{sth_{old}}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$\;
+  }
+  $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$\;
+}
+\Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
+  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$ \tcp*{from a different vantage point}
+  \ForEach{$\mathit{sth}\in \mathit{heads}$}{
+    \lIf{$\mathit{sth}.\mathit{epoch}=\mathit{sth_{other}}.\mathit{epoch}\wedge \mathit{sth}.\mathit{root}\ne \mathit{sth_{other}}.\mathit{root}$}{\KwRet \textsc{Fork}$(\mathit{sth},\mathit{sth_{other}})$}
+  }
+  \KwRet \textsc{Consistent}\;
+}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA-faithful)}\label{alg:cea}
+\KwData{per conversation: chained secret $k$; epoch $t$ (canonical id order for labels)}
+\Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id_A},\mathit{id_B}$)}{
+  $k\gets \KDF(\mathit{pss},\mathit{id_A}\concat \mathit{id_B})$;\ \ $t\gets 0$\;
+}
+\Fn{\normalfont\textsf{CeaUpdate}($I$)}{
+  $k\gets \KDF(k,I)$;\ \ $t\gets t+1$ \tcp*{chain folds a secret $I$}
+}
+\Fn{\normalfont\textsf{CeaLprint}($\mathit{id_A},\mathit{id_B}$)}{
+  \KwRet $\Hash(k\concat \mathit{id_A}\concat \mathit{id_B}\concat t)$\;
+}
+\Fn{\normalfont\textsf{CeaFprint}($\mathit{id_{sender}},\mathit{id_{peer}},\mathit{epk}$)}{
+  $\mathit{fkey}\gets \KDF(k,\mathit{id_{sender}}\concat \mathit{id_{peer}}\concat t)$\;
+  \KwRet $\Hash(\mathit{fkey}\concat \mathit{epk})$\;
+}
+\Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},\mathit{epk},I$)}{
+  $L\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},\mathit{epk})$\;
+  $\textsf{CeaUpdate}(I)$ \tcp*{then fold the secret}
+  $\mathit{server}.\textsf{UpdateRaw}(L,F)$;\ \ $\mathit{server}.\textsf{CommitEpoch}()$\;
+}
+\Fn{\normalfont\textsf{CeaVerify}($\mathit{server},\mathit{id_{sender}},\mathit{id_{self}},\mathit{epk},I,\mathit{sth}$)}{
+  $L\gets \textsf{CeaLprint}(\mathit{id_{sender}},\mathit{id_{self}})$;\ \ $F^{*}\gets \textsf{CeaFprint}(\mathit{id_{sender}},\mathit{id_{self}},\mathit{epk})$\;
+  $\textsf{CeaUpdate}(I)$\;
+  $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
+  \lIf{$v=\bot$}{\KwRet \textsc{NotPosted}}
+  \If{$v\ne F^{*}$}{
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t))$\;
+    \KwRet \textsc{Fork}\;
+  }
+  \KwRet \textsc{Consistent}\;
+}
+\end{algorithm}

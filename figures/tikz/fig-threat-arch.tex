@@ -1,0 +1,19 @@
+% fig-threat-arch.tex — extracted from ch3-threat-model.tex
+% Label: \label{fig:threat-arch}
+\begin{tikzpicture}[>=Stealth,font=\small,
+   actor/.style={draw,rounded corners,minimum width=2.3cm,minimum height=10mm,align=center}]
+  \node[actor] (A) at (0,0.9)  {Alice\\\footnotesize(client)};
+  \node[actor] (B) at (0,-0.9) {Bob\\\footnotesize(client)};
+  \node[actor,fill=black!8] (S) at (5.2,0) {Service operator\\\footnotesize message delivery\\\footnotesize {}+ KT log server};
+  \node[actor] (Au) at (10.2,0) {Auditor};
+  % untrusted network region: the medium BETWEEN clients and server only,
+  % not the honest endpoints Alice/Bob themselves
+  \draw[dashed,red!70!black,rounded corners] (1.35,-1.45) rectangle (4.05,1.45);
+  \node[red!70!black,font=\footnotesize] at (2.7,-1.75) {untrusted network (Dolev--Yao)};
+  % client--server links
+  \draw[->] (A.east) -- (S.west);
+  \draw[->] (B.east) -- (S.west);
+  \node[font=\footnotesize,align=center] at (5.2,-1.7) {client--server:\\semi-trusted};
+  % server--auditor independent
+  \draw[<->,dashed,green!45!black] (S.east) -- node[above,font=\footnotesize]{independent} (Au.west);
+\end{tikzpicture}

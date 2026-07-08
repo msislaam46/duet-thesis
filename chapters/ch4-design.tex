@@ -1,0 +1,528 @@
+\chapter{Design}\label{ch:design}
+
+This chapter presents the proposed design. \Cref{sec:design-arch} introduces the
+overall architecture and its three authenticated data structures.
+\Cref{sec:design-dual,sec:design-windowed} present the two main mechanisms proposed
+in this thesis, the dual-index warning scheme and windowed consistency proofs.
+\Cref{sec:design-acka} explains how the complete design instantiates ACKA, and
+\cref{sec:design-decisions} justifies the principal design decisions. The
+constructions are given here at the level of structure and rationale. The full
+pseudocode is in \cref{app:algorithms}, and every cost claimed in passing is
+measured in \cref{ch:eval}.
+
+\paragraph{Notation.} Hashing is domain-separated in the manner of RFC~6962
+(\cref{ssec:bg-merkle}): $\Hash_{\mathsf{leaf}}(x) = \Hash(\mathtt{0x00} \concat x)$
+and $\Hash_{\mathsf{node}}(l, r) = \Hash(\mathtt{0x01} \concat l \concat r)$, with
+$\Hash$ instantiated as SHA-256 and $\concat$ denoting byte concatenation; the empty
+position has the constant default hash $\Hash(\varepsilon)$. The prefix tree and the log
+use these same leaf and node tags; cross-tree confusion is not exploitable here, since
+prefix roots appear only as log leaf data and log roots only in signed tree heads, but a
+production deployment should apply distinct per-structure tags as defence in depth.
+Identities are treated as fixed-width service identifiers, so concatenations of identity and
+label material are unambiguous without explicit length prefixes.
+
+% ============================================================================
+\section{Architecture}\label{sec:design-arch}
+
+The proposed architecture is built around three authenticated data structures
+arranged in layers, where each layer authenticates the one below (\cref{fig:design-arch}). The
+prefix tree stores the current directory state, the append-only log records every
+committed version of that state, and the signed tree head authenticates the latest
+log root. Together, these three authenticated data structures provide authenticated
+lookups (prefix tree), append-only history (Merkle log), and publicly verifiable
+commitments (signed tree head).
+
+This is the ``combined tree'' design of the IETF Key Transparency working group
+(\cref{ssec:bg-keytrans}): one authenticated dictionary holds the directory, an
+append-only log records every committed state of that dictionary, and the head of the
+log is published as a signed commitment. Lookups are served against the \emph{last
+committed epoch}, never the live tree:
+only a committed prefix root has been folded into the log, so only a committed root
+can be tied, through one chain of proofs, back to a signed head.
+
+\begin{figure}[t]
+\centering
+\input{figures/tikz/fig-design-arch}
+\caption{Overall architecture showing the three authenticated data structures
+(prefix tree $\to$ log $\to$ STH) and the VRF used to derive global directory
+labels.}
+\label{fig:design-arch}
+\end{figure}
+
+\subsection{The three structures}\label{ssec:design-structures}
+
+The three structures operate as a stack, and every lookup verification is rooted in
+all three structures: a lookup is checked against the prefix tree, whose root is checked
+against the log, whose head is checked against the signed commitment
+(\cref{ssec:design-verify}).
+
+\paragraph{Prefix tree.} The directory is a sparse binary Merkle tree that maps each
+256-bit \emph{label} to a \emph{value}; for a user-identity entry, the value is an
+identity public key. The label is the position of the entry in the tree, derived
+rather than chosen, and it comes in two families: a \emph{global slot}, computed
+server-side as a VRF over the user identifier, and the per-conversation
+\emph{dual-index slots}, computed client-side from the shared secret
+(\cref{sec:design-dual}).
+
+\paragraph{Append-only log.} Each committed prefix-tree root is appended to a Merkle
+log (\cref{ssec:bg-merkle}) as a single leaf $\prefroot{t}$. The log therefore records
+every committed directory state, and a consistency proof certifies that this
+history has only ever grown --- nothing previously committed has been modified,
+deleted, or reordered.
+
+\paragraph{Signed tree head.} Each epoch, the root of the log is signed with Ed25519
+and published as the STH. This gives clients and auditors a single authenticated value
+that commits to the whole directory and its history. It is the anchor against which
+every lookup is ultimately checked.
+
+\paragraph{Why a VRF?} The VRF carries the directory-privacy goal G3
+(\cref{sec:threat-goals}). The operator holds the VRF secret key and maps a user
+identifier to a pseudorandom label, attaching a proof that the label was computed
+correctly; a client verifies that proof against the operator's public key but cannot
+itself compute or predict any other label (\cref{ssec:bg-ct2kt}). The labels are thus
+deterministic for the operator yet unpredictable to outsiders, which prevents an
+observer from enumerating the directory.
+
+\subsection{Epoch lifecycle: update, commit, and the signed tree head}\label{ssec:design-epoch}
+
+The directory evolves in epochs. An $\textsf{update}(\mathit{label}, \mathit{value})$
+mutates the live prefix tree in place, re-hashing only the dirty leaf-to-root path, so
+a single update is $O(\log N)$ rather than $O(N)$.
+
+A $\textsf{commit\_epoch}()$ then closes the epoch. It reads the current prefix-tree
+root, appends it to the log as the next leaf, recomputes the log root, snapshots the
+committed tree so that subsequent searches are served against a frozen state, and signs
+the new head.
+
+The contents of the signed tree head determine exactly what the signature
+authenticates. The STH signs, under Ed25519, the 88-byte little-endian message
+\begin{equation}\label{eq:design-sth}
+  \mathit{epoch} \concat \mathit{tree\_size} \concat \mathit{root} \concat
+  \mathit{timestamp} \concat \Hash(\mathit{config}),
+\end{equation}
+where $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
+\mathit{pk}_{\mathsf{sth}} \concat \mathit{suite} \concat \mathit{version} \concat
+\mathit{epoch\_interval})$. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
+required by the inclusion and consistency verifiers. Signing the $\mathit{timestamp}$
+means STH freshness cannot be forged, and the trailing $\Hash(\mathit{config})$ is a
+CONIKS-style policy commitment (the field CONIKS calls $P$) that binds the provider's
+parameters into the signature. With it, the server cannot silently swap its VRF key,
+its signing key, the ciphersuite, the protocol version, or the epoch cadence, or
+serve different parameters to different clients, because any client that recomputes
+$\Hash(\mathit{config})$ from the parameters it expects will reject the mismatch. A
+parameter substitution thus becomes a signed, monitorable, equivocation-detectable act
+rather than a silent one.
+
+\subsection{The client verification chain}\label{ssec:design-verify}
+
+A client accepts no server response without independently verifying it: every lookup is
+ultimately authenticated against a signed tree head. Each verification traverses the same three-layer architecture
+introduced in \cref{sec:design-arch}: first the prefix tree, then the append-only log,
+and finally the signed tree head. The verification chain is the five-step pipeline of
+\cref{fig:design-verify}.
+
+\begin{figure}[t]
+\centering
+\input{figures/tikz/fig-design-verify}
+\caption{The five-step client verification chain. Every lookup is checked locally
+against a signed root.}
+\label{fig:design-verify}
+\end{figure}
+
+Step~1 is the anti-substitution binding on the global path: it ties the queried
+identity, through the VRF, to the exact slot the proof speaks about. It is skipped on
+the dual-index path, where the client derived the label itself from the shared secret
+and so needs no server-supplied VRF proof to know which slot to read. Step~3 anchors the
+whole chain to a signed head, and the head verified there must be the same head against
+which the inclusion proof of step~5 is checked; a proof against an unsigned or stale head
+is refused. Steps~4 and~5 are the two layers of the combined tree: the prefix proof shows
+the entry is at its label in the dictionary, and the log-inclusion proof shows that
+dictionary state is the one the signed head commits to. This is the combined-tree
+semantics of the Key Transparency draft (\cref{ssec:bg-keytrans}).
+
+The verification work is split across the implementation as follows. In the Rust reference,
+\texttt{verify\_search\_result} performs the VRF, value, prefix-root, and log-inclusion
+checks (1, 2, 4, 5); the STH signature (3) is verified by
+\texttt{SignedTreeHead::verify}. The live TypeScript client folds the signature check
+into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verify''
+benchmarked in \cref{ch:eval} is the complete five-step chain.
+
+% ============================================================================
+\section{The dual-index warning scheme}\label{sec:design-dual}
+
+The dual-index warning scheme closes Problem~1 of \cref{sec:bg-open} --- the absence of
+an in-band peer-warning channel --- and so realizes goal G1 against the substitution
+attacks A1, A3, and A5 of \cref{ch:threat}.
+
+\subsection{Label derivation}\label{ssec:design-labels}
+
+The dual-index scheme allocates three directory slots to each conversation: two lookup
+slots (one per participant) and one shared warning slot (\cref{fig:design-dualindex}).
+Alice and Bob derive these slot labels from the X3DH/PQXDH shared secret $\sharedS$
+(\cref{ssec:bg-x3dh}) using HKDF-SHA256 (RFC~5869), the same key-derivation function
+Signal already uses elsewhere:
+\begin{equation}\label{eq:design-labels}
+\begin{aligned}
+  \mathit{PRK} &= \HKDFex(\text{salt} = \text{\texttt{"duet-dual-index"}},\ \sharedS)\\
+  \ell_{\mathsf{self}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"lookup"}} \concat \mathit{id}_{\mathsf{self}} \concat \mathit{id}_{\mathsf{peer}},\ 32\big)\\
+  \ell_{\mathsf{peer}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"lookup"}} \concat \mathit{id}_{\mathsf{peer}} \concat \mathit{id}_{\mathsf{self}},\ 32\big)\\
+  \ell_{\mathsf{warn}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"warning"}} \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B),\ 32\big).
+\end{aligned}
+\end{equation}
+In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key; $\mathit{id}_{\mathsf{self}}$ and
+$\mathit{id}_{\mathsf{peer}}$ are the deriving party's own and peer identifiers; $\min$
+and $\max$ impose a canonical order on the two identities (comparing their fixed-width
+byte representations lexicographically), and each label is a 32-byte
+(256-bit) output, matching the prefix tree's label width. The identifiers are ordered
+canonically \emph{only} for the warning label, so that both parties compute the same
+$\ell_{\mathsf{warn}}$; the two lookup labels are deliberately asymmetric, so that each
+party's key occupies its own slot. There are therefore three labels, not two: both
+parties' keys coexist in the directory, and the shared warning slot sits alongside them.
+
+\begin{figure}[t]
+\centering
+\input{figures/tikz/fig-design-dualindex}
+\caption{The dual-index scheme: the two lookup slots (one per participant) and the shared
+warning slot are all derived by HKDF from the conversation's shared secret $\sharedS$. Because
+both parties hold the same $\sharedS$, they derive the identical warning label $\ell_{\mathsf{warn}}$,
+so any equivocation surfaces in a slot both sides read; a party holding a different secret
+$\sharedS'$ derives a disjoint set of labels and cannot reach these slots.}
+\label{fig:design-dualindex}
+\end{figure}
+
+This corrects two simplifications that appeared in early descriptions of the scheme: it
+uses HKDF rather than a bare hash of $\sharedS$, and it uses three labels with canonical
+ordering applied to the warning label alone. Cross-implementation test vectors verify the
+byte-for-byte equivalence of the derivation across the Rust and TypeScript implementations
+(\cref{app:algorithms}).
+
+\subsection{The three security properties}\label{ssec:design-properties}
+
+The derivation gives the scheme three properties on which detection rests.
+
+\paragraph{Symmetry.} Under the canonical ordering, $A.\ell_{\mathsf{self}} =
+B.\ell_{\mathsf{peer}}$, $A.\ell_{\mathsf{peer}} = B.\ell_{\mathsf{self}}$, and
+$A.\ell_{\mathsf{warn}} = B.\ell_{\mathsf{warn}}$, so the two parties agree on which slot
+each key lives in and, crucially, on the one warning slot they both watch.
+
+\paragraph{Unlinkability.} The server does not hold $\sharedS$, so the HKDF outputs are
+pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
+any other leaf in the tree; it can therefore neither pre-position a value on the warning
+slot nor recognize and selectively censor it.
+
+\paragraph{Tripwire.} A substituted key implies a different shared secret $\sharedS$,
+hence disjoint labels, so a peer lookup either misses the slot the impersonator never
+wrote to, or a warning write lands in a slot whose subsequent non-inclusion the server cannot
+honestly prove.
+
+\subsection{Detection and the bidirectional warning}\label{ssec:design-detection}
+
+On detecting a suspicious key at a lookup slot, a party writes arbitrary non-empty data
+to $\ell_{\mathsf{warn}}$; both parties' background monitors read $\ell_{\mathsf{warn}}$
+on their next check and raise an alert. Because the warning slot's non-inclusion must be
+\emph{proven} (\cref{ssec:design-verify}), a server that has committed to the log cannot
+suppress a write to it without producing a forged non-inclusion proof; the only
+remaining strategy is to refuse service entirely, producing an observable denial of
+service, which is itself a signal (attack A2).
+
+Detection is bidirectional, which matters for the offline case. The victim's own-key
+self-check publishes the warning when the victim notices the wrong key under its own
+name; in addition, a peer that has trust-on-first-use-pinned the victim's key detects a
+substituted peer-slot and publishes the warning on the victim's behalf, so an offline
+victim is still covered. For a \emph{server-side} substitution (A1), where the server
+makes the served bundle agree with the log, the victim's self-check is the necessary
+detector, because a peer comparing the bundle against the log sees no mismatch. The
+residual limitation is the trust-on-first-use caveat of \cref{sec:threat-fair}: a
+substitution that predates first contact pins the incorrect key.
+
+\subsection{Security experiment and reduction sketch}\label{ssec:design-experiment}
+
+The security goal of the dual-index scheme is formalized by the experiment
+$\Expt{dual\text{-}det}{\Pi,\Adv}$ below, in which $\Pi$ denotes the dual-index scheme and
+$\Adv$ a probabilistic polynomial-time adversary (written $\Adv$ rather than $\A$, which
+already denotes Alice); the notation adapts ACKA's $\CEAsec$
+experiment~\cite{dowling2023acka}. The experiment is run by a challenger that invokes
+$\Adv$. The adversary controls the directory server and, following ACKA, even chooses the
+session secret and identities, security rests on the consistency of the registered keys,
+not on their secrecy. After the honest keys are registered, $\Adv$ publishes a directory
+state and a signed tree head and answers each honest lookup with a value and proof of its
+choosing. The adversary succeeds if an honest party accepts a substituted key while no
+detection mechanism is triggered: both parties' self-checks pass and the warning slot is
+provably empty.
+
+\begin{exptbox}{Experiment $\Expt{dual\text{-}det}{\Pi,\Adv}(\secpar)$}
+\small
+\begin{enumerate}\setlength{\itemsep}{1pt}
+  \item $(\sharedS, \mathit{id}_\A, \mathit{id}_\B, \mathit{pk}_\A, \mathit{pk}_\B) \gets \Adv(\secpar)$ \quad (the adversary's choice of secret, identities, and honest keys).
+  \item The challenger derives $(\ell^\A_{\mathsf{self}}, \ell^\A_{\mathsf{peer}}, \ell_{\mathsf{warn}}) \gets \mathsf{Derive}(\sharedS, \mathit{id}_\A, \mathit{id}_\B)$; by symmetry $\ell^\A_{\mathsf{peer}} = \ell^\B_{\mathsf{self}}$ (\cref{ssec:design-properties}).
+  \item The challenger registers the honest keys: $\mathit{pk}_\A$ at $\ell^\A_{\mathsf{self}}$ and $\mathit{pk}_\B$ at $\ell^\B_{\mathsf{self}}$.
+  \item $\Adv$ publishes a directory state (prefix tree and log) and a signed tree head $\mathit{sth}$.
+  \item $\mathit{pk}_{\mathsf{peer}} \gets \mathsf{VerLookup}(\ell^\A_{\mathsf{peer}}, \mathit{sth})$ \quad (Alice's lookup of Bob's key).
+  \item $\mathit{pk}_{\mathsf{self}} \gets \mathsf{VerLookup}(\ell^\B_{\mathsf{self}}, \mathit{sth})$ \quad (Bob's self-check).
+  \item $\mathit{warn} \gets \mathsf{VerWarn}(\ell_{\mathsf{warn}}, \mathit{sth})$ \quad (proven (non-)inclusion of the warning slot).
+  \item \textbf{return}~$1$ if $\mathit{pk}_{\mathsf{peer}} \notin \{\bot, \mathit{pk}_\B\} \wedge \mathit{pk}_{\mathsf{self}} = \mathit{pk}_\B \wedge \mathit{warn} = \mathsf{absent}$; otherwise $0$.
+\end{enumerate}
+{\footnotesize $\mathsf{VerLookup}$ returns the committed value at a label, or $\bot$ if no
+valid proof is supplied; $\mathsf{VerWarn}$ returns $\mathsf{absent}$ when the warning slot
+is proven empty and $\mathsf{present}$ otherwise. Both run the verification chain of
+\cref{ssec:design-verify} against $\mathit{sth}$.}
+\end{exptbox}
+
+The experiment models the state \emph{after} the honest party's monitor has reacted to a
+substitution: on observing $\mathit{pk}_{\mathsf{peer}} \neq \mathit{pk}_\B$, the client
+writes to $\ell_{\mathsf{warn}}$, so $\mathit{warn} = \mathsf{absent}$ holds only if the
+adversary suppressed that write, which against a committed log requires a forged
+non-inclusion proof. A multi-round interactive formulation that makes the
+write-then-recheck explicit across epochs is left to future work.
+
+\begin{definition}[Dual-detection security]
+A dual-index scheme $\Pi$ is \emph{dual-detection-secure} if, for every probabilistic
+polynomial-time adversary $\Adv$,
+\[
+  \advantage{dual\text{-}det}{\Pi,\Adv}(\secpar) \;=\;
+  \Pr\!\big[\,\Expt{dual\text{-}det}{\Pi,\Adv}(\secpar) = 1\,\big] \;\le\; \negl(\secpar).
+\]
+\end{definition}
+
+\paragraph{Reduction sketch.} The symmetry of the derivation
+(\cref{ssec:design-properties}) underpins the detection guarantee: the slot Alice reads for
+Bob's key, $\ell^\A_{\mathsf{peer}}$, is exactly the slot Bob self-checks,
+$\ell^\B_{\mathsf{self}}$. Under a single signed tree head, a valid inclusion proof binds
+that label to one committed value, so a winning adversary must return
+$\mathit{pk}_{\mathsf{peer}} \neq \mathit{pk}_\B$ to Alice while Bob's self-check at the same label still
+yields $\mathit{pk}_\B$ --- two contradictory authenticated values for the same committed
+label under one root, implying a violation of the collision resistance of the Merkle hash
+construction. Suppressing the warning after a detected mismatch likewise requires a forged
+non-inclusion proof. The remaining attack is equivocation, serving Alice and Bob
+different signed heads (attack A4), which lies outside this experiment and is handled by
+the cross-vantage auditor (goal G4). A fully quantified reduction with concrete
+advantage bounds, and a unified treatment of the network and malicious-server adversaries,
+is left to future work (\cref{ch:discussion}).
+
+The dual-index mechanism complements rather than replaces CEA. $\CEA$ authenticates the
+values stored at directory entries by deriving per-epoch fingerprints; the dual-index
+scheme instead derives the directory labels from the shared secret, identifying the
+directory locations at which those values are stored. The two mechanisms therefore address complementary aspects of
+authentication: $\CEA$ authenticates entry contents, while the dual-index scheme
+authenticates entry placement.
+
+\subsection{Session and Continuous Authentication Modes}\label{ssec:design-modes}
+
+The scheme described so far is the \emph{session mode}: the labels come from the
+\emph{initial} X3DH secret $\sharedS$, the registered value is the \emph{identity key},
+and a party re-registers only when its signed pre-key rotates. Session mode detects the
+handshake-time attacks (server substitution (A1) and network man-in-the-middle (A3))
+at the cost of one log write per pre-key rotation.
+
+Alongside it, the system implements a \emph{continuous mode} that binds authentication to
+the \emph{entire} continuous key agreement, following ACKA's example CEA construction
+(\cref{sec:bg-acka}). Each ratchet epoch carries a \emph{public} ratchet key $T_t$ and a \emph{secret} epoch key
+$I_t$ (the Diffie--Hellman output of the asymmetric ratchet). At epoch $t$ the party
+computes, from the current chain state $k_{t-1}$, an evolving label and a fingerprint that
+authenticates $T_t$, and only then folds the secret $I_t$ into the chain:
+\begin{equation}\label{eq:design-cea}
+\begin{aligned}
+  L_t &= \Hash(k_{t-1} \concat \mathit{id}_\A \concat \mathit{id}_\B \concat t),\\
+  F_t &= \Hash\!\big(\KDF(k_{t-1},\ \mathit{id}_{\mathsf{sender}} \concat \mathit{id}_{\mathsf{peer}} \concat t) \concat T_t\big),\\
+  k_t &= \KDF(k_{t-1}, I_t) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
+\end{aligned}
+\end{equation}
+It registers the pair $(L_t \to F_t)$ of \cref{eq:design-cea} in the same log, one entry per ratchet epoch. The
+ordering follows the paper: the label and fingerprint are computed over the
+\emph{current} (pre-update) state and the \emph{public} key, and only then is the
+\emph{secret} $I_t$ folded into the chain. Folding the secret epoch key rather than the public ratchet key
+keeps the chain unpredictable to an adversary that has compromised the pre-shared state
+--- the property the unlinkability and forgery-resistance arguments need. Detection
+proceeds as in ACKA: an active man-in-the-middle that injects a forged ratchet key $T'$ either posts
+under a label the impersonated party never derives (a different chain gives a different
+$L_t$) or produces a conflicting fingerprint at the agreed label --- caught epoch by
+epoch. On a fork, continuous mode reuses the dual-index warning slot to alert the peer in
+band, a composition ACKA itself does not provide.
+
+\begin{figure}[t]
+\centering
+\input{figures/tikz/fig-design-modes}
+\caption{Session mode (left): labels and an identity key derived from the initial secret
+$\sharedS$, written once per pre-key rotation. Continuous mode (right): a chained secret
+$k_0 \to k_1 \to k_2 \to \cdots$ producing one fingerprint per ratchet epoch.}
+\label{fig:design-modes}
+\end{figure}
+
+The two modes differ in their authentication coverage and cost
+(\cref{fig:design-modes}). \textbf{Session mode} authenticates at the level of the identity key,
+with one write per pre-key rotation, and is straightforwardly deployable.
+\textbf{Continuous mode} authenticates each ratchet epoch, with one write per epoch, and
+detects the post-compromise active man-in-the-middle that is ACKA's principal security guarantee
+--- at a substantially higher log-write rate. The two are modes of one system, sharing
+the prefix tree, the log, the STH, and the warning channel; their cost is measured in
+\cref{ch:eval}. One limitation remains: in the prototype the chained
+secret is advanced deterministically from the shared secret, and binding it to the real
+Double Ratchet root key is the same in-protocol hook left to future work as the production
+binding of the real $\sharedS$ (\cref{ch:discussion}). Cross-implementation test vectors
+verify byte-for-byte equivalence of the Rust and TypeScript CEA constructions.
+
+% ============================================================================
+\section{Windowed consistency proofs}\label{sec:design-windowed}
+
+The windowed consistency proof closes Problem~2 of \cref{sec:bg-open}, the linear cost
+of offline catch-up, and so realizes goal G2.
+
+\subsection{The catch-up problem and the bound}\label{ssec:design-catchup}
+
+A client returning after $W$ offline epochs must verify that the current directory state
+is an append-only extension of the last state it previously trusted. A
+straightforward approach verifies one consistency proof for every missed epoch, giving $W$
+separate proofs and an overall verification cost of $O(W \cdot \log N)$. Successive
+consistency proofs contain substantial overlap, making repeated verification redundant. Instead, the
+client requests a single consistency proof spanning its previously trusted log size $m$
+and the current log size $n$, returned together with the latest signed tree head.
+RFC~9162 guarantees that such a proof has size
+\begin{equation}\label{eq:design-proofsize}
+  |\pcons(m, n)| \le \lceil \log_2 m \rceil + \lceil \log_2 n \rceil \quad\text{hashes},
+\end{equation}
+independent of the number of intermediate epochs $W = n - m$ (\cref{fig:design-windowed}). The bound in
+\cref{eq:design-proofsize} is what makes the window free: the client verifies the
+proof against the signed root of that tree head, so the new state is accepted only if it
+is a signed, append-only extension of the state already trusted. The catch-up cost
+therefore depends only on the sizes of the previously trusted and current log states,
+rather than on the number of missed epochs. The warning-slot lookup is
+performed during the same synchronization exchange and so does not change the asymptotic
+complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are given in
+\cref{app:algorithms}.
+
+\begin{figure}[t]
+\centering
+\input{figures/tikz/fig-design-windowed}
+\caption{Offline catch-up over a window $W = n-m$ epochs. The na\"ive approach verifies one
+consistency proof per missed epoch (upper arcs, $O(W\log N)$); the windowed approach requests
+a single RFC~9162 consistency proof spanning the previously trusted head $m$ and the current
+head $n$ (lower arc), whose size is bounded by $\lceil\log_2 m\rceil + \lceil\log_2 n\rceil$
+hashes and is therefore independent of $W$.}
+\label{fig:design-windowed}
+\end{figure}
+
+Two observations qualify this claim. First, the windowed proof is a \emph{standard}
+RFC~9162 consistency proof between two distant heads, not a new cryptographic object; the
+novelty lies in applying it to the key-transparency monitoring-window problem (a gap
+the IETF draft and CONIKS (\S6.3) both leave open) and in quantifying the saving in
+\cref{ch:eval}. Second, the saving is linear in the window: the windowed proof replaces
+$W$ proofs with one. The contribution is therefore a reduction in the number of proofs
+rather than an improvement in the asymptotic complexity of an individual proof.
+
+\subsection{Worked parameterization}\label{ssec:design-param}
+
+A concrete deployment shows the window is not hypothetical. Take $N = 10^7$ users, each
+with about $c = 5$ active conversations, and signed pre-keys rotating every $r = 30$ days.
+Writing one entry per conversation gives on the order of 50~million prefix-tree labels;
+amortized over the 30-day rotation period, this is about 1.67~million log records per day,
+or roughly $69{,}400$ records per hourly epoch. A
+client offline for a full rotation period faces a worst-case window of $W = r \cdot 24 =
+720$ epochs. Under the naïve scheme this is 720 consistency proofs. Under the windowed
+scheme it is one, of size $O(\log N)$. This is the parameterization carried into the
+evaluation of \cref{ch:eval}.
+
+% ============================================================================
+\section{Instantiating ACKA}\label{sec:design-acka}
+
+The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:
+
+\begin{itemize}
+  \item \textbf{$\CKA$ (Continuous Key Agreement)} --- used unmodified.
+  \item \textbf{$\CEA$} --- a primitive that derives per-epoch fingerprints and labels
+  from public keying material and a chained secret state.
+  \item \textbf{$\Logsec$} --- an abstract secure log, assumed honest and immutable.
+\end{itemize}
+
+The three mechanisms of this chapter, together with the cross-vantage auditor, form,
+to our knowledge, the first concrete instantiation of ACKA (\cref{sec:bg-acka}). The contribution is to
+instantiate the component ACKA leaves abstract, $\Logsec$, with a concrete,
+malicious-server-resistant verifiable key directory built on the IETF Key Transparency
+specification~\cite{ietf-keytrans-protocol} and the lineage of Meta's
+\texttt{akd} library~\cite{facebook-akd}, and to drive it in continuous mode so that the
+$\CEA$ fingerprints are published epoch by epoch (\cref{ssec:design-modes}); the
+mapping is summarized in \cref{tab:design-acka}.
+
+\begin{table}[htbp]
+\centering
+\caption{Mapping the ACKA components onto their instantiation in this work.}
+\label{tab:design-acka}
+\small
+\begin{tabular}{@{}llp{6.0cm}@{}}
+\toprule
+ACKA component & Role in the framework & Instantiation in this work \\
+\midrule
+$\CKA$    & continuous key agreement & Signal's Double Ratchet, used unmodified \\
+$\CEA$ & per-epoch fingerprints / labels & dual-index labels (session) and CEA fingerprints (continuous), adding an in-band warning channel \\
+$\Logsec$ & abstract honest, immutable log & KT verifiable key directory: prefix tree + Merkle log + signed tree head + cross-vantage auditor \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three deliberate departures from the paper are stated plainly, because each corresponds to one of
+the ACKA limitations identified in \cref{sec:bg-acka}, and instantiating $\Logsec$ lets
+us address it. First, where $\CEA$ authenticates fingerprints, the session-mode scheme
+additionally derives \emph{labels} from the shared secret, adding the in-band
+peer-warning channel ACKA lacks. Second, ACKA's $\CKA^{\Logsec}$ construction performs no
+deferred verification, a client must verify each epoch as it arrives, whereas the
+windowed consistency proof of \cref{sec:design-windowed} adds exactly the deferred,
+batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is
+honest and provides no out-of-band cross-checking of tree heads; the cross-vantage auditor
+of the threat model (goal G4, attack A4) adds equivocation detection on top of the
+instantiated log. Closing these three gaps is what turns ACKA's abstract framework into a
+deployable system.
+
+% ============================================================================
+\section{Design decisions and alternatives}\label{sec:design-decisions}
+
+The design rests on a number of choices, each made against a specific alternative and,
+where possible, with a deployed precedent. \Cref{tab:design-decisions} collects them; the
+paragraphs below expand the three that most affect the system's behaviour.
+
+\begin{table}[htbp]
+\centering
+\caption{Principal design decisions.}
+\label{tab:design-decisions}
+\small
+\begin{tabular}{@{}p{4.0cm}p{5.4cm}p{3.6cm}@{}}
+\toprule
+Decision & Justification & Reference / precedent \\
+\midrule
+Sparse binary Merkle tree & uniform node semantics; cheap first-class non-inclusion for the warning tripwire; small audit surface & CONIKS, RFC~9162, IETF KeyTrans \\
+ECVRF-EDWARDS25519-SHA512-TAI for global labels & publicly verifiable directory privacy; parity with Signal's deployed keytrans VRF & RFC~9381; Signal keytrans \\
+SHA-256 with RFC~6962 domain tags & second-preimage separation of leaves and nodes; RFC~9162 alignment & RFC~6962/9162 \\
+HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF; PRF security underpins unlinkability & RFC~5869; Signal X3DH \\
+Two-tree (prefix + log) combined stack & one verifiable chain from entry to signed head & IETF KeyTrans draft \\
+Hourly epochs (tunable) & balances proof freshness against commit cost & CONIKS \\
+Client-tunable window $W$ & lets each client trade catch-up frequency against per-check cost & this work \\
+Truncate VRF output $\beta$ to 32 bytes & 256-bit label space; matches the prefix-tree label width & Signal keytrans \texttt{proofToHash} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Directory structure.} The directory is a sparse binary Merkle tree rather
+than an $n$-ary trie or a cryptographic accumulator. A binary tree gives uniform node
+semantics, every internal node hashes exactly two children under the RFC~6962 node tag,
+which keeps both the client verifier and the audit surface small, and it makes
+non-inclusion a first-class, cheap proof: an absent label resolves to a default-hash path,
+which is exactly what the warning tripwire (\cref{ssec:design-detection}) relies on to
+prove a slot empty. An accumulator would shorten membership proofs but make the
+non-membership proofs the warning channel needs substantially more expensive, and an
+$n$-ary trie would complicate the copath encoding without reducing depth for 256-bit
+labels. This is the structure used by CONIKS and the IETF Key Transparency design
+(\cref{ssec:bg-keytrans}).
+
+\paragraph{Global-label derivation.} Global slots are addressed by an ECVRF over the user
+identifier rather than a bare hash. A bare hash would let any observer enumerate the
+directory by guessing identifiers. The VRF instead makes labels pseudorandom to outsiders
+yet publicly verifiable, so a client can confirm the operator computed the correct label
+without being able to compute or predict any other (\cref{ssec:design-structures}). We use
+ECVRF-EDWARDS25519-SHA512-TAI (RFC~9381) to match Signal's deployed keytrans VRF, so the
+primitive cost is one the platform already pays.
+
+\paragraph{Combined prefix-plus-log stack.} Authentication uses two trees, a prefix
+tree for the current directory and an append-only log of its committed roots, rather
+than a single structure. One tree alone would authenticate the present state but not its
+history, leaving append-only violations undetectable. The log supplies exactly the
+consistency proofs that windowed catch-up (\cref{sec:design-windowed}) and the
+cross-vantage auditor (goal~G4) depend on. The cost is one extra log-inclusion path per
+lookup, $32\lceil\lg E\rceil$ bytes, quantified in \cref{ch:eval}.

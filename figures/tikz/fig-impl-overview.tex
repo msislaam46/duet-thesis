@@ -1,0 +1,17 @@
+% fig-impl-overview.tex — extracted from ch5-implementation.tex
+% Label: \label{fig:impl-overview}
+\begin{tikzpicture}[>=Stealth,font=\footnotesize,
+   grp/.style={draw,rounded corners,align=center,inner sep=5pt}]
+  \node[grp,fill=black!4,minimum width=7.6cm] (sd)
+     {\textbf{Signal Desktop (TypeScript)}\\[2pt]{\scriptsize conversation UI \,\textbullet\, KT verifier \,\textbullet\, background monitor \,\textbullet\, hook layer}};
+  \node[grp,fill=black!8,align=center,minimum width=8.0cm,minimum height=4.8cm,inner sep=9pt,below=1.1cm of sd] (srv)
+     {\textbf{\large Rust reference implementation}\\[1pt]{\scriptsize standalone server + crate}\\[6pt]
+      \footnotesize\renewcommand{\arraystretch}{1.35}\begin{tabular}{@{}l@{}}
+      prefix tree\\ Merkle log\\ signed tree head\\ Ed25519 signer\\ ECVRF\\
+      dual-index derivation\\ continuous monitoring (CEA)\\ HTTP API (\cref{app:apiref})
+      \end{tabular}};
+  \node[grp,minimum width=5.6cm,below=1.1cm of srv] (aud)
+     {\textbf{Cross-vantage auditor}\\[1pt]{\scriptsize independent process: poll STH; verify append-only; detect forks}};
+  \draw[<->] (sd) -- node[right,font=\scriptsize]{HTTP / JSON} (srv);
+  \draw[->,dashed] (aud) -- node[right,font=\scriptsize]{poll STH + consistency proofs} (srv);
+\end{tikzpicture}

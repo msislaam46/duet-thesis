@@ -1,0 +1,118 @@
+\chapter{Legal, Social, Ethical and Professional Issues}\label{ch:lsepi}
+
+This project builds security-critical infrastructure for a widely used messaging application, and
+it does so by modifying deployed open-source software; both facts carry legal, social, ethical, and
+professional obligations. This chapter sets out those obligations and how they were discharged
+during the work. It considers the legal position of the code and the data
+(\cref{sec:lsepi-legal}), the social and ethical implications of strengthening, and of being
+seen to strengthen, end-to-end-encrypted messaging (\cref{sec:lsepi-social}), and the
+professional standards, specifically the BCS Code of Conduct~\cite{bcs-code} and the IET Rules of
+Conduct~\cite{iet-conduct}, against which the work was conducted (\cref{sec:lsepi-prof}).
+
+% ============================================================================
+\section{Legal issues}\label{sec:lsepi-legal}
+
+Intellectual property and licensing are the most immediate legal consideration. The prototype
+extends two Signal codebases, libsignal and Signal Desktop, both released under the GNU
+Affero General Public License v3 (AGPL-3.0)~\cite{libsignal,signal-desktop}. Building on AGPL-3.0
+software makes the resulting work a derivative subject to the same licence: its source must remain
+available, and, distinctively for the AGPL, that obligation extends to users who interact with a
+modified version over a network, not only to those who receive a binary. The prototype is a
+research artefact rather than a deployed service, so no public network offering has been made; but
+the licence terms have been respected throughout --- the modifications are kept in a fork whose
+source is available, the upstream copyright and licence notices are preserved, and any future
+deployment would be released under AGPL-3.0. The independent Rust \texttt{kt} crate depends only on
+permissively licensed libraries (the \texttt{sha2} and \texttt{hkdf} crates under the MIT/Apache-2.0
+dual licence, and \texttt{curve25519-dalek} and \texttt{ed25519-dalek} under BSD-3-Clause), which are compatible with that
+outcome. All third-party work (specifications, prior systems, and code) is attributed in the
+references.
+
+A second consideration is export control. The work implements cryptographic software, which is
+regulated under the Wassenaar Arrangement and national export regimes; libsignal itself is
+published under the corresponding open-source exception for publicly available cryptographic source
+code. The contribution here adds no new cryptographic capability beyond standardized primitives
+(the RFC~9381 ECVRF, RFC~5869 HKDF, and Ed25519) and is released as open, published source, so it
+falls within the same well-established exception rather than raising a new control concern.
+
+Data protection is the third. Key transparency is, by construction, a data-minimizing design: the
+directory stores public keys and pseudonymous labels, never message content, and the VRF-derived
+global labels (\cref{ssec:design-labels}) deliberately prevent an observer from enumerating which
+users are present. No personal data was processed in the course of the project, all measurements
+were run on synthetic identifiers and benchmark data, so no obligations under the UK GDPR were
+engaged, while the design itself advances the privacy interests those regimes exist to protect.
+
+% ============================================================================
+\section{Social and ethical issues}\label{sec:lsepi-social}
+
+The social value of the work is a direct contribution to public wellbeing and security:
+authenticated key exchange is what makes end-to-end encryption meaningful, and the people who most
+depend on it (journalists, activists, and others at risk) are exactly those whom an
+undetected key substitution would endanger. Strengthening the automatic detection of such attacks,
+and giving both conversation partners an in-band warning, serves the public interest that the BCS
+code places first.
+
+That same importance imposes a duty of honesty about what the work does and does not achieve,
+because a security tool trusted beyond its guarantees is worse than none. The thesis is explicit
+about its limitations: the prototype carries two proof-of-concept stand-ins for live protocol state
+(\cref{sec:impl-strategy}), it is a single-machine artefact rather than a distributed deployment,
+and the boundary case of key extraction is out of scope (\cref{ch:threat}). The user-facing design
+embodies the same caution: an unreachable server raises a calm, amber notice rather than the red
+alarm reserved for a detected attack (\cref{ssec:impl-verifier}), precisely so that the system does
+not ``cry wolf'' and erode the trust its warnings depend on. The design is open and
+specification-grounded rather than security-through-obscurity, and its correctness is evidenced by
+reproducible tests against published vectors (\cref{sec:impl-tests}) rather than asserted.
+
+A dual-use dimension is unavoidable: robust messaging security protects everyone, including those
+who would misuse it. The settled position in the security community, which this work adopts, is
+that defensive integrity infrastructure of this kind is overwhelmingly to the public good, and that
+weakening it to disadvantage bad actors would disadvantage the far larger population of ordinary
+and at-risk users. Finally, the work followed responsible-disclosure norms in the small: the one
+security-relevant weakness found during integration, a per-lookup head-binding gap, was in
+the author's own prototype and was fixed (\cref{sec:impl-challenges}); no vulnerability in deployed
+Signal software was discovered, but had one been, the appropriate course would have been private
+disclosure to Signal before any publication.
+
+A warning mechanism also has direct effects on the people who see it, which a responsible design must
+weigh. Because the channel can be written by a peer, a malicious or compromised contact can raise a
+spurious warning; at scale, frequent or unexplained alerts risk \emph{warning fatigue}, in which users
+learn to dismiss the very signal meant to protect them (\cref{sec:disc-limitations}). The design
+mitigates this by distinguishing a genuine integrity alert (red) from mere unavailability (amber) and
+by deriving the warning from cryptographic evidence rather than heuristics, but the wording, frequency,
+and explicability of the alert are a human-factors problem this work does not claim to have solved, and
+getting them wrong could erode trust rather than build it. The stakes are highest for at-risk users:
+in an intimate-partner-abuse setting a key change, or a warning about one, can carry safety
+implications beyond the cryptographic question, and any deployment should treat the accessibility and
+clear explanation of these alerts, and a safe path to seek help, as first-order requirements. On the
+conduct of the research itself, finally, all adversarial functionality was exercised only in an
+isolated local test harness against synthetic accounts, with no live Signal interception and no real
+users (\cref{ssec:impl-demo}).
+
+% ============================================================================
+\section{Professional issues and codes of conduct}\label{sec:lsepi-prof}
+
+The work was carried out in line with the BCS Code of Conduct~\cite{bcs-code} and the IET Rules of
+Conduct~\cite{iet-conduct}, and it is worth setting out concretely how.
+
+The BCS code is organized under four principles. \emph{Public interest} (due regard for
+security, privacy, and wellbeing) is the project's subject matter, addressed above.
+\emph{Professional competence and integrity} shaped the technical choices: established, audited
+cryptographic libraries were used in preference to bespoke implementations, and the one primitive
+implemented from scratch, the ECVRF, was validated against the RFC~9381 test vectors rather than
+trusted on inspection (\cref{ssec:impl-core-crypto}); claims are held to what the evidence supports,
+and an unfamiliar literature was studied in order to work competently within it. \emph{Duty to the
+relevant authority} was met through honest, regular engagement with the project supervisor and
+adherence to the university's academic-integrity requirements, including full attribution of
+sources and a clear demarcation of the proof-of-concept stand-ins from verified results.
+\emph{Duty to the profession} is served by not overstating the contribution and by releasing the
+work openly for scrutiny.
+
+The IET Rules of Conduct, which adopt the Engineering Council and Royal Academy of Engineering
+Statement of Ethical Principles (Rule~2), point the same way. Their emphasis on \emph{accuracy and
+rigour} is reflected in the exhaustive and property-based testing and the reproducibility measures
+(\cref{sec:impl-tests,sec:impl-repro}); their requirement to work within one's competence and to
+keep knowledge current (Rules~5--6) is reflected in the grounding of every construction in a named
+specification, and their insistence that a professional opinion state its limitations clearly
+(Rule~26) is reflected in the explicit scoping of the claims throughout. Above all, both codes
+place the public good first, which for a project whose entire purpose is to make a widely used
+private-messaging system harder to attack is not an external constraint but the point of the
+exercise.

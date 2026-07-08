@@ -1,0 +1,37 @@
+% fig-impl-modules.tex — extracted from ch5-implementation.tex
+% Label: \label{fig:impl-modules}
+\begin{tikzpicture}[>=Stealth,font=\scriptsize,
+   cmp/.style={draw,rounded corners,align=center,minimum height=8mm,inner sep=3pt,fill=white},
+   band/.style={font={\footnotesize\itshape},anchor=east,text=black!55}]
+  % API layer (two lines so the box does not grow wider than its border)
+  \node[cmp,minimum width=5.0cm] (api) at (0,5.3) {\textbf{HTTP server}\\lookup / update / consistency API};
+  % Service layer
+  \node[cmp,minimum width=3.0cm] (dir) at (-1.6,3.6) {\textbf{Directory service}\\(\texttt{KTServer})};
+  \node[cmp,minimum width=2.6cm] (cea) at (2.4,3.6) {\textbf{Continuous}\\\textbf{monitoring}};
+  % Authenticated data structures + label derivation
+  \node[cmp,minimum width=2.5cm] (ptree) at (-3.0,1.9) {Sparse Merkle\\prefix tree};
+  \node[cmp,minimum width=2.4cm] (mlog)  at (0.0,1.9)  {Append-only\\Merkle log};
+  \node[cmp,minimum width=2.5cm] (didx)  at (3.0,1.9)  {Dual-index\\derivation};
+  % Cryptography
+  \node[cmp,minimum width=2.5cm] (vrf) at (-1.8,0.3) {ECVRF};
+  \node[cmp,minimum width=2.6cm] (sig) at (1.6,0.3)  {Ed25519 signer};
+  % Base (wide enough to sit under all three crypto columns)
+  \node[cmp,minimum width=6.6cm] (hash) at (0.0,-1.3) {SHA-256 hashing};
+  % band labels, left-aligned clear of every box
+  \foreach \y/\t in {5.3/API, 3.6/services, 0.3/cryptography, -1.3/base}{\node[band] at (-4.9,\y) {\t};}
+  \node[band,align=right] at (-4.9,1.9) {authenticated\\structures};
+  % dependencies (downward)
+  \draw[->] (api) -- (dir);
+  \draw[->] (dir) -- (cea);
+  \draw[->] (dir) -- (ptree);
+  \draw[->] (dir) -- (mlog);
+  \draw[->] (dir) -- (didx);
+  \draw[->] (ptree) -- (vrf);
+  \draw[->] (mlog) -- (sig);
+  \draw[->] (vrf)  -- (vrf  |- hash.north);
+  \draw[->] (sig)  -- (sig  |- hash.north);
+  \draw[->] (didx) -- (didx |- hash.north);
+  % independent auditor (top-right; horizontal link, label pushed toward the auditor)
+  \node[cmp,minimum width=2.4cm,fill=black!5] (aud) at (7.4,5.3) {\textbf{Auditor}\\(independent process)};
+  \draw[<->,dashed] (api.east) -- node[above,align=center,pos=0.6]{poll STH +\\consistency (HTTP)} (aud.west);
+\end{tikzpicture}

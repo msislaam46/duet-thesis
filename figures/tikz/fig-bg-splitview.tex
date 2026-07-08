@@ -1,0 +1,15 @@
+% fig-bg-splitview.tex — extracted from ch2-background.tex
+% Label: \label{fig:bg-splitview}
+\begin{tikzpicture}[>=Stealth,font=\small,
+   box/.style={draw,rounded corners,minimum width=2.4cm,minimum height=9mm}]
+  \node[box,fill=black!8] (srv) at (0,0) {malicious server};
+  \node[box] (ta) at (-3.2,-2) {log with head $\logroot{A}$};
+  \node[box] (tb) at (3.2,-2)  {log with head $\logroot{B}$};
+  \node (A) at (-3.2,-3.6) {\textbf{Alice}};
+  \node (B) at (3.2,-3.6)  {\textbf{Bob}};
+  \draw[->] (srv) -- (ta);
+  \draw[->] (srv) -- (tb);
+  \draw[->] (ta) -- (A);
+  \draw[->] (tb) -- (B);
+  \draw[<->,dashed] (A) to[bend right=20] node[below,font=\footnotesize]{cross-vantage check: $\logroot{A}\stackrel{?}{=}\logroot{B}$} (B);
+\end{tikzpicture}

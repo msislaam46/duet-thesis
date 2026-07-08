@@ -1,0 +1,169 @@
+\chapter{Implementation Reference}\label{app:apiref}
+
+This appendix collects the implementation-level interface details referenced from
+\cref{ch:impl}: the directory server's REST API, the privileged testing interface, the
+Signal Desktop integration hooks and user-interface events, the repository layout, and the
+runner commands. None of it is needed to follow the design (\cref{ch:design}) or the
+evaluation (\cref{ch:eval}); it is provided for reproducibility and for readers who wish to
+run the system.
+
+% ----------------------------------------------------------------------------
+\section{Directory server REST API}\label{sec:apiref-rest}
+
+The standalone server exposes a public API used by clients and auditors. Requests and
+responses are JSON; byte strings are hex-encoded; the verified-lookup endpoints return the
+value together with the prefix proof, the log-inclusion proof, and the signed tree head so
+that the client can run the full verification chain (\cref{ssec:design-verify}).
+\Cref{tab:apiref-public} lists these public endpoints.
+
+\begin{table}[ht]
+\centering
+\caption{Public directory-server endpoints.}
+\label{tab:apiref-public}
+\small
+\begin{tabular}{@{}lp{3.9cm}p{7.6cm}@{}}
+\toprule
+Method & Path & Purpose \\
+\midrule
+GET  & \texttt{/sth} & current signed tree head \\
+GET  & \texttt{/search} & verified lookup by label; returns value, prefix proof, log-inclusion proof, and the signed STH \\
+GET  & \texttt{/search-by-user-id} & lookup by user identifier, with the VRF proof attached \\
+GET  & \texttt{/consistency} & consistency proof between two log sizes (\texttt{from}, \texttt{to}) \\
+GET  & \texttt{/epoch} & current epoch number \\
+GET  & \texttt{/log-root-at} & log root at a given tree size \\
+GET  & \texttt{/vrf-public-key} & operator VRF public key \\
+GET  & \texttt{/sth-public-key} & operator STH signing public key \\
+POST & \texttt{/register} & register a user's key (server derives the VRF label) \\
+POST & \texttt{/update-raw} & write a client-derived (dual-index) label$\to$value \\
+POST & \texttt{/commit} & close the current epoch and sign a new STH \\
+GET  & \texttt{/health} & liveness probe \\
+GET  & \texttt{/dashboard}, \texttt{/internals}, \texttt{/integration}, \texttt{/threats} & served visualization and threat-model pages \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+\section{Privileged testing interface}\label{sec:apiref-admin}
+
+A separate administrative API, bound to an internal-only port, is used exclusively by the
+adversarial scenario suite to stage attacks; it is not part of the protocol. In the
+prototype these endpoints are unauthenticated, and a production deployment would place them
+behind account-layer authorization. \Cref{tab:apiref-admin} lists them.
+
+\begin{table}[ht]
+\centering
+\caption{Privileged testing endpoints (internal only).}
+\label{tab:apiref-admin}
+\small
+\begin{tabular}{@{}llp{7.8cm}@{}}
+\toprule
+Method & Path & Purpose \\
+\midrule
+POST & \texttt{/admin/update} & overwrite a slot's value (stages A1/A5 substitution) \\
+POST & \texttt{/admin/commit} & commit an epoch \\
+POST & \texttt{/admin/equivocate} & sign a second, divergent head at one epoch (stages A4) \\
+POST & \texttt{/admin/stop-equivocate} & clear the forked head \\
+POST & \texttt{/admin/reset} & rebuild the server from its fixed seed with a fresh genesis epoch, for repeatable demonstrations \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+\section{Signal Desktop integration hooks and events}\label{sec:apiref-hooks}
+
+\Cref{tab:apiref-hooks} maps the integration concepts of \cref{sec:impl-signal} to the
+concrete function names in the prototype, and \cref{tab:apiref-events} maps the
+user-interface verdicts to their DOM event names.
+
+\begin{table}[ht]
+\centering
+\caption{Integration hooks.}
+\label{tab:apiref-hooks}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Lifecycle point & Prototype function & Layer \\
+\midrule
+key upload & \texttt{registerKeys} & TypeScript \\
+peer-key retrieval & \texttt{getKeysForServiceId} & TypeScript \\
+safety-number change & \texttt{keyChangeListener} & TypeScript \\
+session establishment & \texttt{sessionEstablished} & TypeScript \\
+pre-key-bundle processing & \texttt{hook\_process\_prekey\_bundle} & Rust (libsignal) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{User-interface verdict events.}
+\label{tab:apiref-events}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Meaning & DOM event \\
+\midrule
+warning written / detected & \texttt{kt:warning} \\
+man-in-the-middle alert (red) & \texttt{kt:mitm-alert} \\
+server unreachable (amber) & \texttt{kt:unreachable} \\
+demonstration: inject a ratchet fork & \texttt{kt:cea-inject} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+\section{Repository layout and runner commands}\label{sec:apiref-repo}
+
+The implementation is organized as follows:
+
+\begin{itemize}
+  \item \texttt{libsignal/rust/kt/} --- the Rust \texttt{kt} crate: library modules
+  (\cref{tab:impl-modules}), the standalone server and auditor binaries, and the benchmark
+  harness.
+  \item \texttt{kt-demo/} --- the server, auditor, and attacker orchestration together with
+  the served visualization and threat-model pages.
+  \item \texttt{Signal-Desktop/ts/kt/} --- the embedded TypeScript client.
+\end{itemize}
+
+The system is driven by single commands: \texttt{cargo test -p kt} and \texttt{cargo bench}
+for the Rust tests and benchmarks, and the runner scripts (\texttt{run} with
+\texttt{up}/\texttt{attack}/\texttt{logs}/\texttt{down}, and \texttt{reset}) for the
+multi-actor demonstration. The networked-in-app mode is enabled by setting a server URL in
+the client's environment before launch.
+
+% ----------------------------------------------------------------------------
+\section{Demonstration gallery}\label{sec:apiref-demo}
+
+This section collects the supporting captures for the demonstration of \cref{ssec:impl-demo}: the
+honest baseline before any attack, and the attacker-side terminals that stage each scenario. The
+main detection screenshots (the two clients showing the warning, the VRF and continuous-mode fronts,
+and the auditor) are in \cref{ssec:impl-demo}. The honest baseline is shown in
+\cref{fig:demo-baseline}, the attacker terminals in \cref{fig:demo-cmd}, and the staged
+equivocation in \cref{fig:demo-equivocation}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.49\textwidth]{figures/ui-baseline-self.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/ui-baseline-contact.png}
+\caption{Honest baseline (scenario A0): the two linked Signal Desktop clients with no warning banner,
+verifying keys against a clean directory. Every later detection is measured against this state.}
+\label{fig:demo-baseline}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.49\textwidth]{figures/cmd-dualindex.png}\hfill
+\includegraphics[width=0.49\textwidth]{figures/cmd-vrf.png}
+\caption{Attacker terminals. Left: the dual-index substitution (\texttt{attack.mjs --label <hex>})
+overwriting the per-conversation lookup slot. Right: the global-slot substitution
+(\texttt{attack.mjs} with the target user-id) overwriting the VRF-derived identity entry.}
+\label{fig:demo-cmd}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.62\textwidth]{figures/cmd-equivocation.png}
+\caption{Staging an equivocation (scenario A4): the privileged testing endpoint signs a second,
+divergent tree head at one epoch, which the cross-vantage auditor then detects
+(\cref{fig:impl-auditor}, right).}
+\label{fig:demo-equivocation}
+\end{figure}

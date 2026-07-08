@@ -1,0 +1,580 @@
+\chapter{Evaluation}\label{ch:eval}
+
+This chapter evaluates the system implemented in \cref{ch:impl} against the goals and threats of
+\cref{ch:threat}. It sets out the measurement methodology and baselines (\cref{sec:eval-method}),
+reports the microbenchmarks for proof size, verification latency, catch-up bandwidth, and detection
+(\cref{sec:eval-micro}), examines behaviour at scale together with the session-versus-continuous
+mode trade (\cref{sec:eval-scale}), places the results beside prior key-transparency systems
+(\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
+taxonomy (\cref{sec:eval-security}). The headline findings are that the dual-index lookup proof is
+at size parity with CONIKS while adding automatic detection, that offline catch-up is three orders
+of magnitude cheaper than naïve monitoring, and that full client verification is sub-\SI{150}{\micro\second}
+and independent of directory size.
+
+% ============================================================================
+\section{Methodology}\label{sec:eval-method}
+
+In this section we describe what was measured, against which baselines, and on what apparatus, so
+that every number that follows can be read against a fixed reference. This matters because the
+value of a transparency system is not any single cost but the trade between proof size, verification
+time, and the bandwidth a client must spend to stay synchronised.
+
+The evaluation is organised around four questions, one per design claim, each stated so that it could
+be falsified. \emph{Is detection free in proof size?} --- falsified if the dual-index proof were
+materially larger than a single-index proof at the same $N$ (\cref{ssec:eval-sizes}). \emph{Is client
+verification cheap and scale-independent?} --- falsified if the full-chain verify grew with $N$ or
+exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}). \emph{Is offline
+catch-up independent of the offline window?} --- falsified if the windowed proof grew with $W$
+(\cref{ssec:eval-catchup}). \emph{Is substitution detected, with no false alarms?} --- falsified by any
+missed attack in the adversarial suite or a non-zero clean-session false-positive rate
+(\cref{ssec:eval-detection,sec:eval-security}). Each question is answered against the baselines below.
+
+Measurements are grouped into thirteen metric families, \emph{M1}--\emph{M13}. Rather than define
+them in prose, \cref{tab:eval-map} is the measurement map for the whole chapter: it states what each
+metric measures, the baseline it is read against, and where it is reported. The reader can consult it
+once and refer back, instead of holding thirteen definitions in mind. The metrics are numbered in the
+order this chapter presents them (size, then latency, then bandwidth, then detection, then scale,
+maintenance, and modes) which is the order the questions above are answered, not the order of the
+benchmark harness that produces them.\footnote{The Rust harness (\cref{app:benchmarks}) emits the
+same metric numbers; a 2026 renumber aligned the two so the harness group \texttt{M1} is proof size,
+\texttt{M2} proof generation, and so on.}
+
+\begin{table}[ht]
+\centering
+\caption{Measurement map: the thirteen metric families, what each measures, and where it is reported.}
+\label{tab:eval-map}
+\footnotesize
+\begin{tabular}{@{}llll@{}}
+\toprule
+Metric & What it measures & Baseline(s) & Reported in \\
+\midrule
+M1  & Lookup proof size vs.\ $N$              & single- vs dual-index      & \cref{ssec:eval-sizes} \\
+M2  & Proof generation latency (server)        & dual-index                 & \cref{ssec:eval-latency} \\
+M3  & Full client verification latency         & dual-index, windowed       & \cref{ssec:eval-latency} \\
+M4  & Offline catch-up bandwidth vs.\ $W$      & na\"ive vs windowed         & \cref{ssec:eval-catchup} \\
+M5  & MitM detection latency                   & dual-index                 & \cref{ssec:eval-detection} \\
+M6  & Clean-session false-positive rate        & ---                        & \cref{ssec:eval-detection} \\
+M7  & Size + verify at scale ($10^6,10^7$)    & dual-index, windowed       & \cref{ssec:eval-scale} \\
+M8  & Single-thread throughput                 & dual-index                 & \cref{ssec:eval-throughput} \\
+M9  & Key rotation + epoch-commit cost         & dual-index, windowed       & \cref{ssec:eval-throughput} \\
+M10 & VRF prove/verify in isolation            & ---                        & \cref{ssec:eval-throughput} \\
+M11 & Added client cost per handshake          & vs no-KT floor             & \cref{ssec:eval-throughput} \\
+M12 & Auditor: per-epoch audit + fork detect   & windowed                   & \cref{ssec:eval-auditor} \\
+M13 & Session vs continuous mode               & session vs continuous      & \cref{ssec:eval-modes} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Baselines are named, not coded, and mean the same thing throughout: the \emph{no-KT floor} (a session
+setup with no key transparency --- a single hash, the cost a deployment pays anyway), the
+\emph{single-index} path (log-inclusion only), the \emph{dual-index} path (the prefix-tree lookup that
+carries the warning slot), and the \emph{windowed} full scheme (dual-index plus windowed consistency
+proofs). These form an ablation: the no-KT floor isolates the cost of key transparency at all,
+single-index removes the dual-index warning, dual-index removes windowing, and windowed is the
+complete client verification. Read together with the session-versus-continuous comparison (M13), they
+let the contribution of each mechanism be attributed directly.
+
+Timings are collected two ways. Criterion provides the confidence intervals and regression plots;
+in parallel, a manual harness of \num{2000} timed iterations per operation records the median, the
+95th percentile, and a 95\% confidence half-width to \texttt{results/rust\_benchmark\_timings.csv},
+and it is the manual-harness medians that are quoted here (they carry less measurement overhead than
+Criterion's per-iteration accounting). Proof sizes are computed exactly and are seed-deterministic,
+so they carry no confidence interval; the scale figures (M7) are distributions over \num{1000}
+random lookups per $N$. All runs use fixed cryptographic and sampling seeds and are reproducible by
+the procedure of \cref{sec:impl-repro}; the full per-parameter tables, at the resolution the CSVs
+record, are collected in \cref{app:benchmarks}. Timing medians are quoted in the body to one decimal
+place ($0.1\,\si{\micro\second}$): finer precision would be spurious for a wall-clock median, and
+sub-microsecond digits vary between runs (for example, the VRF-verify median reads
+\SI{73.8}{\micro\second} in \cref{tab:eval-latency} and \SI{74.8}{\micro\second} in the separate
+scale run of \cref{tab:eval-scale}).
+
+Three limitations bound the interpretation of the numbers. First, the server is in-memory and
+single-machine, so absolute latencies exclude the database and network costs a distributed
+deployment would add. Second, every proof is measured on a single-epoch log, so the log-inclusion
+component is \num{0}\,bytes; a deployed log of $E$ epochs adds $32\lceil\lg E\rceil$\,bytes to every
+lookup proof. Third, the throughput figures are single-thread per-operation costs, not parallel
+scaling. Cross-system numbers in \cref{sec:eval-compare} come from different hardware, scales, and
+storage models and are treated as order-of-magnitude only.
+
+% ============================================================================
+\section{Microbenchmarks (M1--M6)}\label{sec:eval-micro}
+
+In this section we report the core per-lookup costs on a directory of up to $10^6$ labels: how large
+a proof is, how long it takes to produce and to check, how much bandwidth an offline client must
+spend to catch up, and how quickly and reliably an attack is detected.
+
+\subsection{Lookup proof size (M1)}\label{ssec:eval-sizes}
+
+The size of a lookup proof determines the bandwidth cost of every key fetch, so it is the first
+quantity to pin down. \Cref{tab:eval-sizes} reports the single-index and dual-index proof
+sizes as the directory grows. Both scale as $\lceil\lg N\rceil$, exactly as the sparse-tree design
+predicts (\cref{ssec:design-structures}).
+
+\begin{table}[ht]
+\centering
+\caption{Lookup proof size versus directory size $N$ (single-epoch log, seed-deterministic).}
+\label{tab:eval-sizes}
+\small
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+$N$ & single-index hashes & single-index bytes & dual-index prefix hashes & dual-index lookup bytes \\
+\midrule
+$10^2$ & 7  & 224 & 7  & 400 \\
+$10^3$ & 10 & 320 & 10 & 496 \\
+$10^4$ & 14 & 448 & 14 & 624 \\
+$10^5$ & 17 & 544 & 17 & 720 \\
+$10^6$ & 20 & 640 & 23 & 912 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-eval-sizes-plot}
+\caption{Lookup proof size versus directory size $N$ (log $x$): both scale as $\lceil\lg N\rceil$, and
+the dual-index proof carries only the fixed $\sim$\num{176}-byte VRF-and-metadata overhead over the
+single-index path (\cref{tab:eval-sizes}).}
+\label{fig:eval-sizes-plot}
+\end{figure}
+
+The dual-index proof decomposes as a fixed \num{176}\,byte constant (an \num{80}\,byte
+ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{96}\,bytes of metadata (a \num{32}\,byte bitmap,
+leaf data, and depth)) on top of $32$ bytes per prefix hash, giving the closed form
+\begin{equation}\label{eq:eval-proofsize}
+  |\pi| \;=\; 32\lceil\lg N\rceil \;+\; 32\lceil\lg E\rceil \;+\; 176 \ \text{bytes},
+\end{equation}
+where the middle term is the log-inclusion cost a deployed $E$-epoch log adds. The logarithmic
+scaling of \cref{eq:eval-proofsize} in $N$ is plotted in \cref{fig:eval-sizes-plot}. The $10^6$ row reads
+\num{912}\,bytes because the single seeded leaf happens to sit at depth \num{23}; the distribution
+median over \num{1000} random lookups at $10^6$ is \num{816}\,bytes (\cref{ssec:eval-scale}), which
+is the figure to quote. Crucially, the ECVRF proof and the warning slot add nothing beyond this
+formula: \emph{automatic detection adds no proof-size overhead}.
+
+\subsection{Generation and verification latency (M2, M3)}\label{ssec:eval-latency}
+
+A proof that is small is of little use if it is slow to check on the client. \Cref{tab:eval-latency}
+reports the server-side generation cost and the client-side verification cost, broken into the
+prefix-root recompute, the VRF verify, and the full five-step chain of \cref{ssec:design-verify}.
+
+\begin{table}[ht]
+\centering
+\caption{Generation and verification latency (median, manual harness, \num{2000} iterations).}
+\label{tab:eval-latency}
+\small
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+Operation & $N=10^3$ & $N=10^4$ & Scaling \\
+\midrule
+Server full search (gen, incl.\ VRF prove) & \SI{107}{\micro\second} & \SI{159}{\micro\second} & VRF-dominated, near-flat \\
+Prefix-root verify (client) & \SI{26.0}{\micro\second} & \SI{26.0}{\micro\second} & independent of $N$ \\
+VRF proof verify (client) & \SI{73.8}{\micro\second} & \SI{73.7}{\micro\second} & constant-time \\
+\textbf{Full client verify (windowed)} & \textbf{\SI{132.2}{\micro\second}} & \textbf{\SI{132.5}{\micro\second}} & \textbf{independent of $N$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The headline is the last row: full client verification (VRF label binding, value binding, prefix
+root recompute, log inclusion, and the Ed25519 signed-tree-head signature) costs about
+\SI{132}{\micro\second} and does not grow with the directory, because its two cost centres, the
+prefix recompute (\SI{26}{\micro\second}) and the VRF verify (\SI{74}{\micro\second}), are both
+$N$-independent: the first is a fixed \num{256}-level bitmap walk and the second is a constant-time
+elliptic-curve operation. The system therefore meets its sub-millisecond client-verify target with
+roughly sevenfold headroom, and does so while including the VRF verification that comparable systems
+exclude from their reported figures. The server-side full search is likewise near-flat rather than
+growing: it is dominated by the constant-time VRF prove ($\approx$\SI{106}{\micro\second},
+\cref{ssec:eval-throughput}), and its median moves only from \SI{107}{\micro\second} at $N=10^3$ to
+\SI{155}{\micro\second} at $N=10^7$ (\cref{ssec:eval-scale}) --- non-monotonic, not $\lg N$ growth.
+
+\subsection{Offline catch-up bandwidth (M4)}\label{ssec:eval-catchup}
+
+The bandwidth a client spends after being offline is where the windowed-consistency contribution of
+\cref{ssec:design-catchup} pays off. A naïve client verifies one consistency proof per missed epoch
+(the sequential baseline) --- in the benchmark, $W$ separate proofs, each anchored to the current head
+rather than chained epoch-to-epoch, at the same $O(W\log N)$ cost; the windowed client verifies a
+single proof spanning the whole gap.
+\Cref{tab:eval-catchup} reports both as the offline window $W$ grows. Because catch-up proofs are
+taken over the epoch log, one leaf per epoch, their size is independent of the number of users
+$N$; the table therefore holds for every $N$ measured.
+
+\begin{table}[ht]
+\centering
+\caption{Offline catch-up bandwidth: naïve sequential versus windowed, any $N$.}
+\label{tab:eval-catchup}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+$W$ (epochs offline) & na\"ive (bytes) & windowed (bytes) & Ratio \\
+\midrule
+1 (1 hour)   & 96      & 96  & $1.0\times$ \\
+24 (1 day)   & 4{,}416   & 192 & $23.0\times$ \\
+168 (1 week) & 41{,}280  & 256 & $161.3\times$ \\
+720 (1 month)& 222{,}528 & 320 & $695.4\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-eval-catchup-plot}
+\caption{Offline catch-up bandwidth versus window $W$ (log $y$): the naïve baseline grows linearly in
+$W$ (to \num{222528} bytes at a month) while the windowed proof stays a few hundred bytes
+(\cref{tab:eval-catchup}).}
+\label{fig:eval-catchup-plot}
+\end{figure}
+
+The saving is linear in $W$ (measured $\approx 0.97\,W$), not $W/\lg W$, as \cref{fig:eval-catchup-plot}
+makes visible on a log axis: a client offline for a month
+sends a \num{320}\,byte proof in place of \num{222528}\,bytes, a \num{695}-fold reduction, and the
+generation-time counterpart is similar (\SI{0.51}{\micro\second} windowed versus \SI{374}{\micro\second}
+sequential at $W=720$). This directly addresses the monitoring-bandwidth problem that CONIKS lists as
+an open extension.
+
+\subsection{Detection latency and false positives (M5, M6)}\label{ssec:eval-detection}
+
+Finally, the mechanism that makes the scheme worthwhile: how fast a substitution is detected, and how
+often a clean session is wrongly flagged. The detection check, deriving the dual-index labels and
+reading the warning slot, adds \SI{1.4}{\micro\second} at $N\ge10^3$, with a clean session and an
+attacked session indistinguishable in cost, so detection leaks nothing through timing.\footnote{At
+$N=10^2$ the check reads \SI{55}{\micro\second} because a compressed-leaf sibling on the queried path
+forces a full \num{256}-level hash chain; this tree-shape artifact disappears by $N=10^3$.} This
+figure is the \emph{marginal} cost of the warning-slot read on top of a lookup the client already
+verifies; it is an unverified read, so the security-bearing detection cost is that of the full
+verified chain the client runs regardless --- the \SI{26}{\micro\second} prefix verify and the
+remainder of the \SI{132}{\micro\second} chain of \cref{ssec:eval-latency}. Over \num{1000} clean
+sessions the false-positive rate (M6) is \num{0}; this is a sanity check rather than independent
+evidence, since a spurious collision at a 256-bit HKDF-derived warning label is cryptographically
+negligible. Detection is thus effectively free and silent, in sharp contrast to the manual
+safety-number ceremony it replaces, which only about 14\% of users complete without
+guidance~\cite{vaziripour2017}.
+
+% ============================================================================
+\section{Scalability and the mode trade (M7--M13)}\label{sec:eval-scale}
+
+Having established per-lookup costs at moderate size, we now push the directory to production scale,
+measure server-side throughput and maintenance costs, and quantify the price of the continuous
+operating mode.
+
+\subsection{Scale to CONIKS size (M7)}\label{ssec:eval-scale}
+
+To show the design holds at deployment scale, the size and verification measurements were repeated at
+$N=10^6$ and $N=10^7$ --- the latter the scale at which CONIKS reports its figures.
+\Cref{tab:eval-scale} gives the distribution over \num{1000} random lookups per $N$.
+
+\begin{table}[ht]
+\centering
+\caption{Behaviour at CONIKS scale (distribution over \num{1000} random lookups per $N$).}
+\label{tab:eval-scale}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Quantity & $N=10^6$ & $N=10^7$ \\
+\midrule
+Leaf depth (median / mean / max) & 20 / 20.3 / 24 & 24 / 23.6 / 27 \\
+Lookup proof bytes (median / max) & 816 / 944 & 944 / 1{,}040 \\
+Server full search (median / p95) & 149 / \SI{199}{\micro\second} & 155 / \SI{214}{\micro\second} \\
+Prefix verify (median / p95) & 26.0 / \SI{26.2}{\micro\second} & 26.0 / \SI{28.0}{\micro\second} \\
+VRF verify (median / p95) & 74.8 / \SI{87.3}{\micro\second} & 74.7 / \SI{90.5}{\micro\second} \\
+\textbf{Full client verify} & \textbf{$\approx$\SI{132}{\micro\second}} & \textbf{$\approx$\SI{132}{\micro\second} (indep.\ of $N$)} \\
+Build time / peak RSS & 186\,s / 2.04\,GB & 1{,}880\,s / 19.9\,GB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The measured constancy of prefix verification across five orders of magnitude ($10^2$ to $10^7$) is
+the empirical proof that verification is bounded by the fixed \num{256}-level tree height rather than
+by $N$, and full client verification stays at $\approx$\SI{132}{\micro\second} at both $10^6$ and
+$10^7$. The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
+tree takes 31 minutes and \num{20}\,GB of RAM, which is why a production deployment would move to the
+persistent, sharded storage this prototype deliberately does not model.
+
+\subsection{Throughput, rotation, and epoch commit (M8--M11)}\label{ssec:eval-throughput}
+
+Server-side maintenance costs decide how large a deployment one machine can sustain.
+\Cref{tab:eval-server} collects them. Single-thread throughput is about \num{5900} lookups and
+\num{5900} updates per second at $N=10^4$; key rotation (overwriting an existing binding) costs
+\SI{134}{\micro\second}--\SI{186}{\micro\second} --- a figure dominated by a per-rotation VRF prove of
+$\approx$\SI{106}{\micro\second}, because the benchmark re-evaluates the VRF for the unchanged user
+identifier; a production server would cache that label, leaving only tens of microseconds of tree
+work. The verifiable random function, measured in isolation,
+is constant-time at \SI{106}{\micro\second} to prove and \SI{73}{\micro\second} to verify,
+confirming its $N$-independence. The per-handshake key-transparency overhead a deployment pays
+is exactly the $\approx$\SI{132}{\micro\second} full client verify, against a no-KT floor of a single
+hash --- microseconds of client work per conversation.
+
+\begin{table}[ht]
+\centering
+\caption{Server-side maintenance and throughput costs (median).}
+\label{tab:eval-server}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Operation & $N=10^3$ & $N=10^4$ \\
+\midrule
+Lookup throughput (single-thread) & --- & $\approx$5{,}930 op/s (\SI{168.6}{\micro\second}) \\
+Update throughput (single-thread) & --- & $\approx$5{,}950 op/s (\SI{168.2}{\micro\second}) \\
+Key rotation & \SI{134.1}{\micro\second} & \SI{185.5}{\micro\second} \\
+Epoch commit & \SI{408}{\micro\second} & \SI{3.45}{\milli\second} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The one cost that does grow with $N$ is the epoch commit (\SI{408}{\micro\second} at $10^3$ rising to
+\SI{3.45}{\milli\second} at $10^4$, an $8.5\times$ increase for a $10\times$ growth, i.e.\ roughly
+$O(N)$). This is the deep-clone snapshot the current server takes on every commit; a copy-on-write
+tree would reduce it to $O(\lg N)$, and this is noted as future work in \cref{ch:discussion}.
+
+\subsection{Auditor cost (M12)}\label{ssec:eval-auditor}
+
+The cross-vantage auditor (\cref{ssec:design-modes}) that detects split-view equivocation must be
+cheap enough to run continuously. It is: a per-epoch audit, an Ed25519 signature verify plus an
+append-only consistency check, costs \SI{28.6}{\micro\second} at $N=10^4$, and the cross-vantage
+fork-detection check costs \SI{27.6}{\micro\second}. Both are under \SI{30}{\micro\second}, so the
+equivocation-detection machinery is effectively free per epoch. The audit figure times proof
+generation and verification together; a deployed auditor only verifies a proof the server supplies,
+so this is a conservative upper bound on the true audit cost.
+
+\subsection{Session versus continuous mode (M13)}\label{ssec:eval-modes}
+
+The design offers two operating modes (\cref{ssec:design-modes}): session mode writes one directory
+entry per signed-pre-key rotation, and continuous mode writes one per ratchet epoch for finer-grained,
+ACKA-faithful detection. The cost of that granularity is not verification time --- a per-check verify
+is \SI{73.6}{\micro\second} in session mode and \SI{49.4}{\micro\second} in continuous mode, both below
+the \SI{132}{\micro\second} full-chain figure of \cref{ssec:eval-latency} because the dual-index path
+carries no VRF step (its labels are client-derived, not VRF-derived) and these per-epoch checks
+exclude the signed-tree-head signature --- but the number of directory writes. \Cref{tab:eval-modes} reports the write counts over a
+conversation of $E$ hourly epochs, with a signed-pre-key rotation every 30 days ($R=720$).
+
+\begin{table}[ht]
+\centering
+\caption{Directory writes over a conversation: session versus continuous mode ($R=720$).}
+\label{tab:eval-modes}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+$E$ (epochs) & Continuous (one/epoch) & Session (one/rotation) & Ratio \\
+\midrule
+24 (1 day)     & 24    & 1 & $24\times$ \\
+168 (1 week)   & 168   & 1 & $168\times$ \\
+720 (1 month)  & 720   & 1 & $720\times$ \\
+4{,}320 (6 months) & 4{,}320 & 6 & $720\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The write ratio grows linearly in $E$ up to the rotation period and then plateaus at $720\times$: once
+a conversation spans several rotations, session-mode writes tick up in proportion, so continuous mode
+costs at most about $720\times$ more directory writes for per-epoch rather than per-rotation detection.
+This bounds the deployment choice cleanly --- fine-grained detection is available, at a write-amplification
+cost that is capped, not unbounded. One limitation applies: because real ratchet cadence is
+message-driven rather than hourly, the continuous-mode write counts here are an under-count for a
+chatty conversation.
+
+% ============================================================================
+\section{Comparison with prior systems}\label{sec:eval-compare}
+
+In this section we place the measured results beside the key-transparency systems surveyed in
+\cref{ch:background}. \Cref{tab:eval-compare} gives the comparison on the dimensions an examiner of a
+messaging deployment would weigh; the published figures are drawn from each system's paper or
+repository and, per the comparability note below, are order-of-magnitude.
+
+\begin{table}[ht]
+\centering
+\caption{DUET against prior systems (published figures; see the comparability note).}
+\label{tab:eval-compare}
+\footnotesize
+\begin{tabular}{@{}lp{3.1cm}p{2.6cm}p{2.9cm}@{}}
+\toprule
+Dimension & \textbf{DUET (measured)} & CONIKS~\cite{melara2015coniks} & Signal KT~\cite{signal-kt-server} \\
+\midrule
+Lookup proof size & \textbf{816\,B median @ $10^6$} (max 944) & 1{,}216\,B @ $2^{32}$ ($\approx$832\,B @ $10^6$: parity) & 8{,}192\,B fixed ($\approx$9$\times$ larger) \\
+Client lookup verify & \textbf{$\approx$\SI{132}{\micro\second}, indep.\ of $N$} (incl.\ VRF + STH sig) & \SI{159}{\micro\second} path $+\sim$\SI{400}{\micro\second} sig @ $10^7$, excl.\ VRF & unpublished \\
+Catch-up @ $W{=}720$ & \textbf{320\,B} (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB & Monitor endpoint \\
+MitM detection & \textbf{automatic, in-band (dual-index)} & manual SN + self-monitor & lookup check (AKV) + self-monitor; no peer warning \\
+Key coverage & identity \textbf{+ per-session labels} & identity only & ACI, E164, username \\
+Query privacy (operator) & No & No & No \\
+Directory privacy (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Four claims follow from the comparison. First, the dual-index lookup proof is at \emph{size parity}
+with CONIKS at matched $N$ (\num{816}\,bytes median versus $\approx$\num{832}\,bytes analytical at
+$10^6$, and \num{22}--33\% under CONIKS's published \num{1216}\,bytes) while adding automatic
+detection that CONIKS lacks. Second, it is roughly $9\times$ smaller than Signal's deployed wire
+format: Signal's key-transparency server pads every prefix proof to the full \num{256}-sibling copath
+with seed-derived fillers, a deliberate trade of bandwidth for the hiding of tree density that our
+\num{32}-byte bitmap instead reveals --- so the comparison is $\sim$$9\times$ bandwidth for
+$\sim\lceil\lg N\rceil$ bits of density metadata, and SEEMless's measured $\approx$8.6\,kB lookups at
+$10^7$~\cite{chase2019seemless} confirm that both deployed-lineage systems ship $\sim$8\,kB proofs.
+Third, offline catch-up is \num{320}\,bytes against CONIKS's $\Theta(W)$ monitoring cost of
+$\sim$530\,kB at $W=720$, over three orders of magnitude cheaper. Fourth, full client verification is
+$\approx$\SI{132}{\micro\second} and independent of $N$, about $4.2\times$ faster than CONIKS's
+\SI{559}{\micro\second} at $N=10^7$ while our figure \emph{includes} the VRF verify and signature
+theirs omits.
+
+\begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different hardware (a 2015
+Xeon through to 2023 cloud instances), different scales ($10^6$ versus $2^{32}$), and database-backed
+versus in-memory implementations. All cross-system figures are order-of-magnitude; our own benchmarks
+are single-machine and in-memory (\cref{sec:eval-method}).\end{quote}
+
+% ============================================================================
+\section{Security evaluation}\label{sec:eval-security}
+
+Finally, we evaluate the system against the attack taxonomy of \cref{ch:threat}. The adversarial
+scenario suite of \cref{sec:impl-tests} drives each attack end to end and asserts both the verdict and
+the epoch of detection; the results are tabulated in \cref{tab:impl-t5b}. The automated Rust suite
+covers all eight scenarios --- the A0 baseline, the two substitution variants A1a (global VRF slot)
+and A1b (dual-index session slot), the network, censorship and equivocation attacks A2--A4, the
+key-rotation substitution A5, and the X1 endpoint-compromise boundary --- each passing.
+
+\Cref{tab:eval-security} maps each threat to the mechanism that answers it, the evidence that the
+mechanism works, and the outcome. The one attack deliberately out of scope is X1, direct key
+extraction, which no key-transparency system addresses.
+
+\begin{table}[ht]
+\centering
+\caption{Threats, defending mechanisms, evidence, and outcome.}
+\label{tab:eval-security}
+\footnotesize
+\begin{tabular}{@{}llp{4.6cm}l@{}}
+\toprule
+Attack & Mechanism (goal) & Evidence & Result \\
+\midrule
+A1/A3/A5 key substitution & dual-index warning (G1) & own-key self-check + shared warning slot; scenario suite (\cref{tab:impl-t5b}) & detected, 1--2 epochs \\
+A2 warning censorship & per-lookup signed-head binding & signature checked inside every \SI{132}{\micro\second} verify (\cref{ssec:eval-throughput}) & detected \\
+A4 split-view equivocation & cross-vantage auditor (G4) & \SI{27.6}{\micro\second} per check; equivocation-detection test & detected, 1 epoch \\
+directory enumeration & ECVRF labels (G3) & RFC~9381 conformance vectors (\cref{sec:impl-tests}) & prevented \\
+X1 key extraction & --- (out of scope) & no KT system addresses it & n/a \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As a complementary positioning lens, the six scenarios map onto real MITRE ATT\&CK Enterprise
+techniques --- server-side substitution onto Trusted Relationship (T1199) and Transmitted Data
+Manipulation (T1565.002), network interception onto Adversary-in-the-Middle (T1557), split-view onto
+Subvert Trust Controls (T1553), and endpoint key extraction onto the out-of-scope Unsecured
+Credentials (T1552) --- situating the abstract taxonomy against adversary behaviours seen in
+practice. The cryptographic guarantees of \cref{ch:design}, not this mapping, remain the primary
+security argument; the full technique matrix and the per-category STRIDE tables are given in
+\cref{app:security}.
+
+\subsection{STRIDE coverage}\label{ssec:eval-stride}
+
+A STRIDE enumeration over the three trust domains (the server (Merkle log, prefix tree, signed
+tree head), the client (registration, verification, warning monitor), and the auditor) yields
+twenty distinct threats. \Cref{tab:eval-stride} summarises the outcome: eighteen are fully mitigated
+and two are residual.
+
+\begin{table}[ht]
+\centering
+\caption{STRIDE coverage of the key-transparency system.}
+\label{tab:eval-stride}
+\small
+\begin{tabular}{@{}lccp{6.0cm}@{}}
+\toprule
+Category & Threats & Mitigated & Residual \\
+\midrule
+Spoofing & 4 & 4 & --- \\
+Tampering & 3 & 3 & --- (substitution caught within 1--2 epochs) \\
+Repudiation & 3 & 3 & --- \\
+Information disclosure & 3 & 2 & operator learns the label$\leftrightarrow$user mapping \\
+Denial of service & 4 & 3 & write rate-limiting / epoch-withholding \\
+Elevation of privilege & 3 & 3 & --- \\
+\midrule
+\textbf{Total} & \textbf{20} & \textbf{18} & \textbf{2} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Spoofing, tampering, repudiation, and elevation of privilege are closed cryptographically --- ECVRF
+label binding, SHA-256 and Ed25519, the append-only log, and client-side proof verification leave no
+non-negligible residual. The two residual threats are not cryptographic weaknesses but consequences
+of the semi-trusted-server model: the operator necessarily learns which label belongs to which user
+(an information-disclosure residual shared by all deployed key-transparency systems, including
+CONIKS~\cite{melara2015coniks}), and an operator can rate-limit or withhold writes (a
+denial-of-service residual). Both are acknowledged by the standard key-transparency literature and
+neither is addressed by ACKA~\cite{dowling2023acka}, which assumes an honest log; they bound what
+transparency can offer rather than revealing a flaw in this construction.
+
+\subsection{Attack tree}\label{ssec:eval-attacktree}
+
+\Cref{fig:eval-attacktree} places the scenarios under the adversary's ultimate goal --- reading a
+conversation. Because any single path suffices, the figure makes the coverage claim visually: every
+single-mechanism path terminates in a key-transparency control, and only the endpoint-compromise
+boundary X1 escapes, exactly as scoped in \cref{ch:threat}.
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-eval-attacktree}
+\caption{Attack tree for the goal of reading a conversation. Each leaf names the key-transparency
+control that answers the attack and the corresponding MITRE ATT\&CK technique; every single-mechanism
+path is detected or prevented except the endpoint-compromise boundary X1.}
+\label{fig:eval-attacktree}
+\end{figure}
+
+\subsection{Detection timeline}\label{ssec:eval-timeline}
+
+\Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1): the attack at epoch
+$E$ is flagged by the victim's self-check at $E{+}1$, the warning is committed at $E{+}2$, and the
+peer's monitor reads it by $E{+}3$ --- a verdict within one to two epochs and with no user action.
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-eval-timeline}
+\caption{Detection timeline for a server-side key substitution (A1). A peer that pinned the victim's
+key in an earlier epoch flags the change directly on its next fetch.}
+\label{fig:eval-timeline}
+\end{figure}
+
+\subsection{Residual risks and posture}\label{ssec:eval-posture}
+
+The overall posture follows from the preceding artefacts. Detection is automatic and fast (tens of
+microseconds of client work, a verdict within one to two epochs) and the false-positive rate over
+\num{1000} clean sessions is \num{0}, so the warning does not cry wolf. The residual risks are the two
+semi-trusted-server limitations of \cref{ssec:eval-stride}, both outside what any transparency layer
+removes. This is the gap the design set out to close: where the deployed WhatsApp AKD falls back to a
+\emph{manual} verification ceremony on a failed check~\cite{lawlor2023whatsapp}, and where only
+$\sim$14\% of users complete that ceremony at all~\cite{vaziripour2017}, DUET delivers the same
+detection in-band and without user action.
+
+% ============================================================================
+\section{Implications for deployment}\label{sec:eval-deploy}
+
+The measurements above bear directly on whether a design of this kind could be adopted by a
+production messenger such as Signal, whose own key-transparency server this work was built
+against~\cite{signal-kt-server}. This section draws out those implications as measured comparisons
+with their caveats attached, not as recommendations.
+
+On the client, the cost is small and does not grow with the service. Full verification is
+$\approx$\SI{132}{\micro\second} and independent of $N$ (\cref{ssec:eval-latency,ssec:eval-scale}),
+and a lookup proof is \num{816}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}) --- at parity
+with CONIKS and roughly $9\times$ smaller than Signal's deployed, density-hiding wire format
+(\cref{sec:eval-compare}). A client offline for a month catches up in a single \num{320}\,byte proof
+rather than the naïve $\sim$\num{530}\,kB (\cref{ssec:eval-catchup}), which matters most for the
+intermittently connected mobile clients a messenger must serve. The per-conversation overhead a
+deployment pays is therefore microseconds of client work and a few hundred bytes of bandwidth, in
+exchange for automatic in-band detection that replaces a manual ceremony only $\sim$14\% of users
+complete~\cite{vaziripour2017}.
+
+On the server, the picture is more qualified, and the qualifications are exactly what a production
+deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one
+operation that grows with $N$ ($\approx O(N)$, \SI{3.45}{\milli\second} at $10^4$,
+\cref{ssec:eval-throughput}), because the current server deep-clones its committed snapshot; a
+copy-on-write tree would reduce this to $O(\lg N)$ and is the single most valuable server-side change.
+Second, the per-lookup and per-rotation VRF prove ($\approx$\SI{106}{\micro\second}) dominates those
+paths only because the benchmark re-evaluates the VRF for an unchanged identifier; a deployed server
+would cache the label and pay it once. Beyond compute, the scale run exposes the memory limit: a
+$10^7$-label tree needs $\approx$\num{20}\,GB on one machine (\cref{ssec:eval-scale}), so a real
+deployment must move to the persistent, sharded storage of the SEEMless--Parakeet lineage that this
+in-memory prototype deliberately does not model.
+
+Finally, the two operating modes bound the deployment choice rather than forcing it. Session mode is
+the deployable default (one directory write per signed-pre-key rotation, at parity with existing
+key-transparency systems) while continuous mode offers finer-grained, ACKA-faithful detection at a
+write amplification that is capped at $\approx 720\times$, not unbounded (\cref{ssec:eval-modes}). What
+remains before a design of this kind could ship is not performance but three engineering gaps stated
+plainly in \cref{ch:discussion}: authenticated writes on the directory API, persistent sharded
+storage, and closing the operator's label$\leftrightarrow$user query-privacy residual
+(\cref{ssec:eval-stride}) with an oblivious lookup. These are implementation questions, not
+limitations of the measured design; the numbers above show the cryptographic core is comfortably
+within a deployable budget.

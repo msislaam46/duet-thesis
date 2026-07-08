@@ -1,0 +1,11 @@
+% fig-design-verify.tex — extracted from ch4-design.tex
+% Label: \label{fig:design-verify}
+\begin{tikzpicture}[>=Stealth,font=\footnotesize,
+   vstep/.style={draw,rounded corners,text width=13cm,minimum height=8mm,align=left,inner sep=5pt}]
+  \node[vstep] (s1) {\textbf{1. VRF label binding} --- verify the ECVRF proof; check $\beta[0{:}32]$ equals the proof label (RFC~9381)};
+  \node[vstep,below=4mm of s1.south,anchor=north] (s2) {\textbf{2. Value binding} --- verify the proof binds to the returned value};
+  \node[vstep,below=4mm of s2.south,anchor=north] (s3) {\textbf{3. STH signature} --- verify the Ed25519 signature on the STH returned with the search};
+  \node[vstep,below=4mm of s3.south,anchor=north] (s4) {\textbf{4. Prefix root} --- recompute the prefix-tree root from the proof (siblings + 32-byte bitmap)};
+  \node[vstep,below=4mm of s4.south,anchor=north] (s5) {\textbf{5. Log inclusion} --- check the recomputed root is a leaf under the signed log root};
+  \foreach \a/\b in {s1/s2,s2/s3,s3/s4,s4/s5}{\draw[->] (\a) -- (\b);}
+\end{tikzpicture}

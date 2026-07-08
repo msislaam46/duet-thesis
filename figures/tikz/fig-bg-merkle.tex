@@ -1,0 +1,19 @@
+% fig-bg-merkle.tex — extracted from ch2-background.tex
+% Label: \label{fig:bg-merkle}
+\begin{tikzpicture}[>=Stealth,font=\small,
+   nd/.style={draw,circle,minimum size=8mm,inner sep=0pt},
+   lf/.style={draw,rounded corners,minimum size=7mm,inner sep=1pt}]
+  \node[nd] (root) at (3,3) {$h_{0}$};
+  \node[nd,fill=black!15] (n01) at (1.5,1.8) {$h_{01}$};
+  \node[nd] (n23) at (4.5,1.8) {$h_{23}$};
+  \node[lf] (l0) at (0.5,0.4) {$d_0$};
+  \node[lf] (l1) at (2.5,0.4) {$d_1$};
+  \node[lf,very thick] (l2) at (4,0.4) {$d_2$};
+  \node[lf,fill=black!15] (l3) at (6,0.4) {$h_3$};
+  \draw (root)--(n01); \draw (root)--(n23);
+  \draw (n01)--(l0); \draw (n01)--(l1);
+  \draw (n23)--(l2); \draw (n23)--(l3);
+  \node[align=left,font=\footnotesize] at (9,1.6)
+    {Inclusion proof for $d_2$ (bold leaf):\\ shaded copath $\{h_3,\ h_{01}\}$.\\
+     The verifier recomputes\\ $h_{23}$ then $h_0$ from these.};
+\end{tikzpicture}

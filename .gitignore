@@ -1,0 +1,30 @@
+# LaTeX build artifacts — the compiled PDF and aux files are generated
+# (by Overleaf or a local pdflatex/latexmk run) and are not tracked.
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.pdf
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdy
+
+# Editor / OS noise
+*.swp
+.DS_Store
