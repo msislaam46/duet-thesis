@@ -86,7 +86,6 @@ Lifecycle point & Prototype function & Layer \\
 \midrule
 key upload & \texttt{registerKeys} & TypeScript \\
 peer-key retrieval & \texttt{getKeysForServiceId} & TypeScript \\
-safety-number change & \texttt{keyChangeListener} & TypeScript \\
 session establishment & \texttt{sessionEstablished} & TypeScript \\
 pre-key-bundle processing & \texttt{hook\_process\_prekey\_bundle} & Rust (libsignal) \\
 \bottomrule
@@ -102,8 +101,8 @@ pre-key-bundle processing & \texttt{hook\_process\_prekey\_bundle} & Rust (libsi
 \toprule
 Meaning & DOM event \\
 \midrule
-warning written / detected & \texttt{kt:warning} \\
-man-in-the-middle alert (red) & \texttt{kt:mitm-alert} \\
+warning / man-in-the-middle detected (red) & \texttt{kt:warning} \\
+key verified (green) & \texttt{kt:verified} \\
 server unreachable (amber) & \texttt{kt:unreachable} \\
 demonstration: inject a ratchet fork & \texttt{kt:cea-inject} \\
 \bottomrule

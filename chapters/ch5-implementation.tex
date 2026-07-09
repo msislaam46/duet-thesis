@@ -221,20 +221,19 @@ Signal.
 The integration follows a multi-actor architecture. A standalone Rust directory server and an
 independent auditor run as separate processes and communicate with the client over HTTP; a
 separate attacker process drives substitutions and equivocations against a privileged endpoint.
-The TypeScript client is embedded in Signal Desktop, and a self-contained in-process simulator
-allows the full scenario to be shown without any server at all. The system therefore runs in three
-modes: the in-process simulator (always available), the standalone networked stack, and the
+The TypeScript client is embedded in Signal Desktop. The system runs in two
+modes: the standalone networked stack, driven from the command line, and the
 networked-in-app mode in which the embedded client talks to the live Rust server, auditor, and
 attacker from within the real user interface, enabled at runtime by setting a server URL.
 \Cref{fig:impl-signal} shows the overall arrangement: the embedded client at the centre, the three
 processes it exercises (the directory server, the auditor, and the attacker) and the badge
-and banner through which verdicts reach the user, with the client able to run against either the
-in-process simulator or the live networked stack.
+and banner through which verdicts reach the user, with the client verifying against the live
+networked stack.
 
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-signal}
-\caption{Signal Desktop integration. The embedded TypeScript KT client verifies keys at four
+\caption{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
 lifecycle hooks and surfaces verdicts to the badge and banner; it communicates over HTTP with
 the Rust server, which an independent auditor polls and a separate attacker drives
 through a privileged testing interface. The concrete hook functions and verdict-event names are
@@ -262,16 +261,16 @@ is actually invoked, is the subject of the next subsection.
 
 \subsection{Hooking the Signal lifecycle}\label{ssec:impl-hooks}
 
-The client attaches to four lifecycle points of the Signal client: the key-upload path, the
-peer-key-retrieval path, safety-number-change notifications, and session establishment. The
+The client attaches to three lifecycle points of the Signal client: the key-upload path, the
+peer-key-retrieval path, and session establishment. The
 peer-key-retrieval hook is the security-critical one, it runs the full verification chain
 (\cref{ssec:design-verify}) on a peer's key before that key is accepted. On the Rust side, a
 hook in libsignal's pre-key-bundle processing marks the point at which the live X3DH secret is
 available --- the place where the production binding of the real shared secret would attach, and
 where the prototype instead substitutes its deterministic stand-in. Verdicts surface in the user
 interface through a conversation-header badge (green when verified, red on a warning) and a
-banner, driven by three DOM events that signal, respectively, a warning, a detected
-man-in-the-middle, and temporary unavailability. The concrete hook functions and event names are
+banner, driven by DOM events that signal a warning --- a detected key substitution or
+man-in-the-middle --- and temporary unavailability. The concrete hook functions and event names are
 listed in \cref{app:apiref}.
 
 \Cref{fig:impl-verify} traces the exchange that the peer-key-retrieval hook performs. The client
