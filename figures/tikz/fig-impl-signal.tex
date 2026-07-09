@@ -6,7 +6,7 @@
   \node[box,minimum width=6.8cm,minimum height=3.8cm,fill=black!4] (app) at (0,0) {};
   \node[font=\small] at (0,1.6) {\textbf{Signal Desktop (Electron)}};
   \node[sub,minimum width=6.0cm] (hooks) at (0,0.85)
-        {hooks: key upload \,|\, key lookup\\session establishment \,|\, safety-number change};
+        {hooks: key upload \,|\, key lookup \,|\, session establishment};
   \node[sub,minimum width=2.2cm] (client) at (-1.75,-0.75) {KT client\\(verifier)};
   \node[sub,minimum width=2.0cm] (ui) at (1.8,-0.75) {Security UI\\(badge / banner)};
   \draw[->] (client) -- node[above,font=\scriptsize]{verdicts} (ui);
