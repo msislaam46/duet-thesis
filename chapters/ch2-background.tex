@@ -90,7 +90,8 @@ can initiate a session while the recipient is offline.
 
 Historically, Signal's principal built-in defence against a server that
 substitutes one of these keys is the Safety Number: a 60-digit fingerprint,
-derived from the two parties' long-term identity keys, that users are expected
+derived from the two parties' long-term identity keys together with their stable
+account identifiers, that users are expected
 to compare out of band, by scanning a QR code in person, or reading digits
 aloud over a separate channel~\cite{safetynumbers}. More recently, Signal has introduced Automatic
 Key Verification (AKV), a key-transparency-based mechanism discussed in
@@ -100,7 +101,8 @@ of the literature was based.
 
 The decisive observation, which \cref{ssec:bg-gap} develops, is one of
 \emph{coverage}. The Safety Number is a function of the identity keys
-$\pkid{A}$ and $\pkid{B}$ only, and therefore authenticates the long-term
+$\pkid{A}$ and $\pkid{B}$ and the parties' account identifiers only, and
+therefore authenticates the long-term
 identities of the communicating parties and nothing else directly. The signed
 pre-key is authenticated only \emph{indirectly}, by its signature
 $\sig{\spk{}}$ under the identity key, so it is authentic relative to an
@@ -322,26 +324,27 @@ long-term identity keys authenticates only the state of the protocol at session
 initiation and not its subsequent evolution~\cite[p.~4]{dowling2023acka}. The
 same limitation applies to trust-on-first-use systems, where authenticity is
 established once and then assumed thereafter~\cite[p.~4]{dowling2023acka}. Their
-earlier MoDUSA construction (Modified Device-to-User Signal Authentication)
+earlier MoDUSA construction
 addresses this by deriving authentication values throughout the lifetime of the
 conversation, allowing participants to detect state divergence caused by an
 active man-in-the-middle attacker~\cite{dowling2021meta}. However, MoDUSA still
 depends on user-initiated verification. Authentication information exists, but
 users must actively compare it. As a result, a continuous key agreement provides
 no automatic re-authentication during long-lived conversations. Dowling and Hale
-argue that this can leave an active adversary undetected for years, estimating
-up to two years of leaked communication under a sustained post-compromise attack
-compared with approximately one hour in a typical TLS
-deployment~\cite[p.~3]{dowling2023acka}.
+argue that this can leave an active adversary undetected for years: in a stylized
+three-year scenario in which the compromise occurs after the first year, this
+exposes up to two years of communication, against the single (assumed one-hour)
+session that a TLS deployment would expose~\cite[p.~3]{dowling2023acka}.
 
 The human dimension of the problem is equally important because, in the many
 chats where AKV is unavailable, verification still falls back to a manual user
 ceremony. In practice, users rarely
 perform it correctly. In a paired-participant usability study of the
 authentication ceremony across WhatsApp, Viber and Facebook Messenger, only two
-of twelve pairs (about 14\%) located and completed the ceremony when simply
-asked to make sure no one else could read their
-messages~\cite[p.~30]{vaziripour2017}. A brief, generic prompt raised the
+of twelve pairs located and completed the ceremony when simply
+asked to make sure no one else could read their messages, an overall success
+rate of 14\% across all pairs and applications~\cite[p.~30]{vaziripour2017}.
+Brief, app-generic instructions about the need to compare keys raised the
 overall success rate to 79\%, as high as 96\% for Viber~\cite[p.~29]{vaziripour2017},
 but even when prompted the ceremony was slow: 3.2 minutes to find and a further
 7.8 minutes to complete, on average~\cite[p.~36]{vaziripour2017}, which the
@@ -655,12 +658,12 @@ through a small collection of operations: \texttt{Publish}, which commits a new
 directory epoch; \texttt{Query} and \texttt{QueryVer}, which retrieve and verify
 a binding; \texttt{KeyHistory} and \texttt{HistoryVer}, which retrieve and verify
 the history of updates associated with a label, and \texttt{Audit}, which checks
-consistency between published directory states~\cite[p.~2]{chase2019seemless}.
+consistency between published directory states~\cite[p.~4]{chase2019seemless}.
 SEEMless attaches three security goals to this interface: \emph{completeness},
 requiring honest proofs to verify; \emph{soundness}, preventing a malicious
 directory from producing two contradictory yet valid answers for one label; and
 \emph{privacy}, formalized through simulation relative to an explicit leakage
-function~\cite[p.~2]{chase2019seemless}. ELEKTRA later generalized the
+function~\cite[p.~4]{chase2019seemless}. ELEKTRA later generalized the
 abstraction to the multi-device setting as a \emph{multi-device verifiable key
 directory} (MVKD), extending the model to device-key histories while retaining
 analogous notions of completeness, soundness, and privacy, and formalizing for
@@ -759,8 +762,10 @@ limitations are significant. First, monitoring is linear in the offline period: 
 client absent for $\ell$ epochs must perform $\Theta(\ell)$ work, because a
 provider could insert a malicious binding and later revert it, so inspecting only
 the latest STR is unsound. The proposed remedy, a per-leaf version history, would
-require an auditor to perform $\Theta(n)$ work each epoch, which the authors
-themselves doubt is realistic at scale~\cite[p.~11]{melara2015coniks}. Second,
+require an auditor to perform $\Theta(n)$ work each epoch, where $n$ is the
+number of changes in that epoch; the authors themselves doubt that a party
+willing to perform this auditing for free will exist in every
+deployment~\cite[p.~12]{melara2015coniks}. Second,
 the client-to-client gossip that would let peers cross-check STRs is left as
 future work~\cite[p.~7]{melara2015coniks}. Third, the guarantee is detective
 rather than preventive: CONIKS exposes an attack but cannot deter a provider
@@ -777,18 +782,19 @@ abstraction, and a monitoring cost that grows with the number of epochs rather
 than with a user's own activity, since a CONIKS client must re-check every epoch.
 Its construction is the \emph{append-only zero-knowledge set} (aZKS), built
 modularly from a strong cryptographic accumulator and a VRF, and exposing commit,
-query, verify, and verifiable-update operations~\cite[\S3]{chase2019seemless}.
+query, verify, and verifiable-update operations~\cite[\S\S3, 5]{chase2019seemless}.
 Keys are stored under versioned labels across two aZKS instances, an ``all'' set
 and an ``old'' set, and a marker node is inserted on every $2^i$-th update, so
 that proving a key is the current version costs only logarithmically in the
-number of updates~\cite[\S4.2]{chase2019seemless}; the history itself is held in a
+number of epochs~\cite[\S4.2]{chase2019seemless}; the history itself is held in a
 persistent Patricia trie, so storage scales with the number of updates rather
 than the number of epochs~\cite[\S6]{chase2019seemless}. SEEMless also makes
 auditing a public, privacy-free role for which a single honest auditor per epoch
 interval suffices, and it exhibits a concrete tracing attack by which CONIKS's
-proofs leak a user's update pattern~\cite[pp.~3, 5]{chase2019seemless}. On
-performance, its evaluation is entirely in-memory, committing an epoch over ten
-million users in 0.28\,s~\cite[pp.~11--12]{chase2019seemless}; a lookup proof,
+proofs leak a user's update pattern~\cite[pp.~3, 18]{chase2019seemless}. On
+performance, its evaluation is entirely in-memory, committing an epoch of 2{,}000 changes
+(1{,}000 new registrations and 1{,}000 key updates) in a ten-million-user
+directory in 0.28\,s, with VRF evaluation excluded~\cite[pp.~11--12]{chase2019seemless}; a lookup proof,
 comprising the VRF proof and the Patricia-trie authentication path, averages
 about 8{,}600\,B at ten million users~\cite[p.~12]{chase2019seemless}. The
 principal limitation is that detection remains contingent on user participation:
@@ -829,8 +835,9 @@ $2f+1$ quorum of signatures into a certificate that, by the usual
 quorum-intersection argument, proves it could not have
 equivocated~\cite[\S V]{malvai2023parakeet}. The witnesses also timestamp their
 signatures, giving clients freshness, and withhold them while a user's update is
-suppressed, bounding censorship. On performance, Parakeet publishes a
-1{,}024-update batch in 47.12\,ms and a witness verifies one in 68.70\,ms. It
+suppressed, bounding censorship. On performance, Parakeet creates the consistency-protocol update
+notification for a 1{,}024-update batch in 47.12\,ms and a witness verifies one
+in 68.70\,ms. It
 sustains around 800 updates per second below 3.5\,s latency, and uses about
 4.5\,GB at five million users, projected to roughly 850\,GB at one
 billion~\cite[pp.~12--13]{malvai2023parakeet}. Its trade-offs are explicit: the
@@ -847,7 +854,8 @@ messengers actually have, and its genuinely novel contribution is
 \emph{cryptographically authenticated device addition and removal}. Rather than
 treating a user as a single key, it represents each account as a
 \emph{keychain}, an abstraction of Keybase's sigchains, in which every key
-update is cross-signed by an existing device key~\cite[\S3]{len2023elektra}.
+update, save the very first key and a full account reset, is cross-signed by an
+existing device key~\cite[\S3]{len2023elektra}.
 Because additions and removals are chained under the user's own device keys, a
 malicious provider cannot insert a fabricated key without either forging a device
 signature or compromising one of the user's devices~\cite[p.~2]{len2023elektra}.
@@ -865,8 +873,8 @@ resets unsuppressible, forcing a user's conversation partners to acknowledge an
 explicit warning~\cite[p.~2]{len2023elektra}. On performance, a realistic
 join-group query over 100 keychain links verifies in under a second even in a
 directory of 64M links~\cite[p.~12]{len2023elektra}, though privacy rotation is
-expensive: a \texttt{PCSUpdate} takes some 36--37 minutes at four million links,
-dominated by tree rebuilding~\cite[pp.~13--14]{len2023elektra}. Its limitations
+expensive: a \texttt{PCSUpdate} takes roughly 37 minutes at four million links,
+dominated by tree rebuilding~\cite[p.~2]{len2023elektra}. Its limitations
 are that the implementation is an unoptimized academic
 prototype~\cite[p.~12]{len2023elektra}, the keychain guarantee relies on partners
 remembering one another's prior key sets, and it remains a research prototype
@@ -944,9 +952,9 @@ only polylogarithmic data to monitor across the system's whole
 lifetime~\cite[pp.~2, 6]{hu2021merkle2}. Its emphasis, however, is throughput and
 latency rather than the directory privacy that messaging demands: as ELEKTRA
 notes, Merkle\textsuperscript{2} does not aim for strong key privacy and so leaks
-update patterns~\cite[p.~2]{len2023elektra}, and Parakeet faults its reliance on
-client-maintained signature chains as impractical at messaging
-scale~\cite{malvai2023parakeet}. It is therefore best read not as a competitor to
+update patterns~\cite[p.~14]{len2023elektra}, and Parakeet faults its assumption
+that clients can maintain long-term cryptographic signing keys as
+unrealistic~\cite{malvai2023parakeet}. It is therefore best read not as a competitor to
 the privacy-preserving VKDs but as evidence that their shared transparency-log
 substrate can be optimized for very different objectives once user privacy is not
 a first-order goal.
@@ -1042,7 +1050,7 @@ actors: users perform Self Audits of their own labels, Promise Audits check that
 published commitments are incorporated within the CT merge delay, and External
 Audits provide independent oversight~\cite[pp.~50, 52, 53]{goebel2023proton}.
 Beyond documenting the deployed system, G\"obel contributes the first
-step-by-step specification of a KT deployment and proposes a
+step-by-step specification of a KT scheme and proposes a
 \emph{Query-to-SelfAudit Consistency} property, although the accompanying Tamarin
 analysis remains partial~\cite[pp.~18, 68, 83]{goebel2023proton}. For the purposes
 of this review, the most relevant limitation is ProtonKT's detection model. It
@@ -1053,9 +1061,10 @@ never to Bob, and clients and auditors never exchange
 information~\cite[pp.~8, 47]{goebel2023proton}. Security even collapses for labels
 that no one self-audits, which G\"obel flags as
 unsolved~\cite[pp.~76, 78]{goebel2023proton}. G\"obel also identifies the handling
-of KT warnings as an open usability problem: Proton's interface presents only a
-generic verification failure, without the evidence a user would need to
-investigate the cause~\cite[p.~88]{goebel2023proton}. Though not framed as a
+of KT warnings as an open usability problem: on failure Proton's interface shows
+the expected fingerprint and prompts a manual comparison, but presents only a
+generic verification failure without the exportable technical evidence of the
+cause that a user would need to investigate further~\cite[p.~88]{goebel2023proton}. Though not framed as a
 peer-warning mechanism, this points to the broader difficulty of communicating KT
 failures to end users.
 
@@ -1136,10 +1145,11 @@ The adversary ACKA defends against is different from, and along its own axis
 stronger than, the malicious-server adversary of the VKD line, and that
 difference is the crux of the bridge. ACKA's adversary is a full-compromise
 active man-in-the-middle on the \emph{channel}: it may learn the pre-shared
-secret state, compromise long-term signature keys, control the sender's
-randomness, and actively inject its own forged ratchet
-key-share~\cite[pp.~19--20]{dowling2023acka}, so that the construction covers not
-only full compromise but an unrestricted adversary~\cite[p.~5]{dowling2023acka}.
+secret state, control the sender's randomness, and actively inject its own forged
+ratchet key-share~\cite[pp.~19--20]{dowling2023acka}, and---per Remark~4---may even
+hold all long-term authentication secrets~\cite[p.~23]{dowling2023acka}, so that
+the construction covers not only full compromise but an unrestricted
+adversary~\cite[p.~5]{dowling2023acka}.
 But ACKA grants that adversary no power over the \emph{log}: detection holds only
 under the assumptions of CEAsec security and an immutable
 log~\cite[p.~7]{dowling2023acka}. The malicious, equivocating server that the VKD
@@ -1186,11 +1196,14 @@ compromise or coercion. This leaves a fundamental structural gap in the
 literature. ACKA requires a channel it can implicitly trust, whereas practical
 messaging requires an infrastructure that need not be trusted. ACKA's own
 construction further carries three operational limitations that constrain its use
-in asynchronous messaging: detection is strictly one-sided, from sender to
-receiver, with no out-of-band peer-warning channel~\cite[p.~8]{dowling2023acka};
-verification must be performed sequentially every epoch, with no mechanism for
-deferred or windowed catch-up, and the consistency machinery, though defined, is
-left unused for third-party auditing~\cite[p.~21]{dowling2023acka}.
+in asynchronous messaging: detection is one-sided---it is the \emph{receiver}
+that detects a forgery, and there is no out-of-band channel to warn the
+peer~\cite[p.~21]{dowling2023acka}; verification must be performed sequentially
+every epoch, with no mechanism for deferred or windowed catch-up; and the
+consistency machinery, though defined, is left unused for third-party auditing.
+This last point is our own observation rather than a claim of the paper's: ACKA's
+detection argument relies only on the log's append-only (exclude) property, and
+the paper itself never discusses third-party auditing.
 
 Recognising that ACKA's idealised log and the malicious, equivocating server that
 key transparency is built to expose are two halves of a single end-to-end
@@ -1328,7 +1341,7 @@ reset-only warning~\cite[p.~2]{len2023elektra} and PRISM's passing suggestion th
 commitments could be embedded ``in-band within encrypted
 messages''~\cite[p.~5]{pusch2025prism}; PRISM states the diagnosis plainly ---
 ``all existing KT systems assume that someone else will
-check''~\cite[p.~6]{pusch2025prism} --- while the one billion-user deployment ships
+check''~\cite[p.~6]{pusch2025prism} --- while the largest deployed system ships
 with self-monitoring disabled and a manual fallback on
 failure~\cite[pp.~5, 10]{whatsapp2023whitepaper}. This recurring design choice
 motivates the problem formulated in \cref{sec:bg-open}. The question, therefore,
