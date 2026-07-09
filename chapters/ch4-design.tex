@@ -185,7 +185,7 @@ parties' keys coexist in the directory, and the shared warning slot sits alongsi
 \caption{The dual-index scheme: the two lookup slots (one per participant) and the shared
 warning slot are all derived by HKDF from the conversation's shared secret $\sharedS$. Because
 both parties hold the same $\sharedS$, they derive the identical warning label $\ell_{\mathsf{warn}}$,
-so any equivocation surfaces in a slot both sides read; a party holding a different secret
+so a warning written by either party surfaces in a slot both sides read; a party holding a different secret
 $\sharedS'$ derives a disjoint set of labels and cannot reach these slots.}
 \label{fig:design-dualindex}
 \end{figure}
@@ -342,8 +342,8 @@ band, a composition ACKA itself does not provide.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-design-modes}
-\caption{Session mode (left): labels and an identity key derived from the initial secret
-$\sharedS$, written once per pre-key rotation. Continuous mode (right): a chained secret
+\caption{Session mode (left): labels derived from the initial secret $\sharedS$, at which
+the identity key is registered once per pre-key rotation. Continuous mode (right): a chained secret
 $k_0 \to k_1 \to k_2 \to \cdots$ producing one fingerprint per ratchet epoch.}
 \label{fig:design-modes}
 \end{figure}
@@ -372,7 +372,7 @@ of offline catch-up, and so realizes goal G2.
 A client returning after $W$ offline epochs must verify that the current directory state
 is an append-only extension of the last state it previously trusted. A
 straightforward approach verifies one consistency proof for every missed epoch, giving $W$
-separate proofs and an overall verification cost of $O(W \cdot \log N)$. Successive
+separate proofs and an overall verification cost of $O(W \cdot \log n)$. Successive
 consistency proofs contain substantial overlap, making repeated verification redundant. Instead, the
 client requests a single consistency proof spanning its previously trusted log size $m$
 and the current log size $n$, returned together with the latest signed tree head.
@@ -380,12 +380,13 @@ RFC~9162 guarantees that such a proof has size
 \begin{equation}\label{eq:design-proofsize}
   |\pcons(m, n)| \le \lceil \log_2 m \rceil + \lceil \log_2 n \rceil \quad\text{hashes},
 \end{equation}
-independent of the number of intermediate epochs $W = n - m$ (\cref{fig:design-windowed}). The bound in
+growing only logarithmically with the current log size $n = m + W$ rather than linearly
+with the number of intermediate epochs (\cref{fig:design-windowed}). The bound in
 \cref{eq:design-proofsize} is what makes the window free: the client verifies the
 proof against the signed root of that tree head, so the new state is accepted only if it
 is a signed, append-only extension of the state already trusted. The catch-up cost
-therefore depends only on the sizes of the previously trusted and current log states,
-rather than on the number of missed epochs. The warning-slot lookup is
+therefore depends only logarithmically on the sizes of the previously trusted and current
+log states, rather than linearly on the number of missed epochs. The warning-slot lookup is
 performed during the same synchronization exchange and so does not change the asymptotic
 complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are given in
 \cref{app:algorithms}.
@@ -394,10 +395,10 @@ complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are give
 \centering
 \input{figures/tikz/fig-design-windowed}
 \caption{Offline catch-up over a window $W = n-m$ epochs. The na\"ive approach verifies one
-consistency proof per missed epoch (upper arcs, $O(W\log N)$); the windowed approach requests
+consistency proof per missed epoch (upper arcs, $O(W\log n)$); the windowed approach requests
 a single RFC~9162 consistency proof spanning the previously trusted head $m$ and the current
 head $n$ (lower arc), whose size is bounded by $\lceil\log_2 m\rceil + \lceil\log_2 n\rceil$
-hashes and is therefore independent of $W$.}
+hashes --- logarithmic in the log size rather than linear in $W$.}
 \label{fig:design-windowed}
 \end{figure}
 
@@ -414,11 +415,12 @@ rather than an improvement in the asymptotic complexity of an individual proof.
 A concrete deployment shows the window is not hypothetical. Take $N = 10^7$ users, each
 with about $c = 5$ active conversations, and signed pre-keys rotating every $r = 30$ days.
 Writing one entry per conversation gives on the order of 50~million prefix-tree labels;
-amortized over the 30-day rotation period, this is about 1.67~million log records per day,
-or roughly $69{,}400$ records per hourly epoch. A
+amortized over the 30-day rotation period, this is about 1.67~million directory updates per
+day, or roughly $69{,}400$ updates folded into each hourly epoch commit (the log itself
+gains one leaf per epoch regardless of update volume; \cref{ssec:design-epoch}). A
 client offline for a full rotation period faces a worst-case window of $W = r \cdot 24 =
 720$ epochs. Under the naïve scheme this is 720 consistency proofs. Under the windowed
-scheme it is one, of size $O(\log N)$. This is the parameterization carried into the
+scheme it is one, of size $O(\log n)$ in the log size $n$. This is the parameterization carried into the
 evaluation of \cref{ch:eval}.
 
 % ============================================================================
@@ -462,7 +464,7 @@ Three deliberate departures from the paper are stated plainly, because each corr
 the ACKA limitations identified in \cref{sec:bg-acka}, and instantiating $\Logsec$ lets
 us address it. First, where $\CEA$ authenticates fingerprints, the session-mode scheme
 additionally derives \emph{labels} from the shared secret, adding the in-band
-peer-warning channel ACKA lacks. Second, ACKA's $\CKA^{\Logsec}$ construction performs no
+peer-warning channel ACKA lacks. Second, ACKA's combined $\mathsf{CKALOG}$ construction performs no
 deferred verification, a client must verify each epoch as it arrives, whereas the
 windowed consistency proof of \cref{sec:design-windowed} adds exactly the deferred,
 batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is

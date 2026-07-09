@@ -11,7 +11,7 @@
   \draw[->] (S.east) -- (peer.west);
   \draw[->] (S.east) -- node[below,sloped,font=\footnotesize]{HKDF} (warn.west);
   \node[align=left,font=\footnotesize] at (9.4,-1.6)
-    {Same $\sharedS \Rightarrow$ same $\ell_{\mathsf{warn}}$\\ for both parties: an equivocating\\ server must write it to be seen\\ by \emph{both}, which is what trips.};
+    {Same $\sharedS \Rightarrow$ same $\ell_{\mathsf{warn}}$\\ for both parties: a warning either\\ party writes is read by \emph{both}, and\\ the server can neither recognize\\ nor selectively censor the slot.};
   \node[align=left,font=\footnotesize,gray] at (9.4,1.0)
     {A party without $\sharedS$ (a\\ different secret $\sharedS'$) derives a\\ \emph{disjoint} label set and cannot\\ address these slots.};
 \end{tikzpicture}

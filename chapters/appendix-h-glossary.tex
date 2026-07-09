@@ -8,7 +8,7 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
   log component this work instantiates and measures (\cref{def:cka}).
 \item[Auditor] An independent party that observes the log from a second vantage point and cross-checks
   signed tree heads; required only for fork detection (\cref{app:algorithms}, Algorithm~7).
-\item[CEA / CEAsec] The continuous example authentication primitive and its security notion within
+\item[CEA / CEAsec] Continuous entity authentication and its security notion within
   ACKA; the continuous operating mode realises detection in this style.
 \item[CKA] Continuous Key Agreement, the abstraction of a ratcheting protocol as a stream of evolving
   keys, used by ACKA.
@@ -50,8 +50,8 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
 \item[Prefix tree] A sparse Merkle tree over the space of 256-bit labels, storing the current
   directory (\cref{def:prefix-tree}).
 \item[PQXDH] The post-quantum variant of X3DH, augmenting the handshake with a KEM.
-\item[SEEMless] A key-transparency system with an ordered zero-knowledge directory; ships multi-path
-  lookup proofs.
+\item[SEEMless] A key-transparency system built on an append-only zero-knowledge set (aZKS); ships
+  multi-path lookup proofs.
 \item[STH] Signed Tree Head: the operator's signed commitment to the log root at an epoch
   (\cref{def:sth}).
 \item[STRIDE] A threat-elicitation framework (Spoofing, Tampering, Repudiation, Information
@@ -64,7 +64,7 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
 \item[VRF] Verifiable Random Function: a keyed function whose outputs are pseudorandom to outsiders
   yet provably correct (\cref{def:vrf,def:vrf-security}).
 \item[Windowed consistency proof] A single consistency proof spanning an entire offline window,
-  independent of its length (\cref{def:windowed}, \cref{lem:windowed-size}).
+  logarithmic rather than linear in its length (\cref{def:windowed}, \cref{lem:windowed-size}).
 \item[X3DH] Extended Triple Diffie--Hellman, Signal's asynchronous key-agreement handshake
   (\cref{def:x3dh}); its shared secret is the entropy source for the dual-index labels.
 \end{description}

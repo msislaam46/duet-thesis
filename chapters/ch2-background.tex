@@ -235,7 +235,8 @@ message.
 identity key, signed pre-key, signature, and (optionally) a one-time pre-key.
 Alice retrieves the bundle, samples an ephemeral key $\xEK{A}$, derives
 $\sharedS$ from the four Diffie--Hellman values, and sends an initial message
-that Bob can decrypt while offline.}
+carrying her identity key $\xIK{A}$ and ephemeral key $\xEK{A}$, from which Bob
+recomputes the same Diffie--Hellman values while offline.}
 \label{fig:bg-x3dh}
 \end{figure}
 
@@ -272,8 +273,10 @@ ratchet and the symmetric-key chains interact.
 \centering
 \input{figures/tikz/fig-bg-ratchet}
 \caption{Double Ratchet key schedule: the Diffie--Hellman ratchet advances the
-root key, which seeds a symmetric chain producing one message key $mk_i$ per
-message.}
+root key, which seeds a symmetric chain of chain keys $ck_i$. Each symmetric
+ratchet step derives the next chain key and one message key $mk_i$; message
+keys are never used to derive further keys, so each can be deleted (or stored
+for out-of-order messages) without affecting the others.}
 \label{fig:bg-ratchet}
 \end{figure}
 

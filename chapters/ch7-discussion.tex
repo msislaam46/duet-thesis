@@ -85,8 +85,8 @@ would feed that second head over a real gossip channel or an independent auditor
 detection logic and only the transport changed. Separately, two residual threats identified by the
 STRIDE analysis (\cref{ssec:eval-stride}) are inherent to the semi-trusted-server model rather than to
 this construction: the operator necessarily learns the label-to-user mapping (there is no query
-privacy from the operator), and it can rate-limit or withhold writes as a denial of service. Both are
-shared by every deployed key-transparency system.
+privacy from the operator), and the write path can be flooded or operationally rate-limited as a
+denial of service. Both are shared by every deployed key-transparency system.
 
 \paragraph{Prototype bounds.} Several gaps separate the measured artefact from a deployable one. The
 benchmarks are single-machine and in-memory, with no networked or database-backed deployment, so they
@@ -138,7 +138,9 @@ self-contained server-side change, orthogonal to the verification-side contribut
 \paragraph{A formal dual-CEAsec reduction.} The narrative security argument can be completed into a
 game-based proof: define the combined detection game over the dual-index scheme and the log, and
 reduce an adversary's advantage to the collision resistance of the hash and the pseudorandomness and
-uniqueness of the VRF, discharging the obligations sketched in \cref{ch:design}.
+uniqueness of the VRF, discharging the obligations sketched in \cref{ch:design}. A complementary
+step is machine-checked assurance: a symbolic model of the detection protocol in a prover such as
+Tamarin or ProVerif and, further out, a verified implementation of the client-side proof checkers.
 
 \paragraph{Group messaging.} Extending the scheme to groups is the largest conceptual step. Index
 derivation would draw on the group's shared secrets, for example TreeKEM secrets under MLS, and
@@ -148,10 +150,10 @@ with a treatment of how joins and removals interact with the warning slot.
 \paragraph{Query privacy via a distributed OPRF.} The one privacy property no deployed system offers
 --- hiding the queried identity from the operator --- is a natural extension. A client could blind its
 lookup identity with an oblivious pseudorandom function (RFC~9497~\cite{rfc9497}) before the server
-applies its VRF, so the operator learns neither who is queried nor by whom. Signal's own codebase
-already ships a distributed OPRF over Ristretto255 in its secure-value-recovery
-crate~\cite{libsignal}, so part of the engineering cost is already paid; adapting it to the label
-derivation is the open work.
+applies its VRF, so the operator learns neither who is queried nor by whom. Signal has shipped a
+distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal},
+since retired in favour of enclave-based recovery, so the engineering pattern is proven in
+Signal's own lineage; adapting it to the label derivation is the open work.
 
 \paragraph{Post-quantum, multi-device, and deployment.} Because the labels are hash-derived, a
 post-quantum shared secret (PQXDH~\cite{pqxdh}) can feed the derivation unchanged; the open piece is a
@@ -160,12 +162,32 @@ cross-signing of ELEKTRA~\cite{len2023elektra}. On the deployment path, the clea
 integrate with Signal's existing key-transparency service~\cite{signal-kt-server} behind a feature
 flag rather than running a parallel log, which requires only a write API for the warning and
 per-session labels, and the fork-detection vantage should be supplied by a real auditor gossip
-ecosystem rather than the demo stand-in.
+ecosystem rather than the demo stand-in --- which raises its own open questions of federation
+across providers and of incentives for independent auditors to participate honestly.
+
+\paragraph{Human-centred warning design.} The evaluation shows that the warning fires; it does not
+show that users act on it. A usability study of the warning surfaces --- how users interpret the
+red and amber verdicts, whether the evidence behind an alert can be explained intelligibly, how
+the warnings meet accessibility requirements, and how alarm fatigue is avoided --- would complete
+the chain from cryptographic detection to human response, continuing the line of ceremony studies
+that motivated the design~\cite{vaziripour2017}.
+
+\paragraph{Evidence-carrying alerts and operational response.} The prototype's verdicts are
+user-facing events; a production service would add an operator-facing layer: a structured alert
+schema carrying the scenario class, the epoch, and the signed tree heads and proofs that constitute
+the evidence; notification interfaces through which an operator or auditor can reproduce an
+incident from that evidence alone; and an explicit response policy defining when the system rejects
+a proof, requests a key rotation, or escalates to a human --- automated detection with
+human-in-the-loop response. Any such telemetry must be minimised so that the alerting layer does
+not itself leak the metadata the pseudorandom labels were designed to hide.
 
 \paragraph{A networked, persistent benchmark campaign.} Finally, the algorithmic numbers of
 \cref{ch:eval} should be complemented by a networked, database-backed campaign (persistent storage,
 wide-area latencies, and concurrent load) to characterise the costs a real service pays, which the
 comparison with database-bound systems (\cref{sec:eval-compare}) suggests are dominated by persistence
-at scale. Together with the warning-write padding noted above, this
+at scale. Such a campaign should also include a parameter-sensitivity sweep over the epoch cadence
+and the catch-up window, and the client-side energy and CPU profile on mobile hardware, the
+deployment-facing metrics the in-memory benchmarks cannot speak to. Together with the warning-channel hardening noted above (rate limiting and signed
+warning payloads), this
 would close the remaining distance between the measured prototype and a production key-transparency
 service with an in-band warning channel.

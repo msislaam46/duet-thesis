@@ -7,12 +7,16 @@
   \node[box,right=1.4cm of r1] (r2) {root key $rk_2$};
   \draw[->] (r0) -- node[above]{DH} (r1);
   \draw[->] (r1) -- node[above]{DH} (r2);
-  \node[box,below=1cm of r1] (ck) {sending chain key};
-  \draw[->] (r1) -- (ck);
-  \node[box,below=8mm of ck,minimum width=1.3cm] (m1) {$mk_1$};
-  \node[box,right=8mm of m1,minimum width=1.3cm] (m2) {$mk_2$};
-  \node[box,right=8mm of m2,minimum width=1.3cm] (m3) {$mk_3$};
-  \draw[->] (ck) -- (m1);
-  \draw[->] (m1) -- node[above]{KDF} (m2);
-  \draw[->] (m2) -- node[above]{KDF} (m3);
+  \node[box,below=1cm of r1] (c1) {chain key $ck_1$};
+  \node[box,right=1.2cm of c1,minimum width=1.5cm] (c2) {$ck_2$};
+  \node[box,right=1.2cm of c2,minimum width=1.5cm] (c3) {$ck_3$};
+  \draw[->] (r1) -- (c1);
+  \draw[->] (c1) -- node[above]{KDF} (c2);
+  \draw[->] (c2) -- node[above]{KDF} (c3);
+  \node[box,below=8mm of c1,minimum width=1.3cm] (m1) {$mk_1$};
+  \node[box,below=8mm of c2,minimum width=1.3cm] (m2) {$mk_2$};
+  \node[box,below=8mm of c3,minimum width=1.3cm] (m3) {$mk_3$};
+  \draw[->] (c1) -- node[right,font=\footnotesize]{KDF} (m1);
+  \draw[->] (c2) -- node[right,font=\footnotesize]{KDF} (m2);
+  \draw[->] (c3) -- node[right,font=\footnotesize]{KDF} (m3);
 \end{tikzpicture}

@@ -24,7 +24,7 @@ be falsified. \emph{Is detection free in proof size?} --- falsified if the dual-
 materially larger than a single-index proof at the same $N$ (\cref{ssec:eval-sizes}). \emph{Is client
 verification cheap and scale-independent?} --- falsified if the full-chain verify grew with $N$ or
 exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}). \emph{Is offline
-catch-up independent of the offline window?} --- falsified if the windowed proof grew with $W$
+catch-up independent of the offline window?} --- falsified if the windowed proof grew linearly with $W$
 (\cref{ssec:eval-catchup}). \emph{Is substitution detected, with no false alarms?} --- falsified by any
 missed attack in the adversarial suite or a non-zero clean-session false-positive rate
 (\cref{ssec:eval-detection,sec:eval-security}). Each question is answered against the baselines below.
@@ -325,7 +325,7 @@ tree would reduce it to $O(\lg N)$, and this is noted as future work in \cref{ch
 
 \subsection{Auditor cost (M12)}\label{ssec:eval-auditor}
 
-The cross-vantage auditor (\cref{ssec:design-modes}) that detects split-view equivocation must be
+The cross-vantage auditor (\cref{sec:design-acka}) that detects split-view equivocation must be
 cheap enough to run continuously. It is: a per-epoch audit, an Ed25519 signature verify plus an
 append-only consistency check, costs \SI{28.6}{\micro\second} at $N=10^4$, and the cross-vantage
 fork-detection check costs \SI{27.6}{\micro\second}. Both are under \SI{30}{\micro\second}, so the
@@ -478,7 +478,7 @@ Spoofing & 4 & 4 & --- \\
 Tampering & 3 & 3 & --- (substitution caught within 1--2 epochs) \\
 Repudiation & 3 & 3 & --- \\
 Information disclosure & 3 & 2 & operator learns the label$\leftrightarrow$user mapping \\
-Denial of service & 4 & 3 & write rate-limiting / epoch-withholding \\
+Denial of service & 4 & 3 & registration flooding (operational rate-limiting) \\
 Elevation of privilege & 3 & 3 & --- \\
 \midrule
 \textbf{Total} & \textbf{20} & \textbf{18} & \textbf{2} \\
@@ -491,8 +491,10 @@ label binding, SHA-256 and Ed25519, the append-only log, and client-side proof v
 non-negligible residual. The two residual threats are not cryptographic weaknesses but consequences
 of the semi-trusted-server model: the operator necessarily learns which label belongs to which user
 (an information-disclosure residual shared by all deployed key-transparency systems, including
-CONIKS~\cite{melara2015coniks}), and an operator can rate-limit or withhold writes (a
-denial-of-service residual). Both are acknowledged by the standard key-transparency literature and
+CONIKS~\cite{melara2015coniks}), and the write path can be flooded with fake registrations, which
+only operational rate limiting blunts (a denial-of-service residual); an operator that withholds
+epochs or writes is caught by auditor timeouts and the compound signal of A2, at the cost of
+delayed detection. Both residuals are acknowledged by the standard key-transparency literature and
 neither is addressed by ACKA~\cite{dowling2023acka}, which assumes an honest log; they bound what
 transparency can offer rather than revealing a flaw in this construction.
 
@@ -516,7 +518,8 @@ path is detected or prevented except the endpoint-compromise boundary X1.}
 
 \Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1): the attack at epoch
 $E$ is flagged by the victim's self-check at $E{+}1$, the warning is committed at $E{+}2$, and the
-peer's monitor reads it by $E{+}3$ --- a verdict within one to two epochs and with no user action.
+peer's monitor reads it by $E{+}3$ --- the victim's verdict within one epoch of the attack, the
+peer's alert within three (two after the warning commits), and no user action at any step.
 
 \begin{figure}[ht]
 \centering

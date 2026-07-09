@@ -204,9 +204,10 @@ re-fetches the current key from the global VRF directory by user identity and co
 it against the key it already trusts, so a substituted rotation surfaces as a changed
 identity key rather than being accepted silently, and the dual-index warning serves as
 the in-band backstop. (Binding successive rotations into a cross-signed per-user key
-chain, as CONIKS and ELEKTRA do, would strengthen this further and is noted as future
-work in \cref{ch:discussion}; the prototype relies on the identity re-fetch and the
-warning.)
+chain, as CONIKS's strict key-change policy and ELEKTRA do, would strengthen this further and is noted as future
+work in \cref{ch:discussion}; the prototype's client relies on the identity re-fetch and the
+warning, and a single-link cross-signature check --- the new key signed by its trusted
+predecessor --- is demonstrated in the adversarial suite.)
 
 \paragraph{X1 --- endpoint compromise (boundary).} Once the adversary holds the
 victim's own private key, it derives the same shared secret, the same labels, and
@@ -348,7 +349,7 @@ them.}
 Goal & Attack(s) & Security mechanism & Auditor? \\
 \midrule
 G1 key-substitution detection & A1, A3, A5 & dual-index warning (bidirectional); identity-anchored rotation for A5 & no \\
-G2 offline-window consistency & A4, general rewriting & windowed consistency proofs & no \\
+G2 offline-window consistency & general rewriting & windowed consistency proofs & no \\
 G3 directory privacy & enumeration / recon & VRF-derived labels & no \\
 G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\
 \bottomrule

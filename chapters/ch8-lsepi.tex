@@ -39,7 +39,11 @@ directory stores public keys and pseudonymous labels, never message content, and
 global labels (\cref{ssec:design-labels}) deliberately prevent an observer from enumerating which
 users are present. No personal data was processed in the course of the project, all measurements
 were run on synthetic identifiers and benchmark data, so no obligations under the UK GDPR were
-engaged, while the design itself advances the privacy interests those regimes exist to protect.
+engaged, while the design itself advances the privacy interests those regimes exist to protect. A
+production deployment would inherit one governance duty the prototype does not: any operational
+logging of warnings or audit events must itself be data-minimised and access-controlled, so that
+the alerting layer does not re-expose the label-to-user metadata the pseudorandom labels are
+designed to hide.
 
 % ============================================================================
 \section{Social and ethical issues}\label{sec:lsepi-social}

@@ -135,7 +135,8 @@ probabilistic polynomial-time adversary wins the experiment $\Expt{vrf\text{-}pr
 RFC~9381~\cite{rfc9381} with advantage non-negligible in $\secpar$: the adversary, given
 $\mathit{pk}$ and a $\VRFeval$ oracle, must distinguish the true output $\beta^\star=\VRFeval(\mathit{sk},\alpha^\star)$
 on a fresh challenge $\alpha^\star$ from a uniform string. Uniqueness underlies label integrity
-(goal G3 of \cref{ch:threat}); pseudorandomness underlies directory privacy.
+in the verification chain (goal G1 of \cref{ch:threat}); pseudorandomness underlies directory
+privacy (goal G3).
 \end{definition}
 
 % ============================================================================
@@ -162,14 +163,16 @@ $W$ intervening epochs, the windowed consistency proof is the single proof $\pco
 
 \begin{lemma}[Windowed proof size]\label{lem:windowed-size}
 The windowed consistency proof $\pcons(m,n)$ consists of at most $\lceil\lg n\rceil + \lceil\lg
-m\rceil$ hash values, independent of the number of intervening epochs $W$.
+m\rceil$ hash values --- logarithmic in the endpoint sizes rather than linear in the number of
+intervening epochs $W$.
 \end{lemma}
 \begin{proof}[Proof sketch]
 By the structure of the RFC~9162 consistency proof~\cite{rfc9162}, the proof comprises the subtree
 hashes needed to reconstruct both $\MTH(D[0{:}m])$ and $\MTH(D[0{:}n])$; the number of such nodes is
-bounded by the depths of the two trees, $\lceil\lg m\rceil$ and $\lceil\lg n\rceil$. The bound depends
-on the endpoint sizes alone and not on $W=$ (number of epochs between the two visits), which is the
-property exploited in \cref{ssec:design-catchup}.
+bounded by the depths of the two trees, $\lceil\lg m\rceil$ and $\lceil\lg n\rceil$. The bound
+depends only on the endpoint sizes $m$ and $n$, growing logarithmically with them rather than
+linearly with the $W$ epochs between the two visits, which is the property exploited in
+\cref{ssec:design-catchup}.
 \end{proof}
 
 % ============================================================================
@@ -200,7 +203,7 @@ mode (\cref{def:cka}). Referenced in \cref{ssec:design-modes}.
 a notion of authenticating that stream continuously.}
 The Authenticated Continuous Key Agreement framework~\cite{dowling2023acka} models a ratcheting
 protocol as a continuous key agreement $\CKA$ producing a sequence of per-epoch keys, and defines a
-continuous example authentication notion $\CEAsec$ that captures detection of an active adversary who
+continuous entity authentication (CEA) notion, with security game $\CEAsec$, that captures detection of an active adversary who
 injects state mid-session. The framework leaves its append-only log component $\Logsec$ abstract; this
 thesis instantiates that component with the structures of \cref{sec:def-structures} and realises
 continuous authentication through the continuous mode of \cref{ssec:design-modes}. The dual-index
@@ -218,7 +221,7 @@ The following definitions specify the construction original to this work
 \intuition{From one shared secret, two parties independently derive the same three directory slots:
 one lookup slot each and one shared warning slot.}
 $\mathsf{DeriveIndices}(\sharedS, \mathit{id}_{\mathsf{self}}, \mathit{id}_{\mathsf{peer}})$ first
-extracts $\mathit{PRK}=\HKDFex(\varnothing,\sharedS)$ and then returns the three 256-bit labels
+extracts $\mathit{PRK}=\HKDFex(\text{salt}=\text{\texttt{"duet-dual-index"}},\ \sharedS)$ and then returns the three 256-bit labels
 \begin{align*}
   \lblself &= \HKDFexp(\mathit{PRK},\ \texttt{"lookup"}\concat \mathit{id}_{\mathsf{self}}\concat \mathit{id}_{\mathsf{peer}},\ 32),\\
   \lblpeer &= \HKDFexp(\mathit{PRK},\ \texttt{"lookup"}\concat \mathit{id}_{\mathsf{peer}}\concat \mathit{id}_{\mathsf{self}},\ 32),\\

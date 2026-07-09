@@ -110,7 +110,7 @@ Deny STH issuance & Ed25519 signature is non-repudiable & none (cryptographic) \
 Threat & KT control & Residual \\
 \midrule
 Link a label to a user identity & VRF-derived pseudorandom labels & \emph{server knows the mapping (semi-trusted)} \\
-Enumerate registered users & 256-bit pseudorandom labels & \emph{server knows (semi-trusted)} \\
+Enumerate registered users & 256-bit pseudorandom labels & none for outsiders (operator residual counted above) \\
 Leak the shared secret from a label & VRF/HKDF is one-way (preimage-resistant) & none (cryptographic) \\
 \bottomrule
 \end{tabular}

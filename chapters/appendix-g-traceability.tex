@@ -23,7 +23,7 @@ RQ2 & detection adds no proof-size overhead; verification is cheap and scale-ind
 combined-tree verification chain (\cref{ssec:design-verify}) &
 \texttt{prefix\_tree}, \texttt{vrf}, \texttt{merkle\_log} tests; cross-language vectors (\cref{app:tests}) &
 M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 816\,B @ $10^6$; $\approx$\SI{132}{\micro\second} flat \\
-RQ3 & offline catch-up is independent of the offline window &
+RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 \texttt{merkle\_log} exhaustive consistency; \texttt{windowed\_consistency} (\cref{tab:tests-rust}) &
 M4 & \cref{ssec:eval-catchup}: 320\,B @ $W{=}720$, ratio $\approx W$ \\
@@ -33,7 +33,7 @@ Jest wire-parity and unit suites (\cref{sec:tests-ts}); live demonstration (\cre
 M11 & \cref{sec:eval-deploy}: microseconds/conversation, runs in Signal Desktop \\
 \midrule
 --- & equivocation (split-view) is caught from a second vantage &
-cross-vantage auditor (\cref{ssec:design-modes}) &
+cross-vantage auditor (\cref{sec:design-acka}) &
 scenario A4; auditor equivocation tests (\cref{sec:tests-rust}) &
 M12 & \cref{ssec:eval-auditor}: \SI{27.6}{\micro\second}/check \\
 --- & continuous mode trades write volume for finer detection &
@@ -54,7 +54,7 @@ M13 & \cref{ssec:eval-modes}: plateau at $720\times$ \\
 Contribution & Artefact & Strongest evidence \\
 \midrule
 Conceptual & dual-index warning scheme; ACKA-log instantiation (\cref{sec:design-dual,sec:design-acka}) & automatic bidirectional detection, full adversarial suite passes (\cref{sec:eval-security}) \\
-Cryptographic & windowed consistency proof + size bound; dual-index detection experiment (\cref{lem:windowed-size,def:dualindex-detect}) & 320\,B catch-up independent of $W$ (\cref{ssec:eval-catchup}) \\
+Cryptographic & windowed consistency proof + size bound; dual-index detection experiment (\cref{lem:windowed-size,def:dualindex-detect}) & 320\,B catch-up at $W{=}720$, one proof regardless of window (\cref{ssec:eval-catchup}) \\
 Systems & Rust \texttt{kt} crate, server, auditor; TypeScript verifier in Signal Desktop (\cref{ch:impl}) & byte-for-byte parity; live cross-process demonstration (\cref{ssec:impl-demo}) \\
 Empirical & benchmark campaign M1--M13; STRIDE/MITRE evaluation (\cref{ch:eval,app:security}) & parity proof size + free detection; sub-\SI{150}{\micro\second} verify (\cref{sec:eval-micro}) \\
 \bottomrule

@@ -11,5 +11,5 @@
   \node[draw,rounded corners,align=left] at (2.5,-3.5)
        {Alice samples $\xEK{A}$ and computes\\
         $\sharedS=\KDF(\mathrm{DH1}\concat\mathrm{DH2}\concat\mathrm{DH3}\concat\mathrm{DH4}^{*})$};
-  \draw[->] ($(A)+(0,-4.8)$)  -- node[above]{initial message ($\xEK{A}$, ciphertext)} ($(B)+(0,-4.8)$);
+  \draw[->] ($(A)+(0,-4.8)$)  -- node[above]{initial message ($\xIK{A}$, $\xEK{A}$, ciphertext)} ($(B)+(0,-4.8)$);
 \end{tikzpicture}

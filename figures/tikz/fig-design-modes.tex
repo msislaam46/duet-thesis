@@ -6,7 +6,8 @@
   \node[box] (s)  at (0,0.4)  {$\sharedS$};
   \node[box] (sl) at (0,-0.7) {labels};
   \node[box] (sk) at (0,-1.8) {identity key};
-  \draw[->] (s) -- (sl); \draw[->] (sl) -- (sk);
+  \draw[->] (s) -- node[right,font=\footnotesize]{HKDF} (sl);
+  \draw[->,dashed] (sl) -- node[right,font=\footnotesize]{stores} (sk);
   \node[align=center,font=\footnotesize] at (0,-2.8) {one write per\\pre-key rotation};
   \node[font=\small] at (5.4,1.2) {\textbf{Continuous mode}};
   \node[box] (k0) at (4.4,0.4)  {$k_0$};

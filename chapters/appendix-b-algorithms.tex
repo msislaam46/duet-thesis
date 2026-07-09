@@ -182,7 +182,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   \lIf{$W=0$}{\KwRet}
   $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
   \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi_{\mathrm{cons}})$\;
-  \tcc{one proof spans the whole window: $O(\log n)$, independent of $W$}
+  \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth_{new}})$;\ \ \Req $v\ne\bot$\;
   \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
   $\mathit{last\_sth}\gets \mathit{sth_{new}}$\;
