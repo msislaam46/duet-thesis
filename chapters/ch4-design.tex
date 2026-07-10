@@ -147,8 +147,9 @@ semantics of the Key Transparency draft (\cref{ssec:bg-keytrans}).
 
 The verification work is split across the implementation as follows. In the Rust reference,
 \texttt{verify\_search\_result} performs the VRF, value, prefix-root, and log-inclusion
-checks (1, 2, 4, 5); the STH signature (3) is verified by
-\texttt{SignedTreeHead::verify}. The live TypeScript client folds the signature check
+checks (1, 2, 4, 5), and the head-bound wrapper \texttt{verify\_search\_result\_against} adds
+step 3 together with the equality binding of the returned head to the caller's independently
+verified head, so a validly signed but stale or forked head is rejected. The live TypeScript client folds the signature check
 into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verify''
 benchmarked in \cref{ch:eval} is the complete five-step chain.
 
@@ -263,8 +264,16 @@ signature for any client that recomputes the commitment.
 \item \textbf{Transition audit.} The write-once policy binds an honest server; to bind a malicious
 one, the auditor verifies it per epoch. For each committed epoch the server discloses to the auditor
 the epoch's update set together with proofs against the previous committed root; the auditor
-recomputes the previous root, replays the declared insertions, verifies that no existing leaf was
-removed or modified, and checks that the result equals the newly committed root. This is exactly
+recomputes the previous root, replays the declared operations --- insertions of previously absent
+labels and, for key rotation, declared in-place rotations whose disclosed old value must match the
+leaf being replaced --- verifies that nothing beyond the declared operations changed (the delta
+format cannot express a deletion), and checks that the result equals the newly committed root.
+Because labels are opaque, the auditor cannot distinguish a lawful rotation of a global identity
+label from an abusive declared overwrite of a write-once label; what the audit guarantees is that no
+mutation is \emph{silent}. A declared overwrite of a dual-index, CEA, or warning label is forced
+into the open, where the label's owner detects it: a replaced lookup slot fails the owner's
+self-check, a replaced warning slot still alerts (any value at the slot alerts), and a replaced
+fingerprint yields a \textsc{Fork} verdict. This is exactly
 the update-validity role the IETF KeyTrans protocol assigns to third-party auditors, whose
 \textsf{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
 proof against the prior tree, precisely so that the auditor can recompute both roots of the
