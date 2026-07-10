@@ -135,7 +135,12 @@ the dual-index path, where the client derived the label itself from the shared s
 and so needs no server-supplied VRF proof to know which slot to read. Step~3 anchors the
 whole chain to a signed head, and the head verified there must be the same head against
 which the inclusion proof of step~5 is checked; a proof against an unsigned or stale head
-is refused. Steps~4 and~5 are the two layers of the combined tree: the prefix proof shows
+is refused. Concretely, the client requires the head returned alongside the proof to be identical
+to the head it independently obtained and verified --- the latest head it fetched, or, during
+catch-up, the new head whose append-only consistency with its last trusted head it has just
+verified. A response anchored to any other head is rejected even if that head carries a valid
+signature, since a validly signed but stale or forked head is precisely what the equivocation
+adversary of attack A4 would supply. Steps~4 and~5 are the two layers of the combined tree: the prefix proof shows
 the entry is at its label in the dictionary, and the log-inclusion proof shows that
 dictionary state is the one the signed head commits to. This is the combined-tree
 semantics of the Key Transparency draft (\cref{ssec:bg-keytrans}).
@@ -208,22 +213,88 @@ each key lives in and, crucially, on the one warning slot they both watch.
 \paragraph{Unlinkability.} The server does not hold $\sharedS$, so the HKDF outputs are
 pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
 any other leaf in the tree; it can therefore neither pre-position a value on the warning
-slot nor recognize and selectively censor it.
+slot nor recognize and selectively censor it. This property must be stated with its precise scope:
+it holds up to the moment a label is first used. Any lookup or write necessarily reveals the queried
+label to the operator, and repeated monitoring reveals which labels are read together, so after
+first use the operator can associate the three labels of a conversation with the clients that query
+them. What the scheme relies on is therefore unpredictability \emph{before} first use --- the server
+cannot pre-position a value on a slot whose label it cannot compute --- while the consequences of
+what the server learns \emph{after} first use are addressed by the write-once policy, the transition
+audit, and the persistence check of \cref{ssec:design-detection}.
 
 \paragraph{Tripwire.} A substituted key implies a different shared secret $\sharedS$,
 hence disjoint labels, so a peer lookup either misses the slot the impersonator never
-wrote to, or a warning write lands in a slot whose subsequent non-inclusion the server cannot
-honestly prove.
+wrote to, or a warning write lands in a slot the impersonator could not predict. The guarantee that
+a committed warning then \emph{stays} visible is not automatic --- it is supplied by the write-once
+policy, the transition audit, and the persistence check introduced in
+\cref{ssec:design-detection}.
 
 \subsection{Detection and the bidirectional warning}\label{ssec:design-detection}
 
-On detecting a suspicious key at a lookup slot, a party writes arbitrary non-empty data
-to $\ell_{\mathsf{warn}}$; both parties' background monitors read $\ell_{\mathsf{warn}}$
-on their next check and raise an alert. Because the warning slot's non-inclusion must be
-\emph{proven} (\cref{ssec:design-verify}), a server that has committed to the log cannot
-suppress a write to it without producing a forged non-inclusion proof; the only
-remaining strategy is to refuse service entirely, producing an observable denial of
-service, which is itself a signal (attack A2).
+On detecting a suspicious key at a lookup slot, a party writes data to
+$\ell_{\mathsf{warn}}$; both parties' background monitors read $\ell_{\mathsf{warn}}$
+on their next check and raise an alert. To make warnings distinguishable from noise, the
+warning payload is authenticated: the writer appends a MAC computed under a key derived from the
+shared secret with the two identities in canonical order
+($\HKDFexp(\mathit{PRK}, \text{\texttt{"warn-mac"}} \concat \min(\mathit{id_A},\mathit{id_B}) \concat \max(\mathit{id_A},\mathit{id_B}), 32)$),
+which only the two conversation parties can produce or verify. Any \emph{unauthenticated} value found at the slot still
+raises an alert --- since no third party should be able to reach the slot at all, unauthenticated
+data there is itself evidence of misbehaviour --- but the MAC lets the peer distinguish an authentic
+warning from an injected one, which matters because the operator learns the label the first time the
+slot is read (\cref{ssec:design-properties}) and could thereafter write to it.
+
+The suppression argument requires care, because the append-only property of the log constrains the
+\emph{history of committed roots}, not the \emph{contents} of successive directory states. Within
+any epoch whose tree includes the warning leaf, the server cannot answer a warning-slot query with
+``absent'': non-inclusion must be \emph{proven} (\cref{ssec:design-verify}), and a valid
+non-inclusion proof against a root whose tree contains the leaf would require a hash collision.
+Across epochs, however, nothing in the log alone prevents a malicious server from building the
+\emph{next} epoch's prefix tree without a leaf that the previous epoch's tree contained, and then
+proving that leaf's non-inclusion honestly against the new committed root; every log consistency
+proof would continue to verify, because the log records only that roots were appended, not that the
+directory evolved admissibly between them. Three safeguards close this gap.
+
+\begin{enumerate}
+\item \textbf{Write-once labels.} Dual-index and CEA labels (\cref{ssec:design-modes}) are
+write-once: the server's update interface rejects a write to an occupied label in these families,
+and an occupied label is never removed or modified in a subsequent epoch. The policy is bound into
+the signed configuration hash of \cref{eq:design-sth}, so a server that changes it breaks its own
+signature for any client that recomputes the commitment.
+\item \textbf{Transition audit.} The write-once policy binds an honest server; to bind a malicious
+one, the auditor verifies it per epoch. For each committed epoch the server discloses to the auditor
+the epoch's update set together with proofs against the previous committed root; the auditor
+recomputes the previous root, replays the declared insertions, verifies that no existing leaf was
+removed or modified, and checks that the result equals the newly committed root. This is exactly
+the update-validity role the IETF KeyTrans protocol assigns to third-party auditors, whose
+\textsf{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
+proof against the prior tree, precisely so that the auditor can recompute both roots of the
+transition~\cite{ietf-keytrans-protocol}. A deletion or overwrite therefore cannot be committed
+without either forgoing the auditor's counter-signature or presenting the auditor a transition that
+fails to replay.
+\item \textbf{Persistence check.} Independently of any auditor, the writer of a warning retains the
+inclusion proof and signed tree head of the epoch at which its warning committed, and its background
+monitor re-verifies the warning's inclusion on every subsequent check. If the leaf later disappears,
+the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
+$\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three artefacts
+constitute non-repudiable, publishable evidence that the server deleted a committed leaf, since all
+three verify against heads the server itself signed.
+\end{enumerate}
+
+The residual asymmetry should be stated explicitly. The persistence check converts deletion from a
+silent act into one that the warning's \emph{writer} detects and can prove; it does not, by itself,
+alert a \emph{peer} who had not yet read the warning during the window in which it was visible. It
+is the transition audit that closes this residual, because an auditor that validates every epoch's
+update set detects the deletion independently of either party. With these safeguards in place, the
+server's only remaining suppression strategy is to refuse service entirely --- to decline lookups,
+withhold epochs, or withhold the auditor's disclosure --- producing an observable denial of service,
+which is itself a signal (attack A2). All three safeguards are implemented in the prototype: the
+write-once policy is enforced by the server's raw-label update interface, the transition audit by the
+auditor replaying each epoch's declared update set against the committed root, and the persistence
+check by the writer retaining a committed warning's inclusion proof and assembling deletion evidence
+on any later disappearance (\cref{ch:impl}). The one element left to deployment is
+authenticated writes --- account-layer proof of raw-label ownership --- without which the write-once
+policy still binds an honest server and the transition audit still binds a malicious one, but a
+malicious client could squat an as-yet-empty peer slot (\cref{ch:discussion}).
 
 Detection is bidirectional, which matters for the offline case. The victim's own-key
 self-check publishes the warning when the victim notices the wrong key under its own
@@ -327,15 +398,42 @@ authenticates $T_t$, and only then folds the secret $I_t$ into the chain:
   k_t &= \KDF(k_{t-1}, I_t) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
 \end{aligned}
 \end{equation}
-It registers the pair $(L_t \to F_t)$ of \cref{eq:design-cea} in the same log, one entry per ratchet epoch. The
-ordering follows the paper: the label and fingerprint are computed over the
-\emph{current} (pre-update) state and the \emph{public} key, and only then is the
-\emph{secret} $I_t$ folded into the chain. Folding the secret epoch key rather than the public ratchet key
-keeps the chain unpredictable to an adversary that has compromised the pre-shared state
---- the property the unlinkability and forgery-resistance arguments need. Detection
-proceeds as in ACKA: an active man-in-the-middle that injects a forged ratchet key $T'$ either posts
-under a label the impersonated party never derives (a different chain gives a different
-$L_t$) or produces a conflicting fingerprint at the agreed label --- caught epoch by
+It registers the pair $(L_t \to F_t)$ of \cref{eq:design-cea} in the same log, one entry per ratchet epoch. In
+\cref{eq:design-cea}, $\mathit{id}_\A \concat \mathit{id}_\B$ denotes sender-then-receiver order:
+both parties place the identifier of the party who sent that epoch's ratchet key first, and since
+they agree on who sent each epoch, they derive the same label. This is deliberately \emph{not} the
+canonical $\min/\max$ ordering used for the warning label in \cref{eq:design-labels}.
+
+The ordering of operations within an epoch follows ACKA's composed construction
+(their Figure~8) in three respects, each of which matters for correctness. First, the label and
+fingerprint are computed over the \emph{current} (pre-update) state and the \emph{public} key, and
+only then is the \emph{secret} $I_t$ folded into the chain; folding the secret epoch key rather than
+the public ratchet key keeps the chain unpredictable to an adversary that has compromised the
+pre-shared state --- the property the unlinkability and forgery-resistance arguments need. Second,
+before posting, the sender checks that the label $L_t$ is unoccupied: ACKA specifies that ``the
+sender will also check if the label has already been uploaded to the log with a fingerprint, which
+would indicate an impersonation''~\cite{dowling2023acka}, and the sender advances its chain only
+after its write is confirmed committed. Third, the receiver advances its chain only after a
+verification returns a definitive verdict; a pending lookup (the sender's fingerprint not yet
+committed) leaves the receiver's state untouched, so the check can be retried without
+desynchronizing the chain.
+
+One representational point requires an explicit statement. ACKA's log stores a \emph{vector} of
+fingerprints per label, and its receiver rejects unless exactly one fingerprint is present; the alarm
+condition is two fingerprints at one label. Our directory stores exactly one value per label, so that
+alarm condition maps onto two mechanisms instead: the honest sender's pre-post check fails against an
+occupied label (the case in which the adversary posted first), and the write-once policy with its
+transition audit (\cref{ssec:design-detection}) prevents and detects the converse case, in which an
+adversary \emph{overwrites} the honest fingerprint after it committed. Without write-once semantics,
+an active man-in-the-middle that has compromised the pre-shared state --- exactly the adversary ACKA
+defends against, and one who can therefore derive $L_t$ --- could replace the honest $F_t$ with a
+fingerprint over its injected key, and the receiver's check would pass. Entry immutability is thus
+not an implementation detail but the property that lets ACKA's security argument carry over to this
+instantiation.
+
+Detection then proceeds as in ACKA: an active man-in-the-middle that injects a forged ratchet key
+$T'$ either posts under a label the impersonated party never derives (a different chain gives a
+different $L_t$) or produces a conflicting fingerprint at the agreed label --- caught epoch by
 epoch. On a fork, continuous mode reuses the dual-index warning slot to alert the peer in
 band, a composition ACKA itself does not provide.
 
@@ -355,11 +453,16 @@ with one write per pre-key rotation, and is straightforwardly deployable.
 detects the post-compromise active man-in-the-middle that is ACKA's principal security guarantee
 --- at a substantially higher log-write rate. The two are modes of one system, sharing
 the prefix tree, the log, the STH, and the warning channel; their cost is measured in
-\cref{ch:eval}. One limitation remains: in the prototype the chained
+\cref{ch:eval}. Two limitations remain and are stated explicitly. First, in the prototype the chained
 secret is advanced deterministically from the shared secret, and binding it to the real
 Double Ratchet root key is the same in-protocol hook left to future work as the production
-binding of the real $\sharedS$ (\cref{ch:discussion}). Cross-implementation test vectors
-verify byte-for-byte equivalence of the Rust and TypeScript CEA constructions.
+binding of the real $\sharedS$ (\cref{ch:discussion}). Second, the construction inherits ACKA's
+synchronous epoch model: the label chain advances in lockstep on both sides, so a ratchet message
+that is lost before the receiver processes its epoch would leave the two chains permanently
+divergent and every subsequent check failing. The Double Ratchet itself tolerates such loss through
+skipped-message keys; a production binding would therefore need to carry explicit epoch indices and
+a bounded skipped-epoch window in the same manner (\cref{ch:discussion}). Cross-implementation test
+vectors verify byte-for-byte equivalence of the Rust and TypeScript CEA constructions.
 
 % ============================================================================
 \section{Windowed consistency proofs}\label{sec:design-windowed}
@@ -402,13 +505,33 @@ hashes --- logarithmic in the log size rather than linear in $W$.}
 \label{fig:design-windowed}
 \end{figure}
 
-Two observations qualify this claim. First, the windowed proof is a \emph{standard}
+Three observations qualify this claim. First, the windowed proof is a \emph{standard}
 RFC~9162 consistency proof between two distant heads, not a new cryptographic object; the
 novelty lies in applying it to the key-transparency monitoring-window problem (a gap
 the IETF draft and CONIKS (\S6.3) both leave open) and in quantifying the saving in
 \cref{ch:eval}. Second, the saving is linear in the window: the windowed proof replaces
 $W$ proofs with one. The contribution is therefore a reduction in the number of proofs
 rather than an improvement in the asymptotic complexity of an individual proof.
+
+Third, and most importantly, the soundness of windowing must be argued rather than assumed, because
+the key-transparency literature contains a standing objection to exactly this shortcut. CONIKS's
+monitoring cost is linear in the offline period precisely because a malicious provider could insert
+a false binding at some epoch inside the window and revert it before the client returns; a client
+that verifies only the consistency of the two endpoint heads and the current value at its own label
+would miss such a transient substitution, which is why CONIKS concludes that inspecting only the
+latest signed root is unsound (\cref{ssec:bg-vkd-academic}). That objection applies verbatim to any
+windowed check, including this one, and we therefore state explicitly why it does not defeat this
+design. A transient in-window substitution is profitable to the adversary only if it is
+\emph{used}: a peer who initiates or continues the conversation during the window performs
+pinned-key lookups at the dual-index slots (\cref{ssec:design-detection}) and, on a mismatch, writes
+to the shared warning slot. Under the write-once policy, transition audit, and persistence check of
+\cref{ssec:design-detection}, that warning outlives the attack, and the returning client's catch-up
+procedure reads the warning slot in the same synchronization exchange, so the transient substitution
+leaves a durable, in-band trace that the windowed client does see. Windowed catch-up is therefore
+sound in this design \emph{because} the peer-writable, persistent warning channel exists; in a
+directory without such a channel --- CONIKS's, for instance --- the same windowing would weaken
+detection exactly as CONIKS's authors argue. The two contributions are in this sense mutually
+dependent rather than independent optimizations.
 
 \subsection{Worked parameterization}\label{ssec:design-param}
 
@@ -496,6 +619,7 @@ HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF; PRF security 
 Two-tree (prefix + log) combined stack & one verifiable chain from entry to signed head & IETF KeyTrans draft \\
 Hourly epochs (tunable) & balances proof freshness against commit cost & CONIKS \\
 Client-tunable window $W$ & lets each client trade catch-up frequency against per-check cost & this work \\
+Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability ACKA's Logsec assumes; makes warning deletion detectable and provable & ACKA (Dowling--Hale); IETF KeyTrans auditing \\
 Truncate VRF output $\beta$ to 32 bytes & 256-bit label space; matches the prefix-tree label width & Signal keytrans \texttt{proofToHash} \\
 \bottomrule
 \end{tabular}

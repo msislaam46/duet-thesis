@@ -105,7 +105,8 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   \KwRet $(\mathit{label},\pi_{\mathrm{vrf}})$\;
 }
 \Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
-  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value})$ \tcp*{dual-index labels; PoC unauthenticated}
+  \Req $\mathit{live}.\textsf{Lookup}(\mathit{label}).\mathit{value}=\bot$ \tcp*{write-once: occupied labels rejected (\cref{ssec:design-detection})}
+  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value})$ \tcp*{dual-index/CEA labels; PoC unauthenticated}
 }
 \Fn{\normalfont\textsf{CommitEpoch}()}{
   $r\gets \mathit{live}.\textsf{RootHash}()$\;
@@ -140,12 +141,17 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   $\lwarn\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warning"}\concat \mathit{lo}\concat \mathit{hi},32)$\;
   \KwRet $(\lself,\lpeer,\lwarn)$\;
 }
-\Fn{\normalfont\textsf{WriteWarning}($\mathit{server},\lwarn,\mathit{alert}$)}{
-  $\mathit{server}.\textsf{UpdateRaw}(\lwarn,\mathit{alert})$ \tcp*{any non-$\bot$ value = tripwire}
+\Fn{\normalfont\textsf{WriteWarning}($\mathit{server},\lwarn,\mathit{alert},\mathit{PRK}$)}{
+  \lIf{$\mathit{server}$ already holds a value at $\lwarn$}{\KwRet \tcp*[f]{slot is write-once; an existing value already alerts both monitors}}
+  $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$ \tcp*{canonical identities bind $k_{\mathrm{mac}}$ to the pair; only the two parties can compute it}
+  $\mathit{server}.\textsf{UpdateRaw}(\lwarn,\ \mathit{alert}\concat\textsf{MAC}(k_{\mathrm{mac}},\mathit{alert}))$\;
+  after the next epoch commits: $\textsf{RecordWarning}(\lwarn)$ \tcp*{retain evidence (Alg.~\ref{alg:detect})}
 }
-\Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth}$)}{
+\Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth},\mathit{PRK}$)}{
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}
-  \KwRet \textsc{Alert} \textbf{if} $v\ne\bot$ \textbf{else} \textsc{Safe}\;
+  \lIf{$v=\bot$}{\KwRet \textsc{Safe}}
+  \lIf{$\textsf{MAC-Verify}(\textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32),v)$}{\KwRet \textsc{Alert} \tcp*[f]{authentic peer warning}}
+  \KwRet \textsc{Alert} \tcp*{unauthenticated data at an unpredictable slot: itself evidence of misbehaviour}
 }
 \end{algorithm}
 
@@ -155,6 +161,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \Fn{\normalfont\textsf{VerifiedLookup}($\mathit{server},\mathit{label},\mathit{sth},[\mathit{user\_id},\pi_{\mathrm{vrf}}]$)}{
   $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
+  \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to the caller's verified head; a signed but stale/forked head is rejected}
   \If{$\mathit{user\_id}$ given}{
     $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\pi_{\mathrm{prefix}}.\mathit{label}$\;
   }
@@ -166,7 +173,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
   $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   $\mathit{server}.\textsf{UpdateRaw}(\lself,pk_{\mathit{self}})$\;
-  $\mathit{sth}\gets \mathit{server}.\textsf{CommitEpoch}()$\;
+  $\mathit{sth}\gets \mathit{server}.\textsf{CommitEpoch}()$ \tcp*{PoC only; a deployed client waits for the epoch boundary}
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth})$;\ \ \Req $v=pk_{\mathit{self}}$\;
   $\mathit{last\_sth}\gets \mathit{sth}$\;
   \KwRet $(\lself,\lpeer,\lwarn)$\;
@@ -178,11 +185,15 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server},\lself,\lwarn$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
-  $W\gets \mathit{sth_{new}}.\mathit{epoch}-\mathit{last\_sth}.\mathit{epoch}$\;
-  \lIf{$W=0$}{\KwRet}
-  $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
-  \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi_{\mathrm{cons}})$\;
-  \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
+  \uIf{$\mathit{last\_sth}=\bot$}{
+    $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}); no history to check}
+  }\Else{
+    $W\gets \mathit{sth_{new}}.\mathit{epoch}-\mathit{last\_sth}.\mathit{epoch}$\;
+    \lIf{$W=0$}{\KwRet}
+    $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
+    \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi_{\mathrm{cons}})$\;
+    \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
+  }
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth_{new}})$;\ \ \Req $v\ne\bot$\;
   \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
   $\mathit{last\_sth}\gets \mathit{sth_{new}}$\;
@@ -190,15 +201,32 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \end{algorithm}
 
 \begin{algorithm}[H]
-\caption{MitM Detection and Warning}\label{alg:detect}
+\caption{MitM Detection, Warning, and Warning Persistence}\label{alg:detect}
+\KwData{$\mathit{evidence}[]\gets[\,]$; per conversation, $\mathit{PRK}$ as extracted in Alg.~\ref{alg:dualindex}}
 \Fn{\normalfont\textsf{DetectMitM}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
     $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"mismatch"},pk,\mathit{ts}))$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"mismatch"},pk,\mathit{ts}),\mathit{PRK})$\;
     \textbf{raise} SecurityAlert\;
   }
   \KwRet $pk$\;
+}
+\Fn{\normalfont\textsf{RecordWarning}($\lwarn$)}{
+  $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth}_w)\gets \mathit{server}.\textsf{Search}(\lwarn)$;\ \ \Req $v\ne\bot$\;
+  $\mathit{evidence}.\textsf{append}((\lwarn,\mathit{sth}_w,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}}))$ \tcp*{inclusion proof at the committing epoch}
+}
+\Fn{\normalfont\textsf{PersistenceCheck}($\mathit{server}$)}{
+  \ForEach{$(\lwarn,\mathit{sth}_w,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}})\in \mathit{evidence}$}{
+    $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{last\_sth})$\;
+    \If{$v=\bot$}{
+      \tcc{a committed leaf has disappeared: inclusion under $\mathit{sth}_w$, proven non-inclusion
+           under $\mathit{last\_sth}$, and the consistency proof between them are non-repudiable,
+           publishable proof of deletion (\cref{ssec:design-detection})}
+      $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth}_w.\mathit{size},\mathit{last\_sth}.\mathit{size})$\;
+      \textbf{raise} DeletionEvidence$(\lwarn,\mathit{sth}_w,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{last\_sth},\pi_{\mathrm{cons}})$\;
+    }
+  }
 }
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations}$)}{
   \ForEach{$(\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{own\_pk})\in \mathit{conversations}$}{
@@ -206,15 +234,16 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
     $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn)$\;
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$\;
     \If{$v\ne\mathit{own\_pk}$}{
-      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v,\mathit{ts}))$\;
+      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v,\mathit{ts}),\mathit{PRK})$\;
       \textbf{raise} SecurityAlert\;
     }
   }
+  $\textsf{PersistenceCheck}(\mathit{server})$ \tcp*{written warnings must remain committed}
 }
 \end{algorithm}
 
 \begin{algorithm}[H]
-\caption{Auditor (fork detection)}\label{alg:auditor}
+\caption{Auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
 \KwData{$\mathit{heads}[]\gets[\,]$}
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
@@ -222,13 +251,27 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
     $\mathit{sth_{old}}\gets \mathit{heads}.\textsf{last}$\;
     $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
     \Req $\textsf{VerifyConsistency}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{sth_{old}}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$\;
+    $\textsf{AuditTransition}(\mathit{server},\mathit{sth_{new}}.\mathit{epoch})$ \tcp*{directory delta, not only log growth}
   }
   $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$\;
+}
+\Fn{\normalfont\textsf{AuditTransition}($\mathit{server},e$)}{
+  \tcc{after the manner of the IETF KeyTrans \textsf{AuditorUpdate}: the server discloses each
+       epoch's update set with proofs against the previous committed root~\cite{ietf-keytrans-protocol}}
+  $(r_{e-1},r_{e},\mathit{updates}_e,\pi_{\mathrm{batch}})\gets \mathit{server}.\textsf{GetEpochDelta}(e)$\;
+  \Req $r_{e-1},r_{e}$ are log leaves $e{-}1,e$ (inclusion proofs against the latest verified head)\;
+  \Req $\pi_{\mathrm{batch}}$ recomputes $r_{e-1}$ and proves every $\mathit{label}\in\mathit{updates}_e$ absent there \tcp*{no overwrite}
+  $r'\gets$ root after inserting every $(\mathit{label},\mathit{value})\in\mathit{updates}_e$ into the tree of $r_{e-1}$\;
+  \Req $r'=r_{e}$ \tcp*{exact transition: nothing deleted, modified, or overwritten}
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$ \tcp*{from a different vantage point}
   \ForEach{$\mathit{sth}\in \mathit{heads}$}{
     \lIf{$\mathit{sth}.\mathit{epoch}=\mathit{sth_{other}}.\mathit{epoch}\wedge \mathit{sth}.\mathit{root}\ne \mathit{sth_{other}}.\mathit{root}$}{\KwRet \textsc{Fork}$(\mathit{sth},\mathit{sth_{other}})$}
+  }
+  \If{$\mathit{sth_{other}}.\mathit{epoch}$ matches no recorded head}{
+    $\mathit{sth}_{\mathrm{near}}\gets$ recorded head of nearest size;\ \ $\pi\gets \mathit{server}.\textsf{ConsistencyProof}$ between the smaller and larger of the two sizes\;
+    \lIf{refused $\vee\ \neg\,\textsf{VerifyConsistency}(\cdots,\pi)$}{\KwRet \textsc{Fork}$(\mathit{sth}_{\mathrm{near}},\mathit{sth_{other}})$}
   }
   \KwRet \textsc{Consistent}\;
 }
@@ -236,34 +279,39 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 
 \begin{algorithm}[H]
 \caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA-faithful)}\label{alg:cea}
-\KwData{per conversation: chained secret $k$; epoch $t$ (canonical id order for labels)}
+\KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and $\mathit{PRK}$
+from Alg.~\ref{alg:dualindex} (labels use sender-then-receiver id order, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id_A},\mathit{id_B}$)}{
   $k\gets \KDF(\mathit{pss},\mathit{id_A}\concat \mathit{id_B})$;\ \ $t\gets 0$\;
 }
 \Fn{\normalfont\textsf{CeaUpdate}($I$)}{
   $k\gets \KDF(k,I)$;\ \ $t\gets t+1$ \tcp*{chain folds a secret $I$}
 }
-\Fn{\normalfont\textsf{CeaLprint}($\mathit{id_A},\mathit{id_B}$)}{
-  \KwRet $\Hash(k\concat \mathit{id_A}\concat \mathit{id_B}\concat t)$\;
+\Fn{\normalfont\textsf{CeaLprint}($\mathit{id_{sender}},\mathit{id_{receiver}}$)}{
+  \KwRet $\Hash(k\concat \mathit{id_{sender}}\concat \mathit{id_{receiver}}\concat t)$\;
 }
 \Fn{\normalfont\textsf{CeaFprint}($\mathit{id_{sender}},\mathit{id_{peer}},\mathit{epk}$)}{
   $\mathit{fkey}\gets \KDF(k,\mathit{id_{sender}}\concat \mathit{id_{peer}}\concat t)$\;
   \KwRet $\Hash(\mathit{fkey}\concat \mathit{epk})$\;
 }
-\Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},\mathit{epk},I$)}{
-  $L\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},\mathit{epk})$\;
-  $\textsf{CeaUpdate}(I)$ \tcp*{then fold the secret}
-  $\mathit{server}.\textsf{UpdateRaw}(L,F)$;\ \ $\mathit{server}.\textsf{CommitEpoch}()$\;
-}
-\Fn{\normalfont\textsf{CeaVerify}($\mathit{server},\mathit{id_{sender}},\mathit{id_{self}},\mathit{epk},I,\mathit{sth}$)}{
-  $L\gets \textsf{CeaLprint}(\mathit{id_{sender}},\mathit{id_{self}})$;\ \ $F^{*}\gets \textsf{CeaFprint}(\mathit{id_{sender}},\mathit{id_{self}},\mathit{epk})$\;
-  $\textsf{CeaUpdate}(I)$\;
-  $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
-  \lIf{$v=\bot$}{\KwRet \textsc{NotPosted}}
-  \If{$v\ne F^{*}$}{
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t))$\;
-    \KwRet \textsc{Fork}\;
+\Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},\mathit{epk},I,\mathit{sth}$)}{
+  $L\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},\mathit{epk})$ \tcp*{over the current (pre-update) state}
+  \If{$\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})\ne\bot$}{
+    \textbf{raise} SecurityAlert \tcp*{ACKA sender check: an occupied label indicates impersonation}
   }
+  $\mathit{server}.\textsf{UpdateRaw}(L,F)$;\ \ $\mathit{sth'}\gets \mathit{server}.\textsf{CommitEpoch}()$\;
+  \Req $\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth'})=F$ \tcp*{confirmation that the write committed}
+  $\textsf{CeaUpdate}(I)$ \tcp*{advance only after the confirmed write (ACKA Fig.~8)}
+}
+\Fn{\normalfont\textsf{CeaVerify}($\mathit{server},\mathit{id_{sender}},\mathit{id_{self}},\mathit{epk},I,\lwarn,\mathit{sth}$)}{
+  $L\gets \textsf{CeaLprint}(\mathit{id_{sender}},\mathit{id_{self}})$;\ \ $F^{*}\gets \textsf{CeaFprint}(\mathit{id_{sender}},\mathit{id_{self}},\mathit{epk})$\;
+  $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
+  \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{state unchanged: retried later with the same $L$}}
+  \If{$v\ne F^{*}$}{
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t),\mathit{PRK})$\;
+    \KwRet \textsc{Fork} \tcp*{state unchanged: the session is not continued over a fork}
+  }
+  $\textsf{CeaUpdate}(I)$ \tcp*{advance only on \textsc{Consistent} (ACKA Fig.~8: state updates only on success)}
   \KwRet \textsc{Consistent}\;
 }
 \end{algorithm}

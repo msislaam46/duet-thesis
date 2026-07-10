@@ -99,10 +99,11 @@ Module & Specification implemented & Conformance evidence \\
 \texttt{merkle\_log} & RFC~9162 \S2.1.3/\S2.1.4 inclusion and consistency verifiers~\cite{rfc9162} & exhaustive inclusion + every $(m,n)$ consistency pair up to size 64, plus forgery rejection \\
 \texttt{prefix\_tree} & IETF KeyTrans sparse Merkle tree, path-compressed~\cite{ietf-keytrans-protocol} & client-side root recompute from compressed proof \\
 \texttt{vrf} & RFC~9381 ECVRF-EDWARDS25519-SHA512-TAI, suite \texttt{0x03}~\cite{rfc9381} & RFC~9381 App.~B.3 test vectors \\
-\texttt{dual\_index} & RFC~5869 HKDF-SHA256 label derivation~\cite{rfc5869} & cross-implementation vectors vs.\ TypeScript \\
-\texttt{server} & KeyTrans combined-tree semantics + Ed25519 STH~\cite{ietf-keytrans-protocol} & STH signature happy/tamper/wrong-key; committed-snapshot search \\
-\texttt{auditor} & cross-vantage fork detection (\cref{alg:auditor}) & append-only audit + equivocation tests \\
-\texttt{cea} & ACKA example CEA construction~\cite{dowling2023acka} & cross-implementation vectors vs.\ TypeScript \\
+\texttt{dual\_index} & RFC~5869 HKDF-SHA256 label derivation~\cite{rfc5869}; warning-payload MAC (\cref{alg:dualindex}) & cross-implementation vectors vs.\ TypeScript; MAC roundtrip + injection-rejection tests \\
+\texttt{server} & KeyTrans combined-tree semantics + Ed25519 STH~\cite{ietf-keytrans-protocol}; write-once raw-label policy + per-epoch declared update set (\cref{alg:server}) & STH signature happy/tamper/wrong-key; committed-snapshot search; write-once rejection; delta records inserts and rotations \\
+\texttt{auditor} & cross-vantage fork detection + per-epoch transition audit (\cref{alg:auditor}) & append-only audit + equivocation tests; transition audit catches undeclared deletion and modification \\
+\texttt{monitor} & writer-side persistence check + deletion-evidence bundle (\cref{alg:detect}) & persistence holds while committed; deletion yields evidence that verifies against the server's signed heads \\
+\texttt{cea} & ACKA example CEA construction~\cite{dowling2023acka}; server-composed register/verify with sender pre-post check and advance-only-on-success (\cref{alg:cea}) & cross-implementation vectors vs.\ TypeScript; occupied-label and no-advance-on-fork/not-posted tests \\
 \texttt{hook\_process\_\allowbreak prekey\_bundle} & libsignal pre-key-bundle integration point & the hook at which the live X3DH secret is available \\
 \bottomrule
 \end{tabular}
@@ -176,6 +177,28 @@ signature, and checks append-only consistency on each new epoch, so that a forke
 history is caught from a second vantage point. A benchmark harness completes the set, driving the
 measurements of \cref{ch:eval}; the endpoint list and request formats are given in
 \cref{app:apiref}.
+
+The directory-immutability safeguards of \cref{ssec:design-detection} are implemented across these
+components rather than left to deployment. The write-once policy lives in the server's raw-label
+update path: a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
+\texttt{/update-raw} endpoint answers \texttt{409 Conflict}), while the privileged interface exposes
+an explicit unchecked overwrite so the adversarial suite can play a malicious operator. Every commit
+freezes a \emph{declared update set} --- the epoch's inserts and rotations, each rotation disclosing
+its prior value --- which the server publishes at an \texttt{/epoch-delta} endpoint alongside the
+committed directory root. The auditor consumes exactly this disclosure: it maintains its own mirror
+directory, replays each epoch's declared set, and checks the result against the committed root, so a
+deletion (which the delta format cannot express) or an undeclared modification makes the replay
+diverge and is caught --- the role the IETF KeyTrans protocol assigns to third-party auditors through
+its \textsf{AuditorUpdate} structure~\cite{ietf-keytrans-protocol}. Independently of any auditor, the
+\texttt{monitor} module gives a warning's writer a persistence check: it retains the inclusion proof
+and signed tree head of the epoch at which the warning committed and, on any later disappearance,
+assembles the inclusion proof, the proven non-inclusion, and the consistency proof between the two
+heads into a bundle that verifies against the server's own signatures. The warning payload itself
+carries an HKDF-derived MAC (\cref{alg:dualindex}) so that a reader can distinguish a peer-authored
+warning from one the operator injected once it has learned the slot's label. The single element left
+to deployment is authenticated writes: without account-layer proof of raw-label ownership the
+write-once policy still binds an honest server and the transition audit still binds a malicious one,
+but a malicious client could squat an as-yet-empty peer slot (\cref{ch:discussion}).
 
 The performance profile of the core follows from these choices. State is held entirely in memory, so
 no disk or database access sits on the lookup path; prefix proofs are bitmap-compressed over a
