@@ -102,16 +102,19 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   $(\beta,\pi_{\mathrm{vrf}})\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$ \tcp*{ECVRF, RFC 9381}
   $\mathit{label}\gets\beta[0{:}32]$ \tcp*{32-byte truncation}
   $\mathit{live}.\textsf{Insert}(\mathit{label},pk)$\;
+  record \textsf{Insert} (fresh label) or \textsf{Rotate} (occupied label) in the epoch's declared delta\;
   \KwRet $(\mathit{label},\pi_{\mathrm{vrf}})$\;
 }
 \Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
   \Req $\mathit{live}.\textsf{Lookup}(\mathit{label}).\mathit{value}=\bot$ \tcp*{write-once: occupied labels rejected (\cref{ssec:design-detection})}
   $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value})$ \tcp*{dual-index/CEA labels; PoC unauthenticated}
+  record \textsf{Insert}$(\mathit{label},\mathit{value})$ in the epoch's declared delta\;
 }
 \Fn{\normalfont\textsf{CommitEpoch}()}{
   $r\gets \mathit{live}.\textsf{RootHash}()$\;
   $i\gets \mathit{log}.\textsf{Append}(r)$ \tcp*{prefix root is a log leaf}
   $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
+  freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
   $\mathit{epoch}\gets \mathit{epoch}+1$\;
   $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval})$ \tcp*{policy commitment (CONIKS $P$)}
   $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ \mathit{epoch}{-}1\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{ts}\concat \mathit{ch})$ \tcp*{88-byte LE}
@@ -132,7 +135,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 
 \begin{algorithm}[H]
 \caption{Dual-Index Label Derivation (HKDF-SHA256, RFC 5869)}\label{alg:dualindex}
-\KwIn{shared secret $\sharedS$ from X3DH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width)}
+\KwIn{shared secret $\sharedS$ from X3DH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width); $\min/\max$ below denote the canonically ordered conversation pair $(\mathit{id_A},\mathit{id_B})$}
 \Fn{\normalfont\textsf{DeriveLabels}($\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
   $\mathit{PRK}\gets \textsf{HKDF-Extract}(\text{salt}=\texttt{"duet-dual-index"},\ \sharedS)$\;
   $\lself\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"lookup"}\concat \mathit{id_{self}}\concat \mathit{id_{peer}},32)$\;
@@ -157,7 +160,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 
 \begin{algorithm}[H]
 \caption{Client Verification, Registration, Retrieval, Windowed Catch-Up}\label{alg:client}
-\KwData{$\mathit{last\_sth}\gets\bot$}
+\KwData{$\mathit{last\_sth}\gets\bot$; per conversation, $\mathit{PRK}$ as extracted in Alg.~\ref{alg:dualindex}}
 \Fn{\normalfont\textsf{VerifiedLookup}($\mathit{server},\mathit{label},\mathit{sth},[\mathit{user\_id},\pi_{\mathrm{vrf}}]$)}{
   $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
@@ -180,10 +183,11 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \Fn{\normalfont\textsf{RetrieveKey}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
   $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+  $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK})$ \tcp*{advance $\mathit{last\_sth}$ to the current verified head: every lookup binds to it}
   $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$;\ \ \Req $pk\ne\bot$\;
   \KwRet $pk$\;
 }
-\Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server},\lself,\lwarn$)}{
+\Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server},\lself,\lwarn,\mathit{PRK}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
   \uIf{$\mathit{last\_sth}=\bot$}{
     $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}); no history to check}
@@ -195,7 +199,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
     \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
   }
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth_{new}})$;\ \ \Req $v\ne\bot$\;
-  \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
+  \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}},\mathit{PRK})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
   $\mathit{last\_sth}\gets \mathit{sth_{new}}$\;
 }
 \end{algorithm}
@@ -214,6 +218,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \Fn{\normalfont\textsf{RecordWarning}($\lwarn$)}{
   $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth}_w)\gets \mathit{server}.\textsf{Search}(\lwarn)$;\ \ \Req $v\ne\bot$\;
+  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth}_w)$ and the chain $(\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}})$ verifies against $\mathit{sth}_w$ \tcp*{evidence is retained only once it verifies}
   $\mathit{evidence}.\textsf{append}((\lwarn,\mathit{sth}_w,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}}))$ \tcp*{inclusion proof at the committing epoch}
 }
 \Fn{\normalfont\textsf{PersistenceCheck}($\mathit{server}$)}{
@@ -231,7 +236,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations}$)}{
   \ForEach{$(\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{own\_pk})\in \mathit{conversations}$}{
     $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-    $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn)$\;
+    $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK})$\;
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$\;
     \If{$v\ne\mathit{own\_pk}$}{
       $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v,\mathit{ts}),\mathit{PRK})$\;
@@ -258,11 +263,17 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{server},e$)}{
   \tcc{after the manner of the IETF KeyTrans \textsf{AuditorUpdate}: the server discloses each
        epoch's update set with proofs against the previous committed root~\cite{ietf-keytrans-protocol}}
-  $(r_{e-1},r_{e},\mathit{updates}_e,\pi_{\mathrm{batch}})\gets \mathit{server}.\textsf{GetEpochDelta}(e)$\;
+  $(r_{e-1},r_{e},\mathit{ops}_e,\pi_{\mathrm{batch}})\gets \mathit{server}.\textsf{GetEpochDelta}(e)$ \tcp*{$\mathit{ops}_e$: declared \textsf{Insert}$(\ell,v)$ and \textsf{Rotate}$(\ell,v_{\mathrm{old}},v)$ only --- the format cannot express a deletion}
   \Req $r_{e-1},r_{e}$ are log leaves $e{-}1,e$ (inclusion proofs against the latest verified head)\;
-  \Req $\pi_{\mathrm{batch}}$ recomputes $r_{e-1}$ and proves every $\mathit{label}\in\mathit{updates}_e$ absent there \tcp*{no overwrite}
-  $r'\gets$ root after inserting every $(\mathit{label},\mathit{value})\in\mathit{updates}_e$ into the tree of $r_{e-1}$\;
-  \Req $r'=r_{e}$ \tcp*{exact transition: nothing deleted, modified, or overwritten}
+  \Req $\pi_{\mathrm{batch}}$ recomputes $r_{e-1}$; every \textsf{Insert} label is proven absent there, and every \textsf{Rotate} label is proven present with exactly the declared $v_{\mathrm{old}}$ \tcp*{no undeclared overwrite}
+  $r'\gets$ root after applying every operation in $\mathit{ops}_e$ to the tree of $r_{e-1}$\;
+  \Req $r'=r_{e}$ \tcp*{exact transition: nothing beyond the declared operations}
+  \tcc{a \textsf{Rotate} is legitimate only on the global (VRF) family. Labels are opaque, so the
+       auditor cannot distinguish a lawful identity-key rotation from an abusive overwrite of a
+       write-once label; what the replay guarantees is that no mutation is \emph{silent}. A declared
+       overwrite of a raw label is forced into the open, where its owner detects it: a replaced
+       lookup slot fails the self-check, a replaced warning slot still alerts, and a replaced CEA
+       fingerprint yields \textsc{Fork} (\cref{ssec:design-detection})}
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$ \tcp*{from a different vantage point}
