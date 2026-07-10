@@ -1441,8 +1441,11 @@ Bob derive from their shared secret $S$ not only a lookup label but a shared
 \emph{warning} label $\ell_{\mathsf{warn}}$, an initially empty leaf in the same log. If
 either party detects a key mismatch, it writes to that leaf. Because the label is derived
 from $S$, which the server does not hold, the server can neither pre-position a
-value on it nor, having committed to the log, suppress a write to it without an
-observable, total denial of service. This is the in-band peer-warning channel the
+value on the slot nor predict where a warning will land. Once a warning is committed, a
+write-once update policy, a per-epoch transition audit, and a writer-side persistence
+check (\cref{ch:design}) together ensure that removing it is a detectable and provable
+act rather than a silent one, leaving outright denial of service --- itself observable ---
+as the server's only remaining suppression strategy. This is the in-band peer-warning channel the
 literature lacks. The closest related work is KTACA (Yadav et al.), which achieves
 client-side detection but relies on anonymous
 lookups~\cite{yadav2020poster,yadav2022fakekey}, a cost Parakeet explicitly objects
