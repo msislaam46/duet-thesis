@@ -1,20 +1,27 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
-The Rust core is covered by unit and property tests run under \texttt{cargo test}; the TypeScript
-client by a Jest suite; and the system as a whole by the adversarial scenario suite. The
-representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the complete
-listing follows.
+Three suites cover the system. The Rust core is covered by \num{79} unit and property tests across
+nine modules plus the \num{8}-scenario adversarial integration suite (\num{87} tests in total, run
+under \texttt{cargo test}); the TypeScript client is covered by \num{54} Jest tests in six suites,
+and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
+representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
+complete listing follows. Tables are placed exactly where they are discussed.
 
 % ----------------------------------------------------------------------------
 \section{Rust unit and property tests}\label{sec:tests-rust}
 
-\begin{table}[ht]
+The unit and property tests divide into three groups: the cryptographic primitives and data
+structures (\cref{tab:tests-rust-prim}), the server and its verification chain
+(\cref{tab:tests-rust-server}), and the auditor, warning monitor, and continuous-authentication
+mode (\cref{tab:tests-rust-system}).
+
+\begin{table}[H]
 \centering
-\caption{Rust \texttt{kt}-crate tests by module, with the property each checks.}
-\label{tab:tests-rust}
+\caption{Rust tests --- primitives and data structures (\num{33} tests).}
+\label{tab:tests-rust-prim}
 \footnotesize
-\begin{tabular}{@{}llp{7.2cm}@{}}
+\begin{tabular}{@{}llp{7.0cm}@{}}
 \toprule
 Module & Test & Property checked \\
 \midrule
@@ -26,16 +33,18 @@ Module & Test & Property checked \\
 \texttt{merkle\_log} & \texttt{inclusion\_proof\_verifies} & every leaf's inclusion proof verifies (exhaustive to size 64) \\
 \texttt{merkle\_log} & \texttt{consistency\_proof\_verifies} & every $(m,n)$ consistency pair verifies (exhaustive to size 64) \\
 \texttt{merkle\_log} & \texttt{consistency\_proof\_many\_epochs} & consistency holds across many committed epochs \\
+\texttt{merkle\_log} & \texttt{exhaustive\_small\_trees} & roots, inclusion, and consistency remain mutually consistent on every tree up to size 64 \\
 \midrule
 \texttt{prefix\_tree} & \texttt{insert\_and\_search} & inserted labels are retrievable \\
 \texttt{prefix\_tree} & \texttt{proof\_verifies} & an inclusion proof recomputes the root \\
 \texttt{prefix\_tree} & \texttt{proof\_verifies\_multiple\_entries} & proofs verify with many populated leaves \\
 \texttt{prefix\_tree} & \texttt{non\_inclusion} & an absent label has a verifying non-inclusion proof \\
 \texttt{prefix\_tree} & \texttt{root\_hash\_deterministic} & the root is order-independent and reproducible \\
-\texttt{prefix\_tree} & \texttt{update\_overwrites\_value} & re-inserting a label overwrites its value \\
+\texttt{prefix\_tree} & \texttt{update\_overwrites\_value} & the tree-level insert overwrites a value; the write-once policy is enforced one layer above, in \texttt{update\_raw} (\cref{tab:tests-rust-server}) \\
+\texttt{prefix\_tree} & \texttt{remove\_deletes\_leaf\_and\_restores\_sibling\_structure} & the admin-only removal leaves a structurally valid tree, so a deletion is detectable only by the transition audit, never by malformedness \\
 \midrule
 \texttt{vrf} & \texttt{test\_prove\_then\_verify} & an honest proof verifies \\
-\texttt{vrf} & \texttt{test\_deterministic\_output} & \texttt{Eval} is deterministic for fixed key and input \\
+\texttt{vrf} & \texttt{test\_deterministic\_output} & evaluation is deterministic for fixed key and input \\
 \texttt{vrf} & \texttt{test\_different\_inputs\_different\_outputs} & distinct inputs give distinct outputs \\
 \texttt{vrf} & \texttt{test\_different\_keys\_different\_outputs} & distinct keys give distinct outputs \\
 \texttt{vrf} & \texttt{test\_encode\_to\_curve\_try\_and\_increment} & RFC~9381 hash-to-curve conformance \\
@@ -45,49 +54,209 @@ Module & Test & Property checked \\
 \texttt{vrf} & \texttt{test\_verify\_rejects\_wrong\_alpha} & a proof under the wrong input is rejected \\
 \texttt{vrf} & \texttt{test\_verify\_rejects\_wrong\_key} & a proof under the wrong key is rejected \\
 \midrule
-\texttt{dual\_index} & \texttt{label\_symmetry} & Alice and Bob derive the same shared warning label \\
+\texttt{dual\_index} & \texttt{label\_symmetry} & Alice and Bob agree on the two lookup slots ($A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and vice versa) \\
+\texttt{dual\_index} & \texttt{warning\_labels\_symmetric} & both parties derive the identical shared warning label \\
+\texttt{dual\_index} & \texttt{warning\_label\_differs\_across\_pairs} & distinct conversation pairs derive distinct warning labels \\
 \texttt{dual\_index} & \texttt{different\_secrets\_different\_labels} & distinct shared secrets give disjoint labels \\
-\midrule
-\texttt{server} & \texttt{update\_and\_search} & a committed update is returned by search \\
-\texttt{server} & \texttt{epoch\_increments} & committing advances the epoch counter \\
-\texttt{server} & \texttt{non\_existent\_user} & an unregistered user yields proven non-inclusion \\
-\texttt{server} & \texttt{vrf\_proof\_verifies} & the search VRF proof verifies \\
-\texttt{server} & \texttt{vrf\_proof\_rejects\_wrong\_user} & a VRF proof for the wrong user is rejected \\
-\texttt{server} & \texttt{windowed\_consistency} & a windowed consistency proof verifies across epochs \\
+\texttt{dual\_index} & \texttt{hkdf\_deterministic} & the HKDF derivation is reproducible \\
+\texttt{dual\_index} & \texttt{warning\_mac\_roundtrip\_and\_peer\_authentication} & a warning MAC'd under the pair-bound key verifies for the peer \\
+\texttt{dual\_index} & \texttt{warning\_mac\_rejects\_injected\_or\_tampered\_payload} & an injected or tampered warning payload fails MAC verification (but still alerts, \cref{ssec:design-detection}) \\
+\texttt{dual\_index} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte label agreement with the TypeScript implementation on fixed vectors \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The auditor is covered by two soundness tests noted in \cref{tab:impl-t5a}:
-\texttt{equivocation\_is\_detected\_as\_fork} (one signer, two roots at one epoch is reported as a
-fork) and \texttt{detect\_fork\_rejects\_unsigned\_head} (a divergent head with an invalid signature
-is not misclassified as a fork).
+\begin{table}[H]
+\centering
+\caption{Rust tests --- server and verification chain (\texttt{server}, \num{24} tests).}
+\label{tab:tests-rust-server}
+\footnotesize
+\begin{tabular}{@{}lp{9.4cm}@{}}
+\toprule
+Test & Property checked \\
+\midrule
+\texttt{update\_and\_search} & a committed update is returned by search \\
+\texttt{non\_existent\_user} & an unregistered user yields proven non-inclusion \\
+\texttt{epoch\_increments} & committing advances the epoch counter \\
+\texttt{search\_serves\_committed\_epoch} & search serves the frozen committed snapshot, never the live tree \\
+\texttt{vrf\_proof\_verifies} & the search VRF proof verifies \\
+\texttt{vrf\_proof\_rejects\_wrong\_user} & a VRF proof for the wrong user is rejected \\
+\midrule
+\texttt{verify\_search\_result\_end\_to\_end} & the full client chain accepts an honest result \\
+\texttt{verify\_search\_result\_non\_inclusion} & an absent value is accepted only with a valid non-inclusion proof \\
+\texttt{verify\_search\_result\_rejects\_wrong\_user} & the VRF label binding rejects a proof for another identity \\
+\texttt{verify\_search\_result\_raw\_dual\_index} & the raw (VRF-less) chain verifies dual-index lookups \\
+\texttt{verify\_search\_result\_against\_binds\_to\_head} & the head-bound verifier rejects a valid proof served against any head other than the caller's pinned, signed head (the C4 binding, \cref{ssec:design-verify}) \\
+\texttt{verify\_many\_users\_end\_to\_end} & the chain holds across a populated directory \\
+\midrule
+\texttt{sth\_signature\_verifies} & a correctly signed tree head is accepted \\
+\texttt{sth\_signature\_rejects\_tampered\_root} & a tampered root breaks the STH signature \\
+\texttt{sth\_signature\_rejects\_wrong\_key} & a foreign signing key is rejected \\
+\texttt{sth\_multiple\_epochs} & heads verify across successive epochs \\
+\midrule
+\texttt{windowed\_consistency} & a windowed consistency proof verifies across epochs \\
+\texttt{windowed\_consistency\_proof\_to\_pins\_upper\_bound} & the proof between two committed heads respects the RFC~9162 $\lceil\lg m\rceil + \lceil\lg n\rceil$ hash bound \\
+\midrule
+\texttt{update\_raw\_is\_write\_once} & a second write to an occupied raw label is rejected (\texttt{WriteOnceViolation}) and the directory is unchanged \\
+\texttt{update\_raw\_unchecked\_bypasses\_write\_once} & the explicit malicious-server path does overwrite --- the bypass the transition audit must catch \\
+\texttt{epoch\_delta\_records\_inserts\_and\_rotations} & each epoch's declared delta records VRF inserts, raw inserts, and rotations \\
+\texttt{attack\_remove\_raw\_is\_not\_declared} & a raw deletion changes the committed root but never appears in the declared delta --- exactly the mismatch the transition audit detects \\
+\midrule
+\texttt{equivocate\_produces\_conflicting\_signed\_head} & the test server can mint two validly signed heads at one epoch (the A4 fixture) \\
+\texttt{equivocate\_requires\_committed\_epoch} & equivocation requires a committed epoch to fork from \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Rust tests --- auditor, warning monitor, and continuous mode (\num{22} tests).}
+\label{tab:tests-rust-system}
+\footnotesize
+\begin{tabular}{@{}llp{7.0cm}@{}}
+\toprule
+Module & Test & Property checked \\
+\midrule
+\texttt{auditor} & \texttt{honest\_server\_audits\_clean\_across\_epochs} & an honest server passes epoch-by-epoch auditing \\
+\texttt{auditor} & \texttt{transition\_audit\_passes\_for\_honest\_directory} & the declared delta replays to the committed root for an honest directory \\
+\texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_deletion} & a deleted leaf makes the replay diverge and alarm \\
+\texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_modification} & an in-place modification likewise diverges and alarms \\
+\texttt{auditor} & \texttt{audit\_rejects\_unsigned\_or\_foreign\_sth} & an unsigned or foreign-key head is rejected before auditing \\
+\texttt{auditor} & \texttt{audit\_requires\_committed\_epoch} & auditing requires a committed epoch \\
+\texttt{auditor} & \texttt{detect\_fork\_flags\_same\_epoch\_different\_root} & two validly signed roots at one epoch are reported as a fork \\
+\texttt{auditor} & \texttt{detect\_fork\_accepts\_consistent\_head} & a consistent cross-vantage head is not misreported \\
+\texttt{auditor} & \texttt{detect\_fork\_rejects\_unsigned\_head} & a divergent head with an invalid signature is not misclassified as a fork \\
+\texttt{auditor} & \texttt{equivocation\_is\_detected\_as\_fork} & the end-to-end A4 equivocation is caught \\
+\texttt{auditor} & \texttt{sth\_timestamp\_is\_signed} & the timestamp is inside the signed message, so freshness cannot be forged \\
+\midrule
+\texttt{monitor} & \texttt{persistence\_check\_passes\_while\_warning\_persists} & a committed warning that remains present passes the persistence re-check \\
+\texttt{monitor} & \texttt{persistence\_check\_produces\_verifiable\_deletion\_evidence} & on deletion, the assembled bundle (inclusion + proven non-inclusion + consistency) verifies against the server's own signatures \\
+\midrule
+\texttt{cea} & \texttt{honest\_parties\_agree\_each\_epoch} & both chains derive the same label and fingerprint every epoch \\
+\texttt{cea} & \texttt{labels\_evolve\_with\_the\_ratchet} & labels change as the chained secret advances \\
+\texttt{cea} & \texttt{injected\_fork\_detected\_then\_cascades} & an injected ratchet key yields a conflicting fingerprint at the agreed label; later epochs cascade to \textsc{NotPosted} \\
+\texttt{cea} & \texttt{end\_to\_end\_via\_log} & the full register-then-verify round trip runs over the real log \\
+\texttt{cea} & \texttt{cea\_register\_verify\_honest\_advances\_both\_chains} & sender and receiver advance only after the confirmed write and the successful verify, respectively \\
+\texttt{cea} & \texttt{cea\_verify\_does\_not\_advance\_on\_fork} & a fork verdict leaves the receiver's chain untouched \\
+\texttt{cea} & \texttt{cea\_verify\_does\_not\_advance\_when\_not\_posted} & a pending lookup leaves the chain untouched, so the check can be retried \\
+\texttt{cea} & \texttt{cea\_register\_detects\_occupied\_label\_as\_impersonation} & the ACKA sender-side pre-post check: an occupied label raises an alert \\
+\texttt{cea} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte fingerprint agreement with the TypeScript implementation \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % ----------------------------------------------------------------------------
-\section{TypeScript (Signal Desktop) tests}\label{sec:tests-ts}
+\section{TypeScript (Signal Desktop) Jest suite}\label{sec:tests-ts}
 
-The embedded client is covered by a Jest suite in two parts. A \emph{wire-parity} suite runs the
-full client verification chain against the live Rust server and confirms: multi-entry inclusion,
-proven non-inclusion, the Ed25519 signed-tree-head check and its rejection of a tampered head, the
-VRF path, and windowed consistency. A set of \emph{unit} suites back a test double onto a real
-in-process \texttt{KTServer} --- a genuine prefix tree, Merkle log, ECVRF, and Ed25519 signer --- and
-exercise: key-substitution detection (verdicts \texttt{SAFE}, key mismatch, and proven not-in-log),
-the own-key self-check against a server overwrite, man-in-the-middle detection on a replaced lookup
-slot, and the availability-versus-integrity routing that distinguishes an unreachable server (amber)
-from a detected attack (red).
+The embedded client is covered by \num{54} Jest tests in six suites, of two kinds. The
+\emph{wire-parity} suite runs the full client verification chain against the live Rust server over
+the network; the \emph{integration} suite and the four \emph{unit} suites back a test double onto a
+real in-process \texttt{KTServer} --- a genuine prefix tree, Merkle log, ECVRF, and Ed25519 signer
+--- so that every TypeScript check is exercised against real cryptography rather than mocks.
+\Cref{tab:tests-jest-wire} lists the wire-parity and integration tests;
+\cref{tab:tests-jest-unit} lists the four unit suites.
+
+\begin{table}[H]
+\centering
+\caption{Jest tests --- wire parity against the live Rust server, and the integration suite (\num{29} tests).}
+\label{tab:tests-jest-wire}
+\footnotesize
+\begin{tabular}{@{}lp{10.2cm}@{}}
+\toprule
+Suite & Test \\
+\midrule
+\texttt{wire\_parity} & multi-entry dual-index inclusion proofs verify \\
+\texttt{wire\_parity} & proven non-inclusion verifies (value null, chain valid) \\
+\texttt{wire\_parity} & STH Ed25519 signature verifies; tamper is rejected \\
+\texttt{wire\_parity} & VRF path: \texttt{searchByUserId} proof verifies under the server VRF key \\
+\texttt{wire\_parity} & windowed consistency proof verifies across a gap \\
+\midrule
+\texttt{kt\_integration} & domain separation produces different hashes \\
+\texttt{kt\_integration} & empty hash is deterministic \\
+\texttt{kt\_integration} & SHA-256 concatenates inputs \\
+\texttt{kt\_integration} & append and root hash \\
+\texttt{kt\_integration} & inclusion proof verifies \\
+\texttt{kt\_integration} & inclusion proof fails for wrong data \\
+\texttt{kt\_integration} & insert and search \\
+\texttt{kt\_integration} & non-inclusion proof for absent label \\
+\texttt{kt\_integration} & proof verifies against root \\
+\texttt{kt\_integration} & non-inclusion proof verifies \\
+\texttt{kt\_integration} & label symmetry between Alice and Bob \\
+\texttt{kt\_integration} & different shared secrets produce different labels \\
+\texttt{kt\_integration} & update and search round trip \\
+\texttt{kt\_integration} & non-existent user returns null \\
+\texttt{kt\_integration} & \texttt{commitEpoch} increments the epoch \\
+\texttt{kt\_integration} & register and verify --- honest scenario \\
+\texttt{kt\_integration} & detect key mismatch --- MitM scenario \\
+\texttt{kt\_integration} & key not in log --- first contact \\
+\texttt{kt\_integration} & dual-index MitM detection --- honest case \\
+\texttt{kt\_integration} & windowed catch-up after an offline period \\
+\texttt{kt\_integration} & cross-implementation vector v1 (alice/bob) \\
+\texttt{kt\_integration} & cross-implementation vector v3 (fixed-width 16-byte ids) \\
+\texttt{kt\_integration} & tampered proof and wrong alpha are rejected \\
+\texttt{kt\_integration} & \texttt{vrfVerify} binds $\beta$ to the label (hash argument) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Jest tests --- client unit suites (\num{25} tests).}
+\label{tab:tests-jest-unit}
+\footnotesize
+\begin{tabular}{@{}lp{10.2cm}@{}}
+\toprule
+Suite & Test \\
+\midrule
+\texttt{remote\_kt\_client} & \textsc{safe} when the fetched key matches the logged key \\
+\texttt{remote\_kt\_client} & \textsc{key\_mismatch} when the fetched key differs from the logged key \\
+\texttt{remote\_kt\_client} & \textsc{key\_not\_in\_log} (proven non-inclusion) for an unregistered peer \\
+\texttt{remote\_kt\_client} & \texttt{matches=true} after honest registration \\
+\texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites our slot \\
+\texttt{remote\_kt\_client} & null (safe) when the own lookup slot is intact and the warning slot is empty \\
+\texttt{remote\_kt\_client} & returns a warning when our lookup slot was replaced \\
+\texttt{remote\_kt\_client} & green on a clean conversation \\
+\texttt{remote\_kt\_client} & red when the per-conversation lookup slot is replaced \\
+\texttt{remote\_kt\_client} & true on a validly signed head (TOFU baseline) \\
+\texttt{remote\_kt\_client} & false when the head carries a bad signature (foreign key) \\
+\midrule
+\texttt{background\_monitor} & \texttt{emitToSignalUI} fires \texttt{kt:warning} (DOM) and does not touch the Whisper bus \\
+\texttt{background\_monitor} & \texttt{emitOfflineToSignalUI} fires \texttt{kt:unreachable} only (never a MitM alert) \\
+\texttt{background\_monitor} & server unreachable $\to$ \texttt{kt:unreachable}, not a red MitM alert \\
+\texttt{background\_monitor} & error from a server that did respond $\to$ red (\texttt{kt:warning}) \\
+\texttt{background\_monitor} & own key replaced (\texttt{matches=false}) $\to$ red \\
+\texttt{background\_monitor} & own key intact (\texttt{matches=true}) $\to$ no alert at all \\
+\midrule
+\texttt{cea} & honest parties agree each epoch (fold secret $I$, authenticate public $T$) \\
+\texttt{cea} & labels evolve with the ratchet \\
+\texttt{cea} & injected fork detected at the agreed label, then cascades to \textsc{NotPosted} \\
+\texttt{cea} & verdicts: \textsc{Consistent} / \textsc{Fork} / \textsc{NotPosted} returned as specified \\
+\texttt{cea} & cross-implementation vectors (locked with the Rust suite) \\
+\midrule
+\texttt{secret\_store} & the pair key is order-independent ($A{,}B = B{,}A$) and 32 bytes \\
+\texttt{secret\_store} & the derived secret is deterministic and depends on the key pair \\
+\texttt{secret\_store} & remember / has / conversations / forget round trip \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % ----------------------------------------------------------------------------
 \section{Cross-language equivalence vectors}\label{sec:tests-xlang}
 
-A fixed set of test vectors fixes the HKDF dual-index derivation and the CEA construction
-byte-for-byte across the Rust and TypeScript implementations, and the Ed25519 and Merkle
-computations are checked to agree; this is the contract that licenses the TypeScript client as a
-faithful verifier of the Rust server's outputs (\cref{sec:impl-tests}).
+A fixed set of test vectors pins the HKDF dual-index derivation and the CEA construction
+byte-for-byte across the Rust and TypeScript implementations: on the Rust side,
+\texttt{dual\_index::cross\_impl\_test\_vectors} and \texttt{cea::cross\_impl\_test\_vectors}
+(\cref{tab:tests-rust-prim,tab:tests-rust-system}); on the TypeScript side, the
+\texttt{kt\_integration} vectors v1 and v3 and the \texttt{cea} vector test
+(\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The Ed25519 and Merkle computations are checked to
+agree by the wire-parity suite, which verifies the Rust server's live outputs with the TypeScript
+verifiers. Together these are the contract that licenses the TypeScript client as a faithful
+verifier of the Rust server's outputs (\cref{sec:impl-tests}).
 
 % ----------------------------------------------------------------------------
 \section{Adversarial scenario suite}\label{sec:tests-adversarial}
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \caption{End-to-end adversarial scenarios (\cref{ch:threat}) and their verdicts.}
 \label{tab:tests-adversarial}
