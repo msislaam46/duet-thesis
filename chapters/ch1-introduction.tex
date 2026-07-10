@@ -2,45 +2,24 @@
 
 \section{Motivation}\label{sec:intro-motivation}
 
-End-to-end encryption protects a message in transit, but its guarantee is only as strong as the
-public keys the two parties believe they are using. In every deployed encrypted messenger those keys
-are distributed by a server: to start a conversation, a client fetches the recipient's key material
-from the provider's directory and trusts that what it received is genuine. That trust is the weak
-point. A compromised, coerced, or simply malicious directory can hand a client the attacker's key in
-place of the recipient's, and the encryption then protects a channel to the attacker --- a
-key-substitution, or ``fake-key,'' attack that is invisible to the cryptography itself.
+End-to-end encryption protects a message in transit, but its guarantee is only as strong as the public keys the two parties believe they are using. In every deployed encrypted messenger those keys are distributed by a server: to start a conversation, a client fetches the recipient's key material from the provider's directory and trusts that what it received is genuine. That trust is a weak point. A compromised, coerced, or simply malicious directory can hand a client the attacker's key in place of the recipient's, and the encryption then protects a channel to the attacker resulting in a key-substitution, or ``fake-key,'' attack that is invisible to the cryptography itself.
 
-The traditional defence is the manual \emph{safety-number} comparison: the two users read a code
-to each other out of band and confirm it matches. It works in principle but fails in practice,
-because it depends on a human ritual that people do not perform. In one study only about 14\% of
-users completed the ceremony without guidance~\cite{vaziripour2017}, and even a successful comparison
-is a one-off check that says nothing about whether a key changes later. \emph{Key
-transparency} (publishing the directory as a verifiable, append-only log so that clients can check
-their keys against a public, consistent record) is the response the field has converged on, and it
-now ships in production systems, most recently as Signal's optional Automatic Key
-Verification~\cite{signal-akv}. But deployed key transparency still leaves the decisive check to
-\emph{self-monitoring}: a lookup can confirm that a fetched key matches the log, yet a key
-substituted \emph{in the log itself} is noticed only by its owner, and there is no automatic,
-in-band channel by which the \emph{peer} on the other side of a conversation is warned that the
-key they are about to trust is wrong. The verification burden, in the end, still falls on the
-user.
+The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. It works in principle but fails in practice because it depends on a human ritual that people rarely perform. In one study, only about 14\% of users completed the ceremony without guidance~\cite{vaziripour2017}, and even a successful comparison is a one-off check that says nothing about whether a key changes later. \emph{Key
+transparency} (publishing the directory as a verifiable, append-only log so that clients can check their keys against a public, consistent record) is the response the field has converged on, and production systems, such as Signal's Automatic Key Verification, have started deploying it~\cite{signal-akv}.
 
-This thesis addresses that gap. It asks whether key substitution can be made \emph{automatically}
-detectable, \emph{in band}, and at a cost a real messaging service could afford --- so that the
-directory checks the keys on the users' behalf rather than asking the users to check them. The
-scheme it develops in answer, DUET (\emph{DU}al-index, \emph{E}poch-windowed \emph{T}ransparency),
-applies to any messenger with a semi-trusted key directory and is demonstrated through an
-integration into the Signal Desktop client.
+However, deployed key transparency architectures still leave two critical gaps. \emph{First}, detection is reduced entirely to \emph{self-monitoring}. While a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner; there is no automatic, in-band channel to warn the communicating \emph{peer} that the key they are about to trust is compromised. \emph{Second}, returning clients face an offline monitoring cost that grows linearly with the number of missed epochs.
+
+This thesis directly addresses both limitations. It asks whether key substitution can be made \emph{automatically} detectable, \emph{in band}, and at a cost a real messaging service could afford, so that the \textbf{messaging client automatically verifies the keys in the background}, rather than relying on users to perform manual ceremonies. The scheme it develops in answer, DUET (\emph{DU}al-index, \emph{E}poch-windowed \emph{T}ransparency), applies to any messenger with a semi-trusted key directory and is demonstrated through an integration into the Signal Desktop client.
 
 \section{Aims and objectives}\label{sec:intro-aims}
 
 \paragraph{Thesis statement.} The central claim this dissertation defends is that automatic, in-band
 detection of key substitution can be added to a deployed messaging key directory at essentially the
-asymptotic cost the directory already pays --- without a manual user ceremony, without enlarging the
-lookup proof, and without imposing an offline-catch-up cost that grows with the time a client spends
+asymptotic cost the directory already pays without a manual user ceremony, without enlarging the
+lookup proof, and without imposing an offline catch-up cost that grows with the time a client spends
 away.
 
-\paragraph{Research questions.} The work is organised around four research questions, each answered by
+\paragraph{Research questions.} The work is organized around four research questions, each answered by
 a specific later chapter:
 
 \begin{description}
@@ -62,7 +41,7 @@ a specific later chapter:
 
 \section{Contributions}\label{sec:intro-contributions}
 
-The contributions fall into four kinds.
+This thesis makes four principal contributions:
 
 \paragraph{Conceptual.} A \emph{dual-index warning scheme}: a per-conversation construction that gives
 each pair of users a shared, HKDF-derived warning slot in the directory that either party can raise
