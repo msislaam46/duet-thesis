@@ -144,7 +144,7 @@ Threat & KT control & Residual \\
 \midrule
 Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
 Server fabricates a tree head & consistency-proof chain + Ed25519 STH & none (cryptographic) \\
-Client escalates to server writes & server validates write permissions & application-level control \\
+Client escalates to server writes & write-once policy rejects overwrites of occupied labels & authenticated writes left to deployment (empty-slot squatting; \cref{ch:discussion}) \\
 \bottomrule
 \end{tabular}
 \end{table}

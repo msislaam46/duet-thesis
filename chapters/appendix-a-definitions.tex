@@ -153,6 +153,24 @@ Lookups are always served against the last committed epoch, never the live tree.
 \cref{ssec:design-epoch}.
 \end{definition}
 
+\begin{definition}[Declared update set and transition audit]\label{def:epoch-delta}
+\intuition{Every commit publishes the exact list of changes it made; an auditor replays that list and
+checks it reproduces the committed directory --- so a deletion, which the list cannot even express,
+is caught.}
+Each $\mathsf{commit}$ freezes a \emph{declared update set} $\Delta_t$: the epoch's
+$\textsf{Insert}(\ell,\mathit{value})$ operations on fresh labels and
+$\textsf{Rotate}(\ell,\mathit{value}_{\mathrm{old}},\mathit{value})$ operations, each rotation
+disclosing the exact value it replaces; the format cannot express a deletion. The \emph{transition
+audit} replays $\Delta_t$ onto the directory of the previous committed root $\prefroot{t-1}$,
+requiring every \textsf{Insert} label to be proven absent there and every \textsf{Rotate} label to
+be proven present with exactly the declared prior value, and accepts iff the result equals the
+committed $\prefroot{t}$ --- so any undeclared mutation, in particular any deletion, makes the
+replay diverge. Because labels are opaque, the audit guarantees that no mutation is silent rather
+than that every declared rotation is lawful; a declared overwrite of a write-once label is forced
+into the open, where the label's owner detects it. Specified in \cref{ssec:design-detection};
+realised by \textsf{AuditTransition} (\cref{alg:auditor}).
+\end{definition}
+
 \begin{definition}[Windowed consistency proof]\label{def:windowed}
 \intuition{A single consistency proof that lets a long-absent client re-synchronise in one step,
 rather than one proof per missed epoch.}
@@ -236,8 +254,14 @@ deliberately asymmetric. Specified in \cref{ssec:design-labels}.
 \intuition{A party publishes its key at its own lookup slot, and raises the alarm by writing to the
 shared warning slot.}
 $\mathsf{Register}(\lblself,\mathit{pk})$ binds the party's public key at its own lookup label in the
-directory. $\mathsf{WriteWarning}(\lblwarn)$ writes a non-empty value to the shared warning slot.
-Both take effect at the next committed epoch (\cref{def:epoch}). Specified in
+directory. $\mathsf{WriteWarning}(\lblwarn)$ writes a non-empty alert payload to the shared warning
+slot, authenticated by a MAC under a pair-bound key expanded from $\mathit{PRK}$ with the info string
+\texttt{"warn-mac"} and the canonically ordered identities, so that a reader can distinguish a
+peer-authored warning from operator-injected data (\cref{alg:dualindex}). The slot is write-once: an
+occupied slot is left in place, since its value already alerts both monitors, and the directory's
+raw-label interface rejects overwrites (\cref{def:epoch-delta}). Once the write commits, the writer
+retains inclusion evidence for the persistence check (\cref{def:deletion-evidence}).
+Both operations take effect at the next committed epoch (\cref{def:epoch}). Specified in
 \cref{ssec:design-detection}.
 \end{definition}
 
@@ -247,9 +271,25 @@ Both take effect at the next committed epoch (\cref{def:epoch}). Specified in
 $\mathsf{CheckWarning}(\lblwarn,\STH_t)$ returns \textsc{raised} if an inclusion proof binds a
 non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{clear} if a non-inclusion proof
 (\cref{def:noninclusion}) establishes the slot is empty; a response with neither valid proof is
-rejected. A peer key is accepted only when the peer-lookup proof verifies through the chain of
-\cref{ssec:design-verify} and $\mathsf{CheckWarning}$ returns \textsc{clear}. Specified in
-\cref{ssec:design-verify}.
+rejected. The \textsc{raised} verdict does not depend on the payload MAC of
+\cref{def:dualindex-write}: a value whose MAC verifies is an authentic peer warning, while
+unauthenticated data at a slot only the two parties can derive is itself evidence of misbehaviour,
+so either alerts (\cref{alg:dualindex}). A peer key is accepted only when the peer-lookup proof
+verifies through the chain of \cref{ssec:design-verify} and $\mathsf{CheckWarning}$ returns
+\textsc{clear}. Specified in \cref{ssec:design-verify}.
+\end{definition}
+
+\begin{definition}[Deletion evidence]\label{def:deletion-evidence}
+\intuition{A writer that keeps the proof of its committed warning can later \emph{prove} the server
+deleted it, using only the server's own signatures.}
+When a warning commits at epoch $w$, its writer retains the signed tree head $\STH_w$ and the
+inclusion proof of $\lblwarn$ under it. If a later verified lookup under a head $\STH_{t}$ ($t>w$)
+yields proven non-inclusion at $\lblwarn$, the bundle consisting of the retained inclusion proof
+under $\STH_w$, the non-inclusion proof under $\STH_t$, and the consistency proof
+$\pcons(\STH_w.\mathit{size},\STH_t.\mathit{size})$ verifies entirely against the operator's own
+signatures and constitutes non-repudiable, publishable proof that a committed leaf was removed.
+Specified in \cref{ssec:design-detection}; realised by \textsf{PersistenceCheck}
+(\cref{alg:detect}).
 \end{definition}
 
 \begin{definition}[Dual-index detection experiment]\label{def:dualindex-detect}

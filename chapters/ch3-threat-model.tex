@@ -59,9 +59,12 @@ throughout: that the two are a single, possibly malicious, operator, which avoid
 relying on any assumption that they do not collude.
 
 The \textbf{auditors} are independent parties that observe the log from a second
-vantage point and cross-check the tree heads the server publishes. Their role in
-this model is limited to fork detection (scenario A4); no other guarantee depends
-on them, a separation made precise in \cref{sec:threat-assumptions}.
+vantage point, cross-check the tree heads the server publishes, and replay each
+epoch's declared update set against the committed directory root (the per-epoch
+transition audit of \cref{ch:design}). Their role in this model is fork detection
+(scenario A4) and binding a malicious operator to declare every cross-epoch
+mutation; the dual-index warning itself depends on neither, a separation made
+precise in \cref{sec:threat-assumptions}.
 
 The interactions between these actors define three trust boundaries
 (\cref{fig:threat-arch}). The
@@ -175,7 +178,11 @@ faithfully record the warning that exposes it, so it drops the write. The design
 treats the combination of a detected substitution and a suppressed write as a
 signal in itself, since a server cannot serve a clean directory while selectively
 dropping only the writes that would incriminate it without that selectivity being
-observable.
+observable. A2 also covers the stronger, delayed form of censorship: a server that
+first commits the warning and then removes it in a later epoch. Such a deletion is
+inexpressible in the epoch's declared update set, so it diverges the auditor's
+transition replay, and the warning's writer retains the proofs that turn the
+disappearance into publishable evidence (\cref{ch:design}).
 
 \paragraph{A3 --- network man-in-the-middle.} With no server collusion, a
 Dolev--Yao adversary substitutes a key in the bundle in transit. The two parties
@@ -285,13 +292,17 @@ compromised; this is the X1 boundary, and lifting it places the situation outsid
 the scope of any key-transparency guarantee.
 
 The \textbf{auditor assumption} differs from the other assumptions and is
-therefore stated separately. At least one honest auditor is assumed, for fork
-detection only. This is required solely for scenario A4: detecting an equivocating
+therefore stated separately. At least one honest auditor is assumed, for two
+functions. The first is fork detection (scenario A4): detecting an equivocating
 server requires a second, independent vantage point against which to compare tree
-heads. It is not required for the dual-index warning mechanism. Detection of
+heads. The second is the per-epoch transition audit (\cref{ch:design}), which
+binds a malicious operator to declare every cross-epoch mutation and thereby
+catches the delayed warning deletion of A2's strong form; the warning's writer
+independently retains deletion evidence that requires no auditor. Neither
+function is required for the dual-index warning mechanism itself. Detection of
 server-side substitution (A1) and network man-in-the-middle (A3) is performed by
-the communicating clients and depends on no auditor. These two claims are
-distinct: the warning mechanism does not inherit the auditor-honesty assumption.
+the communicating clients and depends on no auditor. These claims are distinct:
+the warning mechanism does not inherit the auditor-honesty assumption.
 
 Finally, the model follows a trust-on-first-use (TOFU) approach, as discussed in
 \cref{sec:threat-fair}. The peer-side detection mechanism introduced in
@@ -320,8 +331,8 @@ offline victim remains covered.
 
 \paragraph{G2 --- Consistency across offline windows.} A client returning after an
 offline period can confirm that the log it now sees is an append-only extension of
-the one it last verified, at a cost that does not grow with the length of the
-absence. This property ensures that intermittent connectivity does not impose a
+the one it last verified, at a cost bounded by the endpoint log sizes rather than
+growing with the length of the absence. This property ensures that intermittent connectivity does not impose a
 growing verification burden on returning clients.
 
 \paragraph{G3 --- Directory privacy.} The mapping between a user's identity and its

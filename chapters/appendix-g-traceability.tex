@@ -17,7 +17,7 @@ RQ & Design claim & Mechanism & Test / scenario & Benchmark & Evidence \\
 \midrule
 RQ1 & substitution is detected automatically, in band, by both parties &
 dual-index warning scheme (\cref{sec:design-dual}) &
-scenarios A1--A5 (\cref{tab:tests-adversarial}); \texttt{dual\_index} label tests (\cref{tab:tests-rust}) &
+scenarios A1--A5 (\cref{tab:tests-adversarial}); \texttt{dual\_index} label tests (\cref{tab:tests-rust-prim}) &
 M5, M6 & \cref{sec:eval-security}: all scenarios pass, FP $=0$ \\
 RQ2 & detection adds no proof-size overhead; verification is cheap and scale-independent &
 combined-tree verification chain (\cref{ssec:design-verify}) &
@@ -25,7 +25,7 @@ combined-tree verification chain (\cref{ssec:design-verify}) &
 M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 816\,B @ $10^6$; $\approx$\SI{132}{\micro\second} flat \\
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
-\texttt{merkle\_log} exhaustive consistency; \texttt{windowed\_consistency} (\cref{tab:tests-rust}) &
+\texttt{merkle\_log} exhaustive consistency; \texttt{windowed\_consistency} (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
 M4 & \cref{ssec:eval-catchup}: 320\,B @ $W{=}720$, ratio $\approx W$ \\
 RQ4 & the scheme integrates into a real deployed client at practical cost &
 TypeScript verifier + lifecycle hooks (\cref{sec:impl-signal}) &
@@ -40,6 +40,10 @@ M12 & \cref{ssec:eval-auditor}: \SI{27.6}{\micro\second}/check \\
 CEA continuous mode (\cref{ssec:design-modes}) &
 M13 mode benchmark (\cref{sec:bench-modes}) &
 M13 & \cref{ssec:eval-modes}: plateau at $720\times$ \\
+--- & a committed warning cannot be removed silently &
+write-once policy + transition audit + persistence evidence (\cref{ssec:design-detection}) &
+\texttt{update\_raw\_is\_write\_once}, \texttt{attack\_remove\_raw\_is\_not\_declared} (\cref{tab:tests-rust-server}); transition-audit and deletion-evidence tests (\cref{tab:tests-rust-system}); scenario A2 &
+--- & \cref{sec:eval-security}: A2 detected \\
 \bottomrule
 \end{tabular}
 \end{table}

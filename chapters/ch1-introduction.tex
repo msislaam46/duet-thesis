@@ -54,8 +54,8 @@ precisely as detection over a semi-trusted directory rather than prevention.
 \paragraph{Cryptographic.} A \emph{windowed consistency proof} that lets an offline client re-verify
 the log in a single proof whose size is bounded by the endpoint log sizes and is independent of the
 number of missed epochs (\cref{sec:design-windowed}, \cref{lem:windowed-size}), and a formal
-detection experiment for the dual-index scheme, reduced to standard assumptions
-(\cref{def:dualindex-detect}).
+detection experiment for the dual-index scheme, stated over standard assumptions with a reduction
+sketch, the full reduction being left as future work (\cref{def:dualindex-detect}).
 
 \paragraph{Systems.} A complete implementation in two independent layers held to byte-for-byte
 parity: a standalone Rust reference implementation (the \texttt{kt} crate, an HTTP directory server,
@@ -79,4 +79,9 @@ ACKA. \Cref{ch:impl} describes the two-layer implementation and its integration 
 \Cref{ch:eval} evaluates the system empirically and against the threat model, and draws out the
 implications for deployment. \Cref{ch:discussion} discusses results, limitations, and future work;
 \cref{ch:lsepi} covers the legal, social, ethical, and professional dimensions; and
-\cref{ch:conclusion} concludes.
+\cref{ch:conclusion} concludes. Supporting material is collected in the appendices: formal
+definitions (\cref{app:definitions}), algorithms (\cref{app:algorithms}), the implementation and
+API reference (\cref{app:apiref}), the test catalogue (\cref{app:tests}), the full benchmark
+results (\cref{app:benchmarks}), the security-analysis tables (\cref{app:security}), a traceability
+matrix linking each claim to its mechanism, test, and evidence (\cref{app:traceability}), and a
+glossary of terms (\cref{app:glossary}).
