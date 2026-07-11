@@ -13,8 +13,8 @@ To do so it instantiated the abstract log component of the ACKA framework as a c
 directory --- an append-only Merkle log over a path-compressed sparse prefix tree, with ECVRF-derived
 labels and an Ed25519 signed tree head, following the IETF KeyTrans draft --- and added two mechanisms
 on top of it. The dual-index warning scheme (\cref{ch:design}) gives each conversation a shared
-warning slot that either party can raise and neither the server can forge in advance nor censor after
-the fact, turning a silent substitution into a detectable one. The windowed consistency proof lets a
+warning slot that either party can raise and that the server can neither forge in advance nor censor
+undetectably after the fact, turning a silent substitution into a detectable one. The windowed consistency proof lets a
 client that has been offline for a long window catch up with a single short proof rather than one per
 missed epoch. Both were realised in a standalone Rust reference implementation and exercised through a
 verifier embedded in Signal Desktop (\cref{ch:impl}), and both were evaluated against the threat model
@@ -23,8 +23,8 @@ of \cref{ch:threat}.
 The evaluation (\cref{ch:eval}) shows that this detection is added essentially for free. The
 dual-index lookup proof is at size parity with CONIKS while carrying the warning channel CONIKS lacks;
 full client verification is under \SI{150}{\micro\second} and independent of directory size, about
-four times faster than CONIKS at the same scale even though it includes the VRF and signature checks
-that figure omits; a month-long offline catch-up costs a few hundred bytes against the hundreds of
+four times faster than CONIKS at the same scale even though it includes the VRF check that CONIKS's
+figures omit (both totals include the signature check); a month-long offline catch-up costs a few hundred bytes against the hundreds of
 kilobytes naïve monitoring would spend; the detection check itself runs in microseconds with no false
 positives over a thousand clean sessions, and the cross-vantage auditor closes the equivocation case
 at under \SI{30}{\micro\second} per epoch. The adversarial suite detects the full substitution and
@@ -35,7 +35,8 @@ Read against the research questions of \cref{sec:intro-aims}, the evidence is di
 in-band detection) is answered by the dual-index warning and its clean pass across the full
 adversarial suite at a zero false-positive rate; RQ2 (cost) by the \num{816}\,byte proof at parity with CONIKS and the
 $\approx$\SI{132}{\micro\second} verification that is independent of directory size; RQ3 (offline) by
-the \num{320}\,byte month-long catch-up, independent of the window, and RQ4 (deployability) by the
+the \num{320}\,byte month-long catch-up, whose size is bounded by the endpoint log sizes rather than
+the window's length, and RQ4 (deployability) by the
 verifier running inside a fork of the real Signal Desktop client at that measured cost. The thesis
 statement --- that this detection can be added at essentially the cost the directory already pays ---
 is thereby supported on every axis it claimed.

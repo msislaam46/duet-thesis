@@ -31,10 +31,11 @@ GET  & \texttt{/search-by-user-id} & lookup by user identifier, with the VRF pro
 GET  & \texttt{/consistency} & consistency proof between two log sizes (\texttt{from}, \texttt{to}) \\
 GET  & \texttt{/epoch} & current epoch number \\
 GET  & \texttt{/log-root-at} & log root at a given tree size \\
+GET  & \texttt{/epoch-delta} & a committed epoch's declared update set and committed directory root, so a networked auditor can replay the transition (\cref{alg:auditor}) \\
 GET  & \texttt{/vrf-public-key} & operator VRF public key \\
 GET  & \texttt{/sth-public-key} & operator STH signing public key \\
 POST & \texttt{/register} & register a user's key (server derives the VRF label) \\
-POST & \texttt{/update-raw} & write a client-derived (dual-index) label$\to$value \\
+POST & \texttt{/update-raw} & write a client-derived (dual-index) label$\to$value; the public surface is write-once, so an occupied label is rejected with \texttt{409 Conflict} (\cref{ssec:design-detection}) \\
 POST & \texttt{/commit} & close the current epoch and sign a new STH \\
 GET  & \texttt{/health} & liveness probe \\
 GET  & \texttt{/dashboard}, \texttt{/internals}, \texttt{/integration}, \texttt{/threats} & served visualization and threat-model pages \\
@@ -59,7 +60,8 @@ behind account-layer authorization. \Cref{tab:apiref-admin} lists them.
 \toprule
 Method & Path & Purpose \\
 \midrule
-POST & \texttt{/admin/update} & overwrite a slot's value (stages A1/A5 substitution) \\
+POST & \texttt{/admin/update} & overwrite a slot's value, bypassing the public write-once policy; the overwrite is still declared in the epoch delta as a rotation (stages A1/A5 substitution) \\
+POST & \texttt{/admin/delete} & remove a committed leaf \emph{without} declaring it in the epoch delta, so the auditor's transition replay fails (stages the suppression-by-deletion scenario) \\
 POST & \texttt{/admin/commit} & commit an epoch \\
 POST & \texttt{/admin/equivocate} & sign a second, divergent head at one epoch (stages A4) \\
 POST & \texttt{/admin/stop-equivocate} & clear the forked head \\

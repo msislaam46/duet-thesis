@@ -28,8 +28,11 @@ registration-metadata link. The scheme does not prevent either overwrite --- a s
 rewrite its own database. Detection instead rests on two facts established in \cref{ch:design}. The
 warning slot is derived by an independent HKDF label, so knowledge of a lookup label yields no
 ability to compute the warning label, and once a warning is committed the server cannot hide it
-without a total, observable write outage (proven non-inclusion turns censorship into a visible
-denial of service). And under an active network man-in-the-middle, the two parties derive their
+silently: refusing to serve it is a total, observable write outage (proven non-inclusion turns
+censorship into a visible denial of service), and removing it in a later epoch is a deletion the
+declared update set cannot express, so the transition audit catches the divergent replay and the
+writer's persistence check converts the disappearance into publishable evidence
+(\cref{ssec:design-detection}). And under an active network man-in-the-middle, the two parties derive their
 labels from divergent shared secrets; the attacker, lacking the true secret, cannot predict the
 victim's expected warning label and so faces an empty slot it cannot fill with a valid inclusion
 proof. Detection is therefore a property of where the keys must live, not of the server's good
@@ -110,8 +113,11 @@ a shared prefix, cannot be detected by any lone client and relies on the cross-v
 definitions and the adversarial scenario suite, not a complete cryptographic reduction. A combined
 ``dual-CEAsec'' game and its reduction to collision resistance and VRF pseudorandomness are stated as
 an obligation rather than discharged. A further practical limitation is warning-channel abuse: a
-malicious peer can write spurious warnings, a relationship-scoped false-positive nuisance that a
-production system would blunt with rate limiting and signed warning payloads.
+malicious peer can write spurious warnings, a relationship-scoped false-positive nuisance. The
+implemented payload MAC (\cref{ch:design}) authenticates the operator boundary --- a reader can
+distinguish a peer-authored warning from operator-injected noise --- but cannot help here, because
+an abusive peer holds the shared secret and can mint valid MACs; a production system would blunt
+this with rate limiting and per-sender signed warning payloads.
 
 % ============================================================================
 \section{Future work}\label{sec:disc-future}

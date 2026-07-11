@@ -6,8 +6,11 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
 \begin{description}
 \item[ACKA] Authenticated Continuous Key Agreement, the framework of Dowling and Hale whose abstract
   log component this work instantiates and measures (\cref{def:cka}).
-\item[Auditor] An independent party that observes the log from a second vantage point and cross-checks
-  signed tree heads; required only for fork detection (\cref{app:algorithms}, Algorithm~7).
+\item[AKV] Automatic Key Verification, Signal's deployed key-transparency lookup check; it verifies a
+  fetched key against the log but carries no peer-warning channel.
+\item[Auditor] An independent party that observes the log from a second vantage point, cross-checks
+  signed tree heads (fork detection), and replays each epoch's declared update set against the
+  committed root (the transition audit) (\cref{def:epoch-delta}, \cref{alg:auditor}).
 \item[CEA / CEAsec] Continuous entity authentication and its security notion within
   ACKA; the continuous operating mode realises detection in this style.
 \item[CKA] Continuous Key Agreement, the abstraction of a ratcheting protocol as a stream of evolving
@@ -16,6 +19,12 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
   directory; the closest published design point for proof size.
 \item[Consistency proof] A short proof that a later log is an append-only extension of an earlier one
   (\cref{def:consistency}).
+\item[Declared update set (epoch delta)] The exact list of inserts and value-disclosing rotations a
+  commit made, published per epoch for auditor replay; the format cannot express a deletion
+  (\cref{def:epoch-delta}).
+\item[Deletion evidence] The verifiable bundle (inclusion proof at commit, later proven
+  non-inclusion, and the consistency proof between the two heads) by which a warning's writer proves
+  the operator removed a committed leaf (\cref{def:deletion-evidence}).
 \item[Dolev--Yao] The standard active-network adversary model: full control of the wire (intercept,
   modify, inject, delete, replay).
 \item[Double Ratchet] Signal's per-message key-ratcheting algorithm (\cref{def:doubleratchet}).
@@ -50,6 +59,9 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
 \item[Prefix tree] A sparse Merkle tree over the space of 256-bit labels, storing the current
   directory (\cref{def:prefix-tree}).
 \item[PQXDH] The post-quantum variant of X3DH, augmenting the handshake with a KEM.
+\item[Safety number] Signal's manual verification code: a 60-digit fingerprint of the two parties'
+  identity keys and account identifiers that users are expected to compare out of band; the ceremony
+  the dual-index warning automates away.
 \item[SEEMless] A key-transparency system built on an append-only zero-knowledge set (aZKS); ships
   multi-path lookup proofs.
 \item[STH] Signed Tree Head: the operator's signed commitment to the log root at an epoch
@@ -59,12 +71,18 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
   \cref{app:security}.
 \item[TOFU] Trust-on-first-use: the initial key is accepted on faith; a limitation inherited from the
   underlying protocol.
+\item[Transition audit] The auditor's per-epoch replay of the declared update set against the
+  previous committed root, which catches any undeclared mutation --- in particular a deletion
+  (\cref{def:epoch-delta}, \cref{alg:auditor}).
 \item[VKD] Verifiable Key Directory, the general term for a key directory serving cryptographic proofs
   of its answers.
 \item[VRF] Verifiable Random Function: a keyed function whose outputs are pseudorandom to outsiders
   yet provably correct (\cref{def:vrf,def:vrf-security}).
 \item[Windowed consistency proof] A single consistency proof spanning an entire offline window,
   logarithmic rather than linear in its length (\cref{def:windowed}, \cref{lem:windowed-size}).
+\item[Write-once policy] The directory's raw-label interface rejects a write to an occupied
+  dual-index, CEA, or warning label, so a committed value cannot be overwritten through the honest
+  interface (\cref{def:epoch-delta}, \cref{ssec:design-detection}).
 \item[X3DH] Extended Triple Diffie--Hellman, Signal's asynchronous key-agreement handshake
   (\cref{def:x3dh}); its shared secret is the entropy source for the dual-index labels.
 \end{description}
