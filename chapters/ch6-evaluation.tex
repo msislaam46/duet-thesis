@@ -87,7 +87,11 @@ record, are collected in \cref{app:benchmarks}. Timing medians are quoted in the
 place ($0.1\,\si{\micro\second}$): finer precision would be spurious for a wall-clock median, and
 sub-microsecond digits vary between runs (for example, the VRF-verify median reads
 \SI{76.8}{\micro\second} in \cref{tab:eval-latency} and \SI{74.9}{\micro\second} in the separate
-scale run of \cref{tab:eval-scale}).
+scale run of \cref{tab:eval-scale}). The isolated VRF rows of \cref{app:benchmarks} show the same
+effect more strongly: measured late in the suite on a warm machine, they read
+\SI{134.8}{\micro\second} (prove) and \SI{92.9}{\micro\second} (verify) against in-path figures of
+$\approx$\SI{120}{\micro\second} (generation including the prove) and \SI{76.8}{\micro\second}
+(verify); the in-path figures are the ones this chapter quotes.
 
 Three limitations bound the interpretation of the numbers. First, the server is in-memory and
 single-machine, so absolute latencies exclude the database and network costs a distributed
@@ -233,7 +237,8 @@ The saving is linear in $W$ (measured $\approx 0.97\,W$), not $W/\lg W$, as \cre
 makes visible on a log axis: a client offline for a month
 sends a \num{320}\,byte proof in place of \num{222528}\,bytes, a \num{695}-fold reduction, and the
 generation-time counterpart is similar (\SI{0.51}{\micro\second} windowed versus \SI{374}{\micro\second}
-sequential at $W=720$). This directly addresses the monitoring-bandwidth problem that CONIKS lists as
+sequential at $W=720$; both are Criterion medians over the log alone, which the prefix-tree
+memoization does not touch). This directly addresses the monitoring-bandwidth problem that CONIKS lists as
 an open extension.
 
 \subsection{Detection latency and false positives (M5, M6)}\label{ssec:eval-detection}
@@ -310,16 +315,17 @@ produce and that persistent storage would remove.
 \subsection{Throughput, rotation, and epoch commit (M8--M11)}\label{ssec:eval-throughput}
 
 Server-side maintenance costs decide how large a deployment one machine can sustain.
-\Cref{tab:eval-server} collects them. Single-thread throughput is about \num{5900} lookups and
-\num{5900} updates per second at $N=10^4$; key rotation (overwriting an existing binding) costs
-\SI{134}{\micro\second}--\SI{186}{\micro\second} --- a figure dominated by a per-rotation VRF prove of
-$\approx$\SI{106}{\micro\second}, because the benchmark re-evaluates the VRF for the unchanged user
-identifier; a production server would cache that label, leaving only tens of microseconds of tree
-work. The verifiable random function, measured in isolation,
-is constant-time at \SI{106}{\micro\second} to prove and \SI{73}{\micro\second} to verify,
-confirming its $N$-independence. The per-handshake key-transparency overhead a deployment pays
-is exactly the $\approx$\SI{132}{\micro\second} full client verify, against a no-KT floor of a single
-hash --- microseconds of client work per conversation.
+\Cref{tab:eval-server} collects them. Single-thread throughput is about \num{8340} lookups and
+\num{6710} updates per second at $N=10^4$. Key rotation (overwriting an existing binding) costs
+\SI{148.7}{\micro\second} at both $10^3$ and $10^4$ --- flat in $N$ for the same reason proof
+generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
+the unchanged user identifier, which a production server would cache, leaving only tens of
+microseconds of tree work. The verifiable random function, measured in isolation, is constant-time
+to prove and to verify, confirming its $N$-independence; its isolated rows in \cref{app:benchmarks}
+read hotter than the in-path figures for the thermal reason noted in \cref{sec:eval-method}. The
+per-handshake key-transparency overhead a deployment pays is exactly the
+$\approx$\SI{132}{\micro\second} full client verify, against a no-KT floor of a single hash ---
+microseconds of client work per conversation.
 
 \begin{table}[ht]
 \centering
@@ -349,8 +355,8 @@ tree would reduce it to $O(\lg N)$, and this is noted as future work in \cref{ch
 
 The cross-vantage auditor (\cref{sec:design-acka}) that detects split-view equivocation must be
 cheap enough to run continuously. It is: a per-epoch audit, an Ed25519 signature verify plus an
-append-only consistency check, costs \SI{28.6}{\micro\second} at $N=10^4$, and the cross-vantage
-fork-detection check costs \SI{27.6}{\micro\second}. Both are under \SI{30}{\micro\second}, so the
+append-only consistency check, costs \SI{28.3}{\micro\second} at $N=10^4$, and the cross-vantage
+fork-detection check costs \SI{27.7}{\micro\second}. Both are under \SI{30}{\micro\second}, so the
 equivocation-detection machinery is effectively free per epoch. The audit figure times proof
 generation and verification together; a deployed auditor only verifies a proof the server supplies,
 so this is a conservative upper bound on the true audit cost.
@@ -360,7 +366,8 @@ so this is a conservative upper bound on the true audit cost.
 The design offers two operating modes (\cref{ssec:design-modes}): session mode writes one directory
 entry per signed-pre-key rotation, and continuous mode writes one per ratchet epoch for finer-grained,
 ACKA-faithful detection. The cost of that granularity is not verification time. A per-check operation
-costs \SI{73.6}{\micro\second} in session mode and \SI{49.4}{\micro\second} in continuous mode. Both
+costs \SI{28.5}{\micro\second} in session mode and \SI{28.3}{\micro\second} in continuous mode (Criterion medians; both include
+server-side proof generation, and are near-identical because the chain memoization flattens the compressed-leaf cost that previously separated them). Both
 figures require a precise statement of what they measure: each benchmarked check comprises the
 client-side label derivation, the server-side proof generation, and the client-side verification of
 the value, prefix-root, and log-inclusion steps. Neither figure includes a VRF step, because the
@@ -628,13 +635,13 @@ complete~\cite{vaziripour2017}.
 
 On the server, the picture is more qualified, and the qualifications are exactly what a production
 deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one
-operation that grows with $N$ ($\approx O(N)$, \SI{3.45}{\milli\second} at $10^4$,
+operation that grows with $N$ ($\approx O(N)$, \SI{5.80}{\milli\second} at $10^4$,
 \cref{ssec:eval-throughput}), because the current server deep-clones its committed snapshot; a
 copy-on-write tree would reduce this to $O(\lg N)$ and is the single most valuable server-side change.
 Second, the per-lookup and per-rotation VRF prove ($\approx$\SI{106}{\micro\second}) dominates those
 paths only because the benchmark re-evaluates the VRF for an unchanged identifier; a deployed server
 would cache the label and pay it once. Beyond compute, the scale run exposes the memory limit: a
-$10^7$-label tree needs $\approx$\num{20}\,GB on one machine (\cref{ssec:eval-scale}), so a real
+$10^7$-label tree needs $\approx$\num{23.5}\,GB on one machine (\cref{ssec:eval-scale}), so a real
 deployment must move to the persistent, sharded storage of the SEEMless--Parakeet lineage that this
 in-memory prototype deliberately does not model.
 

@@ -109,7 +109,7 @@ Module & Specification implemented & Conformance evidence \\
 \end{tabular}
 \end{table}
 
-The implementation comprises approximately 6{,}400 lines of Rust (the crate, its server and
+The implementation comprises approximately 6{,}600 lines of Rust (the crate, its server and
 auditor binaries, and the benchmark harness) and a further 4{,}500 lines of TypeScript in the
 client of \cref{sec:impl-signal}, excluding tests. The three subsections that follow describe the
 crate from the bottom up: its state, the cryptography over it, and the binaries that expose it.
@@ -173,7 +173,8 @@ over the network is another, and it is the subject of the last subsection of the
 Two binaries turn the library into running services. A standalone HTTP server, built on the
 \texttt{axum} framework over the asynchronous \texttt{tokio} runtime, wraps the \texttt{KTServer}
 and serves the lookup, monitoring, and consistency operations as JSON, alongside a privileged
-testing interface used only by the adversarial scenario suite (\cref{sec:impl-tests}). An independent
+testing interface used only by the adversarial scenario suite and the scripted attacker of the
+end-to-end demonstration (\cref{sec:impl-tests,ssec:impl-demo}). An independent
 auditor binary, a small \texttt{ureq} HTTP client, polls the signed tree head, verifies its Ed25519
 signature, and checks append-only consistency on each new epoch, so that a forked or rewritten
 history is caught from a second vantage point. A benchmark harness completes the set, driving the
@@ -326,7 +327,7 @@ The integration runs as a live, multi-actor demonstration: two linked Signal Des
 standalone Rust server, the auditor, and a scripted attacker, driven by the runner scripts of
 \cref{app:apiref}. Its purpose is to show the detection surfaces firing inside the real user
 interface rather than only in a benchmark. The clearest run is the dual-index substitution
-(scenario A1). The attacker overwrites the victim's per-conversation slot on the shared server; on the
+(scenario A1b). The attacker overwrites the victim's per-conversation slot on the shared server; on the
 victim's next monitor tick the own-key self-check fails, and the client writes the shared warning slot
 once (its log records \texttt{WRITE warning slot label=a480\ldots}) and raises a red conversation
 banner reading that its identity key was replaced. The peer client, monitoring the \emph{same} shared
@@ -341,7 +342,7 @@ clients.
 \centering
 \includegraphics[width=\textwidth]{figures/ui-dualindex-self.png}\\[8pt]
 \includegraphics[width=\textwidth]{figures/ui-dualindex-contact.png}
-\caption{The dual-index warning firing across two real, linked Signal Desktop clients (scenario A1).
+\caption{The dual-index warning firing across two real, linked Signal Desktop clients (scenario A1b).
 \emph{Top:} the victim; \emph{bottom:} the peer. Both raise the red Key Transparency banner, and the
 DevTools console beside each shows the victim's \texttt{WRITE warning slot} and the peer's
 \texttt{READ warning slot} at the \emph{identical} label --- the bidirectional detection across two
@@ -533,7 +534,7 @@ networked layer through dynamic imports introduced initialization-order dependen
 that prevented reliable loading of the verification layer. The resolution was to remove every
 dynamic import for the key-transparency code so that the whole layer lives in one bundle, with the
 networked path made opt-in at runtime; its failure is caught separately and never affects the
-simulator.
+messaging client itself.
 
 \paragraph{Client integration: Electron context isolation.} With context isolation enabled, property
 assignments to \texttt{window} in the preload world are not visible to the renderer, so
@@ -545,7 +546,7 @@ peers from within the preload world rather than relying on console helpers.
 \paragraph{Client integration: event-channel mismatch.} Detection initially fired without updating
 the user interface: the background monitor emitted on the client's typed event bus, but the badge
 and banner listen for a DOM custom event. The fix was to dispatch both, mapping the verdict onto the
-custom event the simulator already used.
+custom event the badge and banner already listened for.
 
 \paragraph{Deployment: operational robustness.} Several issues appeared only in a live deployment: a
 server that generated a fresh signing key on each launch invalidated every cached public key, fixed
