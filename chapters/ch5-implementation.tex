@@ -135,8 +135,10 @@ The \texttt{merkle\_log} module maintains the append-only log as a vector of has
 the RFC~9162 inclusion and consistency verifiers, each proof costing time logarithmic in the
 number of entries. The \texttt{prefix\_tree} module implements the directory itself as a
 path-compressed sparse Merkle tree, held as a pointer-based structure so that only the nodes
-actually populated are materialized; its proofs are bitmap-compressed, and a client recomputes the
-root from such a proof to check a lookup without trusting the server.
+actually populated are materialized; each compressed leaf lazily memoizes the top of its
+empty-sibling hash chain, so that serving a proof whose co-path meets a compressed leaf does not
+recompute the up-to-256-level chain on every lookup. Its proofs are bitmap-compressed, and a client
+recomputes the root from such a proof to check a lookup without trusting the server.
 
 The whole of this state sits behind a single lock: the server serializes all access to one
 \texttt{KTServer} instance through an \texttt{Arc<Mutex<KTServer>>}, so reads and writes are mutually

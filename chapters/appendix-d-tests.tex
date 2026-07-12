@@ -1,8 +1,8 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
-Three suites cover the system. The Rust core is covered by \num{79} unit and property tests across
-nine modules plus the \num{8}-scenario adversarial integration suite (\num{87} tests in total, run
+Three suites cover the system. The Rust core is covered by \num{80} unit and property tests across
+nine modules plus the \num{8}-scenario adversarial integration suite (\num{88} tests in total, run
 under \texttt{cargo test}); the TypeScript client is covered by \num{54} Jest tests in six suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
@@ -18,7 +18,7 @@ mode (\cref{tab:tests-rust-system}).
 
 \begin{table}[H]
 \centering
-\caption{Rust tests --- primitives and data structures (\num{33} tests).}
+\caption{Rust tests --- primitives and data structures (\num{34} tests).}
 \label{tab:tests-rust-prim}
 \footnotesize
 \begin{tabular}{@{}llp{7.0cm}@{}}
@@ -42,6 +42,7 @@ Module & Test & Property checked \\
 \texttt{prefix\_tree} & \texttt{root\_hash\_deterministic} & the root is order-independent and reproducible \\
 \texttt{prefix\_tree} & \texttt{update\_overwrites\_value} & the tree-level insert overwrites a value; the write-once policy is enforced one layer above, in \texttt{update\_raw} (\cref{tab:tests-rust-server}) \\
 \texttt{prefix\_tree} & \texttt{remove\_deletes\_leaf\_and\_restores\_sibling\_structure} & the admin-only removal leaves a structurally valid tree, so a deletion is detectable only by the transition audit, never by malformedness \\
+\texttt{prefix\_tree} & \texttt{chain\_memo\_is\_transparent} & the compressed-leaf chain memo is purely an optimization: warm and cold trees yield byte-identical roots and proofs across inserts, rotations, splits, removals, and non-inclusion lookups \\
 \midrule
 \texttt{vrf} & \texttt{test\_prove\_then\_verify} & an honest proof verifies \\
 \texttt{vrf} & \texttt{test\_deterministic\_output} & evaluation is deterministic for fixed key and input \\

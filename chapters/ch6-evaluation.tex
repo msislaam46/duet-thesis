@@ -86,7 +86,7 @@ the procedure of \cref{sec:impl-repro}; the full per-parameter tables, at the re
 record, are collected in \cref{app:benchmarks}. Timing medians are quoted in the body to one decimal
 place ($0.1\,\si{\micro\second}$): finer precision would be spurious for a wall-clock median, and
 sub-microsecond digits vary between runs (for example, the VRF-verify median reads
-\SI{73.8}{\micro\second} in \cref{tab:eval-latency} and \SI{74.8}{\micro\second} in the separate
+\SI{76.8}{\micro\second} in \cref{tab:eval-latency} and \SI{74.9}{\micro\second} in the separate
 scale run of \cref{tab:eval-scale}).
 
 Three limitations bound the interpretation of the numbers. First, the server is in-memory and
@@ -168,10 +168,10 @@ prefix-root recompute, the VRF verify, and the full five-step chain of \cref{sse
 \toprule
 Operation & $N=10^3$ & $N=10^4$ & Scaling \\
 \midrule
-Server full search (gen, incl.\ VRF prove) & \SI{107}{\micro\second} & \SI{159}{\micro\second} & VRF-dominated, near-flat \\
+Server full search (gen, incl.\ VRF prove) & \SI{119.6}{\micro\second} & \SI{119.8}{\micro\second} & VRF-dominated, independent of $N$ \\
 Prefix-root verify (client) & \SI{26.0}{\micro\second} & \SI{26.0}{\micro\second} & independent of $N$ \\
-VRF proof verify (client) & \SI{73.8}{\micro\second} & \SI{73.7}{\micro\second} & constant-time \\
-\textbf{Full client verify (windowed)} & \textbf{\SI{132.2}{\micro\second}} & \textbf{\SI{132.5}{\micro\second}} & \textbf{independent of $N$} \\
+VRF proof verify (client) & \SI{76.8}{\micro\second} & \SI{76.8}{\micro\second} & constant-time \\
+\textbf{Full client verify (windowed)} & \textbf{\SI{132.4}{\micro\second}} & \textbf{\SI{132.6}{\micro\second}} & \textbf{independent of $N$} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -179,14 +179,18 @@ VRF proof verify (client) & \SI{73.8}{\micro\second} & \SI{73.7}{\micro\second} 
 The most important result is the last row: full client verification (VRF label binding, value binding, prefix
 root recompute, log inclusion, and the Ed25519 signed-tree-head signature) costs about
 \SI{132}{\micro\second} and does not grow with the directory, because its two cost centres, the
-prefix recompute (\SI{26}{\micro\second}) and the VRF verify (\SI{74}{\micro\second}), are both
+prefix recompute (\SI{26}{\micro\second}) and the VRF verify (\SI{77}{\micro\second}), are both
 $N$-independent: the first is a fixed \num{256}-level bitmap walk and the second is a constant-time
 elliptic-curve operation. The system therefore meets its sub-millisecond client-verify target with
 roughly sevenfold headroom, and does so while including the VRF verification that comparable systems
-exclude from their reported figures. The server-side full search is likewise near-flat rather than
-growing: it is dominated by the constant-time VRF prove ($\approx$\SI{106}{\micro\second},
-\cref{ssec:eval-throughput}), and its median moves only from \SI{107}{\micro\second} at $N=10^3$ to
-\SI{155}{\micro\second} at $N=10^7$ (\cref{ssec:eval-scale}) --- non-monotonic, not $\lg N$ growth.
+exclude from their reported figures. The server-side full search is likewise flat rather than
+growing, and this is a direct consequence of the compressed-leaf chain memo (\cref{sec:impl-modules}).
+Before that optimization, proof generation grew with directory depth --- from \SI{107}{\micro\second} to
+\SI{159}{\micro\second} across $N=10^3$--$10^4$ --- because each non-inclusion co-path recomputed a
+compressed leaf's \num{256}-level hash chain. Memoizing that chain top removes the $N$-dependent
+component, leaving generation dominated by the constant-time VRF prove: it reads \SI{119.6}{\micro\second}
+at $N=10^3$, \SI{119.8}{\micro\second} at $N=10^4$, and \SI{141.6}{\micro\second} at $N=10^7$
+(\cref{ssec:eval-scale}) --- essentially independent of $N$, exactly like verification.
 
 \subsection{Offline catch-up bandwidth (M4)}\label{ssec:eval-catchup}
 
@@ -235,15 +239,24 @@ an open extension.
 \subsection{Detection latency and false positives (M5, M6)}\label{ssec:eval-detection}
 
 Finally, we measure the detection mechanism itself: how fast a substitution is detected, and how
-often a clean session is wrongly flagged. The detection check, deriving the dual-index labels and
-reading the warning slot, adds \SI{1.4}{\micro\second} at $N\ge10^3$, with a clean session and an
-attacked session indistinguishable in cost, so detection leaks nothing through timing.\footnote{At
-$N=10^2$ the check reads \SI{55}{\micro\second} because a compressed-leaf sibling on the queried path
-forces a full \num{256}-level hash chain; this tree-shape artifact disappears by $N=10^3$.} This
-figure is the \emph{marginal} cost of the warning-slot read on top of a lookup the client already
-verifies; it is an unverified read, so the security-bearing detection cost is that of the full
-verified chain the client runs regardless --- the \SI{26}{\micro\second} prefix verify and the
-remainder of the \SI{132}{\micro\second} chain of \cref{ssec:eval-latency}. Over \num{1000} clean
+often a clean session is wrongly flagged. The detection check comprises the dual-index label
+derivation --- pure HKDF, one extract and three expands, independent of directory size --- and an
+unverified read of the warning slot. The read's underlying cost is \emph{data-dependent}: the
+co-path of a non-inclusion proof almost always meets a compressed leaf, whose subtree hash is a
+chain of up to \num{256} hash evaluations. The implementation memoizes the top of that chain per
+leaf (\cref{sec:impl-modules}), so the check costs a median \SI{1.6}{\micro\second} (95th percentile
+\SI{2.2}{\micro\second}), independent of $N$; only the first touch of a cold leaf pays the full chain once, a worst case
+bounded by the fixed tree depth rather than by $N$. The benchmark samples \num{1000} random
+conversations and reports the distribution --- median and 95th percentile --- rather than any
+single label's path,\footnote{An earlier revision of the harness timed one fixed conversation and,
+before the chain memo, read \SI{1.4}{\micro\second} or ${\sim}$\SI{40}{\micro\second} depending on
+where that one label happened to sit; a single-label figure is not robust, because re-seeding the
+directory relocates every label.}
+and a clean session and an attacked session are indistinguishable in cost, so detection leaks
+nothing through timing. Either way, this is the \emph{marginal} cost of the warning-slot read on top
+of a lookup the client already verifies; it is an unverified read, so the security-bearing detection
+cost is that of the full verified chain the client runs regardless --- the \SI{26}{\micro\second}
+prefix verify and the remainder of the \SI{132}{\micro\second} chain of \cref{ssec:eval-latency}. Over \num{1000} clean
 sessions the false-positive rate (M6) is \num{0}; this is a sanity check rather than independent
 evidence, since a spurious collision at a 256-bit HKDF-derived warning label is cryptographically
 negligible. Detection is thus effectively free and silent, in sharp contrast to the manual
@@ -274,11 +287,11 @@ Quantity & $N=10^6$ & $N=10^7$ \\
 \midrule
 Leaf depth (median / mean / max) & 20 / 20.3 / 24 & 24 / 23.6 / 27 \\
 Lookup proof bytes (median / max) & 816 / 944 & 944 / 1{,}040 \\
-Server full search (median / p95) & 149 / \SI{199}{\micro\second} & 155 / \SI{214}{\micro\second} \\
-Prefix verify (median / p95) & 26.0 / \SI{26.2}{\micro\second} & 26.0 / \SI{28.0}{\micro\second} \\
-VRF verify (median / p95) & 74.8 / \SI{87.3}{\micro\second} & 74.7 / \SI{90.5}{\micro\second} \\
+Server full search (median / p95) & 130 / \SI{157}{\micro\second} & 142 / \SI{2186}{\micro\second}\,$^{\dagger}$ \\
+Prefix verify (median / p95) & 26.0 / \SI{26.6}{\micro\second} & 26.3 / \SI{27.9}{\micro\second} \\
+VRF verify (median / p95) & 74.9 / \SI{94.1}{\micro\second} & 76.1 / \SI{94.6}{\micro\second} \\
 \textbf{Full client verify} & \textbf{$\approx$\SI{132}{\micro\second}} & \textbf{$\approx$\SI{132}{\micro\second} (indep.\ of $N$)} \\
-Build time / peak RSS & 186\,s / 2.04\,GB & 1{,}880\,s / 19.9\,GB \\
+Build time / peak RSS & 150\,s / 2.73\,GB & 1{,}544\,s / 23.5\,GB \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -287,8 +300,12 @@ The measured constancy of prefix verification across five orders of magnitude ($
 the empirical proof that verification is bounded by the fixed \num{256}-level tree height rather than
 by $N$, and full client verification stays at $\approx$\SI{132}{\micro\second} at both $10^6$ and
 $10^7$. The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
-tree takes 31 minutes and \num{20}\,GB of RAM, which is why a production deployment would move to the
-persistent, sharded storage this prototype deliberately does not model.
+tree takes about 26 minutes and \SI{23.5}{\giga\byte} of RAM, which is why a production deployment would move to the
+persistent, sharded storage this prototype deliberately does not model. $^{\dagger}$The $10^7$
+full-search 95th percentile of \SI{2186}{\micro\second} --- against a \SI{142}{\micro\second} median ---
+reflects this same memory pressure: as the \SI{23.5}{\giga\byte} working set approaches available RAM,
+occasional lookups stall on page faults, a tail the deterministic proof structure does not itself
+produce and that persistent storage would remove.
 
 \subsection{Throughput, rotation, and epoch commit (M8--M11)}\label{ssec:eval-throughput}
 
@@ -313,17 +330,19 @@ hash --- microseconds of client work per conversation.
 \toprule
 Operation & $N=10^3$ & $N=10^4$ \\
 \midrule
-Lookup throughput (single-thread) & --- & $\approx$5{,}930 op/s (\SI{168.6}{\micro\second}) \\
-Update throughput (single-thread) & --- & $\approx$5{,}950 op/s (\SI{168.2}{\micro\second}) \\
-Key rotation & \SI{134.1}{\micro\second} & \SI{185.5}{\micro\second} \\
-Epoch commit & \SI{408}{\micro\second} & \SI{3.45}{\milli\second} \\
+Lookup throughput (single-thread) & --- & $\approx$8{,}340 op/s (\SI{119.9}{\micro\second}) \\
+Update throughput (single-thread) & --- & $\approx$6{,}710 op/s (\SI{149.0}{\micro\second}) \\
+Key rotation & \SI{148.7}{\micro\second} & \SI{148.7}{\micro\second} \\
+Epoch commit & \SI{465.6}{\micro\second} & \SI{5.80}{\milli\second} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The one cost that does grow with $N$ is the epoch commit (\SI{408}{\micro\second} at $10^3$ rising to
-\SI{3.45}{\milli\second} at $10^4$, an $8.5\times$ increase for a $10\times$ growth, i.e.\ roughly
-$O(N)$). This is the deep-clone snapshot the current server takes on every commit; a copy-on-write
+The one cost that does grow with $N$ is the epoch commit (\SI{465.6}{\micro\second} at $10^3$ rising to
+\SI{5.80}{\milli\second} at $10^4$, a $\approx$$12\times$ increase for a $10\times$ growth, i.e.\ roughly
+$O(N)$). This is the deep-clone snapshot the current server takes on every commit --- now also copying
+each leaf's chain memo, which is the deliberate space-for-time trade that makes reads flat
+(\cref{sec:impl-modules}); a copy-on-write
 tree would reduce it to $O(\lg N)$, and this is noted as future work in \cref{ch:discussion}.
 
 \subsection{Auditor cost (M12)}\label{ssec:eval-auditor}
