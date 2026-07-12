@@ -251,8 +251,10 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 \end{tabular}
 \end{table}
 
-Per-check verification cost is $73.6\,\si{\micro\second}$ in session mode and
-$49.4\,\si{\micro\second}$ in continuous mode (Criterion medians).
+Per-check verification cost is $28.5\,\si{\micro\second}$ in session mode and
+$28.3\,\si{\micro\second}$ in continuous mode (Criterion medians; both include server-side proof
+generation, near-identical because the chain memoization flattens the compressed-leaf cost that
+previously separated the two modes).
 
 % ----------------------------------------------------------------------------
 \section{Reproducing each metric}\label{sec:bench-repro}
