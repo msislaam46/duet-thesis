@@ -291,15 +291,16 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \begin{algorithm}[H]
 \caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA-faithful)}\label{alg:cea}
 \KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and $\mathit{PRK}$
-from Alg.~\ref{alg:dualindex} (labels use sender-then-receiver id order, \cref{ssec:design-modes})}
+from Alg.~\ref{alg:dualindex} (the label uses canonical $\min/\max$ id order --- one slot per epoch;
+the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id_A},\mathit{id_B}$)}{
   $k\gets \KDF(\mathit{pss},\mathit{id_A}\concat \mathit{id_B})$;\ \ $t\gets 0$\;
 }
 \Fn{\normalfont\textsf{CeaUpdate}($I$)}{
   $k\gets \KDF(k,I)$;\ \ $t\gets t+1$ \tcp*{chain folds a secret $I$}
 }
-\Fn{\normalfont\textsf{CeaLprint}($\mathit{id_{sender}},\mathit{id_{receiver}}$)}{
-  \KwRet $\Hash(k\concat \mathit{id_{sender}}\concat \mathit{id_{receiver}}\concat t)$\;
+\Fn{\normalfont\textsf{CeaLprint}($\mathit{id_A},\mathit{id_B}$)}{
+  \KwRet $\Hash(k\concat \min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B})\concat t)$ \tcp*{canonical order: both parties, one slot per epoch}
 }
 \Fn{\normalfont\textsf{CeaFprint}($\mathit{id_{sender}},\mathit{id_{peer}},\mathit{epk}$)}{
   $\mathit{fkey}\gets \KDF(k,\mathit{id_{sender}}\concat \mathit{id_{peer}}\concat t)$\;
