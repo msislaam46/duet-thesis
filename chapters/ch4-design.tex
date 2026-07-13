@@ -223,7 +223,19 @@ cannot pre-position a value on a slot whose label it cannot compute --- while th
 what the server learns \emph{after} first use are addressed by the write-once policy, the transition
 audit, and the persistence check of \cref{ssec:design-detection}.
 
-\paragraph{Tripwire.} A substituted key implies a different shared secret $\sharedS$,
+\paragraph{Scope of the warning channel.} The bidirectional warning defends a conversation
+\emph{after} its X3DH/PQXDH handshake has completed honestly, so that Alice and Bob hold a genuine
+shared secret $\sharedS$ the server never learns. This is the threat it targets: a malicious server
+(or network) substituting a key for an \emph{already-established} pair (attacks A1, A5). It does
+\emph{not} claim to catch a man-in-the-middle interposed \emph{during} first contact. If the
+adversary sits in the handshake itself, Alice and Bob complete \emph{separate} handshakes with the
+adversary and never share a single $\sharedS$, so no common rendezvous label exists; that case is the
+trust-on-first-use boundary (\cref{sec:threat-fair}), and it is caught, if at all, by the global
+VRF-slot check against the log (attack A3) --- which needs no shared secret --- not by the warning
+channel. The novelty claimed here is precisely the post-establishment peer warning, which
+self-monitoring key transparency does not surface to the other party.
+
+\paragraph{Tripwire.} Within that scope, a substituted key implies a different shared secret $\sharedS$,
 hence disjoint labels, so a peer lookup either misses the slot the impersonator never
 wrote to, or a warning write lands in a slot the impersonator could not predict. The guarantee that
 a committed warning then \emph{stays} visible is not automatic --- it is supplied by the write-once
@@ -515,12 +527,15 @@ hashes --- logarithmic in the log size rather than linear in $W$.}
 \end{figure}
 
 Three observations qualify this claim. First, the windowed proof is a \emph{standard}
-RFC~9162 consistency proof between two distant heads, not a new cryptographic object; the
-novelty lies in applying it to the key-transparency monitoring-window problem (a gap
-the IETF draft and CONIKS (\S6.3) both leave open) and in quantifying the saving in
-\cref{ch:eval}. Second, the saving is linear in the window: the windowed proof replaces
-$W$ proofs with one. The contribution is therefore a reduction in the number of proofs
-rather than an improvement in the asymptotic complexity of an individual proof.
+RFC~9162 consistency proof between two distant heads, not a new cryptographic object. Nor is the
+idea of collapsing unchanged epochs itself new: CONIKS (\S6.3) explicitly \emph{proposes} skipping
+missed epochs when a history structure proves no change, SEEMless makes monitoring cost depend on the
+number of key updates rather than on elapsed epochs, and OPTIKS reduces unchanged-key monitoring to a
+single proof. The contribution here is therefore not the mechanism but its concrete instantiation for
+the \emph{offline-client} monitoring window --- one consistency proof from the client's last
+checkpoint to the current head --- together with the measured saving in \cref{ch:eval}. Second, the
+saving is linear in the window: the windowed proof replaces $W$ proofs with one. It is a reduction in
+the number of proofs, not an improvement in the asymptotic complexity of an individual proof.
 
 Third, and most importantly, the soundness of windowing must be argued rather than assumed, because
 the key-transparency literature contains a standing objection to exactly this shortcut. CONIKS's
