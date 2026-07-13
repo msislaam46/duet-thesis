@@ -47,8 +47,16 @@ integration demonstrates feasibility but carries two proof-of-concept stand-ins,
 the in-protocol hooks left to future work in \cref{ch:discussion}: the per-conversation shared
 secret is derived from a deterministic stand-in (\texttt{pocSharedSecret}) rather than bridged out
 of libsignal's live X3DH state, and continuous mode is driven by a deterministically seeded
-simulated Double Ratchet rather than the client's live ratchet. Neither stand-in changes the
-construction being exercised; both change only the source of the secret that feeds it.
+simulated Double Ratchet rather than the client's live ratchet. The stand-ins exercise the same
+construction and wire format, but the security consequence must be stated plainly rather than glossed
+as merely a different input source: \texttt{pocSharedSecret} is a \emph{public} function of the two
+parties' identity keys, so unlike a real X3DH/PQXDH secret it is computable by the server (indeed by
+anyone). Under the stand-in the derived labels are therefore \emph{predictable}, not unguessable, and
+the secrecy-dependent guarantees --- unlinkability of the slots and the server's inability to
+pre-position a value on them (\cref{ssec:design-properties}) --- hold only once the genuine secret is
+bridged in. What the prototype validates end-to-end is the construction, wire format, and detection
+logic; those secrecy-dependent properties are argued against the design, not demonstrated by the
+stand-in.
 
 This separation is deliberate. Keeping the cryptographic core independent of the Signal Desktop
 integration lets all measurements be performed on a standalone reference implementation while
@@ -111,7 +119,9 @@ Module & Specification implemented & Conformance evidence \\
 
 The implementation comprises approximately 6{,}600 lines of Rust (the crate, its server and
 auditor binaries, and the benchmark harness) and a further 4{,}500 lines of TypeScript in the
-client of \cref{sec:impl-signal}, excluding tests. The three subsections that follow describe the
+client of \cref{sec:impl-signal}. These counts are non-test source lines (`cloc`), and the TypeScript
+figure counts the client once: the crate ships a byte-identical \texttt{signal-desktop-kt} mirror of
+the in-tree \texttt{ts/kt} client for standalone testing, which is not double-counted here. The three subsections that follow describe the
 crate from the bottom up: its state, the cryptography over it, and the binaries that expose it.
 
 \begin{figure}[ht]
@@ -556,7 +566,7 @@ itself down, resolved by bootstrapping a genesis epoch at initialization, and th
 not reproducible because attack state persisted in memory, fixed by an administrative reset that
 rebuilds the server from its seed. That last fix is also what makes the demonstration repeatable.
 
-\paragraph{Trusted computing base and fail-closed behaviour.} It is worth stating plainly what must
+\paragraph{Trusted computing base and fail-closed behaviour.} This paragraph states what must
 be trusted. On the client, the trusted computing base is the verifier and the cryptographic crates it
 calls (\cref{ssec:impl-core-crypto}) together with the operator's two public keys, the STH signing key
 and the VRF key, pinned on first use; the server, the network, and the log are \emph{not} trusted, and
