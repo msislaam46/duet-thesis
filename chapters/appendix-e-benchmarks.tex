@@ -255,8 +255,8 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 \end{tabular}
 \end{table}
 
-Per-check verification cost is $28.5\,\si{\micro\second}$ in session mode and
-$28.3\,\si{\micro\second}$ in continuous mode (Criterion medians; both include server-side proof
+Per-check verification cost is $28.0\,\si{\micro\second}$ in session mode and
+$27.7\,\si{\micro\second}$ in continuous mode (medians; both include server-side proof
 generation, near-identical because the chain memoization flattens the compressed-leaf cost that
 previously separated the two modes).
 
@@ -290,7 +290,7 @@ M9  & \texttt{M9\_key\_rotation}       & \texttt{timings.csv} (\texttt{M9\_rotat
 M10 & \texttt{M10\_vrf\_isolation}     & \texttt{timings.csv} (\texttt{M10\_vrf\_prove}, \texttt{M10\_vrf\_verify}) \\
 M11 & \texttt{M11\_handshake\_overhead}& \texttt{timings.csv} (\texttt{M11\_handshake\_overhead}) \\
 M12 & \texttt{M12\_auditor}            & \texttt{timings.csv} (\texttt{M12\_audit\_epoch}, \texttt{M12\_detect\_fork}) \\
-M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (write counts; the per-check verify timings are \texttt{M13\_modes} Criterion medians, not exported to CSV) \\
+M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (write counts); \texttt{timings.csv} (\texttt{M13\_session\_verify}, \texttt{M13\_continuous\_verify}) \\
 \bottomrule
 \end{tabular}
 \end{table}

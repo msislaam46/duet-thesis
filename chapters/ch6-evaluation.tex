@@ -372,7 +372,7 @@ the end-to-end cost of the protocol.
 The design offers two operating modes (\cref{ssec:design-modes}): session mode writes one directory
 entry per signed-pre-key rotation, and continuous mode writes one per ratchet epoch for finer-grained,
 ACKA-faithful detection. The cost of that granularity is not verification time. A per-check operation
-costs \SI{28.5}{\micro\second} in session mode and \SI{28.3}{\micro\second} in continuous mode (Criterion medians; both include
+costs \SI{28.0}{\micro\second} in session mode and \SI{27.7}{\micro\second} in continuous mode (medians, \cref{tab:bench-repro}; both include
 server-side proof generation, and are near-identical because the chain memoization flattens the compressed-leaf cost that previously separated them). Both
 figures require a precise statement of what they measure: each benchmarked check comprises the
 client-side label derivation, the server-side proof generation, and the client-side verification of
