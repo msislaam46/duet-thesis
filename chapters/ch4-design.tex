@@ -255,13 +255,13 @@ raises an alert --- since no third party should be able to reach the slot at all
 data there is itself evidence of misbehaviour --- but the MAC lets the peer distinguish an authentic
 warning from an injected one, which matters because the operator learns the label the first time the
 slot is read (\cref{ssec:design-properties}) and could thereafter write to it.\footnote{The payload
-MAC is implemented and unit-tested as a primitive in the Rust reference (\texttt{seal\_warning} /
-\texttt{open\_warning}, with roundtrip and injection-rejection tests), but it is not yet wired into
-either client's warning write or read path: the current clients write the plaintext alert and treat
-any value at the slot as an alarm (the tripwire above, which does not depend on the MAC). Wiring the
-MAC into both write paths, with a cross-implementation vector, is left as future work; the
-authorship-distinguishing guarantee is therefore a design property of the reference, not yet an
-end-to-end one.}
+MAC is wired end-to-end: the warning write path seals the alert (\texttt{seal\_warning}) and the read
+path opens it (\texttt{open\_warning}) in both the Rust reference and the TypeScript client, and a
+cross-implementation vector locks the sealed-payload bytes across the two implementations (alongside
+the existing roundtrip and injection-rejection unit tests). The tripwire itself does not depend on the
+MAC --- any value at the slot still raises an alarm --- so the MAC only classifies authorship: an
+opened payload is an authentic peer warning, and a value that fails to open is flagged as
+unauthenticated (possible operator injection) but still alarms.}
 
 The suppression argument requires care, because the append-only property of the log constrains the
 \emph{history of committed roots}, not the \emph{contents} of successive directory states. Within
