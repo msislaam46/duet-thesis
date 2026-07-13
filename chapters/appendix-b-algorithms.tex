@@ -294,10 +294,10 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 from Alg.~\ref{alg:dualindex} (the label uses canonical $\min/\max$ id order --- one slot per epoch;
 the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id_A},\mathit{id_B}$)}{
-  $k\gets \KDF(\mathit{pss},\mathit{id_A}\concat \mathit{id_B})$;\ \ $t\gets 0$\;
+  $k\gets \KDF(\mathit{pss},\min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B}))$;\ \ $t\gets 0$ \tcp*{canonical id order}
 }
 \Fn{\normalfont\textsf{CeaUpdate}($I$)}{
-  $k\gets \KDF(k,I)$;\ \ $t\gets t+1$ \tcp*{chain folds a secret $I$}
+  $k\gets \KDF(k,\KDF(I,\texttt{"CEA"}))$;\ \ $t\gets t+1$ \tcp*{fold the domain-separated secret (Fig 8)}
 }
 \Fn{\normalfont\textsf{CeaLprint}($\mathit{id_A},\mathit{id_B}$)}{
   \KwRet $\Hash(k\concat \min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B})\concat t)$ \tcp*{canonical order: both parties, one slot per epoch}
