@@ -423,7 +423,7 @@ authenticates $T_t$, and only then folds the secret $I_t$ into the chain:
 \begin{aligned}
   L_t &= \Hash\!\big(k_{t-1} \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B) \concat t\big),\\
   F_t &= \Hash\!\big(\KDF(k_{t-1},\ \mathit{id}_{\mathsf{sender}} \concat \mathit{id}_{\mathsf{peer}} \concat t) \concat T_t\big),\\
-  k_t &= \KDF(k_{t-1}, I_t) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
+  k_t &= \KDF\!\big(k_{t-1},\ \KDF(I_t, \text{\texttt{"CEA"}})\big) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
 \end{aligned}
 \end{equation}
 It registers the pair $(L_t \to F_t)$ of \cref{eq:design-cea} in the same log, one entry per ratchet epoch. The
@@ -439,7 +439,11 @@ The ordering of operations within an epoch follows ACKA's composed construction
 fingerprint are computed over the \emph{current} (pre-update) state and the \emph{public} key, and
 only then is the \emph{secret} $I_t$ folded into the chain; folding the secret epoch key rather than
 the public ratchet key keeps the chain unpredictable to an adversary that has compromised the
-pre-shared state --- the property the unlinkability and forgery-resistance arguments need. Second,
+pre-shared state --- the property the unlinkability and forgery-resistance arguments need. The secret
+is domain-separated before folding ($\KDF(I_t, \text{\texttt{"CEA"}})$, ACKA Figure~8): in deployment
+the same DH output $I_t$ also feeds Signal's session-key derivation (the paper's $\KDF(I_t,
+\text{\texttt{"CKA"}})$), so the \texttt{"CEA"} tag keeps the value folded into the transparency chain
+independent of the session key --- the key separation the security argument relies on. Second,
 before posting, the sender checks that the label $L_t$ is unoccupied: ACKA specifies that ``the
 sender will also check if the label has already been uploaded to the log with a fingerprint, which
 would indicate an impersonation''~\cite{dowling2023acka}, and the sender advances its chain only
