@@ -1424,7 +1424,14 @@ malicious directory server and continuously authenticated across the ratchet. Th
 three problems are not addressed \emph{together} by any system surveyed in
 \cref{sec:bg-compare}, and that joint absence is the gap.
 
-These limitations motivate six contributions. Collectively they strengthen key
+These limitations motivate the four principal contributions announced in
+\cref{ch:intro}; this section develops them, itemising below the six concrete mechanisms through
+which they are realised (the dual-index warning and its ACKA framing form the conceptual
+contribution; the windowed proof and detection experiment the cryptographic one; with the
+implementation and evaluation completing the four). Not all six are equally novel, and the text is
+careful to say which: the windowed proof and the cross-vantage auditor reuse mechanisms established
+in prior work (\S6.3 of CONIKS; CT/CONIKS gossip), and are claimed as instantiation-and-measurement,
+not as new primitives. Collectively they strengthen key
 transparency for asynchronous messaging by adding automatic peer notification,
 efficient offline recovery, transparent equivocation detection, and continuous
 authentication over an untrusted directory. The first three sit on the key-transparency

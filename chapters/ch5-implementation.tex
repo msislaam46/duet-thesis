@@ -560,10 +560,17 @@ rebuilds the server from its seed. That last fix is also what makes the demonstr
 be trusted. On the client, the trusted computing base is the verifier and the cryptographic crates it
 calls (\cref{ssec:impl-core-crypto}) together with the operator's two public keys, the STH signing key
 and the VRF key, pinned on first use; the server, the network, and the log are \emph{not} trusted, and
-every answer they give is re-checked against those keys. The verification path is fail-closed: any
+every answer they give is re-checked against those keys. The \emph{verifier} is fail-closed: any
 failure (an invalid or absent signed-tree-head signature, a prefix root that does not recompute, a
-missing log inclusion, or a VRF binding that does not hold) aborts the exchange and rejects the key
-rather than falling through to acceptance (\cref{ssec:impl-hooks}). Availability failures are the one
+missing log inclusion, a proof whose label does not match the one queried, or a VRF binding that
+does not hold) yields a \emph{reject} verdict rather than falling through to acceptance. One
+integration caveat must be stated plainly, because it is the boundary between what the verifier
+guarantees and what the prototype currently enforces: in the present Signal Desktop prekey-bundle
+hook (\cref{ssec:impl-hooks}) that reject verdict is surfaced \emph{advisorily} --- the user is shown
+the red warning, but the hook does not yet abort session establishment. Turning the hook fail-closed
+(refusing the session on a red verdict rather than only warning) is a deployment policy decision
+left to future work (\cref{ch:discussion}); the guarantee proven here is that the verifier never
+\emph{accepts} a bad answer, not that the current integration blocks the session on one. Availability failures are the one
 case deliberately \emph{not} treated as an attack: an unreachable server yields the amber notice of
 \cref{ssec:impl-verifier}, never the red verdict, so a network outage cannot be mistaken for
 misbehaviour nor a substitution hidden behind a feigned outage. Hardening every request handler against
