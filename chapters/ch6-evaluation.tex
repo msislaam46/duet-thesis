@@ -360,7 +360,7 @@ fork-detection check costs \SI{27.7}{\micro\second}. Both are under \SI{30}{\mic
 equivocation-detection machinery is cheap per epoch in local computation. Two scoping caveats matter.
 The audit figure times proof generation and verification together, so as a \emph{verify-only} cost it
 is a conservative over-estimate; but it measures only the auditor's \emph{local} per-epoch work (the
-signature check, the append-only consistency check, and the transition replay against the mirror). It
+signature check and the append-only consistency check). It
 does \emph{not} include the networked, proof-carrying exchange a deployed auditor runs --- fetching
 each epoch's disclosed update set together with the committed-root log-inclusion proof
 (\cref{sec:design-acka}) and verifying that proof against the signed head --- whose transfer and
