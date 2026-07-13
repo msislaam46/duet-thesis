@@ -142,15 +142,22 @@ verified. A response anchored to any other head is rejected even if that head ca
 signature, since a validly signed but stale or forked head is precisely what the equivocation
 adversary of attack A4 would supply. Steps~4 and~5 are the two layers of the combined tree: the prefix proof shows
 the entry is at its label in the dictionary, and the log-inclusion proof shows that
-dictionary state is the one the signed head commits to. This is the combined-tree
+dictionary state is the one the signed head commits to. Because each commit appends the
+new directory root as the log's \emph{last} leaf, step~5 additionally pins the inclusion to
+that latest leaf ($\mathit{leaf\_index} = \mathit{tree\_size} - 1$ at exactly the signed
+size): a genuine inclusion proof for an \emph{earlier} leaf still verifies against the
+current log root, so without this pin a server could answer with a stale directory snapshot
+--- one predating a warning, say --- under the current signed head. Inclusion proves
+membership, not \emph{currency} (RFC~9162 §2.1.3.2); the currency pin closes that gap. This is the combined-tree
 semantics of the Key Transparency draft (\cref{ssec:bg-keytrans}).
 
 The verification work is split across the implementation as follows. In the Rust reference,
 \texttt{verify\_search\_result} performs the VRF, value, prefix-root, and log-inclusion
 checks (1, 2, 4, 5), and the head-bound wrapper \texttt{verify\_search\_result\_against} adds
 step 3 together with the equality binding of the returned head to the caller's independently
-verified head, so a validly signed but stale or forked head is rejected. The live TypeScript client folds the signature check
-into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verify''
+verified head and the latest-leaf currency pin, so a validly signed but stale or forked head ---
+or a genuine proof for an older leaf under the current head --- is rejected. The live TypeScript client folds the signature check
+and the same currency pin into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verify''
 benchmarked in \cref{ch:eval} is the complete five-step chain.
 
 % ============================================================================
