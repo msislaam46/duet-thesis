@@ -63,6 +63,10 @@ $10^5$ & 17 & 544 & 17 & 720 \\
 $10^6$ & 20 & 640 & 23 & 912 \\
 \bottomrule
 \end{tabular}
+
+\vspace{2pt}{\footnotesize The dual-index bytes are the single seeded-leaf path; at $10^6$ that leaf
+sits at depth~23 (912\,B). The distribution median over \num{1000} random lookups is \num{816}\,bytes
+(\cref{tab:bench-scale}, \cref{ssec:eval-scale}) --- the figure quoted in the text.}
 \end{table}
 
 \begin{table}[ht]
@@ -286,7 +290,7 @@ M9  & \texttt{M9\_key\_rotation}       & \texttt{timings.csv} (\texttt{M9\_rotat
 M10 & \texttt{M10\_vrf\_isolation}     & \texttt{timings.csv} (\texttt{M10\_vrf\_prove}, \texttt{M10\_vrf\_verify}) \\
 M11 & \texttt{M11\_handshake\_overhead}& \texttt{timings.csv} (\texttt{M11\_handshake\_overhead}) \\
 M12 & \texttt{M12\_auditor}            & \texttt{timings.csv} (\texttt{M12\_audit\_epoch}, \texttt{M12\_detect\_fork}) \\
-M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} \\
+M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (write counts; the per-check verify timings are \texttt{M13\_modes} Criterion medians, not exported to CSV) \\
 \bottomrule
 \end{tabular}
 \end{table}
