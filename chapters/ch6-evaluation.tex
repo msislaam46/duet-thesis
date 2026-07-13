@@ -357,9 +357,15 @@ The cross-vantage auditor (\cref{sec:design-acka}) that detects split-view equiv
 cheap enough to run continuously. It is: a per-epoch audit, an Ed25519 signature verify plus an
 append-only consistency check, costs \SI{28.3}{\micro\second} at $N=10^4$, and the cross-vantage
 fork-detection check costs \SI{27.7}{\micro\second}. Both are under \SI{30}{\micro\second}, so the
-equivocation-detection machinery is effectively free per epoch. The audit figure times proof
-generation and verification together; a deployed auditor only verifies a proof the server supplies,
-so this is a conservative upper bound on the true audit cost.
+equivocation-detection machinery is cheap per epoch in local computation. Two scoping caveats matter.
+The audit figure times proof generation and verification together, so as a \emph{verify-only} cost it
+is a conservative over-estimate; but it measures only the auditor's \emph{local} per-epoch work (the
+signature check, the append-only consistency check, and the transition replay against the mirror). It
+does \emph{not} include the networked, proof-carrying exchange a deployed auditor runs --- fetching
+each epoch's disclosed update set together with the committed-root log-inclusion proof
+(\cref{sec:design-acka}) and verifying that proof against the signed head --- whose transfer and
+verification cost is not captured here. The number is therefore the compute floor of the audit, not
+the end-to-end cost of the protocol.
 
 \subsection{Session versus continuous mode (M13)}\label{ssec:eval-modes}
 
@@ -564,7 +570,7 @@ CONIKS~\cite{melara2015coniks}), and the write path can be flooded with fake reg
 only operational rate limiting blunts (a denial-of-service residual); an operator that withholds
 epochs or writes is caught by auditor timeouts and the compound signal of A2, at the cost of
 delayed detection. Both residuals are acknowledged by the standard key-transparency literature and
-neither is addressed by ACKA~\cite{dowling2023acka}, which assumes an honest log; they bound what
+neither is addressed by ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather than realising a distrusted one; they bound what
 transparency can offer rather than revealing a flaw in this construction.
 
 \subsection{Attack tree}\label{ssec:eval-attacktree}

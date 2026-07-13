@@ -21,7 +21,8 @@ separately: the malicious directory server of the key-transparency literature
 Continuous Key Agreement framework (\cref{sec:bg-acka}). These adversaries are
 historically isolated by incompatible assumptions: key transparency distrusts the
 infrastructure but ignores the continuous channel, whereas ACKA defends the
-continuous channel but assumes an idealized, honest log. By synthesizing these
+continuous channel but abstracts the log behind a security definition rather than realising a
+distrusted one. By synthesizing these
 adversaries into a single, unified threat model, this thesis establishes a strictly
 stronger baseline against which end-to-end secure messaging can be evaluated.
 
@@ -71,7 +72,7 @@ The interactions between these actors define three trust boundaries
 \emph{client--server} boundary is semi-trusted: the standard key-transparency
 posture inherited from CONIKS and the IETF architecture (\cref{sec:bg-logs}), in
 which the server is relied upon for availability but not for honesty, and not the
-idealized honest log that ACKA assumes. The \emph{client--network} boundary is
+abstract, security-defined log that ACKA leaves to be realised. The \emph{client--network} boundary is
 untrusted: the full active network adversary described below is adopted, the same
 adversary ACKA defends against in its continuous mode (\cref{sec:bg-acka}). The
 \emph{server--auditor} boundary is independent: the auditor's value is that its
@@ -121,7 +122,7 @@ can do so without being caught. It may substitute the key it serves for a user,
 censor writes a client attempts to make to the log, and equivocate by presenting
 two internally consistent but divergent views of the directory to different
 clients. This is the adversary key transparency was built to expose
-(\cref{sec:bg-vkd}), and it lies outside ACKA's model, which trusts the log.
+(\cref{sec:bg-vkd}), and it lies outside ACKA's detection theorem, which assumes a Logsec-secure log rather than realising one against such a server.
 
 \paragraph{What the adversary cannot do.} The model grants the adversary the
 capabilities above and no more. It cannot break the underlying primitives: it

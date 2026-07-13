@@ -119,6 +119,21 @@ distinguish a peer-authored warning from operator-injected noise --- but cannot 
 an abusive peer holds the shared secret and can mint valid MACs; a production system would blunt
 this with rate limiting and per-sender signed warning payloads.
 
+\paragraph{Evaluation completeness.} Three further gaps bound what the evaluation establishes, and
+each is a matter of proof-of-concept scope rather than a hidden result. First, the adversarial suite
+(\cref{app:tests}) models substitution against an \emph{already-established} conversation --- the
+scheme's stated scope (\cref{ssec:design-detection}) --- and a network man-in-the-middle against an
+honest global directory; it does not model a two-leg adversary interposed at first contact, nor a
+server that makes a fabricated pre-key bundle and its log entry mutually consistent, both of which lie
+outside the post-establishment guarantee. Second, the headline latency numbers measure components,
+not a live end-to-end exchange: M11 is the per-handshake KT \emph{verification} (identical to M3), not
+a Signal/PQXDH handshake benchmark, and M12 is the auditor's local computation, not the networked
+proof-carrying audit. Third, the DUET test suite is not wired into Signal Desktop's main continuous
+integration and the live wire-parity check skips silently when no Rust server is reachable, and only
+aggregate benchmark statistics --- not raw Criterion samples --- are committed. A two-leg adversarial
+harness, a genuine handshake benchmark, a required CI gate, and archived raw samples for independent
+re-analysis are left to future work.
+
 % ============================================================================
 \section{Future work}\label{sec:disc-future}
 

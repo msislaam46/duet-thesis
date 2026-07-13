@@ -853,7 +853,7 @@ privacy goal~\cite[p.~14]{malvai2023parakeet}.
 
 \subsubsection{ELEKTRA}
 ELEKTRA extended key transparency to the multi-device accounts that real
-messengers actually have, and its genuinely novel contribution is
+messengers actually have, and its distinctive contribution is
 \emph{cryptographically authenticated device addition and removal}. Rather than
 treating a user as a single key, it represents each account as a
 \emph{keychain}, an abstraction of Keybase's sigchains, in which every key
@@ -920,8 +920,8 @@ that succinct proof rather than by monitoring their own
 entry~\cite[\S4]{pusch2025prism}. The proof attests the \emph{semantic}
 correctness of each update (that a key change is signed by one of the account's
 currently valid, non-revoked private keys) and not merely its structural
-well-formedness~\cite[p.~12]{pusch2025prism}. PRISM's sharpest contribution to
-this review is diagnostic: it observes that every existing KT system assumes
+well-formedness~\cite[p.~12]{pusch2025prism}. PRISM's contribution to
+this review is largely diagnostic: it observes that every existing KT system assumes
 \emph{someone else will check}, whether the user, gossiping clients, a
 blockchain, or third-party auditors~\cite[p.~6]{pusch2025prism}. Its limitations
 are that it is presented as an overview rather than a full specification, reports
@@ -1157,8 +1157,9 @@ But ACKA grants that adversary no power over the \emph{log}: detection holds onl
 under the assumptions of CEAsec security and an immutable
 log~\cite[p.~7]{dowling2023acka}. The malicious, equivocating server that the VKD
 line defends against (one that can substitute keys, censor writes, and serve
-divergent views) therefore lies \emph{outside} ACKA's model, which trusts its
-log to be honest and append-only. The two models are complementary rather than
+divergent views) therefore lies \emph{outside} ACKA's detection theorem, which assumes a log
+already satisfying its Logsec definition (append-only, with consistency and exclusion proofs) and
+leaves that log's malicious-server-resistant realisation open. The two models are complementary rather than
 competing: one adversary controls the wire, the other controls the database, and
 no single framework covers both. The construction also bootstraps from a
 pre-shared state that must be shared and globally unique across honest pairwise
@@ -1178,8 +1179,8 @@ epoch's public key-share to continuous entity authentication (CEA/CEAsec), which
 derives a per-epoch label and fingerprint and posts it to the secure log
 (Logsec); a receiver derives the same label, queries the log, and aborts on a
 colliding or absent fingerprint. Logsec is drawn dashed because the framework
-leaves it \emph{deliberately unspecified} --- the honest, immutable log it
-assumes but does not build. How this slot is filled is taken up in
+leaves it \emph{deliberately unspecified} --- the Logsec-secure, append-only log it
+specifies but does not build. How this slot is filled is taken up in
 \cref{ch:design}.}
 \label{fig:bg-acka}
 \end{figure}
@@ -1191,13 +1192,14 @@ controls the channel between the communicating parties \dots\ then the answer is
 clearly negative. But what if there exists another channel between the two parties
 that the adversary cannot fully control?''~\cite[p.~2]{dowling2023acka}.
 
-ACKA leaves that secondary channel abstract, its honest, immutable Logsec.
-Assuming the existence of a perfectly honest, immutable log is, however, a luxury
-that practical messaging deployments do not have: as established in
+ACKA leaves that secondary channel abstract --- its Logsec-secure log.
+Realising such a log against an \emph{untrusted} server is, however, exactly the problem
+practical messaging deployments face: as established in
 \cref{sec:bg-vkd}, the servers distributing keys are themselves targets of
 compromise or coercion. This leaves a fundamental structural gap in the
-literature. ACKA requires a channel it can implicitly trust, whereas practical
-messaging requires an infrastructure that need not be trusted. ACKA's own
+literature. ACKA specifies the channel's security abstractly (Logsec) but leaves its realisation
+against an untrusted server open, whereas practical messaging must \emph{build} that infrastructure
+without trusting it. ACKA's own
 construction further carries three operational limitations that constrain its use
 in asynchronous messaging: detection is one-sided---it is the \emph{receiver}
 that detects a forgery, and there is no out-of-band channel to warn the
@@ -1208,7 +1210,7 @@ This last point is our own observation rather than a claim of the paper's: ACKA'
 detection argument relies only on the log's append-only (exclude) property, and
 the paper itself never discusses third-party auditing.
 
-Recognising that ACKA's idealised log and the malicious, equivocating server that
+Recognising that ACKA's abstract Logsec-secure log and the malicious, equivocating server that
 key transparency is built to expose are two halves of a single end-to-end
 security picture is what sets the stage for the synthesis this thesis proposes.
 
@@ -1468,33 +1470,31 @@ cross-checks tree heads observed from a second vantage point and flags two valid
 heads at one epoch as an equivocation, detecting the split-view that local checks cannot.
 Contributions~1 through~3 are the transparency-log half of the work.
 
-\paragraph{Contribution 4 --- ACKA instantiation (continuous mode).} This is, to our
-knowledge, the first concrete instantiation of ACKA's continuous binding over a transparency log: a
-per-ratchet-epoch fingerprint and label chain that authenticates the Double Ratchet epoch
-by epoch, instantiating the Logsec that ACKA leaves
-abstract~\cite[p.~10]{dowling2023acka}. In the prototype the ratchet is driven
+\paragraph{Contribution 4 --- ACKA instantiation (continuous mode).} ACKA itself gives a modular
+construction and a specific Signal add-on but leaves its logging component (Logsec) an
+\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}; this is, to our knowledge, the first
+instantiation of that component over a concrete, \emph{malicious-server-resistant}
+key-transparency log --- a per-ratchet-epoch fingerprint and label chain that authenticates the
+Double Ratchet epoch by epoch. The claim is deliberately narrow: what is new is the concrete log
+instantiation and its measurement, not the ACKA construction. In the prototype the ratchet is driven
 deterministically from the shared secret; the in-protocol libsignal hook is future work
 (Chapter~7).
 
 \paragraph{Contribution 5 --- Reconciliation of ACKA and key transparency.} The principal
 conceptual contribution of this thesis is the reconciliation of ACKA and key
 transparency, which are usually read as separate worlds: ACKA authenticates the
-continuous key agreement per epoch but assumes an honest, immutable log, whereas the
-academic VKD literature builds a malicious-server-resistant directory but authenticates
-only a session or identity binding. They differ both in granularity (per-epoch versus
-per-session) and, more fundamentally, in their trust assumption about the log: ACKA
-trusts it, key transparency does not. We bridge them by instantiating ACKA's ``other
-channel'' with a key-transparency log that need not be trusted, reconciling the two
-adversary models in one system, realising both as operating modes, and measuring the
-trade between them. To our knowledge, no prior work spans the continuous and the
+continuous key agreement per epoch but treats its logging component as an \emph{abstract}
+primitive with a security definition (Logsec), leaving the concrete malicious-server-resistant
+realisation open, whereas the academic VKD literature builds exactly such a directory but
+authenticates only a session or identity binding. They differ in granularity (per-epoch versus
+per-session) and, more to the point, in what each makes concrete: ACKA specifies what the log must
+guarantee, key transparency shows how to build it. We bridge them by instantiating ACKA's abstract
+logging component with a concrete key-transparency log that need not be trusted, realising both as
+operating modes and measuring the trade between them. To our knowledge, no prior work spans the continuous and the
 directory worlds. Throughout, we state the coverage trade honestly: we log identity keys
 and per-session labels, not the per-user version chains of SEEMless, Parakeet and OPTIKS
 or the multi-device key-chains of ELEKTRA, different coverage, leaner proofs, and
-automatic in-band detection. (We note for completeness that ``verifiable key exchange''
-also names an unrelated line of work on verifiable \emph{quantum} key
-distribution~\cite{li2022vqkd}; that setting concerns generating fresh symmetric keys
-over quantum channels rather than auditing a classical public-key directory, and is out
-of scope here.)
+automatic in-band detection.
 
 \paragraph{Contribution 6 --- Implementation and evaluation.} This is the engineering
 core of the thesis and a contribution in its own right. The core is a Rust \texttt{kt}
