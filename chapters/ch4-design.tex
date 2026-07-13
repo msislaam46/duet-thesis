@@ -421,16 +421,18 @@ computes, from the current chain state $k_{t-1}$, an evolving label and a finger
 authenticates $T_t$, and only then folds the secret $I_t$ into the chain:
 \begin{equation}\label{eq:design-cea}
 \begin{aligned}
-  L_t &= \Hash(k_{t-1} \concat \mathit{id}_\A \concat \mathit{id}_\B \concat t),\\
+  L_t &= \Hash\!\big(k_{t-1} \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B) \concat t\big),\\
   F_t &= \Hash\!\big(\KDF(k_{t-1},\ \mathit{id}_{\mathsf{sender}} \concat \mathit{id}_{\mathsf{peer}} \concat t) \concat T_t\big),\\
   k_t &= \KDF(k_{t-1}, I_t) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
 \end{aligned}
 \end{equation}
-It registers the pair $(L_t \to F_t)$ of \cref{eq:design-cea} in the same log, one entry per ratchet epoch. In
-\cref{eq:design-cea}, $\mathit{id}_\A \concat \mathit{id}_\B$ denotes sender-then-receiver order:
-both parties place the identifier of the party who sent that epoch's ratchet key first, and since
-they agree on who sent each epoch, they derive the same label. This is deliberately \emph{not} the
-canonical $\min/\max$ ordering used for the warning label in \cref{eq:design-labels}.
+It registers the pair $(L_t \to F_t)$ of \cref{eq:design-cea} in the same log, one entry per ratchet epoch. The
+label $L_t$ uses the canonical $\min/\max$ identity ordering --- the same convention as the warning
+label in \cref{eq:design-labels} --- so both parties derive the identical label for an epoch and it
+maps to a single log slot. The fingerprint $F_t$, by contrast, is \emph{directional}
+($\mathit{id}_{\mathsf{sender}} \concat \mathit{id}_{\mathsf{peer}}$): the verifier recomputes it with the
+party who sent that epoch's ratchet key first, which binds the fingerprint to the sender's public
+key $T_t$ and lets a substituted key be detected at the shared label.
 
 The ordering of operations within an epoch follows ACKA's composed construction
 (their Figure~8) in three respects, each of which matters for correctness. First, the label and
@@ -441,10 +443,10 @@ pre-shared state --- the property the unlinkability and forgery-resistance argum
 before posting, the sender checks that the label $L_t$ is unoccupied: ACKA specifies that ``the
 sender will also check if the label has already been uploaded to the log with a fingerprint, which
 would indicate an impersonation''~\cite{dowling2023acka}, and the sender advances its chain only
-after its write is confirmed committed. Third, the receiver advances its chain only after a
-verification returns a definitive verdict; a pending lookup (the sender's fingerprint not yet
-committed) leaves the receiver's state untouched, so the check can be retried without
-desynchronizing the chain.
+after its write is confirmed committed. Third, the receiver advances its chain only when a
+verification returns \textsc{Consistent}: a detected fork halts the session (the state is not
+carried across a fork), and a pending lookup (the sender's fingerprint not yet committed) leaves the
+receiver's state untouched, so the check can be retried without desynchronizing the chain.
 
 One representational point requires an explicit statement. ACKA's log stores a \emph{vector} of
 fingerprints per label, and its receiver rejects unless exactly one fingerprint is present; the alarm
