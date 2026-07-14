@@ -1,9 +1,10 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
-Three suites cover the system. The Rust core is covered by \num{90} unit and property tests across
-nine modules, the \num{8}-scenario adversarial integration suite, and a replay test in the
-\texttt{kt\_auditor} binary (\num{99} tests in total, run under \texttt{cargo test}); the TypeScript
+Three suites cover the system. The Rust core is covered by \num{91} unit and property tests across
+nine modules, the \num{8}-scenario adversarial integration suite, and \num{7} tests in the
+\texttt{kt\_auditor} binary (the delta-replay test plus six \texttt{classify\_head} rollback/fork
+cases) --- \num{106} tests in total, run under \texttt{cargo test}; the TypeScript
 client is covered by \num{64} Jest tests in six suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
@@ -129,6 +130,7 @@ Module & Test & Property checked \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_deletion} & a deleted leaf makes the replay diverge and alarm \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_modification} & an in-place modification likewise diverges and alarms \\
 \texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected --- the C2/Option B pss-compromise path \\
+\texttt{auditor} & \texttt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert} & the same overwrite declared as an \textsf{Insert} of an already-present label is rejected (A1) --- closing the other delta-op variant \\
 \texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_mirror} & a rejected transition leaves the auditor's mirror untouched, so a single bad epoch cannot corrupt later audits \\
 \texttt{auditor} & \texttt{audit\_rejects\_unsigned\_or\_foreign\_sth} & an unsigned or foreign-key head is rejected before auditing \\
 \texttt{auditor} & \texttt{audit\_requires\_committed\_epoch} & auditing requires a committed epoch \\
