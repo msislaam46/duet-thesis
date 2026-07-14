@@ -116,7 +116,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
   freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
   $\mathit{epoch}\gets \mathit{epoch}+1$\;
-  $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval})$ \tcp*{policy commitment (CONIKS $P$)}
+  $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval}\concat \mathit{rawpolicy})$ \tcp*{policy commitment (CONIKS $P$); $\mathit{rawpolicy}$ binds the write-once/delta policy (H3)}
   $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ \mathit{epoch}{-}1\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{ts}\concat \mathit{ch})$ \tcp*{88-byte LE}
   $\mathit{sth}\gets(\mathit{epoch}{-}1,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{ts},\mathit{ch},\sigma)$\;
   \KwRet $\mathit{sth}$\;
