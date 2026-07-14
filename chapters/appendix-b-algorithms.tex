@@ -101,14 +101,14 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \Fn{\normalfont\textsf{UpdateByUserId}($\mathit{user\_id},pk$)}{
   $(\beta,\pi_{\mathrm{vrf}})\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$ \tcp*{ECVRF, RFC 9381}
   $\mathit{label}\gets\beta[0{:}32]$ \tcp*{32-byte truncation}
-  $\mathit{live}.\textsf{Insert}(\mathit{label},pk)$\;
-  record \textsf{Insert} (fresh label) or \textsf{Rotate} (occupied label) in the epoch's declared delta\;
+  $\mathit{live}.\textsf{Insert}(\mathit{label},pk,\textsc{mutable})$ \tcp*{global-VRF identity: leaf hash $\Hleaf(\textsc{mutable}\concat\mathit{label}\concat pk)$}
+  record \textsf{Insert}/\textsf{Rotate} with $\mathit{kind}=\textsc{mutable}$ in the epoch's declared delta\;
   \KwRet $(\mathit{label},\pi_{\mathrm{vrf}})$\;
 }
 \Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
   \Req $\mathit{live}.\textsf{Lookup}(\mathit{label}).\mathit{value}=\bot$ \tcp*{write-once: occupied labels rejected (\cref{ssec:design-detection})}
-  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value})$ \tcp*{dual-index/CEA labels; PoC unauthenticated}
-  record \textsf{Insert}$(\mathit{label},\mathit{value})$ in the epoch's declared delta\;
+  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value},\textsc{immutable})$ \tcp*{dual-index/CEA: leaf hash $\Hleaf(\textsc{immutable}\concat\mathit{label}\concat\mathit{value})$; kind bound in}
+  record \textsf{Insert}$(\mathit{label},\mathit{value},\textsc{immutable})$ in the epoch's declared delta\;
 }
 \Fn{\normalfont\textsf{CommitEpoch}()}{
   $r\gets \mathit{live}.\textsf{RootHash}()$\;
@@ -265,15 +265,16 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
        epoch's update set with proofs against the previous committed root~\cite{ietf-keytrans-protocol}}
   $(r_{e-1},r_{e},\mathit{ops}_e,\pi_{\mathrm{batch}})\gets \mathit{server}.\textsf{GetEpochDelta}(e)$ \tcp*{$\mathit{ops}_e$: declared \textsf{Insert}$(\ell,v)$ and \textsf{Rotate}$(\ell,v_{\mathrm{old}},v)$ only --- the format cannot express a deletion}
   \Req $r_{e-1},r_{e}$ are log leaves $e{-}1,e$ (inclusion proofs against the latest verified head)\;
-  \Req $\pi_{\mathrm{batch}}$ recomputes $r_{e-1}$; every \textsf{Insert} label is proven absent there, and every \textsf{Rotate} label is proven present with exactly the declared $v_{\mathrm{old}}$ \tcp*{no undeclared overwrite}
-  $r'\gets$ root after applying every operation in $\mathit{ops}_e$ to the tree of $r_{e-1}$\;
+  \Req $\pi_{\mathrm{batch}}$ recomputes $r_{e-1}$; every \textsf{Insert} label is proven absent there, and every \textsf{Rotate} label is proven present with exactly the declared $(\mathit{kind},v_{\mathrm{old}})$ \tcp*{no undeclared overwrite; kind bound into the leaf hash}
+  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}$ \tcp*[f]{reject any rotation of an immutable leaf}}
+  $r'\gets$ root after applying every operation in $\mathit{ops}_e$ to the tree of $r_{e-1}$ \tcp*{leaves hash as $\Hleaf(\mathit{kind}\concat\ell\concat v)$}
   \Req $r'=r_{e}$ \tcp*{exact transition: nothing beyond the declared operations}
-  \tcc{a \textsf{Rotate} is legitimate only on the global (VRF) family. Labels are opaque, so the
-       auditor cannot distinguish a lawful identity-key rotation from an abusive overwrite of a
-       write-once label; what the replay guarantees is that no mutation is \emph{silent}. A declared
-       overwrite of a raw label is forced into the open, where its owner detects it: a replaced
-       lookup slot fails the self-check, a replaced warning slot still alerts, and a replaced CEA
-       fingerprint yields \textsc{Fork} (\cref{ssec:design-detection})}
+  \tcc{each leaf commits its \textsc{mutable}/\textsc{immutable} kind into its hash, so the auditor
+       \emph{distinguishes} the families: a \textsf{Rotate} is accepted only on a mutable
+       (global-VRF identity) leaf and rejected outright on an immutable (raw dual-index / CEA /
+       warning) leaf, as is any rotation misdeclaring the kind. The pss-compromised overwrite of a
+       committed CEA fingerprint --- which the receiver's per-epoch verdict cannot catch --- is thus
+       rejected structurally here (\cref{ssec:design-detection})}
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$ \tcp*{from a different vantage point}
