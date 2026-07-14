@@ -1,8 +1,8 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
-Three suites cover the system. The Rust core is covered by \num{80} unit and property tests across
-nine modules plus the \num{8}-scenario adversarial integration suite (\num{88} tests in total, run
+Three suites cover the system. The Rust core is covered by \num{81} unit and property tests across
+nine modules plus the \num{8}-scenario adversarial integration suite (\num{89} tests in total, run
 under \texttt{cargo test}); the TypeScript client is covered by \num{54} Jest tests in six suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
@@ -69,7 +69,7 @@ Module & Test & Property checked \\
 
 \begin{table}[H]
 \centering
-\caption{Rust tests --- server and verification chain (\texttt{server}, \num{24} tests).}
+\caption{Rust tests --- server and verification chain (\texttt{server}, \num{25} tests).}
 \label{tab:tests-rust-server}
 \footnotesize
 \begin{tabular}{@{}lp{9.4cm}@{}}
@@ -105,6 +105,7 @@ Test & Property checked \\
 \midrule
 \texttt{equivocate\_produces\_conflicting\_signed\_head} & the test server can mint two validly signed heads at one epoch (the A4 fixture) \\
 \texttt{equivocate\_requires\_committed\_epoch} & equivocation requires a committed epoch to fork from \\
+\texttt{verify\_rejects\_malformed\_epoch\_size\_head} & a validly-signed head with $\text{epoch}+1\neq\text{tree\_size}$ is refused (\texttt{MalformedHead}), so a server cannot grow the log past the epoch it signs and hide the later leaves from the auditor \\
 \bottomrule
 \end{tabular}
 \end{table}

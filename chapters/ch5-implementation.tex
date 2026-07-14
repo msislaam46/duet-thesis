@@ -29,8 +29,11 @@ chosen for the measurement core because it is the language of the comparable pro
 and because it allows the directory to be built against the libsignal codebase~\cite{libsignal}
 rather than as a separate model. The crate builds and tests without the rest of libsignal, which
 isolates the measurement environment while preserving compatibility with libsignal's integration
-interface. Its data structures and proof formats follow the KeyTrans draft and are validated
-against Signal's own Go implementation~\cite{signal-kt-server}.
+interface. Its data structures and proof formats follow the KeyTrans draft and were designed by comparison
+with Signal's own Go implementation~\cite{signal-kt-server}; the cryptographic primitives are
+independently validated against the RFC test vectors (\cref{app:tests}). There is no executable
+Go\,$\leftrightarrow$\,DUET interoperability test --- the proof encodings differ deliberately
+(Signal's are fixed-width, DUET's bitmap-compressed) --- so no wire-compatibility is claimed.
 
 The second layer is an integration into the Signal Desktop client~\cite{signal-desktop}, written
 in TypeScript. Its purpose is to demonstrate that the design runs end to end against real identity
