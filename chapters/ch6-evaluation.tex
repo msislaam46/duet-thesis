@@ -124,11 +124,11 @@ predicts (\cref{ssec:design-structures}).
 \toprule
 $N$ & single-index hashes & single-index bytes & dual-index prefix hashes & dual-index lookup bytes \\
 \midrule
-$10^2$ & 7  & 224 & 7  & 400 \\
-$10^3$ & 10 & 320 & 10 & 496 \\
-$10^4$ & 14 & 448 & 14 & 624 \\
-$10^5$ & 17 & 544 & 17 & 720 \\
-$10^6$ & 20 & 640 & 23 & 912 \\
+$10^2$ & 7  & 224 & 7  & 401 \\
+$10^3$ & 10 & 320 & 10 & 497 \\
+$10^4$ & 14 & 448 & 14 & 625 \\
+$10^5$ & 17 & 544 & 17 & 721 \\
+$10^6$ & 20 & 640 & 23 & 913 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -142,23 +142,22 @@ single-index path (\cref{tab:eval-sizes}).}
 \label{fig:eval-sizes-plot}
 \end{figure}
 
-The dual-index proof decomposes as a fixed \num{176}\,byte constant (an \num{80}\,byte
-ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{96}\,bytes of metadata (a \num{32}\,byte bitmap,
-leaf data, and depth)) on top of $32$ bytes per prefix hash, giving the closed form
+The dual-index proof decomposes as a fixed \num{177}\,byte constant (an \num{80}\,byte
+ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{97}\,bytes of metadata (a \num{32}\,byte bitmap,
+the \num{1}\,byte C2 leaf-kind commitment (\cref{ssec:design-detection}), leaf data, and depth)) on
+top of $32$ bytes per prefix hash, giving the closed form
 \begin{equation}\label{eq:eval-proofsize}
-  |\pi| \;=\; 32\lceil\lg N\rceil \;+\; 32\lceil\lg E\rceil \;+\; 176 \ \text{bytes},
+  |\pi| \;=\; 32\lceil\lg N\rceil \;+\; 32\lceil\lg E\rceil \;+\; 177 \ \text{bytes},
 \end{equation}
 where the middle term is the log-inclusion cost a deployed $E$-epoch log adds. The logarithmic
 scaling of \cref{eq:eval-proofsize} in $N$ is plotted in \cref{fig:eval-sizes-plot}. The $10^6$ row reads
-\num{912}\,bytes because the single seeded leaf happens to sit at depth \num{23}; the distribution
-median over \num{1000} random lookups at $10^6$ is \num{816}\,bytes (\cref{ssec:eval-scale}). (The C2
-leaf-kind commitment (\cref{ssec:design-detection}) binds one further byte into every proof; the byte
-counts quoted throughout this chapter predate that byte and increase by one when refreshed from the
-post-C2 benchmark CSV.) We
+\num{913}\,bytes because the single seeded leaf happens to sit at depth \num{23}; the distribution
+median over \num{1000} random lookups at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). We
 therefore report the distribution median in the remainder of this chapter, since it reflects the
 proof size a typical lookup incurs rather than the depth of one particular seeded leaf. Crucially,
 the ECVRF proof and the warning slot add nothing beyond this
-formula: \emph{automatic detection adds no proof-size overhead}.
+formula: \emph{the dual-index detection machinery does not enlarge the per-lookup proof} (a warning
+check is a second lookup of the same shape, not a larger proof).
 
 \subsection{Generation and verification latency (M2, M3)}\label{ssec:eval-latency}
 
@@ -294,7 +293,7 @@ $N=10^6$ and $N=10^7$ --- the latter the scale at which CONIKS reports its figur
 Quantity & $N=10^6$ & $N=10^7$ \\
 \midrule
 Leaf depth (median / mean / max) & 20 / 20.3 / 24 & 24 / 23.6 / 27 \\
-Lookup proof bytes (median / max) & 816 / 944 & 944 / 1{,}040 \\
+Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
 Server full search (median / p95) & 130 / \SI{157}{\micro\second} & 142 / \SI{2186}{\micro\second}\,$^{\dagger}$ \\
 Prefix verify (median / p95) & 26.0 / \SI{26.6}{\micro\second} & 26.3 / \SI{27.9}{\micro\second} \\
 VRF verify (median / p95) & 74.9 / \SI{94.1}{\micro\second} & 76.1 / \SI{94.6}{\micro\second} \\
@@ -440,7 +439,7 @@ repository and, per the comparability note below, are order-of-magnitude.
 \toprule
 Dimension & \textbf{DUET (measured)} & CONIKS~\cite{melara2015coniks} & Signal KT~\cite{signal-kt-server} \\
 \midrule
-Lookup proof size & \textbf{816\,B median @ $10^6$} (max 944) & 1{,}216\,B @ $2^{32}$; $\approx$832\,B @ $10^6$, derived (parity) & 8{,}192\,B fixed ($\approx$9$\times$ larger) \\
+Lookup proof size & \textbf{817\,B median @ $10^6$} (max 945) & 1{,}216\,B @ $2^{32}$; $\approx$832\,B @ $10^6$, derived (parity) & 8{,}192\,B fixed ($\approx$9$\times$ larger) \\
 Client lookup verify & \textbf{$\approx$\SI{132}{\micro\second}, indep.\ of $N$} (incl.\ VRF + STH sig) & \SI{159}{\micro\second} path @ $10^7$ $+\sim$\SI{400}{\micro\second} sig $=$ \SI{559}{\micro\second} (derived); excl.\ VRF & not published \\
 Catch-up @ $W{=}720$ & \textbf{320\,B} (1 windowed proof) & $\Theta(W)$; $\sim$530\,kB, derived & Monitor endpoint \\
 MitM detection & \textbf{automatic, in-band (dual-index)} & manual SN + self-monitor & lookup check (AKV) + self-monitor; no peer warning \\
@@ -459,17 +458,17 @@ CONIKS publishes \num{1216}\,bytes at $N = 2^{32}$; instantiating CONIKS's own p
 (one \num{32}-byte hash per tree level plus one, a \num{96}-byte VRF proof, and the \num{64}-byte
 signed-tree-root signature~\cite[\S5.3, Table~1]{melara2015coniks}) at $N = 10^6$ gives
 $32 \cdot 21 + 96 + 64 = 832$\,bytes --- a figure we derive; the paper itself states no number at
-$10^6$. Our measured median at the same $N$ is \num{816}\,bytes. The two accountings differ in one
+$10^6$. Our measured median at the same $N$ is \num{817}\,bytes. The two accountings differ in one
 respect: CONIKS counts its \num{64}-byte signature inside each proof, whereas our signed tree head is
 transmitted once per epoch rather than inside each lookup proof. Parity holds under either
-convention: \num{816} versus \num{832}\,bytes with the signature counted on CONIKS's side, or
-\num{816} versus \num{768}\,bytes with it excluded from both. Both of our medians also sit
-\num{22}--33\% under CONIKS's published \num{1216}-byte figure (\num{816}\,bytes at $10^6$ is 33\%
-under it; \num{944}\,bytes at $10^7$ is 22\% under it), and our proof, unlike CONIKS's, carries the
+convention: \num{817} versus \num{832}\,bytes with the signature counted on CONIKS's side, or
+\num{817} versus \num{768}\,bytes with it excluded from both. Both of our medians also sit
+\num{22}--33\% under CONIKS's published \num{1216}-byte figure (\num{817}\,bytes at $10^6$ is 33\%
+under it; \num{945}\,bytes at $10^7$ is 22\% under it), and our proof, unlike CONIKS's, carries the
 automatic-detection machinery of \cref{sec:design-dual} at no additional size.
 
 Second, the proof is roughly $9\times$ smaller than Signal's deployed wire format
-($8192/944 = 8.7\times$ at our $10^7$ median; $8192/816 = 10.0\times$ at $10^6$). This is a
+($8192/945 = 8.7\times$ at our $10^7$ median; $8192/817 = 10.0\times$ at $10^6$). This is a
 verified property of the deployed code, not an estimate: Signal's key-transparency server pads every
 prefix proof to the full \num{256}-sibling copath with seed-derived stand-in hashes, and its verifier
 (\texttt{evaluateProof} in \texttt{tree/prefix/verify.go}) rejects any proof that does not contain
@@ -642,7 +641,7 @@ with their caveats attached, not as recommendations.
 
 On the client, the cost is small and does not grow with the service. Full verification is
 $\approx$\SI{132}{\micro\second} and independent of $N$ (\cref{ssec:eval-latency,ssec:eval-scale}),
-and a lookup proof is \num{816}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}) --- at parity
+and a lookup proof is \num{817}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}) --- at parity
 with CONIKS and roughly $9\times$ smaller than Signal's deployed, density-hiding wire format
 (\cref{sec:eval-compare}). A client offline for a month catches up in a single \num{320}\,byte proof
 rather than the approximately \num{222}\,kB that one-proof-per-epoch verification costs over the same

@@ -263,14 +263,17 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$\;
 }
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{server},e$)}{
-  \tcc{after the manner of the IETF KeyTrans \textsf{AuditorUpdate}: the server discloses each
-       epoch's update set with proofs against the previous committed root~\cite{ietf-keytrans-protocol}}
-  $(r_{e-1},r_{e},\mathit{ops}_e,\pi_{\mathrm{batch}})\gets \mathit{server}.\textsf{GetEpochDelta}(e)$ \tcp*{$\mathit{ops}_e$: declared \textsf{Insert}$(\ell,v)$ and \textsf{Rotate}$(\ell,v_{\mathrm{old}},v)$ only --- the format cannot express a deletion}
-  \Req $r_{e-1},r_{e}$ are log leaves $e{-}1,e$ (inclusion proofs against the latest verified head)\;
-  \Req $\pi_{\mathrm{batch}}$ recomputes $r_{e-1}$; every \textsf{Insert} label is proven absent there, and every \textsf{Rotate} label is proven present with exactly the declared $(\mathit{kind},v_{\mathrm{old}})$ \tcp*{no undeclared overwrite; kind bound into the leaf hash}
-  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}$ \tcp*[f]{reject any rotation of an immutable leaf}}
-  $r'\gets$ root after applying every operation in $\mathit{ops}_e$ to the tree of $r_{e-1}$ \tcp*{leaves hash as $\Hleaf(\mathit{kind}\concat\ell\concat v)$}
-  \Req $r'=r_{e}$ \tcp*{exact transition: nothing beyond the declared operations}
+  \tcc{after the manner of the IETF KeyTrans \textsf{AuditorUpdate}, but the auditor maintains its
+       OWN mirror of the committed directory --- reconstructed by replaying epochs $0..e{-}1$ --- so
+       it checks epoch $e$'s declared delta against that mirror (its reconstruction of $r_{e-1}$)
+       rather than trusting server-supplied per-operation membership proofs. The mirror is empty
+       before epoch $0$, so no $r_{-1}$ leaf is required.~\cite{ietf-keytrans-protocol}}
+  $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{server}.\textsf{GetEpochDelta}(e)$ \tcp*{$\mathit{ops}_e$: declared \textsf{Insert}$(\ell,\mathit{kind},v)$ and \textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)$ only --- the format cannot express a deletion}
+  \Req $\pi_{\mathrm{incl}}$ binds $r_{e}$ to leaf $e$ of the log the validated STH signs\;
+  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{mirror}.\textsf{get}(\ell)=\bot$ \tcp*[f]{A1: an insert targets an ABSENT label --- else an overwrite disguised as an insert}}
+  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{mirror}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{mirror}.\textsf{get}(\ell)=v_{\mathrm{old}}$ \tcp*[f]{reject immutable rotation / kind-misdeclaration / wrong prior value}}
+  $r'\gets$ root after applying $\mathit{ops}_e$ to a scratch copy of $\mathit{mirror}$ \tcp*{leaves hash as $\Hleaf(\mathit{kind}\concat\ell\concat v)$}
+  \Req $r'=r_{e}$;\ \ commit the scratch copy to $\mathit{mirror}$ \tcp*{exact transition; commit only on full success (no poisoning)}
   \tcc{each leaf commits its \textsc{mutable}/\textsc{immutable} kind into its hash, so the auditor
        \emph{distinguishes} the families: a \textsf{Rotate} is accepted only on a mutable
        (global-VRF identity) leaf and rejected outright on an immutable (raw dual-index / CEA /
