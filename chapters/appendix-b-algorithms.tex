@@ -253,10 +253,12 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
   \If{$\mathit{heads}\ne[\,]$}{
-    $\mathit{sth_{old}}\gets \mathit{heads}.\textsf{last}$\;
+    $\mathit{sth_{old}}\gets \mathit{heads}.\textsf{last}$;\ \ \Req $\mathit{sth_{new}}$ monotonic in epoch \emph{and} size\;
     $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
     \Req $\textsf{VerifyConsistency}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{sth_{old}}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$\;
-    $\textsf{AuditTransition}(\mathit{server},\mathit{sth_{new}}.\mathit{epoch})$ \tcp*{directory delta, not only log growth}
+  }
+  \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
+    $\textsf{AuditTransition}(\mathit{server},e)$ \tcp*{directory delta of EVERY epoch, not only the newest / log growth}
   }
   $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$\;
 }

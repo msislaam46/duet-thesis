@@ -151,7 +151,10 @@ leaf data, and depth)) on top of $32$ bytes per prefix hash, giving the closed f
 where the middle term is the log-inclusion cost a deployed $E$-epoch log adds. The logarithmic
 scaling of \cref{eq:eval-proofsize} in $N$ is plotted in \cref{fig:eval-sizes-plot}. The $10^6$ row reads
 \num{912}\,bytes because the single seeded leaf happens to sit at depth \num{23}; the distribution
-median over \num{1000} random lookups at $10^6$ is \num{816}\,bytes (\cref{ssec:eval-scale}). We
+median over \num{1000} random lookups at $10^6$ is \num{816}\,bytes (\cref{ssec:eval-scale}). (The C2
+leaf-kind commitment (\cref{ssec:design-detection}) binds one further byte into every proof; the byte
+counts quoted throughout this chapter predate that byte and increase by one when refreshed from the
+post-C2 benchmark CSV.) We
 therefore report the distribution median in the remainder of this chapter, since it reflects the
 proof size a typical lookup incurs rather than the depth of one particular seeded leaf. Crucially,
 the ECVRF proof and the warning slot add nothing beyond this
@@ -375,8 +378,13 @@ ACKA-faithful detection. The cost of that granularity is not verification time. 
 costs \SI{28.0}{\micro\second} in session mode and \SI{27.7}{\micro\second} in continuous mode (medians, \cref{tab:bench-repro}; both include
 server-side proof generation, and are near-identical because the chain memoization flattens the compressed-leaf cost that previously separated them). Both
 figures require a precise statement of what they measure: each benchmarked check comprises the
-client-side label derivation, the server-side proof generation, and the client-side verification of
-the value, prefix-root, and log-inclusion steps. Neither figure includes a VRF step, because the
+server-side proof generation and the client-side verification of the value, prefix-root, and
+log-inclusion steps, both under the same label-bound verifier. Client-side label derivation (a fixed
+sub-microsecond HKDF/hash) is performed once in setup and excluded from both timed bodies, so the two
+medians compare like for like. One residual asymmetry is disclosed: continuous mode appends one log
+leaf per registered epoch (here $K$ epochs) whereas session mode commits once, so the continuous
+log-inclusion proof is over a marginally deeper log; the effect is within the reported precision and
+does not change the conclusion that granularity costs write rate, not verification time. Neither figure includes a VRF step, because the
 dual-index and CEA paths use client-derived rather than VRF-derived labels
 (\cref{ssec:design-verify}), and neither includes the signed-tree-head signature verification that
 the full specified check of \cref{app:algorithms} performs; \cref{ssec:eval-latency} shows that the
@@ -516,6 +524,7 @@ extraction, which no key-transparency system addresses.
 \caption{Threats, defending mechanisms, evidence, and outcome.}
 \label{tab:eval-security}
 \footnotesize
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llp{4.6cm}l@{}}
 \toprule
 Attack & Mechanism (goal) & Evidence & Result \\
@@ -526,7 +535,8 @@ A4 split-view equivocation & cross-vantage auditor (G4) & \SI{27.6}{\micro\secon
 directory enumeration & ECVRF labels (G3) & RFC~9381 conformance vectors (\cref{sec:impl-tests}) & prevented \\
 X1 key extraction & --- (out of scope) & no KT system addresses it & n/a \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 As a complementary positioning lens, the six scenarios map onto the MITRE ATT\&CK Enterprise
