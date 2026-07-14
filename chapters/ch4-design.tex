@@ -102,7 +102,8 @@ authenticates. The STH signs, under Ed25519, the 88-byte little-endian message
 \end{equation}
 where $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
 \mathit{pk}_{\mathsf{sth}} \concat \mathit{suite} \concat \mathit{version} \concat
-\mathit{epoch\_interval})$. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
+\mathit{epoch\_interval} \concat \mathit{raw\_label\_policy})$, the trailing byte binding the
+write-once raw-label policy (C2/H3) so the server cannot silently relax it. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
 required by the inclusion and consistency verifiers. Signing the $\mathit{timestamp}$
 means STH freshness cannot be forged, and the trailing $\Hash(\mathit{config})$ is a
 CONIKS-style policy commitment (the field CONIKS calls $P$) that binds the provider's
@@ -617,7 +618,8 @@ The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:
 \end{itemize}
 
 The three mechanisms of this chapter, together with the cross-vantage auditor, form,
-to our knowledge, the first concrete instantiation of ACKA's abstract logging component
+to our knowledge (we are aware of no prior published or open-source realization at the time of
+writing), the first concrete instantiation of ACKA's abstract logging component
 ($\Logsec$) (\cref{sec:bg-acka}). The contribution is to
 instantiate the component ACKA leaves abstract, $\Logsec$, with a concrete,
 malicious-server-resistant verifiable key directory built on the IETF Key Transparency
