@@ -406,9 +406,14 @@ The write ratio grows linearly in $E$ up to the rotation period and then plateau
 a conversation spans several rotations, session-mode writes tick up in proportion, so continuous mode
 costs at most about $720\times$ more directory writes for per-epoch rather than per-rotation detection.
 This bounds the deployment choice cleanly --- fine-grained detection is available, at a write-amplification
-cost that is capped, not unbounded. One limitation applies: because real ratchet cadence is
+cost that is capped, not unbounded. Two limitations apply. First, because real ratchet cadence is
 message-driven rather than hourly, the continuous-mode write counts here are an under-count for a
-chatty conversation.
+chatty conversation. Second, the continuous-mode timing benchmark folds a \emph{simulated} per-epoch
+ratchet secret --- a fixed stand-in that is distinct from the authenticated public ratchet key, not a
+live Double-Ratchet DH output --- so it measures the transparency-layer cost of a ratchet epoch, not
+the ratchet's own key agreement. To keep the two medians honestly comparable, both modes are timed
+under the \emph{same} label-bound proof verifier (\texttt{verify\_search\_result\_raw\_for}), so
+neither path gains an artificial edge from skipping the label-binding check.
 
 % ============================================================================
 \section{Comparison with prior systems}\label{sec:eval-compare}

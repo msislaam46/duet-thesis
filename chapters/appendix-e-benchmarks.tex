@@ -258,7 +258,12 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 Per-check verification cost is $28.0\,\si{\micro\second}$ in session mode and
 $27.7\,\si{\micro\second}$ in continuous mode (medians; both include server-side proof
 generation, near-identical because the chain memoization flattens the compressed-leaf cost that
-previously separated the two modes).
+previously separated the two modes). Both modes are timed under the identical label-bound proof
+verifier (\texttt{verify\_search\_result\_raw\_for}), so the two medians are apples-to-apples. The
+continuous-mode setup folds a simulated per-epoch ratchet secret that is distinct from the
+authenticated public ratchet key (ACKA's $I$ versus $T$); it is a stand-in for a live Double-Ratchet
+DH output, so the figure captures the transparency-layer cost of an epoch, not the ratchet's own key
+agreement.
 
 % ----------------------------------------------------------------------------
 \section{Reproducing each metric}\label{sec:bench-repro}
