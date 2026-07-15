@@ -545,8 +545,8 @@ X1 key extraction & --- (out of scope) & no KT system addresses it & n/a \\
 }
 \end{table}
 
-As a complementary positioning lens, the six scenarios map onto the MITRE ATT\&CK Enterprise
-techniques --- server-side substitution onto Trusted Relationship (T1199) and Transmitted Data
+As a complementary positioning lens, the scenarios map onto the MITRE ATT\&CK Enterprise
+techniques --- server-side substitution onto Transmitted Data
 Manipulation (T1565.002), network interception onto Adversary-in-the-Middle (T1557), split-view onto
 Subvert Trust Controls (T1553), and endpoint key extraction onto the out-of-scope Unsecured
 Credentials (T1552) --- situating the abstract taxonomy against adversary behaviours seen in
@@ -558,8 +558,8 @@ security argument; the full technique matrix and the per-category STRIDE tables 
 
 A STRIDE enumeration over the three trust domains (the server (Merkle log, prefix tree, signed
 tree head), the client (registration, verification, warning monitor), and the auditor) yields
-twenty distinct threats. \Cref{tab:eval-stride} summarises the outcome: eighteen are fully mitigated
-and two are residual.
+twenty distinct threats. \Cref{tab:eval-stride} summarises the outcome: sixteen are mitigated
+and four are residual.
 
 \begin{table}[ht]
 \centering
@@ -574,25 +574,28 @@ Spoofing & 4 & 4 & --- \\
 Tampering & 3 & 3 & --- (substitution caught within 1--2 epochs) \\
 Repudiation & 3 & 3 & --- \\
 Information disclosure & 3 & 2 & operator learns the label$\leftrightarrow$user mapping \\
-Denial of service & 4 & 3 & registration flooding (operational rate-limiting) \\
+Denial of service & 4 & 1 & rate-limiting, staleness timeout, gossip transport (all deployment-layer, unimplemented) \\
 Elevation of privilege & 3 & 3 & --- \\
 \midrule
-\textbf{Total} & \textbf{20} & \textbf{18} & \textbf{2} \\
+\textbf{Total} & \textbf{20} & \textbf{16} & \textbf{4} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Spoofing, tampering, repudiation, and elevation of privilege are closed cryptographically --- ECVRF
+The forgery threats under spoofing and elevation of privilege are closed cryptographically --- ECVRF
 label binding, SHA-256 and Ed25519, the append-only log, and client-side proof verification leave no
-non-negligible residual. The two residual threats are not cryptographic weaknesses but consequences
-of the semi-trusted-server model: the operator necessarily learns which label belongs to which user
-(an information-disclosure residual shared by all deployed key-transparency systems, including
-CONIKS~\cite{melara2015coniks}), and the write path can be flooded with fake registrations, which
-only operational rate limiting blunts (a denial-of-service residual); an operator that withholds
-epochs or writes is caught by auditor timeouts and the compound signal of A2, at the cost of
-delayed detection. Both residuals are acknowledged by the standard key-transparency literature and
-neither is addressed by ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather than realising a distrusted one; they bound what
-transparency can offer rather than revealing a flaw in this construction.
+non-negligible residual --- and substitution (tampering, and the impersonation case of spoofing) is
+caught by the owner's self-check and peer warning within one or two epochs. The four residual
+threats are not cryptographic weaknesses. One is inherent to the semi-trusted-server model: the
+operator necessarily learns which label belongs to which user, an information-disclosure residual
+shared by all deployed key-transparency systems, including CONIKS~\cite{melara2015coniks}, and not
+addressed by ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather
+than realising a distrusted one. The other three are availability functions the proof-of-concept
+does not implement --- write rate-limiting, a published-epoch staleness timeout, and a gossip
+transport that would surface proof-omission --- each a deployment-layer engineering task
+(\cref{ch:discussion}) rather than a flaw in the construction. (Censoring a committed \emph{warning}
+is, by contrast, mitigated: the compound signal of A2 --- write-once, the transition audit, and the
+persistence check --- makes its removal a detectable act.)
 
 \subsection{Attack tree}\label{ssec:eval-attacktree}
 
@@ -630,8 +633,9 @@ key in an earlier epoch flags the change directly on its next fetch.}
 The overall posture follows from the preceding artefacts. Detection is automatic and fast (tens of
 microseconds of client work, a verdict within one to two epochs) and the false-positive rate over
 \num{1000} clean sessions is \num{0}, so the warning channel raises no spurious alarms. The residual
-risks are the two semi-trusted-server limitations of \cref{ssec:eval-stride}, both outside what any
-transparency layer removes. This is the gap the design set out to close: where the deployed WhatsApp
+risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation --- the label$\leftrightarrow$user
+mapping, outside what any transparency layer removes --- and three availability functions left to a
+production deployment. This is the gap the design set out to close: where the deployed WhatsApp
 AKD ships with client key-history monitoring not yet enabled and directs the user to verify the
 session \emph{manually} with the contact when an automatic check fails~\cite[pp.~5,
 10]{whatsapp2023whitepaper}, and where unprompted users rarely locate and complete such a manual

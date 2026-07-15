@@ -85,11 +85,13 @@ precisely (dual-index detection needs no auditor, and only split-view equivocati
 is implemented as a running cross-vantage check (\cref{ssec:eval-auditor}). In the prototype the
 second vantage is a server-served stand-in driven by the testing interface; a production deployment
 would feed that second head over a real gossip channel or an independent auditor, with identical
-detection logic and only the transport changed. Separately, two residual threats identified by the
-STRIDE analysis (\cref{ssec:eval-stride}) are inherent to the semi-trusted-server model rather than to
-this construction: the operator necessarily learns the label-to-user mapping (there is no query
-privacy from the operator), and the write path can be flooded or operationally rate-limited as a
-denial of service. Both are shared by every deployed key-transparency system.
+detection logic and only the transport changed. Separately, the STRIDE analysis
+(\cref{ssec:eval-stride}) leaves four residual threats, none a weakness in this construction. One is
+inherent to the semi-trusted-server model and shared by every deployed key-transparency system: the
+operator necessarily learns the label-to-user mapping (there is no query privacy from the operator).
+The other three are availability functions the proof-of-concept does not implement --- write
+rate-limiting, a published-epoch staleness timeout, and a gossip transport for proof-omission --- each
+a deployment-layer engineering task rather than a gap in the scheme.
 
 \paragraph{Prototype bounds.} Several gaps separate the measured artefact from a deployable one. The
 benchmarks are single-machine and in-memory, with no networked or database-backed deployment, so they
