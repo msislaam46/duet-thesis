@@ -28,8 +28,9 @@ figures omit (both totals include the signature check); a month-long offline cat
 kilobytes naïve monitoring would spend; the detection check itself runs in microseconds with no false
 positives over a thousand clean sessions, and the cross-vantage auditor closes the equivocation case
 at under \SI{30}{\micro\second} per epoch. The adversarial suite detects the full substitution and
-equivocation taxonomy, and a STRIDE analysis leaves only the two residual risks inherent to any
-semi-trusted-server directory.
+equivocation taxonomy, and a STRIDE analysis leaves four residual risks --- one the label-to-user
+mapping inherent to any semi-trusted-server directory, the other three availability functions left to
+a production deployment.
 
 Read against the research questions of \cref{sec:intro-aims}, the evidence is direct. RQ1 (automatic,
 in-band detection) is answered by the dual-index warning and its clean pass across the full
