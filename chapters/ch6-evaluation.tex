@@ -137,14 +137,15 @@ $10^6$ & 20 & 640 & 23 & 913 \\
 \centering
 \input{figures/tikz/fig-eval-sizes-plot}
 \caption{Lookup proof size versus directory size $N$ (log $x$): both scale as $\lceil\lg N\rceil$, and
-the dual-index proof carries only the fixed $\sim$\num{176}-byte VRF-and-metadata overhead over the
+the dual-index proof carries only the fixed \num{177}-byte VRF-and-metadata overhead over the
 single-index path (\cref{tab:eval-sizes}).}
 \label{fig:eval-sizes-plot}
 \end{figure}
 
 The dual-index proof decomposes as a fixed \num{177}\,byte constant (an \num{80}\,byte
-ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{97}\,bytes of metadata (a \num{32}\,byte bitmap,
-the \num{1}\,byte C2 leaf-kind commitment (\cref{ssec:design-detection}), leaf data, and depth)) on
+ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{97}\,bytes of metadata: a \num{32}\,byte label, a
+\num{32}\,byte value, a \num{1}\,byte C2 leaf-kind commitment (\cref{ssec:design-detection}), and a
+\num{32}\,byte sibling bitmap) on
 top of $32$ bytes per prefix hash, giving the closed form
 \begin{equation}\label{eq:eval-proofsize}
   |\pi| \;=\; 32\lceil\lg N\rceil \;+\; 32\lceil\lg E\rceil \;+\; 177 \ \text{bytes},

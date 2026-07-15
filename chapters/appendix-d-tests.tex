@@ -23,6 +23,7 @@ mode (\cref{tab:tests-rust-system}).
 \caption{Rust tests --- primitives and data structures (\num{35} tests).}
 \label{tab:tests-rust-prim}
 \footnotesize
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llp{7.0cm}@{}}
 \toprule
 Module & Test & Property checked \\
@@ -67,7 +68,7 @@ Module & Test & Property checked \\
 \texttt{dual\_index} & \texttt{warn\_mac\_cross\_impl\_vector} & byte-for-byte agreement with the TypeScript implementation on a fixed sealed-warning MAC vector \\
 \texttt{dual\_index} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte label agreement with the TypeScript implementation on fixed vectors \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \begin{table}[H]
@@ -75,6 +76,7 @@ Module & Test & Property checked \\
 \caption{Rust tests --- server and verification chain (\texttt{server}, \num{28} tests).}
 \label{tab:tests-rust-server}
 \footnotesize
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}lp{9.4cm}@{}}
 \toprule
 Test & Property checked \\
@@ -113,7 +115,7 @@ Test & Property checked \\
 \texttt{equivocate\_requires\_committed\_epoch} & equivocation requires a committed epoch to fork from \\
 \texttt{verify\_rejects\_malformed\_epoch\_size\_head} & a validly-signed head with $\text{epoch}+1\neq\text{tree\_size}$ is refused (\texttt{MalformedHead}), so a server cannot grow the log past the epoch it signs and hide the later leaves from the auditor \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \begin{table}[H]
@@ -121,6 +123,7 @@ Test & Property checked \\
 \caption{Rust tests --- auditor, warning monitor, and continuous mode (\num{27} tests).}
 \label{tab:tests-rust-system}
 \footnotesize
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llp{7.0cm}@{}}
 \toprule
 Module & Test & Property checked \\
@@ -156,7 +159,7 @@ Module & Test & Property checked \\
 \texttt{cea} & \texttt{cea\_register\_detects\_occupied\_label\_as\_impersonation} & the ACKA sender-side pre-post check: an occupied label raises an alert \\
 \texttt{cea} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte fingerprint agreement with the TypeScript implementation \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 % ----------------------------------------------------------------------------

@@ -68,3 +68,19 @@
 % ── Convenience ──
 \newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
 \newcommand{\citeneeded}{\textcolor{orange}{\textbf{[cite]}}}
+
+% ── Breakable code identifiers ──
+% Long snake_case test/function names (e.g. attack_remove_raw_is_not_declared)
+% do not hyphenate, so in a narrow p{} table column they overflow the cell.
+% \idt wraps such a name in \texttt and lets it break at any character, which
+% keeps the traceability/test tables inside their columns.
+\RequirePackage{seqsplit}
+\newcommand{\idt}[1]{\texttt{\seqsplit{#1}}}
+
+% ── Ragged-right paragraph column ──
+% `L{<width>}` is p{<width>} without justification. In a narrow column TeX
+% cannot always stretch a justified line to the exact width, and rather than
+% leave it short it lets the line run over — the usual source of small overfull
+% \hbox warnings in these tables. Ragged-right removes that pressure.
+\RequirePackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
