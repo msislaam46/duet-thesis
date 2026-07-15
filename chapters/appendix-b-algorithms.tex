@@ -7,11 +7,27 @@
 \newcommand{\lwarn}{\ell_{\mathsf{warn}}}
 \SetKwProg{Fn}{function}{:}{}
 \SetKw{Req}{req}
+% Algorithms are set a size smaller than the 1.5-spaced body, as code listings
+% conventionally are: at body size the longest of them is taller than the text
+% block, and `[H]` placement leaves no room to break it.
+\SetAlFnt{\small}
+\SetAlCapFnt{\small}
+\SetAlCapNameFnt{\small}
 
 Conventions: $\Hash(\cdot)=$ SHA-256; domain-separated tree hashing per RFC 6962/9162,
 $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$;
 $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 
+% Set tighter than the 1.5-spaced body (with the \SetAlFnt{\small} above), as
+% code listings conventionally are: at body size and spacing the longest
+% algorithm is taller than the text block, and `[H]` leaves no room to break it.
+% Both levers are needed — with \small alone, 1.0 still overflows one page by
+% ~23pt; 0.95 is the loosest value that clears every page.
+% NOTE: a bare \small inside an algorithm has no effect; algorithm2e takes its
+% body font from \AlFnt, so it must be set via \SetAlFnt.
+\begin{spacing}{0.95}
+
+\clearpage
 \begin{algorithm}[H]
 \caption{Merkle Log Tree (RFC 9162)}\label{alg:merklelog}
 \KwData{$\mathit{leaves}[]\gets[\,]$}
@@ -66,6 +82,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \end{algorithm}
 
+\clearpage
 \begin{algorithm}[H]
 \caption{Sparse Binary Merkle Prefix Tree (label-keyed)}\label{alg:prefix}
 \KwData{path-compressed binary trie over 256-bit labels; empty hash $e=\Hash(\varepsilon)$}
@@ -95,6 +112,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \end{algorithm}
 
+\clearpage
 \begin{algorithm}[H]
 \caption{Key Transparency Server}\label{alg:server}
 \KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$}
@@ -133,6 +151,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \end{algorithm}
 
+\clearpage
 \begin{algorithm}[H]
 \caption{Dual-Index Label Derivation (HKDF-SHA256, RFC 5869)}\label{alg:dualindex}
 \KwIn{shared secret $\sharedS$ from X3DH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width); $\min/\max$ below denote the canonically ordered conversation pair $(\mathit{id_A},\mathit{id_B})$}
@@ -204,6 +223,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \end{algorithm}
 
+\clearpage
 \begin{algorithm}[H]
 \caption{MitM Detection, Warning, and Warning Persistence}\label{alg:detect}
 \KwData{$\mathit{evidence}[]\gets[\,]$; per conversation, $\mathit{PRK}$ as extracted in Alg.~\ref{alg:dualindex}}
@@ -247,6 +267,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \end{algorithm}
 
+\clearpage
 \begin{algorithm}[H]
 \caption{Auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
 \KwData{$\mathit{heads}[]\gets[\,]$}
@@ -257,23 +278,33 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
     $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
     \Req $\textsf{VerifyConsistency}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{sth_{old}}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$\;
   }
+  \tcc{Staged state: replay every not-yet-audited epoch onto a SCRATCH mirror; the live mirror,
+       audited-epoch cursor, and heads list are committed as ONE transaction only if the ENTIRE
+       head passes every stage. A fetch failure aborts the transaction (retryable next poll) without
+       latching a fork alarm, matching the Rust implementation's \texttt{transition\_complete} guard.}
+  $\mathit{scratch}\gets \textsf{clone}(\mathit{mirror})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
-    $\textsf{AuditTransition}(\mathit{server},e)$ \tcp*{directory delta of EVERY epoch, not only the newest / log growth}
+    \lIf{$\mathit{server}.\textsf{GetEpochDelta}(e)$ fails}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable, not a fork}}
+    $\textsf{AuditTransition}(\mathit{scratch},e)$ \tcp*{replays into scratch; does NOT commit to mirror}
+    $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
-  $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$\;
+  \tcc{Cross-vantage fork check and any additional stages run here (omitted for brevity)}
+  \If{$\mathit{complete}$ \emph{and} no fork detected}{
+    $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$ \tcp*{single all-or-nothing commit}
+  }
 }
-\Fn{\normalfont\textsf{AuditTransition}($\mathit{server},e$)}{
+\Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e$)}{
   \tcc{after the manner of the IETF KeyTrans \textsf{AuditorUpdate}, but the auditor maintains its
        OWN mirror of the committed directory --- reconstructed by replaying epochs $0..e{-}1$ --- so
        it checks epoch $e$'s declared delta against that mirror (its reconstruction of $r_{e-1}$)
        rather than trusting server-supplied per-operation membership proofs. The mirror is empty
        before epoch $0$, so no $r_{-1}$ leaf is required.~\cite{ietf-keytrans-protocol}}
-  $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{server}.\textsf{GetEpochDelta}(e)$ \tcp*{$\mathit{ops}_e$: declared \textsf{Insert}$(\ell,\mathit{kind},v)$ and \textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)$ only --- the format cannot express a deletion}
+  $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets$ the already-fetched delta for epoch $e$\;
   \Req $\pi_{\mathrm{incl}}$ binds $r_{e}$ to leaf $e$ of the log the validated STH signs\;
-  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{mirror}.\textsf{get}(\ell)=\bot$ \tcp*[f]{A1: an insert targets an ABSENT label --- else an overwrite disguised as an insert}}
-  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{mirror}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{mirror}.\textsf{get}(\ell)=v_{\mathrm{old}}$ \tcp*[f]{reject immutable rotation / kind-misdeclaration / wrong prior value}}
-  $r'\gets$ root after applying $\mathit{ops}_e$ to a scratch copy of $\mathit{mirror}$ \tcp*{leaves hash as $\Hleaf(\mathit{kind}\concat\ell\concat v)$}
-  \Req $r'=r_{e}$;\ \ commit the scratch copy to $\mathit{mirror}$ \tcp*{exact transition; commit only on full success (no poisoning)}
+  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$ \tcp*[f]{A1: an insert targets an ABSENT label --- else an overwrite disguised as an insert}}
+  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$ \tcp*[f]{reject immutable rotation / kind-misdeclaration / wrong prior value}}
+  $r'\gets$ root after applying $\mathit{ops}_e$ to $\mathit{scratch}$ \tcp*{leaves hash as $\Hleaf(\mathit{kind}\concat\ell\concat v)$}
+  \Req $r'=r_{e}$ \tcp*{exact transition; on failure the caller discards the scratch entirely}
   \tcc{each leaf commits its \textsc{mutable}/\textsc{immutable} kind into its hash, so the auditor
        \emph{distinguishes} the families: a \textsf{Rotate} is accepted only on a mutable
        (global-VRF identity) leaf and rejected outright on an immutable (raw dual-index / CEA /
@@ -294,6 +325,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \end{algorithm}
 
+\clearpage
 \begin{algorithm}[H]
 \caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA-faithful)}\label{alg:cea}
 \KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and $\mathit{PRK}$
@@ -333,3 +365,5 @@ the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
   \KwRet \textsc{Consistent}\;
 }
 \end{algorithm}
+
+\end{spacing}

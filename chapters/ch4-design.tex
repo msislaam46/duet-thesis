@@ -633,6 +633,7 @@ mapping is summarized in \cref{tab:design-acka}.
 \caption{Mapping the ACKA components onto their instantiation in this work.}
 \label{tab:design-acka}
 \small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llp{6.0cm}@{}}
 \toprule
 ACKA component & Role in the framework & Instantiation in this work \\
@@ -641,7 +642,7 @@ $\CKA$    & continuous key agreement & Signal's Double Ratchet, used unmodified 
 $\CEA$ & per-epoch fingerprints / labels & dual-index labels (session) and CEA fingerprints (continuous), adding an in-band warning channel \\
 $\Logsec$ & abstract append-only secure log (consistency + exclusion) & KT verifiable key directory: prefix tree + Merkle log + signed tree head + cross-vantage auditor \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 Three deliberate departures from the paper are stated plainly, because each corresponds to one of

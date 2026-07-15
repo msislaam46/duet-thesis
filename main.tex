@@ -182,7 +182,12 @@ and my family, whose encouragement made this work possible.
 % NOTATION TABLE — prof insists on consistent notation (F11).
 % Keep this synchronized with kt-macros.sty. One row per macro.
 \chapter*{Notation}
-\begin{tabular}{ll}
+% The \small must stay scoped to this table: unbraced, it leaks into every
+% chapter and appendix that follows and silently sets the whole body a size
+% smaller (it cost the document ~13 pages before this was caught).
+\begingroup
+\small
+\begin{tabular}{@{}lp{9.5cm}@{}}
 \toprule
 Symbol & Meaning \\
 \midrule
@@ -203,6 +208,7 @@ $W$ & offline window (epochs); $N$: number of labels; $E$: number of epochs \\
 $\concat$ & byte-string concatenation \\
 \bottomrule
 \end{tabular}
+\endgroup
 
 % ===================== CHAPTERS =====================
 \include{chapters/ch1-introduction}
