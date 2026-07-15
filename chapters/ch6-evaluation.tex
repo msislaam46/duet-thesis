@@ -112,8 +112,9 @@ spend to catch up, and how quickly and reliably an attack is detected.
 
 The size of a lookup proof determines the bandwidth cost of every key fetch, so it is the first
 quantity to pin down. \Cref{tab:eval-sizes} reports the single-index and dual-index proof
-sizes as the directory grows. Both scale as $\lceil\lg N\rceil$, exactly as the sparse-tree design
-predicts (\cref{ssec:design-structures}).
+sizes as the directory grows. A proof carries one hash per non-empty sibling on the label's path,
+whose number $h$ has expected value $\approx\lceil\lg N\rceil$, so both grow logarithmically in $N$
+as the sparse-tree design predicts (\cref{ssec:design-structures}).
 
 \begin{table}[ht]
 \centering
@@ -136,7 +137,7 @@ $10^6$ & 20 & 640 & 23 & 913 \\
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-sizes-plot}
-\caption{Lookup proof size versus directory size $N$ (log $x$): both scale as $\lceil\lg N\rceil$, and
+\caption{Lookup proof size versus directory size $N$ (log $x$): both grow as $\sim\lg N$, and
 the dual-index proof carries only the fixed \num{177}-byte VRF-and-metadata overhead over the
 single-index path (\cref{tab:eval-sizes}).}
 \label{fig:eval-sizes-plot}
@@ -146,14 +147,17 @@ The dual-index proof decomposes as a fixed \num{177}\,byte constant (an \num{80}
 ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{97}\,bytes of metadata: a \num{32}\,byte label, a
 \num{32}\,byte value, a \num{1}\,byte C2 leaf-kind commitment (\cref{ssec:design-detection}), and a
 \num{32}\,byte sibling bitmap) on
-top of $32$ bytes per prefix hash, giving the closed form
+top of $32$ bytes per prefix hash, giving
 \begin{equation}\label{eq:eval-proofsize}
-  |\pi| \;=\; 32\lceil\lg N\rceil \;+\; 32\lceil\lg E\rceil \;+\; 177 \ \text{bytes},
+  |\pi| \;=\; 32h \;+\; 32\lceil\lg E\rceil \;+\; 177 \ \text{bytes},
+  \qquad \mathbb{E}[h]\approx\lceil\lg N\rceil,
 \end{equation}
-where the middle term is the log-inclusion cost a deployed $E$-epoch log adds. The logarithmic
-scaling of \cref{eq:eval-proofsize} in $N$ is plotted in \cref{fig:eval-sizes-plot}. The $10^6$ row reads
-\num{913}\,bytes because the single seeded leaf happens to sit at depth \num{23}; the distribution
-median over \num{1000} random lookups at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). We
+where $h$ is the number of non-empty siblings on the queried label's path (the ``dual-index prefix
+hashes'' column of \cref{tab:eval-sizes}) and the middle term is the log-inclusion cost a deployed
+$E$-epoch log adds. The $O(\lg N + \lg E)$ scaling of \cref{eq:eval-proofsize} is plotted in
+\cref{fig:eval-sizes-plot}. The $10^6$ row reads \num{913}\,bytes because the single seeded leaf's
+path carries $h=\num{23}$ non-empty siblings; the distribution median over \num{1000} random lookups
+at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). We
 therefore report the distribution median in the remainder of this chapter, since it reflects the
 proof size a typical lookup incurs rather than the depth of one particular seeded leaf. Crucially,
 the ECVRF proof and the warning slot add nothing beyond this
@@ -410,11 +414,13 @@ $E$ (epochs) & Continuous (one/epoch) & Session (one/rotation) & Ratio \\
 \end{tabular}
 \end{table}
 
-The write ratio grows linearly in $E$ up to the rotation period and then plateaus at $720\times$: once
-a conversation spans several rotations, session-mode writes tick up in proportion, so continuous mode
-costs at most about $720\times$ more directory writes for per-epoch rather than per-rotation detection.
-This bounds the deployment choice cleanly --- fine-grained detection is available, at a write-amplification
-cost that is capped, not unbounded. Two limitations apply. First, because real ratchet cadence is
+The write ratio grows linearly in $E$ up to the rotation period and then plateaus at $720\times$ under
+this benchmark's cadence model: once a conversation spans several rotations, session-mode writes tick
+up in proportion, so continuous mode costs about $720\times$ more directory writes for per-epoch
+rather than per-rotation detection. The plateau is a property of the assumed hourly cadence (one
+ratchet epoch per hour, a 720-hour rotation), not a deployment bound: with real message-driven
+ratcheting the ratio is the number of ratchet epochs per signed-pre-key rotation, which has no fixed
+cap. Two limitations follow from this. First, because real ratchet cadence is
 message-driven rather than hourly, the continuous-mode write counts here are an under-count for a
 chatty conversation. Second, the continuous-mode timing benchmark folds a \emph{simulated} per-epoch
 ratchet secret --- a fixed stand-in that is distinct from the authenticated public ratchet key, not a
@@ -669,7 +675,8 @@ in-memory prototype deliberately does not model.
 Finally, the two operating modes bound the deployment choice rather than forcing it. Session mode is
 the deployable default (one directory write per signed-pre-key rotation, at parity with existing
 key-transparency systems) while continuous mode offers finer-grained, ACKA-faithful detection at a
-write amplification that is capped at $\approx 720\times$, not unbounded (\cref{ssec:eval-modes}). What
+write amplification of $\approx 720\times$ under the hourly-epoch benchmark model --- the ratio scales
+with ratchet cadence rather than sitting at a fixed cap (\cref{ssec:eval-modes}). What
 remains before a design of this kind could ship is not performance but three engineering gaps stated
 plainly in \cref{ch:discussion}: authenticated writes on the directory API, persistent sharded
 storage, and closing the operator's label$\leftrightarrow$user query-privacy residual

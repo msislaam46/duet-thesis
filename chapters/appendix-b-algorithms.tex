@@ -87,19 +87,19 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \begin{algorithm}[H]
 \caption{Sparse Binary Merkle Prefix Tree (label-keyed)}\label{alg:prefix}
 \KwData{path-compressed binary trie over 256-bit labels; empty hash $e=\Hash(\varepsilon)$}
-\Fn{\normalfont\textsf{Insert}($\mathit{label},\mathit{value}$)}{
-  \Req $|\mathit{label}|=32$\;
-  place leaf $\Hleaf(\mathit{label}\concat\mathit{value})$ at the bit-path of $\mathit{label}$\;
+\Fn{\normalfont\textsf{Insert}($\mathit{label},\mathit{value},\mathit{kind}$)}{
+  \Req $|\mathit{label}|=32$ \tcp*{$\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$, bound into the leaf (C2)}
+  place leaf $\Hleaf(\mathit{kind}\concat\mathit{label}\concat\mathit{value})$ at the bit-path of $\mathit{label}$\;
   recompute hashes along the insertion path only \tcp*{$O(256)$}
   \KwRet \textsf{RootHash}()\;
 }
 \Fn{\normalfont\textsf{Lookup}($\mathit{label}$)}{
   walk the bit-path of $\mathit{label}$\;
-  $\pi\gets(\mathit{label},\mathit{value}\text{ or }\bot,\mathit{bitmap},\mathit{siblings})$ \tcp*{compressed proof}
+  $\pi\gets(\mathit{label},\mathit{value}\text{ or }\bot,\mathit{kind},\mathit{bitmap},\mathit{siblings})$ \tcp*{compressed proof}
   \KwRet $(\mathit{value}\text{ or }\bot,\ \pi)$\;
 }
 \Fn{\normalfont\textsf{RootFromProof}($\pi$)}{
-  $c\gets e$ \textbf{if} $\pi.\mathit{value}=\bot$ \textbf{else} $\Hleaf(\pi.\mathit{label}\concat\pi.\mathit{value})$\;
+  $c\gets e$ \textbf{if} $\pi.\mathit{value}=\bot$ \textbf{else} $\Hleaf(\pi.\mathit{kind}\concat\pi.\mathit{label}\concat\pi.\mathit{value})$ \tcp*{kind authenticated by the root (C2)}\;
   \For{$i\gets 0$ \KwTo $255$}{
     $s\gets$ next sibling from $\pi.\mathit{siblings}$ if $\mathit{bitmap}[i]$ set, else $e$\;
     \lIf{$c=e\wedge s=e$}{\textbf{continue}}
@@ -191,6 +191,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   \Req $\pi_{\mathrm{prefix}}.\mathit{value}=v$\;
   $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
   \Req $\textsf{VerifyInclusion}(r,\pi_{\mathrm{incl}}.\mathit{index},\pi_{\mathrm{incl}}.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pi_{\mathrm{incl}}.\mathit{path})$\;
+  \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{currency: the proof must cover the LAST log leaf --- an older leaf's inclusion also verifies (inclusion $\ne$ currency, RFC 9162)}
   \KwRet $v$ \tcp*{$v$ may be $\bot$: proven non-inclusion}
 }
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{

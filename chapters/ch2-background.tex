@@ -1427,21 +1427,19 @@ three problems are not addressed \emph{together} by any system surveyed in
 \cref{sec:bg-compare}, and that joint absence is the gap.
 
 These limitations motivate the four principal contributions announced in
-\cref{ch:intro}; this section develops them, itemising below the six concrete mechanisms through
-which they are realised (the dual-index warning and its ACKA framing form the conceptual
-contribution; the windowed proof and detection experiment the cryptographic one; with the
-implementation and evaluation completing the four). Not all six are equally novel, and the text is
-careful to say which: the windowed proof and the cross-vantage auditor reuse mechanisms established
-in prior work (\S6.3 of CONIKS; CT/CONIKS gossip), and are claimed as instantiation-and-measurement,
-not as new primitives. Collectively they strengthen key
-transparency for asynchronous messaging by adding automatic peer notification,
-efficient offline recovery, transparent equivocation detection, and continuous
-authentication over an untrusted directory. The first three sit on the key-transparency
-log and address those three problems in turn; the fourth carries authentication into the
-continuous ratchet setting that ACKA models; the fifth is the conceptual reconciliation
-that frames the design, and the sixth is the working system in which all of them are
-realised and measured. They are parallel, not layered: the log mechanisms do not depend
-on the ACKA instantiation, which realises one operating mode of the system rather than
+\cref{ch:intro} --- conceptual, cryptographic, systems, and empirical --- which this section develops.
+The \emph{conceptual} contribution is the dual-index warning scheme, together with its framing as a
+concrete instantiation of the ACKA append-only-log component; the \emph{cryptographic} contribution
+is the windowed consistency proof and the dual-index detection experiment; the \emph{systems}
+contribution is the byte-parity Rust and TypeScript implementation with its cross-vantage auditor;
+and the \emph{empirical} contribution is the benchmark campaign and security evaluation. Not every
+mechanism is equally novel, and the text is careful to say which: the windowed proof and the
+cross-vantage auditor reuse ideas established in prior work (\S6.3 of CONIKS; CT/CONIKS gossip) and
+are claimed as instantiation-and-measurement, not as new primitives. Together they strengthen key
+transparency for asynchronous messaging by adding automatic peer notification, efficient offline
+recovery, transparent equivocation detection, and continuous authentication over an untrusted
+directory. The mechanisms are parallel, not layered: the log-based warning scheme does not depend on
+the ACKA continuous-mode instantiation, which realises one operating mode of the system rather than
 its foundation.
 
 \paragraph{Contribution 1 --- Dual-index warning scheme.} This addresses Problem 1 by

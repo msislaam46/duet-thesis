@@ -2,9 +2,10 @@
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
 Three suites cover the system. The Rust core is covered by \num{91} unit and property tests across
-nine modules, the \num{8}-scenario adversarial integration suite, and \num{7} tests in the
-\texttt{kt\_auditor} binary (the delta-replay test plus six \texttt{classify\_head} rollback/fork
-cases) --- \num{106} tests in total, run under \texttt{cargo test}; the TypeScript
+nine modules, the \num{8}-scenario adversarial integration suite, and \num{13} tests in the
+\texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
+five \texttt{commit\_decision} transaction cases, and an end-to-end partial-fetch-failure test)
+--- \num{112} tests in total, run under \texttt{cargo test}; the TypeScript
 client is covered by \num{64} Jest tests in six suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
@@ -120,7 +121,7 @@ Test & Property checked \\
 
 \begin{table}[H]
 \centering
-\caption{Rust tests --- auditor, warning monitor, and continuous mode (\num{27} tests).}
+\caption{Rust tests --- auditor, warning monitor, and continuous mode (\num{28} tests).}
 \label{tab:tests-rust-system}
 \footnotesize
 \resizebox{\textwidth}{!}{%
