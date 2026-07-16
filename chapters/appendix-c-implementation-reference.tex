@@ -117,17 +117,20 @@ demonstration: inject a ratchet fork & \texttt{kt:cea-inject} \\
 The implementation is organized as follows:
 
 \begin{itemize}
-  \item \texttt{libsignal/rust/kt/} --- the Rust \texttt{kt} crate: library modules
+  \item \texttt{crate/} --- the Rust \texttt{duet} crate: library modules
   (\cref{tab:impl-modules}), the standalone server and auditor binaries, and the benchmark
   harness.
-  \item \texttt{kt-demo/} --- the server, auditor, and attacker orchestration together with
+  \item \texttt{demo/} --- the server, auditor, and attacker orchestration together with
   the served visualization and threat-model pages.
-  \item \texttt{Signal-Desktop/ts/kt/} --- the embedded TypeScript client.
+  \item \texttt{signal-desktop/ts/kt/} --- the embedded TypeScript client (mirrored
+  byte-for-byte by the standalone \texttt{signal-desktop-kt/} package).
 \end{itemize}
 
-The system is driven by single commands: \texttt{cargo test -p kt} and \texttt{cargo bench}
-for the Rust tests and benchmarks, and the runner scripts (\texttt{run} with
-\texttt{up}/\texttt{attack}/\texttt{logs}/\texttt{down}, and \texttt{reset}) for the
+The system is driven by single commands: \texttt{cargo test} and \texttt{cargo bench}, run from
+\texttt{crate/}, for the Rust tests and benchmarks, and the runner script
+\texttt{demo/run.ps1} --- whose subcommands are \texttt{up}, \texttt{server}, \texttt{auditor},
+\texttt{build}, \texttt{attack}, \texttt{fork}, \texttt{stop-fork}, \texttt{delete},
+\texttt{simulate-delete}, \texttt{stop}, and \texttt{reset} --- for the
 multi-actor demonstration. The networked-in-app mode is enabled by setting a server URL in
 the client's environment before launch.
 

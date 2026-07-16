@@ -228,7 +228,7 @@ is the epoch commit, which snapshots the tree by a deep clone; \cref{ch:eval} qu
 Because the evaluation of \cref{ch:eval} rests on the numbers this harness produces, its methodology
 belongs here, with the results themselves deferred. Measurements are taken two ways. Criterion drives
 the statistical benchmarks, warming up for a fixed interval before repeating each operation until its
-confidence interval stabilises and emitting the full distribution; a lightweight companion harness
+confidence interval stabilizes and emitting the full distribution; a lightweight companion harness
 times a fixed number of iterations (\num{2000} per operation) against a monotonic clock and records
 the median, 95th percentile, and a 95\% confidence half-width to CSV. The two agree, and the
 companion medians are the figures quoted in \cref{ch:eval}.
@@ -239,7 +239,7 @@ constant seeds, so proof sizes are reproducible to the byte and timing samples a
 same users on every run. Timings are \emph{server-side}: the harness invokes the \texttt{KTServer}
 directly, so an operation measures only its cryptographic work, with the \texttt{axum} HTTP transport
 and the Electron client deliberately excluded --- their overhead is not the quantity being
-characterised, and separating them keeps the measurement of the design honest. Memory is captured
+characterized, and separating them keeps the measurement of the design honest. Memory is captured
 separately as the resident set size after building the tree, via the \texttt{sysinfo} crate, and the
 CONIKS-scale runs report distributions over a thousand random lookups per size. Each experiment
 begins from fresh server state, an administrative reset rebuilds the directory from its seed, so

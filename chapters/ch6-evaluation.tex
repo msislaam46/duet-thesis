@@ -17,9 +17,9 @@ and independent of directory size.
 In this section we describe what was measured, against which baselines, and on what apparatus, so
 that every number that follows can be read against a fixed reference. This matters because the
 value of a transparency system is not any single cost but the trade between proof size, verification
-time, and the bandwidth a client must spend to stay synchronised.
+time, and the bandwidth a client must spend to stay synchronized.
 
-The evaluation is organised around four questions, one per design claim, each stated so that it could
+The evaluation is organized around four questions, one per design claim, each stated so that it could
 be falsified. \emph{Is detection free in proof size?} --- falsified if the dual-index proof were
 materially larger than a single-index proof at the same $N$ (\cref{ssec:eval-sizes}). \emph{Is client
 verification cheap and scale-independent?} --- falsified if the full-chain verify grew with $N$ or
@@ -96,7 +96,7 @@ $\approx$\SI{120}{\micro\second} (generation including the prove) and \SI{76.8}{
 Three limitations bound the interpretation of the numbers. First, the server is in-memory and
 single-machine, so absolute latencies exclude the database and network costs a distributed
 deployment would add. Second, every proof is measured on a single-epoch log, so the log-inclusion
-component is \num{0}\,bytes; a deployed log of $E$ epochs adds $32\lceil\lg E\rceil$\,bytes to every
+component is \num{0}\,bytes; a deployed log of $E$ epochs adds up to $32\lceil\lg E\rceil$\,bytes to every
 lookup proof. Third, the throughput figures are single-thread per-operation costs, not parallel
 scaling. Cross-system numbers in \cref{sec:eval-compare} come from different hardware, scales, and
 storage models and are treated as order-of-magnitude only.
@@ -149,12 +149,15 @@ ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{97}\,bytes of metadata: a \num{3
 \num{32}\,byte sibling bitmap) on
 top of $32$ bytes per prefix hash, giving
 \begin{equation}\label{eq:eval-proofsize}
-  |\pi| \;=\; 32h \;+\; 32\lceil\lg E\rceil \;+\; 177 \ \text{bytes},
-  \qquad \mathbb{E}[h]\approx\lceil\lg N\rceil,
+  |\pi| \;=\; 32h \;+\; 32h_{\mathrm{log}} \;+\; 177 \ \text{bytes},
+  \qquad \mathbb{E}[h]\approx\lceil\lg N\rceil,\quad h_{\mathrm{log}}\le\lceil\lg E\rceil,
 \end{equation}
 where $h$ is the number of non-empty siblings on the queried label's path (the ``dual-index prefix
-hashes'' column of \cref{tab:eval-sizes}) and the middle term is the log-inclusion cost a deployed
-$E$-epoch log adds. The $O(\lg N + \lg E)$ scaling of \cref{eq:eval-proofsize} is plotted in
+hashes'' column of \cref{tab:eval-sizes}) and $h_{\mathrm{log}}$ is the length of the current root's
+log-inclusion path. Because the current directory root is always the \emph{last} log leaf (the
+currency pin, \cref{ssec:design-verify}), $h_{\mathrm{log}}$ is the number of complete subtrees to its
+left --- $\mathrm{popcount}(E-1)$, at most $\lceil\lg E\rceil$ and often smaller (one hash at $E=5$,
+not three). The $O(\lg N + \lg E)$ scaling of \cref{eq:eval-proofsize} is plotted in
 \cref{fig:eval-sizes-plot}. The $10^6$ row reads \num{913}\,bytes because the single seeded leaf's
 path carries $h=\num{23}$ non-empty siblings; the distribution median over \num{1000} random lookups
 at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). We
@@ -546,9 +549,9 @@ X1 key extraction & --- (out of scope) & no KT system addresses it & n/a \\
 \end{table}
 
 As a complementary positioning lens, the scenarios map onto the MITRE ATT\&CK Enterprise
-techniques --- server-side substitution onto Transmitted Data
-Manipulation (T1565.002), network interception onto Adversary-in-the-Middle (T1557), split-view onto
-Subvert Trust Controls (T1553), and endpoint key extraction onto the out-of-scope Unsecured
+techniques~\cite{mitre-attack} --- server-side substitution onto Transmitted Data
+Manipulation (T1565.002), network interception onto Adversary-in-the-Middle (T1557), and endpoint key
+extraction onto the out-of-scope Unsecured
 Credentials (T1552) --- situating the abstract taxonomy against adversary behaviours seen in
 practice. The cryptographic guarantees of \cref{ch:design}, not this mapping, remain the primary
 security argument; the full technique matrix and the per-category STRIDE tables are given in
@@ -558,12 +561,14 @@ security argument; the full technique matrix and the per-category STRIDE tables 
 
 A STRIDE enumeration over the three trust domains (the server (Merkle log, prefix tree, signed
 tree head), the client (registration, verification, warning monitor), and the auditor) yields
-twenty distinct threats. \Cref{tab:eval-stride} summarises the outcome: sixteen are mitigated
+twenty distinct threats. \Cref{tab:eval-stride} summarizes the outcome: sixteen are mitigated
 and four are residual.
 
 \begin{table}[ht]
 \centering
-\caption{STRIDE coverage of the key-transparency system.}
+\caption{STRIDE coverage of the key-transparency system. A threat is counted \emph{mitigated} when an
+implemented control prevents or detects the principal attack outcome, and \emph{residual} when no
+implemented control addresses it (\cref{app:security}).}
 \label{tab:eval-stride}
 \small
 \begin{tabular}{@{}lccp{6.0cm}@{}}
@@ -590,12 +595,14 @@ threats are not cryptographic weaknesses. One is inherent to the semi-trusted-se
 operator necessarily learns which label belongs to which user, an information-disclosure residual
 shared by all deployed key-transparency systems, including CONIKS~\cite{melara2015coniks}, and not
 addressed by ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather
-than realising a distrusted one. The other three are availability functions the proof-of-concept
+than realizing a distrusted one. The other three are availability functions the proof-of-concept
 does not implement --- write rate-limiting, a published-epoch staleness timeout, and a gossip
 transport that would surface proof-omission --- each a deployment-layer engineering task
-(\cref{ch:discussion}) rather than a flaw in the construction. (Censoring a committed \emph{warning}
-is, by contrast, mitigated: the compound signal of A2 --- write-once, the transition audit, and the
-persistence check --- makes its removal a detectable act.)
+(\cref{ch:discussion}) rather than a flaw in the construction. (A2's write censorship is, by
+contrast, mitigated: the compound signal --- a key mismatch from the self-check together with a
+proof-verified \emph{absence} of the warning --- is itself confirmation of compromise. Deleting a
+warning \emph{after} it commits is tampering rather than censorship, and is separately closed by the
+write-once policy, the per-epoch transition audit, and the writer's persistence evidence.)
 
 \subsection{Attack tree}\label{ssec:eval-attacktree}
 

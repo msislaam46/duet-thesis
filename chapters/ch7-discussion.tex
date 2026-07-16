@@ -71,7 +71,7 @@ still holds without one.
 \section{Limitations}\label{sec:disc-limitations}
 
 The honest limits of the work fall into four groups: what the design is scoped to, what it must trust,
-what the prototype does not yet realise, and what has not been proved.
+what the prototype does not yet realize, and what has not been proved.
 
 \paragraph{Scope.} The scheme is detection, not prevention, and it inherits the trust-on-first-use
 assumption discussed above. It is pairwise: it does not cover group messaging, Sender Keys, or MLS,
@@ -95,7 +95,7 @@ a deployment-layer engineering task rather than a gap in the scheme.
 
 \paragraph{Prototype bounds.} Several gaps separate the measured artefact from a deployable one. The
 benchmarks are single-machine and in-memory, with no networked or database-backed deployment, so they
-characterise the design's algorithmic cost rather than a production service; relatedly, the epoch
+characterize the design's algorithmic cost rather than a production service; relatedly, the epoch
 commit uses an $O(N)$ deep-clone snapshot with a transient memory spike, measured directly in
 \cref{ch:eval} and reducible to $O(\log N)$ by structural sharing (below). The Signal Desktop
 integration carries two proof-of-concept stand-ins, both flagged in \cref{ch:impl}: the
@@ -145,7 +145,7 @@ those that turn the prototype into a deployment to those that broaden the design
 \paragraph{Production shared-secret binding.} The single change that most advances the work is
 bridging the genuine X3DH/PQXDH shared secret out of libsignal at the pre-key-bundle hook and binding
 the dual-index labels to it, in place of the deterministic stand-in. libsignal folds the shared
-secret into the ratchet root key and discards it immediately after session initialisation, so the
+secret into the ratchet root key and discards it immediately after session initialization, so the
 work is to capture it at that hook and hand it to the label derivation; everything downstream is
 unchanged. This is what turns the labels from ``stable per account'' into ``unguessable by the server,
 per session,'' and it is the prerequisite for the active-network-MitM detection of \cref{ch:threat} to
@@ -223,12 +223,12 @@ schema carrying the scenario class, the epoch, and the signed tree heads and pro
 the evidence; notification interfaces through which an operator or auditor can reproduce an
 incident from that evidence alone; and an explicit response policy defining when the system rejects
 a proof, requests a key rotation, or escalates to a human --- automated detection with
-human-in-the-loop response. Any such telemetry must be minimised so that the alerting layer does
+human-in-the-loop response. Any such telemetry must be minimized so that the alerting layer does
 not itself leak the metadata the pseudorandom labels were designed to hide.
 
 \paragraph{A networked, persistent benchmark campaign.} Finally, the algorithmic numbers of
 \cref{ch:eval} should be complemented by a networked, database-backed campaign (persistent storage,
-wide-area latencies, and concurrent load) to characterise the costs a real service pays, which the
+wide-area latencies, and concurrent load) to characterize the costs a real service pays, which the
 comparison with database-bound systems (\cref{sec:eval-compare}) suggests are dominated by persistence
 at scale. Such a campaign should also include a parameter-sensitivity sweep over the epoch cadence
 and the catch-up window, and the client-side energy and CPU profile on mobile hardware, the
