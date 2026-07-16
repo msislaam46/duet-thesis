@@ -1,6 +1,6 @@
 \chapter{Security Analysis Tables}\label{app:security}
 
-This appendix gives the full security-analysis mapping tables summarised in
+This appendix gives the full security-analysis mapping tables summarized in
 \cref{sec:eval-security}: the MITRE ATT\&CK technique-to-mitigation matrix
 (\cref{sec:sec-mitre}) and the complete STRIDE enumeration (\cref{sec:sec-stride}). Both are drawn
 from the attack scenarios of \cref{ch:threat} and the mechanisms of \cref{ch:design}, and both
@@ -16,7 +16,7 @@ key-transparency mitigations in \cref{tab:sec-mitre}.
 
 \begin{table}[ht]
 \centering
-\caption{MITRE ATT\&CK Enterprise techniques mapped to their key-transparency mitigations. Five
+\caption{MITRE ATT\&CK Enterprise techniques mapped to their key-transparency mitigations. Four
 techniques are mitigated; T1552 is the explicit endpoint-compromise boundary (X1).}
 \label{tab:sec-mitre}
 \footnotesize
@@ -25,23 +25,23 @@ techniques are mitigated; T1552 is the explicit endpoint-compromise boundary (X1
 ID & Technique & Vector in KT & KT mitigation & Scen. \\
 \midrule
 T1557 & Adversary-in-the-Middle & network interception of X3DH & label mismatch (different secret $\Rightarrow$ different label) & A3 \\
-T1557.004 & Evil Twin & rogue Wi-Fi/DNS for bundle interception & shared-secret divergence & A3 \\
+T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & shared-secret divergence & A3 \\
 T1565 & Data Manipulation & modify key bindings in the tree & Merkle inclusion-proof verification & A1,A3,A4 \\
-T1565.002 & Transmitted Data Manipulation & replace a key in transit or at rest & self-check + warning-label propagation & A1 \\
-T1553 & Subvert Trust Controls & present inconsistent tree views & consistency proofs + auditor cross-check + signed STHs & A4 \\
+T1565.002 & Transmitted Data Manipulation & replace a key in transit & self-check + warning-label propagation & A1 \\
 T1552 & Unsecured Credentials & extract private keys from a device & \emph{none} --- KT boundary (endpoint compromise) & X1 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The techniques span the Collection, Credential Access, Defense Evasion, and Impact tactics. Every
+The techniques span the Collection, Credential Access, and Impact tactics. Every
 technique except T1552 is mitigated by a key-transparency control; T1552 is the deliberate
 endpoint-compromise boundary, out of scope for any directory mechanism (\cref{ch:threat}). The table
-lists only techniques with a faithful ATT\&CK counterpart. Adversary behaviours specific to a
-malicious \emph{directory} --- observing registration patterns, operating a parallel encrypted
-channel, abusing the server's own write authority, or selectively censoring writes --- have no
-precise Enterprise-technique match and are the thesis's own A1/A2 threats, analysed through the STRIDE
-enumeration and the attack scenarios of \cref{ch:threat} instead.
+lists only techniques with a faithful ATT\&CK counterpart~\cite{mitre-attack}. Adversary behaviours
+specific to a malicious \emph{directory} --- observing registration patterns, operating a parallel
+encrypted channel, abusing the server's own write authority, selectively censoring writes, or
+presenting divergent signed views (equivocation) --- have no precise Enterprise-technique match and
+are the thesis's own A1/A2/A4 threats, analyzed through the STRIDE enumeration and the attack
+scenarios of \cref{ch:threat} instead.
 
 % ----------------------------------------------------------------------------
 \section{STRIDE enumeration}\label{sec:sec-stride}
@@ -50,6 +50,12 @@ The STRIDE enumeration covers the server (Merkle log, prefix tree, signed tree h
 (registration, verification, warning monitor), and the auditor. Of twenty threats, sixteen are
 mitigated and four are residual; the summary is \cref{tab:eval-stride} in \cref{ch:eval}, and
 the per-category detail follows in \cref{tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}.
+
+A threat is counted \emph{mitigated} when an implemented control prevents or detects the principal
+attack outcome, even where a limitation remains; it is counted \emph{residual} when no implemented
+control addresses that outcome. The Residual column records both cases: the four counted residual
+threats are \emph{italicized}, while upright entries are limitations of rows that are counted
+mitigated.
 
 \begin{table}[ht]
 \centering
@@ -127,7 +133,7 @@ Threat & KT control & Residual \\
 \midrule
 Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented; freshness alarm left to deployment} \\
 Refuse to serve proofs & cross-vantage comparison by the auditor & \emph{gossip transport not implemented in the PoC; prototype fetches a second vantage directly} \\
-Censor warning writes & compound-signal detection (A2): write-once + transition audit + persistence & client out-of-band alert \\
+Censor warning writes & compound signal (A2): key mismatch from the self-check + proof-verified \emph{absence} of the warning $=$ confirmed compromise & client out-of-band alert \\
 Flood with fake registrations & deployment-level rate limiting & \emph{not implemented in the PoC (operational risk)} \\
 \bottomrule
 \end{tabular}
@@ -154,7 +160,7 @@ semi-trusted-server model: the operator necessarily learns the label-to-user map
 Disclosure), a residual shared by the standard key-transparency literature (CONIKS~\cite{melara2015coniks},
 the IETF Key Transparency architecture~\cite{ietf-keytrans-protocol}) and not addressed by
 ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather than
-realising a distrusted one. The other three are availability functions the proof-of-concept does not
+realizing a distrusted one. The other three are availability functions the proof-of-concept does not
 implement --- write rate-limiting, a published-epoch staleness timeout, and a gossip transport for
 proof-omission --- each a deployment-layer engineering task rather than a gap in the scheme
 (\cref{ch:discussion}).

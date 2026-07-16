@@ -26,7 +26,7 @@ compromised, messages are delayed, or supporting infrastructure behaves
 maliciously? The first question motivates the study of key transparency and
 verifiable key directories, whereas the second is captured formally by the
 Authenticated Continuous Key Agreement (ACKA) framework that underpins modern
-analyses of secure messaging systems.
+analyzes of secure messaging systems.
 
 % ============================================================================
 \section{The Signal protocol stack}\label{sec:bg-signal}
@@ -1036,7 +1036,7 @@ indicator of the direction in which standardized key-transparency deployments ar
 heading.
 
 \subsubsection{Proton Mail Key Transparency}
-Proton Mail's ProtonKT is notable for being both deployed and formally analysed,
+Proton Mail's ProtonKT is notable for being both deployed and formally analyzed,
 its design documented in G\"obel's MSc thesis~\cite{goebel2023proton} and a
 Transparency-Summit presentation~\cite{proton2023ktdeck}. It is a VKD whose labels
 are email addresses and whose values are \emph{Signed Key Lists} (SKLs):
@@ -1132,7 +1132,7 @@ detection mechanism is then simple to state: an adversary who injects a forged
 key-share must either collide on the honest party's label (producing two
 fingerprints at one label, which alerts all communicating parties) or post
 under a label the impersonated party never generates, which that party detects on
-lookup~\cite[p.~7]{dowling2023acka} (\cref{fig:bg-acka} summarises the
+lookup~\cite[p.~7]{dowling2023acka} (\cref{fig:bg-acka} summarizes the
 composition).
 
 A point of precision concerns how the framework treats Logsec. It is left
@@ -1141,7 +1141,7 @@ or other distributed ledger protocols; to provide maximum flexibility in choice,
 we define the logging scheme here generically''~\cite[p.~10]{dowling2023acka}.
 This genericity is a framework design choice rather than a flaw: ACKA fixes what
 the secure log must guarantee, append-only immutability, without committing
-to how those guarantees are realised, leaving the construction of Logsec
+to how those guarantees are realized, leaving the construction of Logsec
 deliberately open.
 
 The adversary ACKA defends against is different from, and along its own axis
@@ -1159,7 +1159,7 @@ log~\cite[p.~7]{dowling2023acka}. The malicious, equivocating server that the VK
 line defends against (one that can substitute keys, censor writes, and serve
 divergent views) therefore lies \emph{outside} ACKA's detection theorem, which assumes a log
 already satisfying its Logsec definition (append-only, with consistency and exclusion proofs) and
-leaves that log's malicious-server-resistant realisation open. The two models are complementary rather than
+leaves that log's malicious-server-resistant realization open. The two models are complementary rather than
 competing: one adversary controls the wire, the other controls the database, and
 no single framework covers both. The construction also bootstraps from a
 pre-shared state that must be shared and globally unique across honest pairwise
@@ -1193,11 +1193,11 @@ clearly negative. But what if there exists another channel between the two parti
 that the adversary cannot fully control?''~\cite[p.~2]{dowling2023acka}.
 
 ACKA leaves that secondary channel abstract --- its Logsec-secure log.
-Realising such a log against an \emph{untrusted} server is, however, exactly the problem
+Realizing such a log against an \emph{untrusted} server is, however, exactly the problem
 practical messaging deployments face: as established in
 \cref{sec:bg-vkd}, the servers distributing keys are themselves targets of
 compromise or coercion. This leaves a fundamental structural gap in the
-literature. ACKA specifies the channel's security abstractly (Logsec) but leaves its realisation
+literature. ACKA specifies the channel's security abstractly (Logsec) but leaves its realization
 against an untrusted server open, whereas practical messaging must \emph{build} that infrastructure
 without trusting it. ACKA's own
 construction further carries three operational limitations that constrain its use
@@ -1210,7 +1210,7 @@ This last point is our own observation rather than a claim of the paper's: ACKA'
 detection argument relies only on the log's append-only (exclude) property, and
 the paper itself never discusses third-party auditing.
 
-Recognising that ACKA's abstract Logsec-secure log and the malicious, equivocating server that
+Recognizing that ACKA's abstract Logsec-secure log and the malicious, equivocating server that
 key transparency is built to expose are two halves of a single end-to-end
 security picture is what sets the stage for the synthesis this thesis proposes.
 
@@ -1439,7 +1439,7 @@ are claimed as instantiation-and-measurement, not as new primitives. Together th
 transparency for asynchronous messaging by adding automatic peer notification, efficient offline
 recovery, transparent equivocation detection, and continuous authentication over an untrusted
 directory. The mechanisms are parallel, not layered: the log-based warning scheme does not depend on
-the ACKA continuous-mode instantiation, which realises one operating mode of the system rather than
+the ACKA continuous-mode instantiation, which realizes one operating mode of the system rather than
 its foundation.
 
 \paragraph{Contribution 1 --- Dual-index warning scheme.} This addresses Problem 1 by
@@ -1483,11 +1483,11 @@ conceptual contribution of this thesis is the reconciliation of ACKA and key
 transparency, which are usually read as separate worlds: ACKA authenticates the
 continuous key agreement per epoch but treats its logging component as an \emph{abstract}
 primitive with a security definition (Logsec), leaving the concrete malicious-server-resistant
-realisation open, whereas the academic VKD literature builds exactly such a directory but
+realization open, whereas the academic VKD literature builds exactly such a directory but
 authenticates only a session or identity binding. They differ in granularity (per-epoch versus
 per-session) and, more to the point, in what each makes concrete: ACKA specifies what the log must
 guarantee, key transparency shows how to build it. We bridge them by instantiating ACKA's abstract
-logging component with a concrete key-transparency log that need not be trusted, realising both as
+logging component with a concrete key-transparency log that need not be trusted, realizing both as
 operating modes and measuring the trade between them. To our knowledge, no prior work spans the continuous and the
 directory worlds. Throughout, we state the coverage trade honestly: we log identity keys
 and per-session labels, not the per-user version chains of SEEMless, Parakeet and OPTIKS

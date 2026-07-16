@@ -168,11 +168,11 @@ committed $\prefroot{t}$ --- so any undeclared mutation, in particular any delet
 replay diverge. Because labels are opaque, the audit guarantees that no mutation is silent rather
 than that every declared rotation is lawful; a declared overwrite of a write-once label is forced
 into the open, where the label's owner detects it. Specified in \cref{ssec:design-detection};
-realised by \textsf{AuditTransition} (\cref{alg:auditor}).
+realized by \textsf{AuditTransition} (\cref{alg:auditor}).
 \end{definition}
 
 \begin{definition}[Windowed consistency proof]\label{def:windowed}
-\intuition{A single consistency proof that lets a long-absent client re-synchronise in one step,
+\intuition{A single consistency proof that lets a long-absent client re-synchronize in one step,
 rather than one proof per missed epoch.}
 For a client that last verified the log at size $m$ and returns when the log has size $n$, spanning
 $W$ intervening epochs, the windowed consistency proof is the single proof $\pcons(m,n)$ of
@@ -223,7 +223,7 @@ The Authenticated Continuous Key Agreement framework~\cite{dowling2023acka} mode
 protocol as a continuous key agreement $\CKA$ producing a sequence of per-epoch keys, and defines a
 continuous entity authentication (CEA) notion, with security game $\CEAsec$, that captures detection of an active adversary who
 injects state mid-session. The framework leaves its append-only log component $\Logsec$ abstract; this
-thesis instantiates that component with the structures of \cref{sec:def-structures} and realises
+thesis instantiates that component with the structures of \cref{sec:def-structures} and realizes
 continuous authentication through the continuous mode of \cref{ssec:design-modes}. The dual-index
 warning scheme below is an \emph{extension} of this idea --- it authenticates by directory
 \emph{location} rather than by chained fingerprint value --- and is not an instance of $\CEAsec$.
@@ -288,7 +288,7 @@ yields proven non-inclusion at $\lblwarn$, the bundle consisting of the retained
 under $\STH_w$, the non-inclusion proof under $\STH_t$, and the consistency proof
 $\pcons(\STH_w.\mathit{size},\STH_t.\mathit{size})$ verifies entirely against the operator's own
 signatures and constitutes non-repudiable, publishable proof that a committed leaf was removed.
-Specified in \cref{ssec:design-detection}; realised by \textsf{PersistenceCheck}
+Specified in \cref{ssec:design-detection}; realized by \textsf{PersistenceCheck}
 (\cref{alg:detect}).
 \end{definition}
 
