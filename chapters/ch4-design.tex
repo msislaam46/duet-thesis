@@ -713,4 +713,4 @@ than a single structure. One tree alone would authenticate the present state but
 history, leaving append-only violations undetectable. The log supplies exactly the
 consistency proofs that windowed catch-up (\cref{sec:design-windowed}) and the
 cross-vantage auditor (goal~G4) depend on. The cost is one extra log-inclusion path per
-lookup, $32\lceil\lg E\rceil$ bytes, quantified in \cref{ch:eval}.
+lookup, up to $32\lceil\lg E\rceil$ bytes, quantified in \cref{ch:eval}.

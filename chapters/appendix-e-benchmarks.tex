@@ -37,7 +37,7 @@ Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
 \end{table}
 
 Methodology caveats recorded with the run: the server is in-memory (no network, no database); proof
-sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds $32\lceil\lg E\rceil$
+sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to $32\lceil\lg E\rceil$
 bytes to each lookup proof; memory is resident set size after build, not peak; and the throughput
 figures are single-thread per-operation costs.
 
