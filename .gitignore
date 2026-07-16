@@ -28,3 +28,10 @@
 # Editor / OS noise
 *.swp
 .DS_Store
+
+# Review/audit working notes and AI-tooling metadata — never part of the submission.
+AUDIT_*
+FIX_PLAN_*
+*_REVIEW_FINDINGS.md
+*_FINDINGS.md
+.claude/
