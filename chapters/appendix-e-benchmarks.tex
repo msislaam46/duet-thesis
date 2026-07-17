@@ -43,8 +43,12 @@ bytes to each lookup proof; memory is resident set size after build, not peak; a
 figures are single-thread per-operation costs. The SHA-NI row matters for portability rather than
 being incidental hardware detail: the SHA-256 implementation dispatches to the hardware instruction
 at run time, and on a host without it every hash-bound metric (the prefix and full verify, M5, the
-M8 update, M9, and M13) is between \num{1.6} and \num{4.6} times slower. A run on such a host is not
-comparable with this one, and pinning the toolchain does not make the timings portable. Timings are
+M8 update, M9, and M13) is between roughly \num{1.3} and \num{4.6} times slower. This gap is measured
+against a different processor and platform, so SHA-NI is the dominant \emph{plausible} factor rather
+than a causally isolated one --- indeed the same auxiliary host is faster on the VRF-bound operations
+(M10 prove \SI{106.5}{\micro\second} versus \SI{127.7}{\micro\second}), where SHA-256 is not on the
+critical path. A run on such a host is not comparable with this one, and pinning the toolchain does
+not make the timings portable. Timings are
 therefore reported as measurements of this configuration, not as properties of the scheme; the proof
 sizes, being computed rather than timed, are hardware-independent.
 
@@ -269,9 +273,10 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 
 Per-check verification cost is $27.3\,\si{\micro\second}$ in session mode and
 $27.7\,\si{\micro\second}$ in continuous mode (medians; both include server-side proof generation).
-The \SI{0.4}{\micro\second} gap is smaller than either 95\% confidence half-width ($\pm0.43$ and
-$\pm0.33$ respectively), so the two modes are indistinguishable at this resolution rather than one
-being faster: the chain memoization flattens the compressed-leaf cost that previously separated them.
+The two 95\% confidence intervals ($\pm0.43$ and $\pm0.33\,\si{\micro\second}$) overlap, so no
+practically meaningful difference between the modes is claimed at this resolution (the
+\SI{0.4}{\micro\second} gap exceeds the smaller half-width, so an equivalence claim is not made
+either): the chain memoization flattens the compressed-leaf cost that previously separated them.
 Both modes are timed under the identical label-bound proof
 verifier (\texttt{verify\_search\_result\_raw\_for}), so the two medians are apples-to-apples. The
 continuous-mode setup folds a simulated per-epoch ratchet secret that is distinct from the
