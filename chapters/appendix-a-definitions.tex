@@ -7,7 +7,12 @@ they are drawn from and are cited accordingly; the dual-index scheme of \cref{se
 the one construction original to this work.
 
 % ============================================================================
-\section{Cryptographic primitives}\label{sec:def-primitives}
+\section{Cryptographic Primitives}\label{sec:def-primitives}
+
+This section states the standard cryptographic primitives the design relies on: a collision-resistant
+hash, a key-derivation function, and a digital signature. They are the assumptions under which the
+authenticated structures of \cref{sec:def-structures} and the dual-index security argument hold, and
+each is given with the concrete algorithm used in the implementation.
 
 \begin{definition}[Collision-resistant hash function]\label{def:hash}
 \intuition{A function whose outputs are short fingerprints that no efficient adversary can make
@@ -39,7 +44,13 @@ signed tree head (\cref{def:sth}).
 \end{definition}
 
 % ============================================================================
-\section{Authenticated data structures}\label{sec:def-structures}
+\section{Authenticated Data Structures}\label{sec:def-structures}
+
+This section defines the authenticated structures used to make directory behaviour externally
+verifiable. The prefix tree proves whether a key is present or absent, while the append-only log
+records successive directory states. Together they let a client verify both the current lookup result
+and its relationship to previously trusted history. The structures are illustrated in
+\cref{fig:bg-merkle,fig:design-arch}.
 
 \begin{definition}[Merkle log tree and tree hash]\label{def:merkle-log}
 \intuition{A tamper-evident list: one short root fingerprint commits to every entry in order, and any
@@ -67,7 +78,7 @@ $\pincl$ and accepts iff it equals the committed $\logroot{t}$. Used in \cref{ss
 
 \begin{definition}[Consistency proof]\label{def:consistency}
 \intuition{A short proof that a later version of the log is an append-only extension of an earlier
-one --- nothing was reordered, modified, or deleted.}
+one, with nothing reordered, modified, or deleted.}
 For sizes $m\le n$, a consistency proof $\pcons(m,n)$ is the set of subtree hashes of
 RFC~9162~\cite{rfc9162} that proves the size-$m$ tree is a prefix of the size-$n$ tree, i.e.\ that
 $\MTH(D[0{:}m])$ is consistent with $\MTH(D[0{:}n])$. Verification accepts iff the two committed roots
@@ -109,7 +120,12 @@ before trusting any proof anchored to it. Used in \cref{ssec:design-verify,ssec:
 \end{definition}
 
 % ============================================================================
-\section{Verifiable random function}\label{sec:def-vrf}
+\section{Verifiable Random Function}\label{sec:def-vrf}
+
+This section defines the verifiable random function (VRF) that produces the directory's
+privacy-preserving lookup labels. The VRF lets the server derive a pseudorandom label for an
+identifier and prove that derivation correct, so a client can trust the label without the server
+being able to enumerate the directory. It underpins the global-slot index of \cref{ssec:design-labels}.
 
 \begin{definition}[Verifiable random function]\label{def:vrf}
 \intuition{A keyed function whose outputs look random to everyone but the key holder, yet come with a
@@ -140,7 +156,12 @@ privacy (goal G3).
 \end{definition}
 
 % ============================================================================
-\section{Epochs and windowed consistency}\label{sec:def-epoch}
+\section{Epochs and Windowed Consistency}\label{sec:def-epoch}
+
+This section defines the epoch model and the windowed consistency proof on which offline catch-up
+rests. It fixes what an epoch and a signed tree head are, and states the distant-head consistency
+proof a returning client verifies in place of one proof per missed epoch. It supports the windowed
+scheme of \cref{sec:design-windowed}.
 
 \begin{definition}[Epoch]\label{def:epoch}
 \intuition{A committed snapshot of the directory; between snapshots the live tree is mutated, and a
@@ -155,7 +176,7 @@ Lookups are always served against the last committed epoch, never the live tree.
 
 \begin{definition}[Declared update set and transition audit]\label{def:epoch-delta}
 \intuition{Every commit publishes the exact list of changes it made; an auditor replays that list and
-checks it reproduces the committed directory --- so a deletion, which the list cannot even express,
+checks it reproduces the committed directory, so a deletion, which the list cannot even express,
 is caught.}
 Each $\mathsf{commit}$ freezes a \emph{declared update set} $\Delta_t$: the epoch's
 $\textsf{Insert}(\ell,\mathit{value})$ operations on fresh labels and
@@ -164,7 +185,7 @@ disclosing the exact value it replaces; the format cannot express a deletion. Th
 audit} replays $\Delta_t$ onto the directory of the previous committed root $\prefroot{t-1}$,
 requiring every \textsf{Insert} label to be proven absent there and every \textsf{Rotate} label to
 be proven present with exactly the declared prior value, and accepts iff the result equals the
-committed $\prefroot{t}$ --- so any undeclared mutation, in particular any deletion, makes the
+committed $\prefroot{t}$: any undeclared mutation, in particular any deletion, makes the
 replay diverge. Because labels are opaque, the audit guarantees that no mutation is silent rather
 than that every declared rotation is lawful; a declared overwrite of a write-once label is forced
 into the open, where the label's owner detects it. Specified in \cref{ssec:design-detection};
@@ -181,7 +202,7 @@ $W$ intervening epochs, the windowed consistency proof is the single proof $\pco
 
 \begin{lemma}[Windowed proof size]\label{lem:windowed-size}
 The windowed consistency proof $\pcons(m,n)$ consists of at most $\lceil\lg n\rceil + \lceil\lg
-m\rceil$ hash values --- logarithmic in the endpoint sizes rather than linear in the number of
+m\rceil$ hash values: logarithmic in the endpoint sizes rather than linear in the number of
 intervening epochs $W$.
 \end{lemma}
 \begin{proof}[Proof sketch]
@@ -194,7 +215,12 @@ linearly with the $W$ epochs between the two visits, which is the property explo
 \end{proof}
 
 % ============================================================================
-\section{Signal protocol primitives}\label{sec:def-signal}
+\section{Signal Protocol Primitives}\label{sec:def-signal}
+
+This section defines the Signal protocol primitives whose outputs DUET consumes: the X3DH handshake
+that establishes a per-conversation shared secret and the Double Ratchet that evolves it. DUET
+derives its per-conversation labels from these secrets, so their definitions fix the inputs to the
+dual-index derivation of \cref{sec:def-dualindex}.
 
 \begin{definition}[X3DH shared secret]\label{def:x3dh}
 \intuition{An asynchronous handshake that lets Alice derive a shared secret with an offline Bob from
@@ -202,9 +228,9 @@ his published pre-keys.}
 The Extended Triple Diffie--Hellman handshake~\cite{x3dh} derives a shared secret $\sharedS$ from a
 combination of Diffie--Hellman values over the parties' identity keys $\pkid{\cdot}$, Bob's signed
 pre-key $\spk{\B}$, an optional one-time pre-key $\opk{\B}{i}$, and Alice's ephemeral key
-$\ek{\A}$; the post-quantum variant PQXDH~\cite{pqxdh} augments this with a KEM. In this thesis
-$\sharedS$ is the entropy source for the dual-index labels (\cref{def:dualindex-derive}). Introduced
-in \cref{ssec:design-labels}.
+$\ek{\A}$; the post-quantum variant PQXDH~\cite{pqxdh} augments this with a KEM. It is introduced and
+diagrammed in \cref{ssec:bg-x3dh,fig:bg-x3dh}. In this thesis $\sharedS$ is the entropy source for
+the dual-index labels (\cref{def:dualindex-derive}), used in \cref{ssec:design-labels}.
 \end{definition}
 
 \begin{definition}[Double Ratchet]\label{def:doubleratchet}
@@ -212,8 +238,9 @@ in \cref{ssec:design-labels}.
 after a compromise.}
 The Double Ratchet~\cite{doubleratchet} maintains a root chain and per-direction sending and
 receiving chains, deriving a fresh message key per message and mixing in new Diffie--Hellman outputs
-as the conversation proceeds. Its per-epoch ratchet state is the input to the continuous operating
-mode (\cref{def:cka}). Referenced in \cref{ssec:design-modes}.
+as the conversation proceeds. It is introduced and diagrammed in \cref{ssec:bg-ratchet,fig:bg-ratchet}.
+Its per-epoch ratchet state is the input to the continuous operating mode (\cref{def:cka}), used in
+\cref{ssec:design-modes}.
 \end{definition}
 
 \begin{definition}[Continuous key agreement and continuous authentication]\label{def:cka}
@@ -225,12 +252,12 @@ continuous entity authentication (CEA) notion, with security game $\CEAsec$, tha
 injects state mid-session. The framework leaves its append-only log component $\Logsec$ abstract; this
 thesis instantiates that component with the structures of \cref{sec:def-structures} and realizes
 continuous authentication through the continuous mode of \cref{ssec:design-modes}. The dual-index
-warning scheme below is an \emph{extension} of this idea --- it authenticates by directory
-\emph{location} rather than by chained fingerprint value --- and is not an instance of $\CEAsec$.
+warning scheme below is an \emph{extension} of this idea (it authenticates by directory
+\emph{location} rather than by chained fingerprint value) and is not an instance of $\CEAsec$.
 \end{definition}
 
 % ============================================================================
-\section{The dual-index warning scheme}\label{sec:def-dualindex}
+\section{The Dual-Index Warning Scheme}\label{sec:def-dualindex}
 
 The following definitions specify the construction original to this work
 (\cref{ssec:design-labels}). They rely on the primitives above and introduce no new assumptions.
@@ -294,7 +321,7 @@ Specified in \cref{ssec:design-detection}; realized by \textsf{PersistenceCheck}
 
 \begin{definition}[Dual-index detection experiment]\label{def:dualindex-detect}
 \intuition{The adversary wins only if it makes a client accept a substituted key while the warning
-slot stays provably empty --- i.e.\ if it substitutes without tripping the wire.}
+slot stays provably empty, i.e.\ if it substitutes without tripping the wire.}
 Let $\Adv$ be a probabilistic polynomial-time adversary controlling the server and the network under
 the model of \cref{ch:threat}. In the experiment $\Expt{dual\text{-}det}{\Adv}$, $\Adv$ interacts with
 an honest client and peer and wins if it causes the client to accept a peer key

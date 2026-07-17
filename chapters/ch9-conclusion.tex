@@ -10,9 +10,9 @@ key substitution automatically detectable, in band, and at a cost a real messagi
 afford.
 
 To do so it instantiated the abstract log component of the ACKA framework as a concrete verifiable
-directory --- an append-only Merkle log over a path-compressed sparse prefix tree, with ECVRF-derived
-labels and an Ed25519 signed tree head, following the IETF KeyTrans draft --- and added two mechanisms
-on top of it. The dual-index warning scheme (\cref{ch:design}) gives each conversation a shared
+directory: an append-only Merkle log over a path-compressed sparse prefix tree, with ECVRF-derived
+labels and an Ed25519 signed tree head, following the IETF KeyTrans draft. On top of it, it added two
+mechanisms. The dual-index warning scheme (\cref{ch:design}) gives each conversation a shared
 warning slot that either party can raise and that the server can neither forge in advance nor censor
 undetectably after the fact, turning a silent substitution into a detectable one. The windowed consistency proof lets a
 client that has been offline for a long window catch up with a single short proof rather than one per
@@ -22,29 +22,29 @@ of \cref{ch:threat}.
 
 The evaluation (\cref{ch:eval}) shows that this detection is added without changing the asymptotic
 complexity of the lookup proof, using additional lookups of the shape the client already verifies. The
-dual-index lookup proof is at size parity with CONIKS while carrying the warning channel CONIKS lacks;
-median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
+dual-index lookup proof is at size parity with CONIKS while carrying the warning channel CONIKS lacks.
+Median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
 far more slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}), about
 \num{3.8} times faster than CONIKS at matched scale even though it includes the VRF check that CONIKS's
 figures omit (both totals include the signature check, and the cross-hardware comparison is
-indicative only); a month-long offline catch-up sends one proof rather than $W$, a few hundred raw
-path bytes against the hundreds of kilobytes naïve monitoring would spend; the warning-slot read
+indicative only). A month-long offline catch-up carries one proof rather than $W$, a few hundred raw
+path bytes against the hundreds of kilobytes naïve monitoring would spend. The warning-slot read
 costs microseconds on top of a lookup the client already verifies, with no false
 positives over a thousand clean sessions, and the cross-vantage auditor's local fork check runs at a
 median \SI{27.9}{\micro\second} (p95 \SI{34.2}{\micro\second}) against one observed head. The adversarial suite detects the full substitution and
-equivocation taxonomy, and a STRIDE analysis leaves four residual risks --- one the label-to-user
+equivocation taxonomy, and a STRIDE analysis leaves four residual risks: one the label-to-user
 mapping inherent to any semi-trusted-server directory, the other three availability functions left to
 a production deployment.
 
 Read against the research questions of \cref{sec:intro-aims}, the evidence is direct. RQ1 (automatic,
 in-band detection) is answered by the dual-index warning and its clean pass across the full
-adversarial suite at a zero false-positive rate; RQ2 (cost) by the \num{817}\,byte proof at parity with CONIKS and the
-$\approx$\SI{128}{\micro\second} verification at $N\le10^4$, rising only to $\approx$\SI{147}{\micro\second} at $10^7$; RQ3 (offline) by
+adversarial suite at a zero false-positive rate. RQ2 (cost) is answered by the \num{817}\,byte proof at parity with CONIKS and the
+$\approx$\SI{128}{\micro\second} verification at $N\le10^4$, rising only to $\approx$\SI{147}{\micro\second} at $10^7$. RQ3 (offline) is answered by
 the \num{320}\,byte month-long catch-up, whose size is bounded by the endpoint log sizes rather than
-the window's length, and RQ4 (deployability) by the
+the window's length. RQ4 (client-integration feasibility) is answered by the
 verifier running inside a fork of the real Signal Desktop client at that measured cost. The thesis
-statement --- that this detection can be added without changing the asymptotic complexity of the
-proofs the directory already serves, using additional lookups of the existing shape --- is thereby
+statement, that this detection can be added without changing the asymptotic complexity of the
+proofs the directory already serves using additional lookups of the existing shape, is thereby
 supported on every axis it claimed.
 
 The result is a design that detects rather than prevents (a server can still substitute a key, but
@@ -52,6 +52,8 @@ it can no longer do so silently) and that presents a deployment such as Signal w
 well-defined addition rather than a wholesale change: a write path for warning and per-session labels
 alongside the identity directory it already maintains, at a client cost of microseconds per
 conversation. The clearest remaining step, binding the labels to the live X3DH secret in place of the
-prototype's stand-in (\cref{ch:discussion}), is an engineering task rather than a research one. Key
+prototype's stand-in (\cref{ch:discussion}), is a necessary security-integration step whose
+correctness and operational cost remain to be evaluated. Key
 transparency has, until now, told users that they must check their keys themselves; this work shows
-that, for the price the directory already pays, it can check them for the users instead.
+that, by reusing the directory's existing proof form while incurring additional lookups and
+deployment work, it can check them for the users instead.

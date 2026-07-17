@@ -3,29 +3,30 @@
 This chapter steps back from the construction and the numbers to ask what they mean. It first
 discusses what the results establish and how the design sits within the wider key-transparency
 landscape (\cref{sec:disc-discussion}), then states the limitations of the work candidly
-(\cref{sec:disc-limitations}), and finally sets out the future work the design invites --- the part
+(\cref{sec:disc-limitations}), and finally sets out the future work the design invites: the part
 that turns a prototype into a deployable system (\cref{sec:disc-future}).
 
 % ============================================================================
 \section{Discussion}\label{sec:disc-discussion}
 
-\paragraph{Interpretation: detection at no asymptotic cost.} The central finding of this work is that
+\paragraph{Interpretation: Detection at No Asymptotic Cost.} The central finding of this work is that
 automatic, in-band detection of key substitution can be
-added to a messaging directory essentially for free. \Cref{ch:eval} shows that the dual-index lookup
+added to a messaging directory without changing the asymptotic cost of the proofs the directory
+already serves, at the measured cost of additional proof-shaped lookups. \Cref{ch:eval} shows that the dual-index lookup
 proof is at size parity with CONIKS while carrying a warning channel CONIKS lacks, that full client
 median verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more
 slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}), and that an offline
 client catches up in a few hundred bytes where naïve monitoring would spend hundreds of kilobytes.
 The detection the design adds does not show up as a new asymptotic cost: it rides on the same
-logarithmic proofs the directory already produces. This is the result that matters for a deployment
+logarithmic proofs the directory already produces. This result supports the deployment
 argument, because it means a provider does not have to choose between the transparency it already
 runs and the peer-warning channel that closes the gap manual safety numbers leave open.
 
-\paragraph{Where the guarantee comes from.} It is worth being precise about how the detection actually
+\paragraph{Where the Guarantee Comes From.} It is worth being precise about how the detection actually
 holds, because the substitution surface is larger than it first appears. A malicious server has two slots in which it can plant a victim's key:
 the global VRF-derived slot, which it can both compute and overwrite, and the per-conversation
 dual-index slot, which it cannot derive without the shared secret but can overwrite through the
-registration-metadata link. The scheme does not prevent either overwrite --- a server can always
+registration-metadata link. The scheme does not prevent either overwrite: a server can always
 rewrite its own database. Detection instead rests on two facts established in \cref{ch:design}. The
 warning slot is derived by an independent HKDF label, so knowledge of a lookup label yields no
 ability to compute the warning label, and once a warning is committed the server cannot hide it
@@ -39,10 +40,11 @@ victim's expected warning label and so faces an empty slot it cannot fill with a
 proof. Detection is therefore a property of where the keys must live, not of the server's good
 behaviour.
 
-\paragraph{Generalisability beyond Signal.} Nothing in the design is specific to Signal beyond the
+\paragraph{Generalisability Beyond Signal.} Nothing in the design is specific to Signal beyond the
 shape of its inputs: it applies to any messenger with a semi-trusted key directory and a per-session
 shared secret from a ratcheting handshake, from which the labels are derived. In that light, the work
-is also the first concrete instantiation, and measurement, of a piece of the
+also gives what, among the published and open-source systems surveyed in \cref{ch:background}, we
+found to be the first concrete implementation and measurement of this piece of the
 ACKA framework rather than a correction to it. ACKA~\cite{dowling2023acka} deliberately leaves its
 append-only-log component abstract; that abstraction is a framework-design choice, not a flaw, and
 this thesis fills it in with a Merkle log, sparse prefix tree, and ECVRF following the IETF KeyTrans
@@ -50,11 +52,11 @@ draft~\cite{ietf-keytrans-protocol}, then measures what that instantiation costs
 (\cref{sec:design-acka}). The dual-index warning is best described as an \emph{extension} of the
 continuous-authentication idea rather than an instance of it: where the framework's fingerprints are
 values chained from ratchet state, the dual-index scheme derives \emph{labels}, locations in the
-directory, and uses a shared one as a tripwire. Stating this precisely matters, because the
-contribution is the tripwire mechanism and its cost, not a re-derivation of the framework.
+directory, and uses a shared one as a warning slot. Stating this precisely matters, because the
+contribution is the shared-warning-slot mechanism and its cost, not a re-derivation of the framework.
 
-\paragraph{Deployment trade-offs, and where not to use the design.} The design is honest about its
-register: it detects, it does not prevent. A server can still
+\paragraph{Deployment Trade-Offs, and Where Not to Use the Design.} The design provides detection
+rather than prevention. A server can still
 substitute a key; what changes is that the substitution can no longer be silent. That framing
 inherits the trust-on-first-use caveat of the underlying protocol, the very first key a party
 learns is taken on faith, and it deliberately leaves several things out of scope: it does not
@@ -80,7 +82,7 @@ where the warning would have to fan out across a dynamic membership. And it is s
 contrast to multi-device keychain schemes such as ELEKTRA~\cite{len2023elektra}; extending the
 warning to a set of a user's devices is left open.
 
-\paragraph{Trust assumptions.} Two of the design's guarantees rest on parties beyond the client. Fork
+\paragraph{Trust Assumptions.} Two of the design's guarantees rest on parties beyond the client. Fork
 detection requires at least one honest auditor with an independent vantage point; this is scoped
 precisely (dual-index detection needs no auditor, and only split-view equivocation does) and it
 is implemented as a running cross-vantage check (\cref{ssec:eval-auditor}). In the prototype the
@@ -90,11 +92,11 @@ detection logic and only the transport changed. Separately, the STRIDE analysis
 (\cref{ssec:eval-stride}) leaves four residual threats, none a weakness in this construction. One is
 inherent to the semi-trusted-server model and shared by every deployed key-transparency system: the
 operator necessarily learns the label-to-user mapping (there is no query privacy from the operator).
-The other three are availability functions the proof-of-concept does not implement --- write
-rate-limiting, a published-epoch staleness timeout, and a gossip transport for proof-omission --- each
+The other three are availability functions the proof-of-concept does not implement (write
+rate-limiting, a published-epoch staleness timeout, and a gossip transport for proof-omission), each
 a deployment-layer engineering task rather than a gap in the scheme.
 
-\paragraph{Prototype bounds.} Several gaps separate the measured artefact from a deployable one. The
+\paragraph{Prototype Bounds.} Several gaps separate the measured artefact from a deployable one. The
 benchmarks are single-machine and in-memory, with no networked or database-backed deployment, so they
 characterize the design's algorithmic cost rather than a production service; relatedly, the epoch
 commit uses an $O(N)$ deep-clone snapshot with a transient memory spike, measured directly in
@@ -105,27 +107,27 @@ continuous mode is driven by a seeded simulated ratchet rather than the client's
 changes the construction being exercised, but both must be replaced before the unlinkability and
 active-MitM guarantees hold against a real adversary rather than a simulated one. Finally, the
 networked client ties every search-time signed tree head into one append-only chain: the head is
-signature-verified per lookup and its root is folded --- via the same windowed consistency proof used
-for offline catch-up --- into the client's pinned baseline, so a validly-signed but \emph{forked} head
+signature-verified per lookup and its root is folded, via the same windowed consistency proof used
+for offline catch-up, into the client's pinned baseline, so a validly-signed but \emph{forked} head
 served only in a search response (and thus invisible to an auditor polling the public head alone) is
 rejected the instant it fails to chain. The residual here is not a client-side gap but the fundamental
 limitation already stated above: a \emph{fully consistent} split-world, whose branches each chain from
 a shared prefix, cannot be detected by any lone client and relies on the cross-vantage auditor.
 
-\paragraph{Formal status.} The security argument is a narrative one supported by experiment
+\paragraph{Formal Status.} The security argument is a narrative one supported by experiment
 definitions and the adversarial scenario suite, not a complete cryptographic reduction. A combined
 ``dual-CEAsec'' game and its reduction to collision resistance and VRF pseudorandomness are stated as
 an obligation rather than discharged. A further practical limitation is warning-channel abuse: a
 malicious peer can write spurious warnings, a relationship-scoped false-positive nuisance. The
-implemented payload MAC (\cref{ch:design}) authenticates the operator boundary --- a reader can
-distinguish a peer-authored warning from operator-injected noise --- but cannot help here, because
+implemented payload MAC (\cref{ch:design}) authenticates the operator boundary (a reader can
+distinguish a peer-authored warning from operator-injected noise) but cannot help here, because
 an abusive peer holds the shared secret and can mint valid MACs; a production system would blunt
 this with rate limiting and per-sender signed warning payloads.
 
-\paragraph{Evaluation completeness.} Three further gaps bound what the evaluation establishes, and
+\paragraph{Evaluation Completeness.} Three further gaps bound what the evaluation establishes, and
 each is a matter of proof-of-concept scope rather than a hidden result. First, the adversarial suite
-(\cref{app:tests}) models substitution against an \emph{already-established} conversation --- the
-scheme's stated scope (\cref{ssec:design-detection}) --- and a network man-in-the-middle against an
+(\cref{app:tests}) models substitution against an \emph{already-established} conversation, the
+scheme's stated scope (\cref{ssec:design-detection}), and a network man-in-the-middle against an
 honest global directory; it does not model a two-leg adversary interposed at first contact, nor a
 server that makes a fabricated pre-key bundle and its log entry mutually consistent, both of which lie
 outside the post-establishment guarantee. Second, the headline latency numbers measure components,
@@ -133,17 +135,17 @@ not a live end-to-end exchange: M11 is the per-handshake KT \emph{verification} 
 a Signal/PQXDH handshake benchmark, and M12 is the auditor's local computation, not the networked
 proof-carrying audit. Third, the DUET test suite is not wired into Signal Desktop's main continuous
 integration and the live wire-parity check skips silently when no Rust server is reachable, and only
-aggregate benchmark statistics --- not raw Criterion samples --- are committed. A two-leg adversarial
+aggregate benchmark statistics, not raw Criterion samples, are committed. A two-leg adversarial
 harness, a genuine handshake benchmark, a required CI gate, and archived raw samples for independent
 re-analysis are left to future work.
 
 % ============================================================================
-\section{Future work}\label{sec:disc-future}
+\section{Future Work}\label{sec:disc-future}
 
 The limitations above map onto a concrete programme of future work. The items are ordered roughly from
 those that turn the prototype into a deployment to those that broaden the design's reach.
 
-\paragraph{Production shared-secret binding.} The single change that most advances the work is
+\paragraph{Production Shared-Secret Binding.} The single change that most advances the work is
 bridging the genuine X3DH/PQXDH shared secret out of libsignal at the pre-key-bundle hook and binding
 the dual-index labels to it, in place of the deterministic stand-in. libsignal folds the shared
 secret into the ratchet root key and discards it immediately after session initialization, so the
@@ -152,15 +154,14 @@ unchanged. This is what turns the labels from ``stable per account'' into ``ungu
 per session,'' and it is the prerequisite for the active-network-MitM detection of \cref{ch:threat} to
 hold against a real adversary. It is the headline deployment-path item.
 
-\paragraph{An $O(\log N)$ epoch commit.} The commit cost measured in \cref{ch:eval} is an artefact of
+\paragraph{An $O(\log N)$ Epoch Commit.} The commit cost measured in \cref{ch:eval} is an artefact of
 a single-process design that deep-clones the committed tree so concurrent lookups see a stable view.
 Replacing the tree's owned children with reference-counted, copy-on-write nodes makes each epoch an
 immutable version that shares all untouched subtrees with its predecessor and allocates only along the
 $O(\log N)$ root-to-leaf path, matching how production key-transparency systems version epochs. It is a
 self-contained server-side change, orthogonal to the verification-side contribution.
 
-\paragraph{Enforcing directory immutability: write-once labels, transition audit, persistence
-checks.} \Cref{ch:design} specifies three safeguards that together guarantee a committed warning or
+\paragraph{Authenticated Ownership of Raw-Label Writes.} \Cref{ch:design} specifies three safeguards that together guarantee a committed warning or
 CEA fingerprint cannot be silently removed or replaced: a write-once policy on dual-index and CEA
 labels, a per-epoch transition audit in which the auditor replays each epoch's disclosed update set
 against the previous committed root (the role the IETF KeyTrans protocol assigns to third-party
@@ -170,64 +171,64 @@ a committed leaf into non-repudiable, publishable evidence of deletion. The prot
 all three: the server's raw-label update interface enforces the write-once policy and rejects an
 overwrite of an occupied dual-index, CEA, or warning label; each committed epoch records a declared
 update set that the auditor replays onto its own mirror directory, checking the result against the
-committed root, so a deletion --- which the delta format cannot express --- makes the replay diverge
+committed root, so a deletion, which the delta format cannot express, makes the replay diverge
 and is detected; and the writer-side persistence check retains the inclusion proof and signed tree
 head of a committed warning and, on any later disappearance, assembles the inclusion proof, the
 proven non-inclusion, and the consistency proof between the two heads into a bundle that verifies
 against the server's own signatures. The one remaining deployment-path item is authenticated writes
---- account-layer proof that a caller owns the raw label it writes --- without which the write-once
+(account-layer proof that a caller owns the raw label it writes), without which the write-once
 policy still binds an honest server and the auditor still binds a malicious one, but a malicious
 \emph{client} could squat an as-yet-empty peer slot. The in-process implementation and its
 adversarial tests are described in \cref{ch:impl}; the argument that these safeguards bind
 a fully malicious operator is exactly the suppression argument of \cref{ch:design}.
 
-\paragraph{A formal dual-CEAsec reduction.} The narrative security argument can be completed into a
+\paragraph{A Formal Dual-CEAsec Reduction.} The narrative security argument can be completed into a
 game-based proof: define the combined detection game over the dual-index scheme and the log, and
 reduce an adversary's advantage to the collision resistance of the hash and the pseudorandomness and
 uniqueness of the VRF, discharging the obligations sketched in \cref{ch:design}. A complementary
 step is machine-checked assurance: a symbolic model of the detection protocol in a prover such as
 Tamarin or ProVerif and, further out, a verified implementation of the client-side proof checkers.
 
-\paragraph{Group messaging.} Extending the scheme to groups is the largest conceptual step. Index
+\paragraph{Group Messaging.} Extending the scheme to groups is the largest conceptual step. Index
 derivation would draw on the group's shared secrets, for example TreeKEM secrets under MLS, and
 the warning mechanism would need a fan-out strategy across a membership that changes over time, along
 with a treatment of how joins and removals interact with the warning slot.
 
-\paragraph{Query privacy via a distributed OPRF.} The one privacy property no deployed system offers
---- hiding the queried identity from the operator --- is a natural extension. A client could blind its
+\paragraph{Query Privacy via a Distributed OPRF.} A privacy property not provided by the deployed
+systems surveyed here, hiding the queried identity from the operator, is a natural extension. A client could blind its
 lookup identity with an oblivious pseudorandom function (RFC~9497~\cite{rfc9497}) before the server
 applies its VRF, so the operator learns neither who is queried nor by whom. Signal has shipped a
 distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal},
 since retired in favour of enclave-based recovery, so the engineering pattern is proven in
 Signal's own lineage; adapting it to the label derivation is the open work.
 
-\paragraph{Post-quantum, multi-device, and deployment.} Because the labels are hash-derived, a
+\paragraph{Post-Quantum, Multi-Device, and Deployment.} Because the labels are hash-derived, a
 post-quantum shared secret (PQXDH~\cite{pqxdh}) can feed the derivation unchanged; the open piece is a
 post-quantum VRF, for which only candidates exist. Multi-device support would follow the keychain
 cross-signing of ELEKTRA~\cite{len2023elektra}. On the deployment path, the cleanest route is to
 integrate with Signal's existing key-transparency service~\cite{signal-kt-server} behind a feature
 flag rather than running a parallel log, which requires only a write API for the warning and
 per-session labels, and the fork-detection vantage should be supplied by a real auditor gossip
-ecosystem rather than the demo stand-in --- which raises its own open questions of federation
+ecosystem rather than the demo stand-in, which raises its own open questions of federation
 across providers and of incentives for independent auditors to participate honestly.
 
-\paragraph{Human-centred warning design.} The evaluation shows that the warning fires; it does not
-show that users act on it. A usability study of the warning surfaces --- how users interpret the
+\paragraph{Human-Centred Warning Design.} The evaluation shows that the warning fires; it does not
+show that users act on it. A usability study of the warning surfaces (how users interpret the
 red and amber verdicts, whether the evidence behind an alert can be explained intelligibly, how
-the warnings meet accessibility requirements, and how alarm fatigue is avoided --- would complete
+the warnings meet accessibility requirements, and how alarm fatigue is avoided) would complete
 the chain from cryptographic detection to human response, continuing the line of ceremony studies
 that motivated the design~\cite{vaziripour2017}.
 
-\paragraph{Evidence-carrying alerts and operational response.} The prototype's verdicts are
+\paragraph{Evidence-Carrying Alerts and Operational Response.} The prototype's verdicts are
 user-facing events; a production service would add an operator-facing layer: a structured alert
 schema carrying the scenario class, the epoch, and the signed tree heads and proofs that constitute
 the evidence; notification interfaces through which an operator or auditor can reproduce an
 incident from that evidence alone; and an explicit response policy defining when the system rejects
-a proof, requests a key rotation, or escalates to a human --- automated detection with
+a proof, requests a key rotation, or escalates to a human: automated detection with
 human-in-the-loop response. Any such telemetry must be minimized so that the alerting layer does
 not itself leak the metadata the pseudorandom labels were designed to hide.
 
-\paragraph{A networked, persistent benchmark campaign.} Finally, the algorithmic numbers of
+\paragraph{A Networked, Persistent Benchmark Campaign.} Finally, the algorithmic numbers of
 \cref{ch:eval} should be complemented by a networked, database-backed campaign (persistent storage,
 wide-area latencies, and concurrent load) to characterize the costs a real service pays, which the
 comparison with database-bound systems (\cref{sec:eval-compare}) suggests are dominated by persistence

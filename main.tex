@@ -74,6 +74,18 @@
 %   \end{definition}
 \newcommand{\intuition}[1]{\emph{Intuition: #1}\\[2pt]}
 
+% ── Screenshot placeholder (Th3 recapture) ──────────────────────────
+% The submitted screenshots are being recaptured under controlled
+% conditions (synthetic identities, no personal paths, no DevTools
+% counters, fixed zoom/theme, one scenario per capture). Until the
+% replacements land, each slot is marked here so its position and target
+% asset are unambiguous. Grep for \screenshotplaceholder to find them.
+% Usage: \screenshotplaceholder{<width>}{<intended figures/asset.png>}
+\newcommand{\screenshotplaceholder}[2]{%
+  \fbox{\parbox[c][0.26\textheight][c]{\dimexpr#1-2\fboxsep-2\fboxrule\relax}{%
+    \centering\ttfamily\footnotesize #2\\[6pt]%
+    \normalfont\itshape [screenshot placeholder: recapture per Th3]}}}
+
 % ── Experiment block for security games (ACKA-paper style, F25) ──
 % A proper framed box in the clean crypto-paper style (thin black rule all
 % round, white background, bold title with a rule under it, then the numbered
@@ -105,7 +117,7 @@
 \vspace{2cm}
 {\large Mohammad Saiful Islam\par}
 \vspace{12cm}
-{\large A dissertation\\Submitted in partial fulfillment of the requirements for the degree of\par}
+{\large A dissertation\\Submitted in partial fulfilment of the requirements for the degree of\par}
 \vspace{1cm}
 {\large MSc Advanced Computing\par}
 {\scshape King's College London\\Department of Informatics\par}
@@ -137,9 +149,9 @@ The security of end-to-end encrypted messaging rests on an assumption its crypto
 not itself establish: that the public keys the server hands out are authentic. Signal's
 original built-in defence, the Safety Number, covers only the long-term identity keys and requires a
 manual out-of-band comparison that few users ever complete, leaving a malicious or compromised
-directory free to substitute a key undetected. Key transparency answers the malicious-server
-problem by publishing the directory as a verifiable, append-only log, and now ships in
-production --- most recently as Signal's optional Automatic Key Verification --- but deployed
+directory free to substitute a key undetected. Key transparency makes the directory auditable
+and supports detection of unauthorized key changes by publishing it as a verifiable, append-only log, and now ships in
+production (most recently as Signal's optional Automatic Key Verification), but deployed
 designs still leave two gaps: a key substituted in the log itself is noticed only by its owner,
 with no in-band channel to warn the peer, and a client returning after an offline period must
 pay a monitoring cost that grows with the number of missed epochs, i.e., with the time spent
@@ -153,17 +165,19 @@ rests on two underlying mechanisms. First, the
 participant-specific lookup labels together with a shared warning label, enabling automatic,
 in-band detection of key substitution by both participants without additional user interaction.
 Second, \emph{windowed consistency proofs} replace per-epoch catch-up with a single consistency
-proof between the last trusted and current tree heads, so a client sends one proof rather than $W$,
-with size logarithmic in the endpoint log sizes rather than linear in the epochs it missed.
+proof between the last trusted and current tree heads, so a client requests and verifies one proof
+rather than one for each of the $W$ missed epochs, with size logarithmic in the endpoint log sizes
+rather than linear in the epochs it missed.
 
 Measured on a directory of up to $10^6$ labels, the dual-index lookup proof has a median size of
-\SI{817}{B} --- at parity with CONIKS, while adding automatic detection without enlarging the per-lookup proof --- and
+\SI{817}{B} (at parity with CONIKS, while adding automatic detection without enlarging the per-lookup proof), and
 median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
 far more slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}).
 Windowed catch-up carries \SI{320}{B} of raw consistency-path hashes in place of \SI{222528}{B} at a
 one-month offline window, a \num{695}-fold reduction against a synthetic baseline that re-fetches a
-current-head-anchored proof on each of the $W$ occasions. A two-client demonstration shows substitution and equivocation being
-detected in band, with the warning surfaced in the client interface.
+current-head-anchored proof on each of the $W$ occasions. In a two-client demonstration, the linked
+clients surface substitution warnings in band, while a separate cross-vantage auditor detects
+equivocation.
 
 These results show that DUET's combination of automatic, in-band key-substitution detection and
 single-proof offline consistency can be added to a messaging directory at Signal's scale without
@@ -199,14 +213,14 @@ $\pkid{U}, \skid{U}$ & long-term identity key pair of user $U$ \\
 $\spk{U}, \sig{\spk{U}}$ & signed pre-key and its signature under $\skid{U}$ \\
 $\opk{U}{i}$ & $i$-th one-time pre-key of $U$ \\
 $\ek{U}$ & ephemeral key of $U$ \\
-$\xIK{U},\xSPK{U},\xOPK{U},\xEK{U}$ & X3DH-spec notation for $\pkid{U},\spk{U},\opk{U}{i},\ek{U}$ \\
+$\xIK{U},\xSPK{U},\xOPK{U},\xEK{U}$ & Extended Triple Diffie--Hellman (X3DH)-spec notation for $\pkid{U},\spk{U},\opk{U}{i},\ek{U}$ \\
 $\sharedS$ & X3DH shared secret \\
 $\DH{X}{Y};\ \KDF$ & Diffie--Hellman value of two key pairs; key-derivation function \\
 $\Hash$ & collision-resistant hash $\{0,1\}^*\!\to\!\{0,1\}^{256}$ (SHA-256) \\
 $\ell_{\mathsf{self}}, \ell_{\mathsf{peer}}, \ell_{\mathsf{warn}}$ & dual-index labels: own-key lookup, peer-key lookup, and shared warning slot \\
 $t$; $\STH_t$ & epoch number; signed tree head at epoch $t$ \\
 $h_t$; $r_t$ & log-tree root; prefix-tree root at epoch $t$ \\
-$\pincl, \pcons, \pvrf$ & inclusion / consistency / VRF proofs \\
+$\pincl, \pcons, \pvrf$ & inclusion / consistency / verifiable-random-function (VRF) proofs \\
 $W$ & offline window (epochs); $N$: number of labels; $E$: number of epochs \\
 $\concat$ & byte-string concatenation \\
 \bottomrule

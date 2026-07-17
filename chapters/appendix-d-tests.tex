@@ -4,15 +4,15 @@ This appendix lists the full test suite that backs the conformance claims of \cr
 Three suites cover the system. The Rust core is covered by \num{91} unit and property tests across
 nine modules, the \num{8}-scenario adversarial integration suite, and \num{13} tests in the
 \texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
-five \texttt{commit\_decision} transaction cases, and an end-to-end partial-fetch-failure test)
---- \num{112} tests in total, run under \texttt{cargo test}; the TypeScript
+five \texttt{commit\_decision} transaction cases, and an end-to-end partial-fetch-failure test),
+\num{112} tests in total, run under \texttt{cargo test}; the TypeScript
 client is covered by \num{64} Jest tests in six suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
 complete listing follows. Tables are placed exactly where they are discussed.
 
 % ----------------------------------------------------------------------------
-\section{Rust unit and property tests}\label{sec:tests-rust}
+\section{Rust Unit and Property Tests}\label{sec:tests-rust}
 
 The unit and property tests divide into three groups: the cryptographic primitives and data
 structures (\cref{tab:tests-rust-prim}), the server and its verification chain
@@ -21,7 +21,7 @@ mode (\cref{tab:tests-rust-system}).
 
 \begin{table}[H]
 \centering
-\caption{Rust tests --- primitives and data structures (\num{35} tests).}
+\caption{Rust tests: primitives and data structures (\num{35} tests).}
 \label{tab:tests-rust-prim}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -74,7 +74,7 @@ Module & Test & Property checked \\
 
 \begin{table}[H]
 \centering
-\caption{Rust tests --- server and verification chain (\texttt{server}, \num{28} tests).}
+\caption{Rust tests: server and verification chain (\texttt{server}, \num{28} tests).}
 \label{tab:tests-rust-server}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -108,9 +108,9 @@ Test & Property checked \\
 \texttt{windowed\_consistency\_proof\_to\_pins\_upper\_bound} & the proof between two committed heads respects the RFC~9162 $\lceil\lg m\rceil + \lceil\lg n\rceil$ hash bound \\
 \midrule
 \texttt{update\_raw\_is\_write\_once} & a second write to an occupied raw label is rejected (\texttt{WriteOnceViolation}) and the directory is unchanged \\
-\texttt{update\_raw\_unchecked\_bypasses\_write\_once} & the explicit malicious-server path does overwrite --- the bypass the transition audit must catch \\
+\texttt{update\_raw\_unchecked\_bypasses\_write\_once} & the explicit malicious-server path does overwrite: the bypass the transition audit must catch \\
 \texttt{epoch\_delta\_records\_inserts\_and\_rotations} & each epoch's declared delta records VRF inserts, raw inserts, and rotations \\
-\texttt{attack\_remove\_raw\_is\_not\_declared} & a raw deletion changes the committed root but never appears in the declared delta --- exactly the mismatch the transition audit detects \\
+\texttt{attack\_remove\_raw\_is\_not\_declared} & a raw deletion changes the committed root but never appears in the declared delta: exactly the mismatch the transition audit detects \\
 \midrule
 \texttt{equivocate\_produces\_conflicting\_signed\_head} & the test server can mint two validly signed heads at one epoch (the A4 fixture) \\
 \texttt{equivocate\_requires\_committed\_epoch} & equivocation requires a committed epoch to fork from \\
@@ -121,7 +121,7 @@ Test & Property checked \\
 
 \begin{table}[H]
 \centering
-\caption{Rust tests --- auditor, warning monitor, and continuous mode (\num{28} tests).}
+\caption{Rust tests: auditor, warning monitor, and continuous mode (\num{28} tests).}
 \label{tab:tests-rust-system}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -133,8 +133,8 @@ Module & Test & Property checked \\
 \texttt{auditor} & \texttt{transition\_audit\_passes\_for\_honest\_directory} & the declared delta replays to the committed root for an honest directory \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_deletion} & a deleted leaf makes the replay diverge and alarm \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_modification} & an in-place modification likewise diverges and alarms \\
-\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected --- the C2/Option B pss-compromise path \\
-\texttt{auditor} & \texttt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert} & the same overwrite declared as an \textsf{Insert} of an already-present label is rejected (A1) --- closing the other delta-op variant \\
+\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected: the C2/Option B pss-compromise path \\
+\texttt{auditor} & \texttt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert} & the same overwrite declared as an \textsf{Insert} of an already-present label is rejected (A1): closing the other delta-op variant \\
 \texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_mirror} & a rejected transition leaves the auditor's mirror untouched, so a single bad epoch cannot corrupt later audits \\
 \texttt{auditor} & \texttt{audit\_rejects\_unsigned\_or\_foreign\_sth} & an unsigned or foreign-key head is rejected before auditing \\
 \texttt{auditor} & \texttt{audit\_requires\_committed\_epoch} & auditing requires a committed epoch \\
@@ -148,7 +148,7 @@ Module & Test & Property checked \\
 \midrule
 \texttt{monitor} & \texttt{persistence\_check\_passes\_while\_warning\_persists} & a committed warning that remains present passes the persistence re-check \\
 \texttt{monitor} & \texttt{persistence\_check\_produces\_verifiable\_deletion\_evidence} & on deletion, the assembled bundle (inclusion + proven non-inclusion + consistency) verifies against the server's own signatures \\
-\texttt{monitor} & \texttt{deletion\_evidence\_rejects\_stale\_non\_inclusion} & a stale (superseded) non-inclusion proof cannot certify a deletion --- the bundle must be current \\
+\texttt{monitor} & \texttt{deletion\_evidence\_rejects\_stale\_non\_inclusion} & a stale (superseded) non-inclusion proof cannot certify a deletion: the bundle must be current \\
 \texttt{monitor} & \texttt{persistence\_check\_is\_indeterminate\_under\_a\_forged\_head} & a persistence check against an unverifiable/forged head returns \textsc{Indeterminate}, never a false clean (fail-closed) \\
 \midrule
 \texttt{cea} & \texttt{honest\_parties\_agree\_each\_epoch} & both chains derive the same label and fingerprint every epoch \\
@@ -164,19 +164,19 @@ Module & Test & Property checked \\
 \end{table}
 
 % ----------------------------------------------------------------------------
-\section{TypeScript (Signal Desktop) Jest suite}\label{sec:tests-ts}
+\section{TypeScript (Signal Desktop) Jest Suite}\label{sec:tests-ts}
 
 The embedded client is covered by \num{64} Jest tests in six suites, of two kinds. The
 \emph{wire-parity} suite runs the full client verification chain against the live Rust server over
 the network; the \emph{integration} suite and the four \emph{unit} suites back a test double onto a
-real in-process \texttt{KTServer} --- a genuine prefix tree, Merkle log, ECVRF, and Ed25519 signer
---- so that every TypeScript check is exercised against real cryptography rather than mocks.
+real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF, and Ed25519 signer)
+so that every TypeScript check is exercised against real cryptography rather than mocks.
 \Cref{tab:tests-jest-wire} lists the wire-parity and integration tests;
 \cref{tab:tests-jest-unit} lists the four unit suites.
 
 \begin{table}[H]
 \centering
-\caption{Jest tests --- wire parity against the live Rust server, and the integration suite (\num{36} tests).}
+\caption{Jest tests: wire parity against the live Rust server, and the integration suite (\num{36} tests).}
 \label{tab:tests-jest-wire}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}
@@ -204,10 +204,10 @@ Suite & Test \\
 \texttt{kt\_integration} & update and search round trip \\
 \texttt{kt\_integration} & non-existent user returns null \\
 \texttt{kt\_integration} & \texttt{commitEpoch} increments the epoch \\
-\texttt{kt\_integration} & register and verify --- honest scenario \\
-\texttt{kt\_integration} & detect key mismatch --- MitM scenario \\
-\texttt{kt\_integration} & key not in log --- first contact \\
-\texttt{kt\_integration} & dual-index MitM detection --- honest case \\
+\texttt{kt\_integration} & register and verify (honest scenario) \\
+\texttt{kt\_integration} & detect key mismatch (MitM scenario) \\
+\texttt{kt\_integration} & key not in log (first contact) \\
+\texttt{kt\_integration} & dual-index MitM detection (honest case) \\
 \texttt{kt\_integration} & windowed catch-up after an offline period \\
 \texttt{kt\_integration} & cross-implementation vector v1 (alice/bob) \\
 \texttt{kt\_integration} & cross-implementation vector v3 (fixed-width 16-byte ids) \\
@@ -222,7 +222,7 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Jest tests --- client unit suites (\num{28} tests).}
+\caption{Jest tests: client unit suites (\num{28} tests).}
 \label{tab:tests-jest-unit}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}
@@ -265,12 +265,12 @@ Suite & Test \\
 \end{table}
 
 % ----------------------------------------------------------------------------
-\section{Cross-language equivalence vectors}\label{sec:tests-xlang}
+\section{Cross-Language Equivalence Vectors}\label{sec:tests-xlang}
 
 A fixed set of test vectors pins the HKDF dual-index derivation, the sealed warning MAC, and the
 CEA construction byte-for-byte across the Rust and TypeScript implementations: on the Rust side,
 \texttt{dual\_index::cross\_impl\_test\_vectors}, \texttt{dual\_index::warn\_mac\_cross\_impl\_vector},
-and \texttt{cea::cross\_impl\_test\_vectors} --- the last pinning three ratchet epochs, not just the
+and \texttt{cea::cross\_impl\_test\_vectors}, the last pinning three ratchet epochs, not just the
 first (\cref{tab:tests-rust-prim,tab:tests-rust-system}); on the TypeScript side, the
 \texttt{kt\_integration} vectors v1, v3, and the warn-MAC vector, and the \texttt{cea} vector test
 (\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The Ed25519 and Merkle computations are checked to
@@ -279,7 +279,7 @@ verifiers. Together these are the contract that licenses the TypeScript client a
 verifier of the Rust server's outputs (\cref{sec:impl-tests}).
 
 % ----------------------------------------------------------------------------
-\section{Adversarial scenario suite}\label{sec:tests-adversarial}
+\section{Adversarial Scenario Suite}\label{sec:tests-adversarial}
 
 \begin{table}[H]
 \centering
@@ -290,14 +290,14 @@ verifier of the Rust server's outputs (\cref{sec:impl-tests}).
 \toprule
 Scenario & Scripted attack & Detection mechanism & Observed & Latency \\
 \midrule
-A0 & honest baseline & all checks pass & pass & --- \\
+A0 & honest baseline & all checks pass & pass & n/a \\
 A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\
 A1b & substitute a dual-index session slot & self-check + peer warning & pass & 1--2 epochs \\
 A2 & substitute and censor the warning & compound signal (proven non-inclusion) & pass & 1--2 epochs \\
 A3 & MitM on the X3DH bundle & label divergence + VRF anchor & pass & next lookup \\
 A4 & equivocate (split-view) & cross-vantage auditor & pass & 1 epoch \\
 A5 & substitute during a key rotation & identity re-fetch + cross-signature & pass & 1--2 epochs \\
-X1 & extract the victim's key & out of scope (boundary) & n/a & --- \\
+X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 \bottomrule
 \end{tabular}
 \end{table}

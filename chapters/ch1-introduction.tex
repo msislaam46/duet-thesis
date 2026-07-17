@@ -1,8 +1,13 @@
 \chapter{Introduction}\label{ch:intro}
 
+This chapter introduces the public-key authentication problem that motivates the thesis and explains
+why it matters for Signal's end-to-end security. It first shows how a substituted public key can
+undermine an otherwise secure encrypted channel, then states the research questions and
+contributions developed in the remainder of the thesis.
+
 \section{Motivation}\label{sec:intro-motivation}
 
-End-to-end encryption protects a message in transit, but its guarantee is only as strong as the public keys the two parties believe they are using. In every deployed encrypted messenger those keys are distributed by a server: to start a conversation, a client fetches the recipient's key material from the provider's directory and trusts that what it received is genuine. That trust is a weak point. A compromised, coerced, or simply malicious directory can hand a client the attacker's key in place of the recipient's, and the encryption then protects a channel to the attacker resulting in a key-substitution, or ``fake-key,'' attack that is invisible to the cryptography itself.
+End-to-end encryption protects a message in transit, but its guarantee is only as strong as the public keys the two parties believe they are using. In asynchronous messaging systems such as Signal, clients normally obtain this key material from provider-operated infrastructure, and trust that what they receive is genuine. That trust is a weak point. If that infrastructure substitutes an attacker's key for the recipient's, the protocol may establish an encrypted channel to the attacker rather than to the intended recipient. This is a key-substitution, or ``fake-key,'' attack, and it is invisible to the cryptography itself.
 
 The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. It works in principle but fails in practice because it depends on a human ritual that people rarely perform. In one study, only about 14\% of users completed the ceremony without guidance~\cite{vaziripour2017}, and even a successful comparison is a one-off check that says nothing about whether a key changes later. \emph{Key
 transparency} (publishing the directory as a verifiable, append-only log so that clients can check their keys against a public, consistent record) is the response the field has converged on, and production systems, such as Signal's Automatic Key Verification, have started deploying it~\cite{signal-akv}.
@@ -11,15 +16,20 @@ However, deployed key transparency architectures still leave two critical gaps. 
 
 This thesis directly addresses both limitations. It asks whether key substitution can be made \emph{automatically} detectable, \emph{in band}, and at a cost a real messaging service could afford, so that the \textbf{messaging client automatically verifies the keys in the background}, rather than relying on users to perform manual ceremonies. The scheme it develops in answer, DUET (\emph{DU}al-index, \emph{E}poch-windowed \emph{T}ransparency), applies to any messenger with a semi-trusted key directory and is demonstrated through an integration into the Signal Desktop client.
 
-\section{Aims and objectives}\label{sec:intro-aims}
+DUET does not prevent a malicious provider from denying service. Its goal is narrower: a substituted
+key, an invalid or missing proof, or an inconsistent directory history must cause verification to
+fail rather than allowing the client to accept the attacker's key silently. \Cref{ch:threat}
+formalizes this distinction between detectable interference and availability.
 
-\paragraph{Thesis statement.} The central claim this dissertation defends is that automatic, in-band
+\section{Aims and Objectives}\label{sec:intro-aims}
+
+\paragraph{Thesis Statement.} The central claim this dissertation defends is that automatic, in-band
 detection of key substitution can be added to a deployed messaging key directory at essentially the
 asymptotic cost the directory already pays without a manual user ceremony, without enlarging the
-lookup proof, and without imposing an offline catch-up cost that grows with the time a client spends
-away.
+lookup proof, and while replacing one proof per missed epoch with a single proof whose size grows
+logarithmically in the endpoint log sizes.
 
-\paragraph{Research questions.} The work is organized around four research questions, each answered by
+\paragraph{Research Questions.} The work is organized around four research questions, each answered by
 a specific later chapter:
 
 \begin{description}
@@ -35,7 +45,7 @@ a specific later chapter:
   endpoint log sizes rather than linearly in the epochs missed? \emph{(Answered by the
   windowed consistency proof of \cref{sec:design-windowed} and its measurement in
   \cref{ssec:eval-catchup}.)}
-  \item[RQ4 (deployability).] Does the scheme integrate into a real, deployed messaging client at a
+  \item[RQ4 (client-integration feasibility).] Does the scheme integrate into a real, deployed messaging client at a
   practical cost, rather than only into a standalone model? \emph{(Answered by the Signal Desktop
   integration of \cref{ch:impl} and the deployment analysis of \cref{sec:eval-deploy}.)}
 \end{description}
@@ -45,12 +55,14 @@ a specific later chapter:
 This thesis makes four principal contributions:
 
 \paragraph{Conceptual.} A \emph{dual-index warning scheme}: a per-conversation construction that gives
-each pair of users a shared, HKDF-derived warning slot in the directory that either party can raise
+each pair of users a shared warning slot in the directory, derived with the HMAC-based
+Extract-and-Expand Key Derivation Function (HKDF), that either party can raise
 and that a malicious server can neither pre-position nor censor undetectably, turning a silent
 substitution into an automatic, bidirectional, in-band alert (\cref{sec:design-dual}). More broadly,
 the thesis provides what is, to our knowledge (we are aware of no prior published or open-source
 realization at the time of writing), the first concrete instantiation and measurement of the abstract
-append-only-log component of the ACKA framework~\cite{dowling2023acka}, and frames the guarantee
+append-only-log component of the Authenticated Continuous Key Agreement (ACKA)
+framework~\cite{dowling2023acka}, and frames the guarantee
 precisely as detection over a semi-trusted directory rather than prevention.
 
 \paragraph{Cryptographic.} A formal detection experiment for the dual-index scheme, stated over
@@ -72,10 +84,11 @@ proof is at size parity with CONIKS while adding a detection channel it lacks, t
 verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than
 $N$ (\SIrange{128.1}{147.1}{\micro\second}), and that a
 month-long offline catch-up costs a few hundred bytes against the hundreds of kilobytes naïve
-monitoring would spend; together with a systematic security evaluation (STRIDE and MITRE ATT\&CK
-coverage) of the resulting system (\cref{ch:eval}).
+monitoring would spend; together with a systematic security evaluation using the STRIDE
+threat-classification framework and the MITRE ATT\&CK knowledge base for the resulting system
+(\cref{ch:eval}).
 
-\section{Thesis roadmap}\label{sec:intro-roadmap}
+\section{Thesis Roadmap}\label{sec:intro-roadmap}
 
 \Cref{ch:background} surveys the Signal protocol stack, transparency logs, verifiable key directories,
 and the ACKA framework, and identifies the research gap. \Cref{ch:threat} fixes the threat model,

@@ -2,11 +2,11 @@
 % Label: \label{fig:eval-catchup-plot}
 \begin{tikzpicture}
 \begin{axis}[width=0.82\textwidth,height=6cm,ymode=log,
-  xlabel={offline window $W$ (epochs)}, ylabel={catch-up proof (bytes)},
+  xlabel={offline window $W$ (epochs)}, ylabel={raw consistency-path hash bytes},
   xtick={1,24,168,720}, xticklabels={1,24,168,720},
   legend pos=north west, grid=both, font=\footnotesize]
 \addplot+[mark=*] coordinates {(1,96)(24,4416)(168,41280)(720,222528)};
 \addplot+[mark=square*] coordinates {(1,96)(24,192)(168,256)(720,320)};
-\legend{na\"ive (one proof per epoch), windowed (one proof)}
+\legend{synthetic current-head baseline ($W$ proofs), windowed (one proof)}
 \end{axis}
 \end{tikzpicture}

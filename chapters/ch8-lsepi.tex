@@ -10,16 +10,18 @@ professional standards, specifically the BCS Code of Conduct~\cite{bcs-code} and
 Conduct~\cite{iet-conduct}, against which the work was conducted (\cref{sec:lsepi-prof}).
 
 % ============================================================================
-\section{Legal issues}\label{sec:lsepi-legal}
+\section{Legal Issues}\label{sec:lsepi-legal}
 
 Intellectual property and licensing are the most immediate legal consideration. The prototype
 extends two Signal codebases, libsignal and Signal Desktop, both released under the GNU
-Affero General Public License v3 (AGPL-3.0)~\cite{libsignal,signal-desktop}. Building on AGPL-3.0
-software makes the resulting work a derivative subject to the same licence: its source must remain
-available, and, distinctively for the AGPL, that obligation extends to users who interact with a
-modified version over a network, not only to those who receive a binary. The prototype is a
+Affero General Public License v3 (AGPL-3.0)~\cite{libsignal,signal-desktop}. The project is
+distributed on the basis that modifications to the AGPL-covered Signal code remain under AGPL-3.0:
+their source must remain available, and, distinctively for the AGPL, that obligation extends to
+users who interact with a modified version over a network, not only to those who receive a binary.
+Whether a particular separately developed component is itself a derivative work can depend on the
+facts, the jurisdiction, and the mode of combination and distribution. The prototype is a
 research artefact rather than a deployed service, so no public network offering has been made; but
-the licence terms have been respected throughout --- the modifications are kept in a fork whose
+the licence terms have been respected throughout: the modifications are kept in a fork whose
 source is available, the upstream copyright and licence notices are preserved, and any future
 deployment would be released under AGPL-3.0. The independent Rust \texttt{kt} crate depends only on
 permissively licensed libraries (the \texttt{sha2} and \texttt{hkdf} crates under the MIT/Apache-2.0
@@ -31,22 +33,25 @@ A second consideration is export control. The work implements cryptographic soft
 regulated under the Wassenaar Arrangement and national export regimes; libsignal itself is
 published under the corresponding open-source exception for publicly available cryptographic source
 code. The contribution here adds no new cryptographic capability beyond standardized primitives
-(the RFC~9381 ECVRF, RFC~5869 HKDF, and Ed25519) and is released as open, published source, so it
-falls within the same well-established exception rather than raising a new control concern.
+(the RFC~9381 ECVRF, RFC~5869 HKDF, and Ed25519) and is released as open, published source. This
+thesis does not determine the software's export-control classification: public availability may be
+relevant, but the applicable control lists and end-use rules require a case-specific assessment.
 
 Data protection is the third. Key transparency is, by construction, a data-minimizing design: the
 directory stores public keys and pseudonymous labels, never message content, and the VRF-derived
 global labels (\cref{ssec:design-labels}) deliberately prevent an observer from enumerating which
-users are present. No personal data was processed in the course of the project, all measurements
-were run on synthetic identifiers and benchmark data, so no obligations under the UK GDPR were
-engaged, while the design itself advances the privacy interests those regimes exist to protect. A
+users are present. The benchmark corpus used generated identifiers not linked to identifiable
+individuals. Subject to that assumption, the benchmark data were not personal data and no
+obligations under the UK GDPR were engaged by the measurements, while the design itself advances the
+privacy interests those regimes exist to protect. Screenshots and operational logs that contain
+identifiable names or paths would require separate review before release. A
 production deployment would inherit one governance duty the prototype does not: any operational
 logging of warnings or audit events must itself be data-minimized and access-controlled, so that
 the alerting layer does not re-expose the label-to-user metadata the pseudorandom labels are
 designed to hide.
 
 % ============================================================================
-\section{Social and ethical issues}\label{sec:lsepi-social}
+\section{Social and Ethical Issues}\label{sec:lsepi-social}
 
 The social value of the work is a direct contribution to public wellbeing and security:
 authenticated key exchange is what makes end-to-end encryption meaningful, and the people who most
@@ -92,7 +97,7 @@ isolated local test harness against synthetic accounts, with no live Signal inte
 users (\cref{ssec:impl-demo}).
 
 % ============================================================================
-\section{Professional issues and codes of conduct}\label{sec:lsepi-prof}
+\section{Professional Issues and Codes of Conduct}\label{sec:lsepi-prof}
 
 The work was carried out in line with the BCS Code of Conduct~\cite{bcs-code} and the IET Rules of
 Conduct~\cite{iet-conduct}, and it is worth setting out concretely how.
