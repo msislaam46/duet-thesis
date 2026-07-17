@@ -7,8 +7,9 @@ reports the microbenchmarks for proof size, verification latency, catch-up bandw
 mode trade (\cref{sec:eval-scale}), places the results beside prior key-transparency systems
 (\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
 taxonomy (\cref{sec:eval-security}). The headline findings are that the dual-index lookup proof is
-at size parity with CONIKS while adding automatic detection, that offline catch-up is three orders
-of magnitude cheaper than naïve monitoring, and that median full client verification stays below
+at size parity with CONIKS while adding automatic detection, that offline catch-up needs one proof
+rather than $W$ --- \num{695}-fold fewer raw path-hash bytes at a one-month window against this
+chapter's synthetic baseline --- and that median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
 
 % ============================================================================
@@ -22,10 +23,11 @@ time, and the bandwidth a client must spend to stay synchronized.
 The evaluation is organized around four questions, one per design claim, each stated so that it could
 be falsified. \emph{Is detection free in proof size?} --- falsified if the dual-index proof were
 materially larger than a single-index proof at the same $N$ (\cref{ssec:eval-sizes}). \emph{Is client
-verification cheap and scale-independent?} --- falsified if the full-chain verify grew with $N$ or
-exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}). \emph{Is offline
-catch-up independent of the offline window?} --- falsified if the windowed proof grew linearly with $W$
-(\cref{ssec:eval-catchup}). \emph{Is substitution detected, with no false alarms?} --- falsified by any
+verification stay cheap as the directory grows?} --- falsified if the full-chain verify grew in
+proportion to $N$, or exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}).
+\emph{Can an offline client re-synchronize in a single proof, rather than one per missed epoch?} ---
+falsified if the windowed client still had to fetch a proof per epoch, or if that single proof's size
+grew linearly with $W$ (\cref{ssec:eval-catchup}). \emph{Is substitution detected, with no false alarms?} --- falsified by any
 missed attack in the adversarial suite or a non-zero clean-session false-positive rate
 (\cref{ssec:eval-detection,sec:eval-security}). Each question is answered against the baselines below.
 
@@ -52,7 +54,7 @@ M1  & Lookup proof size vs.\ $N$              & single- vs dual-index      & \cr
 M2  & Proof generation latency (server)        & dual-index                 & \cref{ssec:eval-latency} \\
 M3  & Full client verification latency         & dual-index, windowed       & \cref{ssec:eval-latency} \\
 M4  & Offline catch-up bandwidth vs.\ $W$      & na\"ive vs windowed         & \cref{ssec:eval-catchup} \\
-M5  & MitM detection latency                   & dual-index                 & \cref{ssec:eval-detection} \\
+M5  & Marginal warning-slot lookup cost        & dual-index                 & \cref{ssec:eval-detection} \\
 M6  & Clean-session false-positive rate        & ---                        & \cref{ssec:eval-detection} \\
 M7  & Size + verify at scale ($10^6,10^7$)    & dual-index, windowed       & \cref{ssec:eval-scale} \\
 M8  & Single-thread throughput                 & dual-index                 & \cref{ssec:eval-throughput} \\
@@ -262,9 +264,9 @@ $W$ (epochs offline) & synthetic sequential (bytes) & windowed (bytes) & Ratio \
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-catchup-plot}
-\caption{Offline catch-up bandwidth versus window $W$ (log $y$): the naïve baseline grows linearly in
-$W$ (to \num{222528} bytes at a month) while the windowed proof stays a few hundred bytes
-(\cref{tab:eval-catchup}).}
+\caption{Offline catch-up, raw consistency-path hash bytes versus window $W$ (log $y$): the synthetic
+current-head-anchored baseline grows linearly in $W$ (to \num{222528} bytes at a month) while the
+windowed proof stays a few hundred bytes, growing logarithmically (\cref{tab:eval-catchup}).}
 \label{fig:eval-catchup-plot}
 \end{figure}
 
@@ -726,8 +728,9 @@ production messenger such as Signal, whose own key-transparency server this work
 against~\cite{signal-kt-server}. This section draws out those implications as measured comparisons
 with their caveats attached, not as recommendations.
 
-On the client, the cost is small and does not grow with the service. Full verification is
-$\approx$\SI{128}{\micro\second} and independent of $N$ (\cref{ssec:eval-latency,ssec:eval-scale}),
+On the client, the cost is small and grows far more slowly than the service. Full verification is
+$\approx$\SI{128}{\micro\second} at $N\le10^4$ and \SI{147.1}{\micro\second} at $10^7$
+(\cref{ssec:eval-latency,ssec:eval-scale}),
 and a lookup proof is \num{817}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}) --- at parity
 with CONIKS and roughly $9\times$ smaller than Signal's deployed, density-hiding wire format
 (\cref{sec:eval-compare}). A client offline for a month catches up in a single \num{320}\,byte proof

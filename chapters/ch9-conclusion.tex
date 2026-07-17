@@ -20,7 +20,8 @@ missed epoch. Both were realized in a standalone Rust reference implementation a
 verifier embedded in Signal Desktop (\cref{ch:impl}), and both were evaluated against the threat model
 of \cref{ch:threat}.
 
-The evaluation (\cref{ch:eval}) shows that this detection is added essentially for free. The
+The evaluation (\cref{ch:eval}) shows that this detection is added without changing the asymptotic
+complexity of the lookup proof, using additional lookups of the shape the client already verifies. The
 dual-index lookup proof is at size parity with CONIKS while carrying the warning channel CONIKS lacks;
 median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
 far more slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}), about
@@ -42,8 +43,9 @@ $\approx$\SI{128}{\micro\second} verification at $N\le10^4$, rising only to $\ap
 the \num{320}\,byte month-long catch-up, whose size is bounded by the endpoint log sizes rather than
 the window's length, and RQ4 (deployability) by the
 verifier running inside a fork of the real Signal Desktop client at that measured cost. The thesis
-statement --- that this detection can be added at essentially the cost the directory already pays ---
-is thereby supported on every axis it claimed.
+statement --- that this detection can be added without changing the asymptotic complexity of the
+proofs the directory already serves, using additional lookups of the existing shape --- is thereby
+supported on every axis it claimed.
 
 The result is a design that detects rather than prevents (a server can still substitute a key, but
 it can no longer do so silently) and that presents a deployment such as Signal with a narrow,

@@ -160,14 +160,16 @@ Measured on a directory of up to $10^6$ labels, the dual-index lookup proof has 
 \SI{817}{B} --- at parity with CONIKS, while adding automatic detection without enlarging the per-lookup proof --- and
 median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
 far more slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}).
-Windowed catch-up sends \SI{320}{B} in place of \SI{222528}{B} at a one-month offline window, a
-\num{695}-fold reduction. A two-client demonstration shows substitution and equivocation being
+Windowed catch-up carries \SI{320}{B} of raw consistency-path hashes in place of \SI{222528}{B} at a
+one-month offline window, a \num{695}-fold reduction against a synthetic baseline that re-fetches a
+current-head-anchored proof on each of the $W$ occasions. A two-client demonstration shows substitution and equivocation being
 detected in band, with the warning surfaced in the client interface.
 
 These results show that DUET's combination of automatic, in-band key-substitution detection and
-window-independent offline consistency can be added to a messaging directory at Signal's scale
-at essentially the cost it already pays, and the thesis sets out what remains between the
-measured prototype and a production deployment.
+single-proof offline consistency can be added to a messaging directory at Signal's scale without
+changing the asymptotic complexity of the proofs it already serves, using additional lookups of the
+existing proof shape; the thesis sets out what remains between the measured prototype and a
+production deployment.
 \end{abstract}
 
 \chapter*{Acknowledgements}

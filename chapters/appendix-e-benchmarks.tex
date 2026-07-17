@@ -50,10 +50,10 @@ configuration rather than as properties of the scheme, and pinning the toolchain
 portable. The proof sizes, being computed rather than timed, are hardware-independent.
 
 % ----------------------------------------------------------------------------
-\section{Proof sizes (M1) and catch-up bandwidth (M4)}\label{sec:bench-sizes}
+\section{Proof sizes (M1) and catch-up path bytes (M4)}\label{sec:bench-sizes}
 
 Lookup proof size against directory size is reported in \cref{tab:bench-m1}, and offline
-catch-up bandwidth against the window in \cref{tab:bench-m4}.
+catch-up raw consistency-path hash bytes against the window in \cref{tab:bench-m4}.
 
 \begin{table}[ht]
 \centering
@@ -79,13 +79,14 @@ sits at depth~23 (913\,B). The distribution median over \num{1000} random lookup
 
 \begin{table}[ht]
 \centering
-\caption{M4 --- catch-up bandwidth, na\"ive sequential versus windowed; identical for
+\caption{M4 --- catch-up, raw consistency-path hash bytes (serialized bandwidth not measured):
+synthetic current-head-anchored sequential baseline versus windowed; identical for
 $N\in\{10^3,10^4,10^5\}$ because catch-up size is independent of $N$.}
 \label{tab:bench-m4}
 \small
 \begin{tabular}{@{}rrrr@{}}
 \toprule
-$W$ (epochs) & na\"ive sequential (bytes) & windowed (bytes) & Ratio \\
+$W$ (epochs) & synthetic sequential (bytes) & windowed (bytes) & Ratio \\
 \midrule
 1   & 96      & 96  & $1.00\times$ \\
 24  & 4{,}416   & 192 & $23.00\times$ \\
@@ -102,8 +103,8 @@ at a 256-bit HKDF-derived warning label is cryptographically negligible).
 \section{Latency, throughput, and maintenance (M2, M3, M5, M8--M12)}\label{sec:bench-timings}
 
 The timing families are reported below one per table, each preceded by a one-line statement of what it
-measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the MitM
-detection-check latency (\cref{tab:bench-detection}), throughput and the maintenance operations
+measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the marginal
+warning-slot lookup cost (\cref{tab:bench-detection}), throughput and the maintenance operations
 (\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). All values are
 microseconds unless noted: median, 95th percentile, and a 95\% confidence
 half-width of the \emph{mean} ($\pm$, normal approximation, $1.96\,s/\sqrt{n}$) over the manual
@@ -135,9 +136,10 @@ M3 VRF verify (dual-index)           & $10^4$ & 76.0  & 92.0  & 0.76 \\
 \end{tabular}
 \end{table}
 
-\medskip\noindent\emph{Detection (M5) --- the marginal cost of the warning-slot read on top of a
-lookup the client already verifies (an unverified read; the security-bearing cost is the full M3
-chain above). The read's underlying cost is data-dependent --- a compressed-leaf sibling on the
+\medskip\noindent\emph{Marginal warning-slot lookup (M5) --- the cost of the warning-slot read on top
+of a lookup the client already verifies. This is \emph{not} the detector: it is an unverified read,
+taken in clean state, whereas the detector performs two proof-carrying lookups
+(\cref{ssec:eval-detection}). The read's underlying cost is data-dependent --- a compressed-leaf sibling on the
 co-path implies a subtree-hash chain of up to \num{256} levels --- but the implementation memoizes
 each leaf's chain top (\cref{sec:impl-modules}), so the sampled check reads
 ${\approx}$\SI{1.6}{\micro\second} independent of $N$, with only a cold leaf's first touch paying
@@ -146,14 +148,15 @@ distribution, not one label's path (\cref{ssec:eval-detection}).}
 
 \begin{table}[ht]
 \centering
-\caption{M5 --- MitM detection check latency (distribution over \num{1000} sampled conversations).}
+\caption{M5 --- marginal warning-slot lookup cost, an unverified read (distribution over \num{1000}
+sampled conversations). Not the detector: see \cref{ssec:eval-detection}.}
 \label{tab:bench-detection}
 \small
 \begin{tabular}{@{}llrrr@{}}
 \toprule
 Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
 \midrule
-M5 detection check (dual-index) & $10^3$ & 1.6 & 2.0 & 0.16 \\
+M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 & 0.16 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -192,9 +195,12 @@ by construction, the same operation as the M3 full client verify} --- the KT cos
 \emph{is} one full client verification --- so its rows equal the M3 full-verify rows exactly; they are
 listed separately only because the chapter frames the same measurement two ways.
 
-\medskip\noindent\emph{Auditor (M12) --- the per-epoch append-only audit and the cross-vantage
-fork-detection check; the audit figure times proof generation and verification together, a
-conservative upper bound on the deployed verify-only cost.}
+\medskip\noindent\emph{Auditor (M12) --- the local append-only cryptographic kernel: an STH signature
+check plus consistency-proof generation and verification, and a fork check against \emph{one}
+observed head. It excludes the full \texttt{audit\_epoch} transition replay, network transfer, and
+the growth of the fork check with the number of accumulated heads, so it is a compute floor and not
+an upper bound on deployed verification. Including proof generation makes the audit figure
+conservative only against the verify-only kernel beside it, not against the omitted work.}
 
 \begin{table}[ht]
 \centering
