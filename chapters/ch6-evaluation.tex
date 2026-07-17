@@ -296,20 +296,30 @@ single label's path,\footnote{An earlier revision of the harness timed one fixed
 before the chain memo, read \SI{1.4}{\micro\second} or ${\sim}$\SI{40}{\micro\second} depending on
 where that one label happened to sit; a single-label figure is not robust, because re-seeding the
 directory relocates every label.}
-Both branches have microsecond-scale marginal cost; timing distinguishability between the clean and
-attacked branches was not evaluated, and no claim is made about it. Either way, this is the
+Both branches have microsecond-scale marginal cost, and no claim of timing indistinguishability is
+made between them --- the run does not support one. The clean branch reads
+\SI{1.62}{\micro\second} against the attacked branch's \SI{1.72}{\micro\second} at $N=10^3$, and the
+two Criterion intervals do not overlap. That separation is not offered as a leak either: a
+side-channel claim in either direction needs a dedicated adversarial and statistical analysis that
+this benchmark, which was built to size a cost rather than to test a hypothesis, does not attempt.
+The point is only that indistinguishability cannot be asserted here. Either way, this is the
 \emph{marginal} cost of the warning-slot read on top
 of a lookup the client already verifies; it is an unverified read, so the security-bearing detection
 cost is that of the full verified chain the client runs regardless --- the \SI{26}{\micro\second}
 prefix verify and the remainder of the \SI{128}{\micro\second} chain of \cref{ssec:eval-latency}. Over \num{1000} clean
 sessions the false-positive rate (M6) is \num{0}; this is a sanity check rather than independent
 evidence, since a spurious collision at a 256-bit HKDF-derived warning label is cryptographically
-negligible. End-to-end detection latency --- two proof-verified lookups, plus the network
-round-trips a deployment would add --- was not measured. The marginal warning-slot read is
-microseconds; the security-bearing cost is one additional proof-verified lookup of the same shape as
-M3 ($\approx$\SI{128}{\micro\second} median). Detection remains automatic and silent, in sharp
-contrast to the manual safety-number ceremony it replaces, which only about 14\% of users complete
-without guidance~\cite{vaziripour2017}.
+negligible. What M5 times must not be mistaken for the detector. The reference detector
+(\texttt{detectMitm}, \cref{sec:impl-signal}) performs \emph{two} proof-carrying lookups: the client's
+own slot must still verifiably equal its key, and the warning slot must be verifiably \emph{empty} ---
+a non-inclusion proof, since an unproven ``empty'' would let the server censor the warning. M5 times
+neither. It times the marginal, unverified read of the warning slot, in clean state. Each of the two
+verified lookups is of the shape M3 measures ($\approx$\SI{128}{\micro\second} median locally), which
+bounds one of them; no two-request total is derived from that here, because the workflow those
+requests belong to --- including the network round-trips a deployment adds --- was not measured, and
+end-to-end detection latency is therefore not a figure this thesis reports. Detection remains
+automatic and silent, in sharp contrast to the manual safety-number ceremony it replaces, which only
+about 14\% of users complete without guidance~\cite{vaziripour2017}.
 
 % ============================================================================
 \section{Scalability and the mode trade (M7--M13)}\label{sec:eval-scale}
@@ -421,11 +431,14 @@ signature check and the append-only consistency check). It
 does \emph{not} include the networked, proof-carrying exchange a deployed auditor runs --- fetching
 each epoch's disclosed update set together with the committed-root log-inclusion proof
 (\cref{sec:design-acka}) and verifying that proof against the signed head --- whose transfer and
-verification cost is not captured here. Nor does it include the full \texttt{audit\_epoch} transition
-replay, or a long-history scan over $O(E)$ accumulated heads: the fork check is measured against a
-single observed head, so the figure does not speak to an auditor reconciling many vantages over a
-long log. The number is therefore the compute floor of the audit, not
-the end-to-end cost of the protocol.
+verification cost is not captured here, nor the full \texttt{audit\_epoch} transition replay, which
+re-applies every disclosed update into a scratch mirror rather than checking a signature and a
+consistency proof. The fork figure needs a further caveat, and it is not a constant. The
+implementation's \texttt{detect\_fork} compares the presented head against \emph{every} head it has
+observed (a linear scan of the observed vector), so its cost grows with the number of accumulated
+heads; the benchmark seeds exactly one, so \SI{27.9}{\micro\second} is the one-head case and not the
+steady-state cost of a mature auditor holding many vantages over a long log. The number is therefore
+the compute floor of the audit, not the end-to-end cost of the protocol.
 
 \subsection{Session versus continuous mode (M13)}\label{ssec:eval-modes}
 
