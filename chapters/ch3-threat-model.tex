@@ -27,7 +27,7 @@ adversaries into a single, unified threat model, this thesis establishes a stric
 stronger baseline against which end-to-end secure messaging can be evaluated.
 
 % ============================================================================
-\section{System model and actors}\label{sec:threat-system}
+\section{System Model and Actors}\label{sec:threat-system}
 
 The setting is the asynchronous messaging deployment introduced in
 \cref{sec:bg-signal}: two users, Alice and Bob, communicate through
@@ -98,7 +98,7 @@ point.}
 \end{figure}
 
 % ============================================================================
-\section{Adversary model}\label{sec:threat-adversary}
+\section{Adversary Model}\label{sec:threat-adversary}
 
 The threat model combines two well-established adversary models, because the
 system must reason about both network attacks and malicious key-directory
@@ -107,7 +107,7 @@ model~\cite{dolevyao1983}; for the infrastructure, it adopts the
 semi-trusted-server model of the key-transparency literature. These adversaries
 are independent, and deployments may face either or both simultaneously.
 
-\paragraph{The network attacker (Dolev--Yao).} Following Dolev and
+\paragraph{The Network Attacker (Dolev--Yao).} Following Dolev and
 Yao~\cite{dolevyao1983}, the network adversary has maximal control of the wire:
 it can intercept, modify, inject, delete, and replay any message, and it can
 impersonate any party in transit. It does not, on its own, control the server's
@@ -116,7 +116,7 @@ post-compromise security does not defend against once the adversary remains acti
 (\cref{ssec:bg-ratchet}), and that ACKA's continuous mode is designed to catch
 (\cref{sec:bg-acka}).
 
-\paragraph{The infrastructure attacker (malicious server).} The server is
+\paragraph{The Infrastructure Attacker (Malicious Server).} The server is
 semi-trusted: relied upon for availability but assumed to act maliciously when it
 can do so without being caught. It may substitute the key it serves for a user,
 censor writes a client attempts to make to the log, and equivocate by presenting
@@ -124,7 +124,7 @@ two internally consistent but divergent views of the directory to different
 clients. This is the adversary key transparency was built to expose
 (\cref{sec:bg-vkd}), and it lies outside ACKA's detection theorem, which assumes a Logsec-secure log rather than realizing one against such a server.
 
-\paragraph{What the adversary cannot do.} The model grants the adversary the
+\paragraph{What the Adversary Cannot Do.} The model grants the adversary the
 capabilities above and no more. It cannot break the underlying primitives: it
 cannot find collisions in SHA-256, solve the discrete-logarithm problem
 underlying X25519, or forge an Ed25519 signature. It cannot forge a
@@ -162,9 +162,9 @@ X1 & endpoint holder & impersonate using the victim's key & out of scope (bounda
 \end{tabular}
 \end{table}
 
-\subsection{Attack scenarios}\label{ssec:threat-scenarios}
+\subsection{Attack Scenarios}\label{ssec:threat-scenarios}
 
-\paragraph{A1 --- key substitution.} A1 is the primary attack in the model: a
+\paragraph{A1: Key Substitution.} A1 is the primary attack in the model: a
 compromised or coerced server writes its own key in place of the victim's. The
 substituted key is internally consistent, since the malicious server has
 legitimately appended the forged key to its own Merkle log and can produce valid
@@ -173,7 +173,7 @@ machinery. It comes from
 the victim observing the wrong key under its own name and from the peer learning
 of the substitution through the in-band warning channel.
 
-\paragraph{A2 --- warning censorship.} A2 extends A1 by considering a malicious
+\paragraph{A2: Warning Censorship.} A2 extends A1 by considering a malicious
 server that additionally suppresses warning writes. Such a server would not
 faithfully record the warning that exposes it, so it drops the write. The design
 treats the combination of a detected substitution and a suppressed write as a
@@ -185,7 +185,7 @@ inexpressible in the epoch's declared update set, so it diverges the auditor's
 transition replay, and the warning's writer retains the proofs that turn the
 disappearance into publishable evidence (\cref{ch:design}).
 
-\paragraph{A3 --- network man-in-the-middle.} With no server collusion, a
+\paragraph{A3: Network Man-in-the-Middle.} With no server collusion, a
 Dolev--Yao adversary substitutes a key in the bundle in transit. The two parties
 then derive different shared secrets, and because the dual-index labels are
 derived from that secret, they address disjoint locations in the directory: the
@@ -198,12 +198,12 @@ log remain honest. Continuous mode detects it because each epoch logs a
 fingerprint of the ratchet key, so an injected key produces a conflicting
 fingerprint at the agreed label and the same warning fires.
 
-\paragraph{A4 --- equivocation (split-view).} Inherited from Certificate
+\paragraph{A4: Equivocation (Split-View).} Inherited from Certificate
 Transparency (\cref{ssec:bg-ct2kt}), the server signs two heads at one epoch, one
 for the victim and one for the auditor, and no single client can distinguish the
 two views. The cross-vantage comparison of the two heads exposes the fork.
 
-\paragraph{A5 --- malicious key rotation.} During a legitimate key rotation,
+\paragraph{A5: Malicious Key Rotation.} During a legitimate key rotation,
 changes to the directory are expected. A malicious server exploits this by
 substituting its own key while presenting the rotation as genuine, so the peer
 derives the wrong secret and lands at a different directory index. The defence
@@ -214,10 +214,10 @@ identity key rather than being accepted silently, and the dual-index warning ser
 the in-band backstop. (Binding successive rotations into a cross-signed per-user key
 chain, as CONIKS's strict key-change policy and ELEKTRA do, would strengthen this further and is noted as future
 work in \cref{ch:discussion}; the prototype's client relies on the identity re-fetch and the
-warning, and a single-link cross-signature check --- the new key signed by its trusted
-predecessor --- is demonstrated in the adversarial suite.)
+warning, and a single-link cross-signature check (the new key signed by its trusted
+predecessor) is demonstrated in the adversarial suite.)
 
-\paragraph{X1 --- endpoint compromise (boundary).} Once the adversary holds the
+\paragraph{X1: Endpoint Compromise (Boundary).} Once the adversary holds the
 victim's own private key, it derives the same shared secret, the same labels, and
 the same proofs, and is indistinguishable from the victim. X1 is included to
 delineate the guarantee: key transparency protects the channel between honest
@@ -235,12 +235,12 @@ out-of-scope boundary.}
 \end{figure}
 
 % ============================================================================
-\section{Justification of the threat model}\label{sec:threat-fair}
+\section{Justification of the Threat Model}\label{sec:threat-fair}
 
 To ensure the threat model reflects real-world deployment constraints, two of its
 foundational assumptions require explicit justification.
 
-\paragraph{Realism of the malicious-server assumption.} This is the standard
+\paragraph{Realism of the Malicious-Server Assumption.} This is the standard
 assumption of the key-transparency field. The same semi-trusted, potentially
 equivocating server appears in CONIKS~\cite{melara2015coniks},
 SEEMless~\cite{chase2019seemless}, Parakeet~\cite{malvai2023parakeet}, and the
@@ -253,12 +253,12 @@ deployed messengers show that this is not a hypothetical
 surface~\cite{yadav2022fakekey}. Assuming the server may misbehave is therefore a
 conservative and well-precedented modelling choice.
 
-\paragraph{Rejection of the honest-routing assumption.} The model deliberately does not assume
+\paragraph{Rejection of the Honest-Routing Assumption.} The model deliberately does not assume
 honest routing. A network adversary that drops messages is a denial-of-service
 adversary, and the model admits message deletion as one of the Dolev--Yao
-capabilities. The purpose of key transparency is not to prevent such interference
---- no cryptographic directory can force a hostile network to deliver packets ---
-but to convert silent compromise into detectable misbehaviour: a censored write, a
+capabilities. Key transparency cannot prevent such interference, because no cryptographic
+directory can force a hostile network to deliver packets. Its purpose is instead to convert silent
+compromise into detectable misbehaviour: a censored write, a
 missing epoch, or a proof that fails to verify is observable, whereas a
 substituted key on an unaccountable server is not. The guarantee is therefore
 \textbf{detection, not prevention}: the system does not stop a determined operator
@@ -315,7 +315,7 @@ limitation is acknowledged explicitly rather than assumed away and is revisited 
 \cref{ch:discussion}.
 
 % ============================================================================
-\section{Security goals}\label{sec:threat-goals}
+\section{Security Goals}\label{sec:threat-goals}
 
 The adversary model and assumptions define the security goals of the system. The
 system is expected to satisfy four security goals, each tied to the attack it
@@ -323,27 +323,27 @@ addresses and the mechanism that delivers it; the formal experiments that make
 each goal precise are given in \cref{app:definitions}, and each is demonstrated
 empirically in \cref{ch:eval}.
 
-\paragraph{G1 --- Key-substitution detection.} If a server (A1, A5) or a network
+\paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
 adversary (A3) substitutes a key, an honest party detects the substitution within
 at most one epoch of its next check. G1 is realized bidirectionally: the victim
 detects the wrong key under its own name, and a peer that has pinned the victim's
 key detects it on its next key-fetch; either can raise the in-band warning, so an
 offline victim remains covered.
 
-\paragraph{G2 --- Consistency across offline windows.} A client returning after an
+\paragraph{G2: Consistency Across Offline Windows.} A client returning after an
 offline period can confirm that the log it now sees is an append-only extension of
 the one it last verified, at a cost bounded by the endpoint log sizes rather than
 growing with the length of the absence. This property ensures that intermittent connectivity does not impose a
 growing verification burden on returning clients.
 
-\paragraph{G3 --- Directory privacy.} The mapping between a user's identity and its
+\paragraph{G3: Directory Privacy.} The mapping between a user's identity and its
 directory slot is hidden from outsiders, via VRF-derived labels
 (\cref{ssec:bg-ct2kt}). The limit of this goal is stated precisely: it provides
 directory privacy against third parties, not query privacy against the operator,
 which necessarily learns which identity it is asked to resolve. Query privacy from
 the operator is out of scope (\cref{sec:threat-scope}).
 
-\paragraph{G4 --- Fork detection.} An equivocating server (A4) that signs two
+\paragraph{G4: Fork Detection.} An equivocating server (A4) that signs two
 divergent heads at one epoch is detected by cross-vantage auditing. G4 is the only
 goal that depends on the auditor-honesty assumption (\cref{sec:threat-assumptions}).
 
@@ -369,7 +369,7 @@ G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\
 \end{table}
 
 % ============================================================================
-\section{Out of scope}\label{sec:threat-scope}
+\section{Out of Scope}\label{sec:threat-scope}
 
 The following are explicitly out of scope.
 

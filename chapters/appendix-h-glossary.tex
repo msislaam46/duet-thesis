@@ -29,7 +29,7 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
   modify, inject, delete, replay).
 \item[Double Ratchet] Signal's per-message key-ratcheting algorithm (\cref{def:doubleratchet}).
 \item[Dual-index warning scheme] This work's construction: two lookup labels and one shared warning
-  label per conversation, derived from the shared secret, with the warning label acting as a tripwire
+  label per conversation, derived from the shared secret, with the warning label acting as the detection trigger
   (\cref{sec:def-dualindex}).
 \item[ECVRF] Elliptic-Curve Verifiable Random Function; the suite used is
   ECVRF-EDWARDS25519-SHA512-TAI (\cref{def:vrf}).
@@ -72,7 +72,7 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
 \item[TOFU] Trust-on-first-use: the initial key is accepted on faith; a limitation inherited from the
   underlying protocol.
 \item[Transition audit] The auditor's per-epoch replay of the declared update set against the
-  previous committed root, which catches any undeclared mutation --- in particular a deletion
+  previous committed root, which catches any undeclared mutation, in particular a deletion
   (\cref{def:epoch-delta}, \cref{alg:auditor}).
 \item[VKD] Verifiable Key Directory, the general term for a key directory serving cryptographic proofs
   of its answers.

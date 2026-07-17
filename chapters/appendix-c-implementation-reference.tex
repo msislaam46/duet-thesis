@@ -8,7 +8,7 @@ evaluation (\cref{ch:eval}); it is provided for reproducibility and for readers 
 run the system.
 
 % ----------------------------------------------------------------------------
-\section{Directory server REST API}\label{sec:apiref-rest}
+\section{Directory Server REST API}\label{sec:apiref-rest}
 
 The standalone server exposes a public API used by clients and auditors. Requests and
 responses are JSON; byte strings are hex-encoded; the verified-lookup endpoints return the
@@ -44,7 +44,7 @@ GET  & \texttt{/dashboard}, \texttt{/internals}, \texttt{/integration}, \texttt{
 \end{table}
 
 % ----------------------------------------------------------------------------
-\section{Privileged testing interface}\label{sec:apiref-admin}
+\section{Privileged Testing Interface}\label{sec:apiref-admin}
 
 A separate administrative API, bound to an internal-only port, is used exclusively by the
 adversarial scenario suite to stage attacks; it is not part of the protocol. In the
@@ -71,7 +71,7 @@ POST & \texttt{/admin/reset} & rebuild the server from its fixed seed with a fre
 \end{table}
 
 % ----------------------------------------------------------------------------
-\section{Signal Desktop integration hooks and events}\label{sec:apiref-hooks}
+\section{Signal Desktop Integration Hooks and Events}\label{sec:apiref-hooks}
 
 \Cref{tab:apiref-hooks} maps the integration concepts of \cref{sec:impl-signal} to the
 concrete function names in the prototype, and \cref{tab:apiref-events} maps the
@@ -112,17 +112,17 @@ demonstration: inject a ratchet fork & \texttt{kt:cea-inject} \\
 \end{table}
 
 % ----------------------------------------------------------------------------
-\section{Repository layout and runner commands}\label{sec:apiref-repo}
+\section{Repository Layout and Runner Commands}\label{sec:apiref-repo}
 
 The implementation is organized as follows:
 
 \begin{itemize}
-  \item \texttt{crate/} --- the Rust \texttt{duet} crate: library modules
+  \item \texttt{crate/}: the Rust \texttt{duet} crate, with library modules
   (\cref{tab:impl-modules}), the standalone server and auditor binaries, and the benchmark
   harness.
-  \item \texttt{demo/} --- the server, auditor, and attacker orchestration together with
+  \item \texttt{demo/}: the server, auditor, and attacker orchestration together with
   the served visualization and threat-model pages.
-  \item \texttt{signal-desktop/ts/kt/} --- the embedded TypeScript client (mirrored
+  \item \texttt{signal-desktop/ts/kt/}: the embedded TypeScript client (mirrored
   byte-for-byte by the standalone \texttt{signal-desktop-kt/} package).
 \end{itemize}
 
@@ -138,7 +138,7 @@ instead. The networked-in-app mode is enabled by setting a server URL in
 the client's environment before launch.
 
 % ----------------------------------------------------------------------------
-\section{Demonstration gallery}\label{sec:apiref-demo}
+\section{Demonstration Gallery}\label{sec:apiref-demo}
 
 This section collects the supporting captures for the demonstration of \cref{ssec:impl-demo}: the
 honest baseline before any attack, and the attacker-side terminals that stage each scenario. The
@@ -149,18 +149,18 @@ equivocation in \cref{fig:demo-equivocation}.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.49\textwidth]{figures/ui-baseline-self.png}\hfill
-\includegraphics[width=0.49\textwidth]{figures/ui-baseline-contact.png}
-\caption{Honest baseline (scenario A0): the two linked Signal Desktop clients with no warning banner,
+\screenshotplaceholder{0.49\textwidth}{figures/ui-baseline-self.png}\hfill
+\screenshotplaceholder{0.49\textwidth}{figures/ui-baseline-contact.png}
+\caption[Honest baseline (scenario A0).]{Honest baseline (scenario A0): the two linked Signal Desktop clients with no warning banner,
 verifying keys against a clean directory. Every later detection is measured against this state.}
 \label{fig:demo-baseline}
 \end{figure}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.49\textwidth]{figures/cmd-dualindex.png}\hfill
-\includegraphics[width=0.49\textwidth]{figures/cmd-vrf.png}
-\caption{Attacker terminals. Left: the dual-index substitution (\texttt{attack.mjs --label <hex>})
+\screenshotplaceholder{0.49\textwidth}{figures/cmd-dualindex.png}\hfill
+\screenshotplaceholder{0.49\textwidth}{figures/cmd-vrf.png}
+\caption[Attacker terminals staging the two substitutions.]{Attacker terminals. Left: the dual-index substitution (\texttt{attack.mjs --label <hex>})
 overwriting the per-conversation lookup slot. Right: the global-slot substitution
 (\texttt{attack.mjs} with the target user-id) overwriting the VRF-derived identity entry.}
 \label{fig:demo-cmd}
@@ -168,8 +168,8 @@ overwriting the per-conversation lookup slot. Right: the global-slot substitutio
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.62\textwidth]{figures/cmd-equivocation.png}
-\caption{Staging an equivocation (scenario A4): the privileged testing endpoint signs a second,
+\screenshotplaceholder{0.62\textwidth}{figures/cmd-equivocation.png}
+\caption[Staging an equivocation (scenario A4).]{Staging an equivocation (scenario A4): the privileged testing endpoint signs a second,
 divergent tree head at one epoch, which the cross-vantage auditor then detects
 (\cref{fig:impl-auditor}, right).}
 \label{fig:demo-equivocation}
