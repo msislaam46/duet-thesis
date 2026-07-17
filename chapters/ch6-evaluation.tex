@@ -8,8 +8,8 @@ mode trade (\cref{sec:eval-scale}), places the results beside prior key-transpar
 (\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
 taxonomy (\cref{sec:eval-security}). The headline findings are that the dual-index lookup proof is
 at size parity with CONIKS while adding automatic detection, that offline catch-up is three orders
-of magnitude cheaper than naïve monitoring, and that full client verification is sub-\SI{150}{\micro\second}
-and independent of directory size.
+of magnitude cheaper than naïve monitoring, and that median full client verification is sub-\SI{150}{\micro\second}
+and effectively independent of directory size.
 
 % ============================================================================
 \section{Methodology}\label{sec:eval-method}
@@ -86,12 +86,12 @@ the procedure of \cref{sec:impl-repro}; the full per-parameter tables, at the re
 record, are collected in \cref{app:benchmarks}. Timing medians are quoted in the body to one decimal
 place ($0.1\,\si{\micro\second}$): finer precision would be spurious for a wall-clock median, and
 sub-microsecond digits vary between runs (for example, the VRF-verify median reads
-\SI{74.5}{\micro\second} in \cref{tab:eval-latency} and \SI{77.2}{\micro\second} in the separate
+\SI{76.0}{\micro\second} in \cref{tab:eval-latency} and \SI{81.5}{\micro\second} in the separate
 scale run of \cref{tab:eval-scale}). The isolated VRF rows of \cref{app:benchmarks} show the same
 sensitivity more strongly, and in both directions: isolated verify reads
-\SI{81.4}{\micro\second} against an in-path \SI{74.5}{\micro\second}, while isolated prove reads
-\SI{127.7}{\micro\second} against a prove-inclusive in-path generation of
-\SI{129.5}{\micro\second} --- so the isolated figure is the slower one for verify and the faster one
+\SI{78.5}{\micro\second} against an in-path \SI{76.0}{\micro\second}, while isolated prove reads
+\SI{117.4}{\micro\second} against a prove-inclusive in-path generation of
+\SI{119.5}{\micro\second} --- so the isolated figure is the slower one for verify and the faster one
 for prove. Measuring the same primitive in a different benchmark context, and at a different point in
 the run order, therefore shifts it by a few percent in whichever direction; the harness records
 execution times but no clock-frequency, power, or temperature telemetry, so this is reported as
@@ -187,10 +187,10 @@ prefix-root recompute, the VRF verify, and the full five-step chain of \cref{sse
 \toprule
 Operation & $N=10^3$ & $N=10^4$ & Scaling \\
 \midrule
-Server full search (gen, incl.\ VRF prove) & \SI{129.5}{\micro\second} & \SI{129.3}{\micro\second} & VRF-dominated, independent of $N$ \\
+Server full search (gen, incl.\ VRF prove) & \SI{119.5}{\micro\second} & \SI{119.7}{\micro\second} & VRF-dominated, independent of $N$ \\
 Prefix-root verify (client) & \SI{25.9}{\micro\second} & \SI{25.9}{\micro\second} & independent of $N$ \\
-VRF proof verify (client) & \SI{74.5}{\micro\second} & \SI{74.5}{\micro\second} & constant-time \\
-\textbf{Full client verify (windowed)} & \textbf{\SI{128.4}{\micro\second}} & \textbf{\SI{128.3}{\micro\second}} & \textbf{independent of $N$} \\
+VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} & constant-time \\
+\textbf{Full client verify (windowed)} & \textbf{\SI{128.1}{\micro\second}} & \textbf{\SI{128.6}{\micro\second}} & \textbf{flat in $N$} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -251,11 +251,13 @@ $W$ (to \num{222528} bytes at a month) while the windowed proof stays a few hund
 The saving is linear in $W$ (measured $\approx 0.97\,W$), not $W/\lg W$, as \cref{fig:eval-catchup-plot}
 makes visible on a log axis: a client offline for a month
 sends a \num{320}\,byte proof in place of \num{222528}\,bytes, a \num{695}-fold reduction, and the
-generation-time counterpart is similar in magnitude (\SI{0.27}{\micro\second} windowed versus
-\SI{191.9}{\micro\second} sequential at $W=720$, a $\approx$\num{708}-fold difference; both are
-Criterion slope point estimates over the log alone, which the prefix-tree memoization does not touch). The
-bandwidth and generation-time ratios are separate measurements and are close but not identical: the
-former is computed exactly, the latter timed. This directly addresses the monitoring-bandwidth problem that CONIKS lists as
+generation-time counterpart is similar in magnitude (\SI{0.3}{\micro\second} windowed versus
+\SI{184.8}{\micro\second} sequential at $W=720$ --- medians over the log alone, which the prefix-tree
+memoization does not touch). The two ratios are separate measurements and should not be conflated:
+the \num{695}-fold bandwidth figure is computed exactly, whereas the generation-time figure is timed,
+and the windowed median sits at the \SI{0.1}{\micro\second} resolution this chapter quotes to, so
+their quotient is only good to a couple of significant figures ($\approx$\num{600}-fold). Both say the
+same thing about the mechanism: one proof replaces $W$ of them. This directly addresses the monitoring-bandwidth problem that CONIKS lists as
 an open extension.
 
 \subsection{Detection latency and false positives (M5, M6)}\label{ssec:eval-detection}
@@ -309,24 +311,32 @@ Quantity & $N=10^6$ & $N=10^7$ \\
 \midrule
 Leaf depth (median / mean / max) & 20 / 20.3 / 24 & 24 / 23.6 / 27 \\
 Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
-Server full search (median / p95) & 114 / \SI{206}{\micro\second} & 136 / \SI{2644}{\micro\second}\,$^{\dagger}$ \\
-Prefix verify (median / p95) & 25.9 / \SI{26.4}{\micro\second} & 26.0 / \SI{27.0}{\micro\second} \\
-VRF verify (median / p95) & 76.6 / \SI{179.8}{\micro\second} & 77.2 / \SI{101.9}{\micro\second} \\
-\textbf{Full client verify} & \textbf{$\approx$\SI{132.5}{\micro\second}} & \textbf{$\approx$\SI{131.3}{\micro\second} (indep.\ of $N$)} \\
-Build time / RSS after build & 167\,s / 2.81\,GB & 1{,}709\,s / 21.5\,GB \\
+Server full search (median / p95) & 117.6 / \SI{131.7}{\micro\second} & 141.2 / \SI{2404.5}{\micro\second}\,$^{\dagger}$ \\
+Prefix verify (median / p95) & 25.9 / \SI{27.0}{\micro\second} & 26.0 / \SI{28.0}{\micro\second} \\
+VRF verify (median / p95) & 80.0 / \SI{92.7}{\micro\second} & 81.5 / \SI{107.1}{\micro\second} \\
+\textbf{Full client verify (median / p95)} & \textbf{131.9} / \SI{147.9}{\micro\second} & \textbf{147.1} / \SI{179.7}{\micro\second} \\
+Build time / RSS after build & 149\,s / 2.81\,GB & 1{,}536\,s / 20.8\,GB \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The measured constancy of prefix verification across five orders of magnitude ($10^2$ to $10^7$) is
-the empirical proof that verification is bounded by the fixed \num{256}-level tree height rather than
-by $N$, and full client verification stays at $\approx$\SIrange{131}{133}{\micro\second} at both $10^6$
-and $10^7$ (these are the direct Criterion \texttt{m7\_scale\_verification} medians, measured at scale;
-the manual-harness M3 figure at $N\le10^4$ of \cref{tab:eval-latency} reads $\approx$\SI{128}{\micro\second}). The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
-tree takes about 28 minutes and leaves a \SI{21.5}{\giga\byte} resident set, which is why a production
+The measured constancy of prefix verification across five orders of magnitude ($10^2$ to $10^7$) ---
+\SI{25.9}{\micro\second} at $10^3$ and \SI{26.0}{\micro\second} at $10^7$ --- is the empirical proof
+that the tree walk is bounded by the fixed \num{256}-level height rather than by $N$. Full client
+verification is not quite as flat: its median reads \SI{131.9}{\micro\second} at $10^6$ and
+\SI{147.1}{\micro\second} at $10^7$ (direct \texttt{m7\_scale\_verification} medians, measured at
+scale), against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at $N\le10^4$
+(\cref{tab:eval-latency}). Read end to end, the full check therefore rises by roughly \num{15}\,\% ---
+about \SI{19}{\micro\second} --- while $N$ grows by four orders of magnitude. That residue is not
+tree-depth: the two components that could carry it, the prefix walk and the constant-time VRF, are
+themselves flat across the same range. Part is the wider proof at depth~24 and part is the change of
+measurement context between the two harnesses (\cref{sec:eval-method}); the run does not separate
+them. The claim the data supports is that the check grows far more slowly than the directory, not that
+it is invariant. The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
+tree takes about 26 minutes and leaves a \SI{20.8}{\giga\byte} resident set, which is why a production
 deployment would move to the persistent, sharded storage this prototype deliberately does not model.
-$^{\dagger}$The $10^7$ full-search 95th percentile of \SI{2644}{\micro\second} --- an order of magnitude
-above its \SI{136}{\micro\second} median --- shows that a small fraction of lookups are far slower than
+$^{\dagger}$The $10^7$ full-search 95th percentile of \SI{2404.5}{\micro\second} --- an order of magnitude
+above its \SI{141.2}{\micro\second} median --- shows that a small fraction of lookups are far slower than
 the typical one. The proof structure does not account for it: the client-side steps that consume the
 proof (prefix and VRF verify) show no comparable tail. The harness records no paging or
 memory-pressure counters, so the source of the tail was not instrumented; a \SI{21.5}{\giga\byte}
@@ -338,7 +348,7 @@ is a conjecture the data here does not test. The median is the figure quoted abo
 Server-side maintenance costs decide how large a deployment one machine can sustain.
 \Cref{tab:eval-server} collects them. Single-thread throughput is about \num{7680} lookups and
 \num{6630} updates per second at $N=10^4$. Key rotation (overwriting an existing binding) costs
-\SI{149.2}{\micro\second} at $10^3$ and \SI{150.2}{\micro\second} at $10^4$ --- flat in $N$ for the same reason proof
+\SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$ --- flat in $N$ for the same reason proof
 generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
 the unchanged user identifier, which a production server would cache, leaving only tens of
 microseconds of tree work. The verifiable random function, measured in isolation, is constant-time
@@ -358,16 +368,16 @@ microseconds of client work per conversation.
 \toprule
 Operation & $N=10^3$ & $N=10^4$ \\
 \midrule
-Lookup throughput (single-thread) & --- & $\approx$7{,}680 op/s (\SI{130.2}{\micro\second}) \\
-Update throughput (single-thread) & --- & $\approx$6{,}630 op/s (\SI{150.8}{\micro\second}) \\
-Key rotation & \SI{149.2}{\micro\second} & \SI{150.2}{\micro\second} \\
-Epoch commit & \SI{468.4}{\micro\second} & \SI{6.00}{\milli\second} \\
+Lookup throughput (single-thread) & --- & $\approx$8{,}360 op/s (\SI{119.6}{\micro\second}) \\
+Update throughput (single-thread) & --- & $\approx$6{,}630 op/s (\SI{150.9}{\micro\second}) \\
+Key rotation & \SI{150.2}{\micro\second} & \SI{164.0}{\micro\second} \\
+Epoch commit & \SI{464.0}{\micro\second} & \SI{5.92}{\milli\second} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The one cost that does grow with $N$ is the epoch commit (\SI{468.4}{\micro\second} at $10^3$ rising to
-\SI{6.00}{\milli\second} at $10^4$, a $\approx$$13\times$ increase for a $10\times$ growth, i.e.\ roughly
+The one cost that does grow with $N$ is the epoch commit (\SI{464.0}{\micro\second} at $10^3$ rising to
+\SI{5.92}{\milli\second} at $10^4$, a $\approx$$13\times$ increase for a $10\times$ growth, i.e.\ roughly
 $O(N)$). This is the deep-clone snapshot the current server takes on every commit --- now also copying
 each leaf's chain memo, which is the deliberate space-for-time trade that makes reads flat
 (\cref{sec:impl-modules}); a copy-on-write
@@ -377,8 +387,8 @@ tree would reduce it to $O(\lg N)$, and this is noted as future work in \cref{ch
 
 The cross-vantage auditor (\cref{sec:design-acka}) that detects split-view equivocation must be
 cheap enough to run continuously. It is: a per-epoch audit, an Ed25519 signature verify plus an
-append-only consistency check, costs \SI{29.0}{\micro\second} at $N=10^4$, and the cross-vantage
-fork-detection check costs \SI{27.4}{\micro\second}. Both are under \SI{30}{\micro\second}, so the
+append-only consistency check, costs \SI{28.5}{\micro\second} at $N=10^4$, and the cross-vantage
+fork-detection check costs \SI{27.9}{\micro\second}. Both are under \SI{30}{\micro\second}, so the
 equivocation-detection machinery is cheap per epoch in local computation. Two scoping caveats matter.
 The audit figure times proof generation and verification together, so as a \emph{verify-only} cost it
 is a conservative over-estimate; but it measures only the auditor's \emph{local} per-epoch work (the
@@ -394,9 +404,9 @@ the end-to-end cost of the protocol.
 The design offers two operating modes (\cref{ssec:design-modes}): session mode writes one directory
 entry per signed-pre-key rotation, and continuous mode writes one per ratchet epoch for finer-grained,
 ACKA-faithful detection. The cost of that granularity is not verification time. A per-check operation
-costs \SI{27.3}{\micro\second} in session mode and \SI{27.7}{\micro\second} in continuous mode (medians, \cref{app:benchmarks}; both include
-server-side proof generation). The two \num{95}\% confidence intervals overlap, so no practically
-meaningful difference between the modes is claimed at this resolution: the
+costs \SI{27.2}{\micro\second} in session mode and \SI{27.5}{\micro\second} in continuous mode (medians, \cref{app:benchmarks}; both include
+server-side proof generation). The two \num{95}\% confidence intervals overlap, so the thesis does
+not interpret the \SI{0.4}{\micro\second} ordering of the two medians: the
 chain memoization flattens the compressed-leaf cost that previously separated them. Both
 figures require a precise statement of what they measure: each benchmarked check comprises the
 server-side proof generation and the client-side verification of the value, prefix-root, and
@@ -521,7 +531,7 @@ check: it \emph{includes} the VRF verification that CONIKS's figures omit, in ad
 signature verification that both totals include. Because the two measurements come from different
 hardware (CONIKS's 2015 2\,GHz laptop CPU against our 2022 mobile CPU; see the comparability note),
 the $4.2\times$ factor is indicative only; the claims that stand on our hardware alone are the
-sub-\SI{150}{\micro\second} cost of the full five-step chain and its measured independence of $N$.
+sub-\SI{150}{\micro\second} median cost of the full five-step chain and its measured independence of $N$.
 
 \begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different hardware (a 2015
 Xeon through to 2023 cloud instances), different scales ($10^6$ versus $2^{32}$), and database-backed
@@ -690,11 +700,11 @@ deployment would have to engineer away. Two costs stand out. First, the epoch co
 operation that grows with $N$ ($\approx O(N)$, \SI{6.00}{\milli\second} at $10^4$,
 \cref{ssec:eval-throughput}), because the current server deep-clones its committed snapshot; a
 copy-on-write tree would reduce this to $O(\lg N)$ and is the single most valuable server-side change.
-Second, the per-lookup and per-rotation VRF prove (\SI{127.7}{\micro\second} measured in isolation,
+Second, the per-lookup and per-rotation VRF prove (\SI{117.4}{\micro\second} measured in isolation,
 \cref{tab:bench-maint}) dominates those
 paths only because the benchmark re-evaluates the VRF for an unchanged identifier; a deployed server
 would cache the label and pay it once. Beyond compute, the scale run exposes the memory limit: a
-$10^7$-label tree leaves a $\approx$\num{21.5}\,GB resident set on one machine (\cref{ssec:eval-scale}), so a real
+$10^7$-label tree leaves a $\approx$\num{20.8}\,GB resident set on one machine (\cref{ssec:eval-scale}), so a real
 deployment must move to the persistent, sharded storage of the SEEMless--Parakeet lineage that this
 in-memory prototype deliberately does not model.
 

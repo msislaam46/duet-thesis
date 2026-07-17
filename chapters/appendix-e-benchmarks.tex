@@ -29,7 +29,7 @@ CPU SHA extensions (SHA-NI) & yes (hardware SHA-256) \\
 RAM & 31.7\,GB \\
 OS / architecture & Windows, x86\_64 \\
 Rust toolchain & \texttt{rustc 1.96.0} \\
-Build commit & \texttt{40bfaaa} \\
+Build commit & \texttt{66ffa77} \\
 Profile & \texttt{bench} (opt-level 3), single-threaded loops \\
 VRF seed & \texttt{[42;32]} (fixed) \\
 Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
@@ -40,16 +40,18 @@ Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
 Methodology caveats recorded with the run: the server is in-memory (no network, no database); proof
 sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to $32\lceil\lg E\rceil$
 bytes to each lookup proof; memory is resident set size after build, not peak; and the throughput
-figures are single-thread per-operation costs. The SHA-NI row matters for portability rather than
-being incidental hardware detail: the SHA-256 implementation dispatches to the hardware instruction
-at run time, and on a host without it every hash-bound metric (the prefix and full verify, M5, the
-M8 update, M9, and M13) is between roughly \num{1.3} and \num{4.6} times slower. This gap is measured
-against a different processor and platform, so SHA-NI is the dominant \emph{plausible} factor rather
-than a causally isolated one --- indeed the same auxiliary host is faster on the VRF-bound operations
-(M10 prove \SI{106.5}{\micro\second} versus \SI{127.7}{\micro\second}), where SHA-256 is not on the
-critical path. A run on such a host is not comparable with this one, and pinning the toolchain does
-not make the timings portable. Timings are
-therefore reported as measurements of this configuration, not as properties of the scheme; the proof
+figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
+portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to the
+hardware instruction at run time, so a host lacking it takes a software path for every hash. An
+auxiliary run of the same code on a different machine --- an Intel i9-9900K, which has neither SHA-NI
+nor the same microarchitecture or clock --- measured the hash-bound operations (the prefix and full
+verify, M5, the M8 update, M9, and M13) roughly \num{1.3} to \num{4.6} times slower. That difference
+is attributable to the two changes together, the missing instruction and the different processor, and
+this experiment cannot separate them: it varies both at once. It is reported as evidence that the
+timings do not transfer between hosts, not as a measurement of SHA-NI's contribution. Consistently,
+the same auxiliary host was \emph{faster} on the VRF-bound operations, where SHA-256 is off the
+critical path. Pinning the toolchain does not make timings portable; they are
+therefore reported as measurements of this configuration, not as properties of the scheme. The proof
 sizes, being computed rather than timed, are hardware-independent.
 
 % ----------------------------------------------------------------------------
@@ -123,14 +125,14 @@ produce a proof and the client-side cost to check it, broken into its pieces.}
 \toprule
 Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
 \midrule
-M2 search generation (dual-index)    & $10^3$ & 129.5 & 150.1 & 0.74 \\
-M2 search generation (dual-index)    & $10^4$ & 129.3 & 145.3 & 0.74 \\
-M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.1  & 0.06 \\
-M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.1  & 0.38 \\
-M3 VRF verify (dual-index)           & $10^3$ & 74.5  & 90.4  & 0.74 \\
-M3 VRF verify (dual-index)           & $10^4$ & 74.5  & 89.9  & 0.61 \\
-\textbf{M3 full client verify (windowed)} & $10^3$ & \textbf{128.4} & 153.9 & 0.76 \\
-\textbf{M3 full client verify (windowed)} & $10^4$ & \textbf{128.3} & 144.1 & 0.72 \\
+M2 search generation (dual-index)    & $10^3$ & 119.5 & 144.0 & 0.88 \\
+M2 search generation (dual-index)    & $10^4$ & 119.7 & 138.0 & 0.86 \\
+M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.2  & 0.36 \\
+M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.1  & 0.36 \\
+M3 VRF verify (dual-index)           & $10^3$ & 76.0  & 92.0  & 0.76 \\
+M3 VRF verify (dual-index)           & $10^4$ & 76.0  & 92.0  & 0.76 \\
+\textbf{M3 full client verify (windowed)} & $10^3$ & \textbf{128.1} & 144.4 & 0.73 \\
+\textbf{M3 full client verify (windowed)} & $10^4$ & \textbf{128.6} & 152.0 & 0.90 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -153,7 +155,7 @@ distribution, not one label's path (\cref{ssec:eval-detection}).}
 \toprule
 Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
 \midrule
-M5 detection check (dual-index) & $10^3$ & 1.6 & 2.1 & 0.15 \\
+M5 detection check (dual-index) & $10^3$ & 1.6 & 2.0 & 0.16 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -170,21 +172,21 @@ rotation and epoch commit, the VRF in isolation, and the per-handshake client ov
 \toprule
 Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
 \midrule
-M8 lookup throughput (dual-index)    & $10^4$ & 130.2 & 148.4 & 0.98 \\
-M8 update throughput (dual-index)    & $10^4$ & 150.8 & 175.1 & 1.02 \\
-M9 key rotation (dual-index)         & $10^3$ & 149.2 & 176.0 & 0.84 \\
-M9 key rotation (dual-index)         & $10^4$ & 150.2 & 166.9 & 0.92 \\
-M9 epoch commit (windowed)           & $10^3$ & 468.4 & 562.7 & 6.40 \\
-M9 epoch commit (windowed)           & $10^4$ & 6004.3 & 6697.0 & 51.13 \\
-M10 VRF prove (isolated)             & ---    & 127.7 & 130.7 & 0.61 \\
-M10 VRF verify (isolated)            & ---    & 81.4  & 83.9  & 0.44 \\
-M11 handshake overhead (windowed)    & $10^3$ & 128.4 & 153.9 & 0.76 \\
-M11 handshake overhead (windowed)    & $10^4$ & 128.3 & 144.1 & 0.72 \\
+M8 lookup throughput (dual-index)    & $10^4$ & 119.6 & 134.8 & 0.55 \\
+M8 update throughput (dual-index)    & $10^4$ & 150.9 & 179.3 & 0.95 \\
+M9 key rotation (dual-index)         & $10^3$ & 150.2 & 177.0 & 0.92 \\
+M9 key rotation (dual-index)         & $10^4$ & 164.0 & 180.0 & 1.04 \\
+M9 epoch commit (windowed)           & $10^3$ & 464.0 & 486.5 & 2.12 \\
+M9 epoch commit (windowed)           & $10^4$ & 5915.7 & 7056.6 & 67.76 \\
+M10 VRF prove (isolated)             & ---    & 117.4 & 122.3 & 0.90 \\
+M10 VRF verify (isolated)            & ---    & 78.5  & 89.9  & 0.68 \\
+M11 handshake overhead (windowed)    & $10^3$ & 128.1 & 144.4 & 0.73 \\
+M11 handshake overhead (windowed)    & $10^4$ & 128.6 & 152.0 & 0.90 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-M8 throughput follows as $10^6 / \text{median}_{\mu s}$: approximately $7{,}680$ lookups/s and
+M8 throughput follows as $10^6 / \text{median}_{\mu s}$: approximately $8{,}360$ lookups/s and
 $6{,}630$ updates/s, single-thread. M9 epoch commit scales roughly linearly in $N$ ($\approx$$13\times$ for a
 $10\times$ increase), reflecting the deep-clone snapshot --- which now also copies each leaf's chain
 memo --- discussed in \cref{ch:eval}. \emph{M11 is,
@@ -205,8 +207,8 @@ conservative upper bound on the deployed verify-only cost.}
 \toprule
 Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
 \midrule
-M12 audit epoch (windowed)  & $10^4$ & 29.0 & 29.1 & 0.24 \\
-M12 detect fork (windowed)  & $10^4$ & 27.4 & 27.5 & 0.13 \\
+M12 audit epoch (windowed)  & $10^4$ & 28.5 & 28.6 & 0.54 \\
+M12 detect fork (windowed)  & $10^4$ & 27.9 & 34.2 & 0.46 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -228,21 +230,22 @@ Quantity & $N=10^6$ & $N=10^7$ \\
 \midrule
 Leaf depth (median / mean / max) & 20 / 20.28 / 24 & 24 / 23.57 / 27 \\
 Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
-Server full search (median / p95, \si{\micro\second}) & 113.6 / 206.3 & 136.0 / 2644.4$^{\dagger}$ \\
-Prefix verify (median / p95, \si{\micro\second}) & 25.9 / 26.4 & 26.0 / 27.0 \\
-VRF verify (median / p95, \si{\micro\second}) & 76.6 / 179.8 & 77.2 / 101.9 \\
-Build time & 167.2\,s & 1{,}708.5\,s \\
-RSS after build & 2{,}812\,MB & 21{,}520\,MB \\
+Server full search (median / p95, \si{\micro\second}) & 117.6 / 131.7 & 141.2 / 2404.5$^{\dagger}$ \\
+Prefix verify (median / p95, \si{\micro\second}) & 25.9 / 27.0 & 26.0 / 28.0 \\
+VRF verify (median / p95, \si{\micro\second}) & 80.0 / 92.7 & 81.5 / 107.1 \\
+\textbf{Full client verify (median / p95, \si{\micro\second})} & \textbf{131.9} / 147.9 & \textbf{147.1} / 179.7 \\
+Build time & 149.0\,s & 1{,}535.9\,s \\
+RSS after build & 2{,}812\,MB & 20{,}786\,MB \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent$^{\dagger}$The $10^7$ full-search 95th percentile (\SI{2644.4}{\micro\second}) sits an order
-of magnitude above its \SI{136.0}{\micro\second} median, so a small fraction of lookups are far slower
+\noindent$^{\dagger}$The $10^7$ full-search 95th percentile (\SI{2404.5}{\micro\second}) sits an order
+of magnitude above its \SI{141.2}{\micro\second} median, so a small fraction of lookups are far slower
 than the typical one. The proof itself does not explain it --- the verification steps that consume the
 proof (prefix, VRF) show no comparable tail --- and the harness records no page-fault, paging, or
 memory-pressure counters, so the source of the tail was not instrumented and is not established here.
-A plausible candidate, given a \num{21520}\,MB working set on a \num{31.7}\,GB machine, is occasional
+A plausible candidate, given a \num{20786}\,MB working set on a \num{31.7}\,GB machine, is occasional
 stalls as the resident set approaches available memory; a deployment on persistent, sharded storage
 would have a different memory profile, though whether that removes the tail is untested. The median is
 the figure the chapter quotes.
@@ -271,12 +274,12 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 \end{tabular}
 \end{table}
 
-Per-check verification cost is $27.3\,\si{\micro\second}$ in session mode and
-$27.7\,\si{\micro\second}$ in continuous mode (medians; both include server-side proof generation).
-The two 95\% confidence intervals ($\pm0.43$ and $\pm0.33\,\si{\micro\second}$) overlap, so no
-practically meaningful difference between the modes is claimed at this resolution (the
-\SI{0.4}{\micro\second} gap exceeds the smaller half-width, so an equivalence claim is not made
-either): the chain memoization flattens the compressed-leaf cost that previously separated them.
+Per-check verification cost is $27.2\,\si{\micro\second}$ in session mode and
+$27.5\,\si{\micro\second}$ in continuous mode (medians; both include server-side proof generation).
+The two 95\% confidence intervals ($\pm0.43$ and $\pm0.33\,\si{\micro\second}$) overlap, so the
+ordering of the two medians is not interpreted; no equivalence claim is made either, since no
+equivalence margin was defined or tested. The chain memoization flattens the compressed-leaf
+cost that previously separated them.
 Both modes are timed under the identical label-bound proof
 verifier (\texttt{verify\_search\_result\_raw\_for}), so the two medians are apples-to-apples. The
 continuous-mode setup folds a simulated per-epoch ratchet secret that is distinct from the
@@ -306,10 +309,10 @@ Metric & Criterion group & CSV source \\
 M1  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M1}) \\
 M2  & \texttt{M2\_proof\_generation}   & \texttt{rust\_benchmark\_timings.csv} (\texttt{M2\_search\_gen}) \\
 M3  & \texttt{M3\_proof\_verification} & \texttt{rust\_benchmark\_timings.csv} (\texttt{M3\_prefix\_verify}, \texttt{M3\_vrf\_verify}, \texttt{M3\_full\_client\_verify}) \\
-M4  & \texttt{M4\_catchup\_cost}       & bandwidth: \texttt{rust\_benchmark\_results.csv} (\texttt{M4}); generation time (slope): Criterion \texttt{m4\_catchup\_cost} (see \texttt{results/PROVENANCE.md}) \\
+M4  & \texttt{M4\_catchup\_cost}       & bandwidth: \texttt{rust\_benchmark\_results.csv} (\texttt{M4}); generation time: \texttt{rust\_benchmark\_timings.csv} (\texttt{M4\_catchup\_gen}; the $N$ column carries $W$) \\
 M5  & \texttt{M5\_mitm\_detection}     & \texttt{rust\_benchmark\_timings.csv} (\texttt{M5\_detection}) \\
 M6  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M6}) \\
-M7  & \texttt{M7\_scale\_verification} & sizes / build / RSS: \texttt{rust\_benchmark\_m7.csv}; full-client-verify median: Criterion \texttt{m7\_scale\_verification/windowed\_full\_client\_verify} (see \texttt{results/PROVENANCE.md}) \\
+M7  & \texttt{M7\_scale\_verification} & \texttt{rust\_benchmark\_m7.csv} (incl.\ \texttt{full\_client\_verify\_median}/\texttt{\_p95}) \\
 M8  & \texttt{M8\_throughput}          & \texttt{rust\_benchmark\_timings.csv} (\texttt{M8\_lookup}, \texttt{M8\_update}) \\
 M9  & \texttt{M9\_key\_rotation}       & \texttt{rust\_benchmark\_timings.csv} (\texttt{M9\_rotation}, \texttt{M9\_epoch\_commit}) \\
 M10 & \texttt{M10\_vrf\_isolation}     & \texttt{rust\_benchmark\_timings.csv} (\texttt{M10\_vrf\_prove}, \texttt{M10\_vrf\_verify}) \\
