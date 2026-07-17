@@ -22,7 +22,7 @@ M5, M6 & \cref{sec:eval-security}: all scenarios pass, FP $=0$ \\
 RQ2 & detection does not enlarge an individual per-lookup proof; verification is cheap and scale-independent &
 combined-tree verification chain (\cref{ssec:design-verify}) &
 \idt{prefix\_tree}, \texttt{vrf}, \idt{merkle\_log} tests; cross-language vectors (\cref{app:tests}) &
-M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; $\approx$\SI{132}{\micro\second} flat \\
+M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; $\approx$\SI{128}{\micro\second} flat \\
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 \idt{merkle\_log} exhaustive consistency; \idt{windowed\_consistency} (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
@@ -35,7 +35,7 @@ M11 & \cref{sec:eval-deploy}: microseconds/conversation, runs in Signal Desktop 
 --- & equivocation (split-view) is caught from a second vantage &
 cross-vantage auditor (\cref{sec:design-acka}) &
 scenario A4; auditor equivocation tests (\cref{sec:tests-rust}) &
-M12 & \cref{ssec:eval-auditor}: \SI{27.6}{\micro\second}/check \\
+M12 & \cref{ssec:eval-auditor}: \SI{27.4}{\micro\second}/check \\
 --- & continuous mode trades write volume for finer detection &
 CEA continuous mode (\cref{ssec:design-modes}) &
 M13 mode benchmark (\cref{sec:bench-modes}) &
