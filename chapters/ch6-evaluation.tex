@@ -198,7 +198,7 @@ VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} 
 The most important result is the last row: full client verification (VRF label binding, value binding, prefix
 root recompute, log inclusion, and the Ed25519 signed-tree-head signature) costs about
 \SI{128}{\micro\second} and does not grow with the directory, because its two cost centres, the
-prefix recompute (\SI{25.9}{\micro\second}) and the VRF verify (\SI{74.5}{\micro\second}), are both
+prefix recompute (\SI{25.9}{\micro\second}) and the VRF verify (\SI{76.0}{\micro\second}), are both
 $N$-independent: the first is a fixed \num{256}-level bitmap walk and the second is a constant-time
 elliptic-curve operation. The system therefore meets its sub-millisecond client-verify target with
 roughly sevenfold headroom, and does so while including the VRF verification that comparable systems
@@ -207,9 +207,12 @@ growing, and this is a direct consequence of the compressed-leaf chain memo (\cr
 Before that optimization, proof generation grew with directory depth --- from \SI{107}{\micro\second} to
 \SI{159}{\micro\second} across $N=10^3$--$10^4$ --- because each non-inclusion co-path recomputed a
 compressed leaf's \num{256}-level hash chain. Memoizing that chain top removes the $N$-dependent
-component, leaving generation dominated by the constant-time VRF prove: it reads \SI{129.5}{\micro\second}
-at $N=10^3$, \SI{129.3}{\micro\second} at $N=10^4$, and \SI{136.0}{\micro\second} at $N=10^7$
-(\cref{ssec:eval-scale}) --- essentially independent of $N$, exactly like verification.
+component, leaving generation dominated by the constant-time VRF prove: it reads \SI{119.5}{\micro\second}
+at $N=10^3$ and \SI{119.7}{\micro\second} at $N=10^4$, while the scale run's search median reads
+\SI{117.6}{\micro\second} at $N=10^6$ and \SI{141.2}{\micro\second} at $N=10^7$
+(\cref{ssec:eval-scale}) --- flat through $10^6$, then rising at $10^7$, the same shape verification
+shows and with the same two candidates behind it, the wider proof and the change of measurement
+context between the harnesses.
 
 \subsection{Offline catch-up bandwidth (M4)}\label{ssec:eval-catchup}
 
@@ -339,14 +342,14 @@ $^{\dagger}$The $10^7$ full-search 95th percentile of \SI{2404.5}{\micro\second}
 above its \SI{141.2}{\micro\second} median --- shows that a small fraction of lookups are far slower than
 the typical one. The proof structure does not account for it: the client-side steps that consume the
 proof (prefix and VRF verify) show no comparable tail. The harness records no paging or
-memory-pressure counters, so the source of the tail was not instrumented; a \SI{21.5}{\giga\byte}
+memory-pressure counters, so the source of the tail was not instrumented; a \SI{20.8}{\giga\byte}
 resident set on a \SI{31.7}{\giga\byte} machine makes memory pressure a plausible candidate, but that
 is a conjecture the data here does not test. The median is the figure quoted above.
 
 \subsection{Throughput, rotation, and epoch commit (M8--M11)}\label{ssec:eval-throughput}
 
 Server-side maintenance costs decide how large a deployment one machine can sustain.
-\Cref{tab:eval-server} collects them. Single-thread throughput is about \num{7680} lookups and
+\Cref{tab:eval-server} collects them. Single-thread throughput is about \num{8360} lookups and
 \num{6630} updates per second at $N=10^4$. Key rotation (overwriting an existing binding) costs
 \SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$ --- flat in $N$ for the same reason proof
 generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
@@ -564,7 +567,7 @@ Attack & Mechanism (goal) & Evidence & Result \\
 \midrule
 A1/A3/A5 key substitution & dual-index warning (G1) & own-key self-check + shared warning slot; scenario suite (\cref{tab:impl-t5b}) & detected, 1--2 epochs \\
 A2 warning censorship & per-lookup signed-head binding; write-once labels + transition audit (\cref{ssec:design-detection}) & signature checked inside every \SI{128}{\micro\second} verify (\cref{ssec:eval-latency}) & detected \\
-A4 split-view equivocation & cross-vantage auditor (G4) & \SI{27.4}{\micro\second} per check; equivocation-detection test & detected, 1 epoch \\
+A4 split-view equivocation & cross-vantage auditor (G4) & \SI{27.9}{\micro\second} per check; equivocation-detection test & detected, 1 epoch \\
 directory enumeration & ECVRF labels (G3) & RFC~9381 conformance vectors (\cref{sec:impl-tests}) & prevented \\
 X1 key extraction & --- (out of scope) & no KT system addresses it & n/a \\
 \bottomrule
