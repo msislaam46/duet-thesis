@@ -153,12 +153,13 @@ rests on two underlying mechanisms. First, the
 participant-specific lookup labels together with a shared warning label, enabling automatic,
 in-band detection of key substitution by both participants without additional user interaction.
 Second, \emph{windowed consistency proofs} replace per-epoch catch-up with a single consistency
-proof between the last trusted and current tree heads, making offline synchronization independent
-of the duration of the offline period.
+proof between the last trusted and current tree heads, so a client sends one proof rather than $W$,
+with size logarithmic in the endpoint log sizes rather than linear in the epochs it missed.
 
 Measured on a directory of up to $10^6$ labels, the dual-index lookup proof has a median size of
 \SI{817}{B} --- at parity with CONIKS, while adding automatic detection without enlarging the per-lookup proof --- and
-median full client verification stays below \SI{150}{\micro\second} and is effectively independent of directory size.
+median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
+far more slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}).
 Windowed catch-up sends \SI{320}{B} in place of \SI{222528}{B} at a one-month offline window, a
 \num{695}-fold reduction. A two-client demonstration shows substitution and equivocation being
 detected in band, with the warning surfaced in the client interface.

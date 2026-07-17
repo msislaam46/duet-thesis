@@ -106,7 +106,10 @@ measures: per-lookup generation and verification latency (\cref{tab:bench-latenc
 detection-check latency (\cref{tab:bench-detection}), throughput and the maintenance operations
 (\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). All values are
 microseconds unless noted: median, 95th percentile, and a 95\% confidence
-half-width ($\pm$) over the manual harness's $2{,}000$ iterations.
+half-width of the \emph{mean} ($\pm$, normal approximation, $1.96\,s/\sqrt{n}$) over the manual
+harness's $2{,}000$ iterations. The median and 95th percentile are descriptive sample statistics and
+carry no interval; the $\pm$ column quantifies the precision of the mean and licenses no inference
+about the median reported beside it.
 
 \medskip\noindent\emph{Per-lookup latency (M2 generation, M3 verification) --- the server-side cost to
 produce a proof and the client-side cost to check it, broken into its pieces.}
@@ -118,7 +121,7 @@ produce a proof and the client-side cost to check it, broken into its pieces.}
 \small
 \begin{tabular}{@{}llrrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
+Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
 \midrule
 M2 search generation (dual-index)    & $10^3$ & 119.5 & 144.0 & 0.88 \\
 M2 search generation (dual-index)    & $10^4$ & 119.7 & 138.0 & 0.86 \\
@@ -148,7 +151,7 @@ distribution, not one label's path (\cref{ssec:eval-detection}).}
 \small
 \begin{tabular}{@{}llrrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
+Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
 \midrule
 M5 detection check (dual-index) & $10^3$ & 1.6 & 2.0 & 0.16 \\
 \bottomrule
@@ -165,7 +168,7 @@ rotation and epoch commit, the VRF in isolation, and the per-handshake client ov
 \small
 \begin{tabular}{@{}llrrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
+Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
 \midrule
 M8 lookup throughput (dual-index)    & $10^4$ & 119.6 & 134.8 & 0.55 \\
 M8 update throughput (dual-index)    & $10^4$ & 150.9 & 179.3 & 0.95 \\
@@ -200,7 +203,7 @@ conservative upper bound on the deployed verify-only cost.}
 \small
 \begin{tabular}{@{}llrrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 & CI $\pm$ \\
+Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
 \midrule
 M12 audit epoch (windowed)  & $10^4$ & 28.5 & 28.6 & 0.54 \\
 M12 detect fork (windowed)  & $10^4$ & 27.9 & 34.2 & 0.46 \\
@@ -271,9 +274,11 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 
 Per-check verification cost is $27.2\,\si{\micro\second}$ in session mode and
 $27.5\,\si{\micro\second}$ in continuous mode (medians; both include server-side proof generation).
-The two 95\% confidence intervals ($\pm0.43$ and $\pm0.33\,\si{\micro\second}$) overlap, so the
-ordering of the two medians is not interpreted; no equivalence claim is made either, since no
-equivalence margin was defined or tested. The chain memoization flattens the compressed-leaf
+The medians differ by $0.3\,\si{\micro\second}$, and that ordering is not interpreted. The
+$\pm$ figures the harness records for these two rows ($\pm0.24$ and $\pm0.09\,\si{\micro\second}$)
+are confidence half-widths of the \emph{mean} (\cref{sec:bench-env}), so they support no inference
+about the medians in either direction; no equivalence claim is made either, since no equivalence
+margin was defined or tested. The chain memoization flattens the compressed-leaf
 cost that previously separated them.
 Both modes are timed under the identical label-bound proof
 verifier (\texttt{verify\_search\_result\_raw\_for}), so the two medians are apples-to-apples. The

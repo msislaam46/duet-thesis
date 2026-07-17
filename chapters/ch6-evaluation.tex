@@ -8,8 +8,8 @@ mode trade (\cref{sec:eval-scale}), places the results beside prior key-transpar
 (\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
 taxonomy (\cref{sec:eval-security}). The headline findings are that the dual-index lookup proof is
 at size parity with CONIKS while adding automatic detection, that offline catch-up is three orders
-of magnitude cheaper than naïve monitoring, and that median full client verification is sub-\SI{150}{\micro\second}
-and effectively independent of directory size.
+of magnitude cheaper than naïve monitoring, and that median full client verification stays below
+\SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
 
 % ============================================================================
 \section{Methodology}\label{sec:eval-method}
@@ -78,8 +78,14 @@ let the contribution of each mechanism be attributed directly.
 Timings are collected two ways. Criterion provides the confidence intervals and regression plots;
 in parallel, a manual harness of \num{2000} timed iterations per operation records the median, the
 95th percentile, and a 95\% confidence half-width to \texttt{results/rust\_benchmark\_timings.csv},
-and it is the manual-harness medians that are quoted here (they carry less measurement overhead than
-Criterion's per-iteration accounting). Proof sizes are computed exactly and are seed-deterministic,
+and it is the manual-harness medians that are quoted here, the harness producing uniformly formatted
+rows across every metric family. Two properties of those rows bound how they may be read. The median
+and 95th percentile are descriptive sample statistics, carrying no interval. The $\pm$ column is a
+\num{95}\,\% confidence half-width \emph{of the mean} under a normal approximation
+($1.96\,s/\sqrt{n}$): it quantifies the precision of the mean, so it licenses no inference about the
+medians quoted beside it, and none is drawn. Where a timing falls near the platform's timer
+resolution --- the sub-microsecond M4 windowed generation figures, \SIrange{0.1}{0.3}{\micro\second}
+--- it is a coarse hot-path observation and is treated as one. Proof sizes are computed exactly and are seed-deterministic,
 so they carry no confidence interval; the scale figures (M7) are distributions over \num{1000}
 random lookups per $N$. All runs use fixed cryptographic and sampling seeds and are reproducible by
 the procedure of \cref{sec:impl-repro}; the full per-parameter tables, at the resolution the CSVs
@@ -217,22 +223,33 @@ context between the harnesses.
 \subsection{Offline catch-up bandwidth (M4)}\label{ssec:eval-catchup}
 
 The bandwidth a client spends after being offline is where the windowed-consistency contribution of
-\cref{ssec:design-catchup} pays off. A naïve client verifies one consistency proof per missed epoch
-(the sequential baseline) --- in the benchmark, $W$ separate proofs, each anchored to the current head
-rather than chained epoch-to-epoch, at the same $O(W\log N)$ cost; the windowed client verifies a
-single proof spanning the whole gap.
+\cref{ssec:design-catchup} pays off. A naïve client verifies one consistency proof per missed epoch;
+the windowed client verifies a single proof spanning the whole gap.
 \Cref{tab:eval-catchup} reports both as the offline window $W$ grows. Because catch-up proofs are
 taken over the epoch log, one leaf per epoch, their size is independent of the number of users
 $N$; the table therefore holds for every $N$ measured.
 
+Two properties of the comparison must be stated before the ratio is read, because both bound what it
+means. First, the baseline is \emph{synthetic}: the harness issues $W$ current-head-anchored
+consistency proofs, which models a client that re-fetches a fresh proof against the latest head on
+each of $W$ occasions.\footnote{It is one baseline among several, not the cost of generic sequential
+catch-up. A client verifying adjacent $e \to e+1$ transitions is an equally reasonable naïve
+strategy, and its per-proof size is smaller, so the \num{695}-fold constant is specific to this
+construction. What does not depend on the choice is the proof \emph{count}: $O(1)$ against $O(W)$.}
+Second, the byte figures are \emph{raw consistency-path hash bytes} --- the harness counts path
+length times the \num{32}-byte hash size. A deployment serializes these (the reference server sends
+hex-encoded JSON with framing and length fields), so serialized network bandwidth was not measured
+and would be larger on both sides of the comparison.
+
 \begin{table}[ht]
 \centering
-\caption{Offline catch-up bandwidth: naïve sequential versus windowed, any $N$.}
+\caption{Offline catch-up, raw consistency-path hash bytes: synthetic sequential baseline ($W$
+current-head-anchored proofs) versus windowed, any $N$.}
 \label{tab:eval-catchup}
 \small
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-$W$ (epochs offline) & na\"ive (bytes) & windowed (bytes) & Ratio \\
+$W$ (epochs offline) & synthetic sequential (bytes) & windowed (bytes) & Ratio \\
 \midrule
 1 (1 hour)   & 96      & 96  & $1.0\times$ \\
 24 (1 day)   & 4{,}416   & 192 & $23.0\times$ \\
@@ -257,38 +274,42 @@ sends a \num{320}\,byte proof in place of \num{222528}\,bytes, a \num{695}-fold 
 generation-time counterpart is similar in magnitude (\SI{0.3}{\micro\second} windowed versus
 \SI{184.8}{\micro\second} sequential at $W=720$ --- medians over the log alone, which the prefix-tree
 memoization does not touch). The two ratios are separate measurements and should not be conflated:
-the \num{695}-fold bandwidth figure is computed exactly, whereas the generation-time figure is timed,
+the \num{695}-fold figure is a computed count of raw path hash bytes, whereas the generation-time figure is timed,
 and the windowed median sits at the \SI{0.1}{\micro\second} resolution this chapter quotes to, so
 their quotient is only good to a couple of significant figures ($\approx$\num{600}-fold). Both say the
 same thing about the mechanism: one proof replaces $W$ of them. This directly addresses the monitoring-bandwidth problem that CONIKS lists as
 an open extension.
 
-\subsection{Detection latency and false positives (M5, M6)}\label{ssec:eval-detection}
+\subsection{Warning-slot lookup cost and false positives (M5, M6)}\label{ssec:eval-detection}
 
-Finally, we measure the detection mechanism itself: how fast a substitution is detected, and how
-often a clean session is wrongly flagged. The detection check comprises the dual-index label
+Finally, we measure the warning-slot read that carries detection, and how
+often a clean session is wrongly flagged. The check comprises the dual-index label
 derivation --- pure HKDF, one extract and three expands, independent of directory size --- and an
 unverified read of the warning slot. The read's underlying cost is \emph{data-dependent}: the
 co-path of a non-inclusion proof almost always meets a compressed leaf, whose subtree hash is a
 chain of up to \num{256} hash evaluations. The implementation memoizes the top of that chain per
 leaf (\cref{sec:impl-modules}), so the check costs a median \SI{1.6}{\micro\second} (95th percentile
-\SI{2.1}{\micro\second}), independent of $N$; only the first touch of a cold leaf pays the full chain once, a worst case
+\SI{2.0}{\micro\second}), independent of $N$; only the first touch of a cold leaf pays the full chain once, a worst case
 bounded by the fixed tree depth rather than by $N$. The benchmark samples \num{1000} random
 conversations and reports the distribution --- median and 95th percentile --- rather than any
 single label's path,\footnote{An earlier revision of the harness timed one fixed conversation and,
 before the chain memo, read \SI{1.4}{\micro\second} or ${\sim}$\SI{40}{\micro\second} depending on
 where that one label happened to sit; a single-label figure is not robust, because re-seeding the
 directory relocates every label.}
-and a clean session and an attacked session are indistinguishable in cost, so detection leaks
-nothing through timing. Either way, this is the \emph{marginal} cost of the warning-slot read on top
+Both branches have microsecond-scale marginal cost; timing distinguishability between the clean and
+attacked branches was not evaluated, and no claim is made about it. Either way, this is the
+\emph{marginal} cost of the warning-slot read on top
 of a lookup the client already verifies; it is an unverified read, so the security-bearing detection
 cost is that of the full verified chain the client runs regardless --- the \SI{26}{\micro\second}
 prefix verify and the remainder of the \SI{128}{\micro\second} chain of \cref{ssec:eval-latency}. Over \num{1000} clean
 sessions the false-positive rate (M6) is \num{0}; this is a sanity check rather than independent
 evidence, since a spurious collision at a 256-bit HKDF-derived warning label is cryptographically
-negligible. Detection is thus effectively free and silent, in sharp contrast to the manual
-safety-number ceremony it replaces, which only about 14\% of users complete without
-guidance~\cite{vaziripour2017}.
+negligible. End-to-end detection latency --- two proof-verified lookups, plus the network
+round-trips a deployment would add --- was not measured. The marginal warning-slot read is
+microseconds; the security-bearing cost is one additional proof-verified lookup of the same shape as
+M3 ($\approx$\SI{128}{\micro\second} median). Detection remains automatic and silent, in sharp
+contrast to the manual safety-number ceremony it replaces, which only about 14\% of users complete
+without guidance~\cite{vaziripour2017}.
 
 % ============================================================================
 \section{Scalability and the mode trade (M7--M13)}\label{sec:eval-scale}
@@ -389,17 +410,21 @@ tree would reduce it to $O(\lg N)$, and this is noted as future work in \cref{ch
 \subsection{Auditor cost (M12)}\label{ssec:eval-auditor}
 
 The cross-vantage auditor (\cref{sec:design-acka}) that detects split-view equivocation must be
-cheap enough to run continuously. It is: a per-epoch audit, an Ed25519 signature verify plus an
-append-only consistency check, costs \SI{28.5}{\micro\second} at $N=10^4$, and the cross-vantage
-fork-detection check costs \SI{27.9}{\micro\second}. Both are under \SI{30}{\micro\second}, so the
-equivocation-detection machinery is cheap per epoch in local computation. Two scoping caveats matter.
+cheap enough to run continuously. It is, in the local append-only cryptographic kernel this metric
+covers --- an STH signature check plus consistency-proof generation and verification, and a fork
+check against \emph{one} observed head. The per-epoch audit costs \SI{28.5}{\micro\second} median at
+$N=10^4$, and the fork check \SI{27.9}{\micro\second} median (p95 \SI{34.2}{\micro\second}), so the
+equivocation-detection kernel is cheap per epoch in local computation. Two scoping caveats matter.
 The audit figure times proof generation and verification together, so as a \emph{verify-only} cost it
 is a conservative over-estimate; but it measures only the auditor's \emph{local} per-epoch work (the
 signature check and the append-only consistency check). It
 does \emph{not} include the networked, proof-carrying exchange a deployed auditor runs --- fetching
 each epoch's disclosed update set together with the committed-root log-inclusion proof
 (\cref{sec:design-acka}) and verifying that proof against the signed head --- whose transfer and
-verification cost is not captured here. The number is therefore the compute floor of the audit, not
+verification cost is not captured here. Nor does it include the full \texttt{audit\_epoch} transition
+replay, or a long-history scan over $O(E)$ accumulated heads: the fork check is measured against a
+single observed head, so the figure does not speak to an auditor reconciling many vantages over a
+long log. The number is therefore the compute floor of the audit, not
 the end-to-end cost of the protocol.
 
 \subsection{Session versus continuous mode (M13)}\label{ssec:eval-modes}
@@ -408,9 +433,11 @@ The design offers two operating modes (\cref{ssec:design-modes}): session mode w
 entry per signed-pre-key rotation, and continuous mode writes one per ratchet epoch for finer-grained,
 ACKA-faithful detection. The cost of that granularity is not verification time. A per-check operation
 costs \SI{27.2}{\micro\second} in session mode and \SI{27.5}{\micro\second} in continuous mode (medians, \cref{app:benchmarks}; both include
-server-side proof generation). The two \num{95}\% confidence intervals overlap, so the thesis does
-not interpret the \SI{0.4}{\micro\second} ordering of the two medians: the
-chain memoization flattens the compressed-leaf cost that previously separated them. Both
+server-side proof generation). The two medians differ by \SI{0.3}{\micro\second}, and no ordering
+conclusion is drawn from that gap: the $\pm$ column is a confidence half-width of the \emph{mean}
+(\cref{sec:eval-method}) and licenses no inference about the medians, which are reported as
+descriptive statistics. The chain memoization flattens the compressed-leaf cost that previously
+separated the two modes. Both
 figures require a precise statement of what they measure: each benchmarked check comprises the
 server-side proof generation and the client-side verification of the value, prefix-root, and
 log-inclusion steps, both under the same label-bound verifier. Client-side label derivation (a fixed
@@ -477,7 +504,7 @@ repository and, per the comparability note below, are order-of-magnitude.
 Dimension & \textbf{DUET (measured)} & CONIKS~\cite{melara2015coniks} & Signal KT~\cite{signal-kt-server} \\
 \midrule
 Lookup proof size & \textbf{817\,B median @ $10^6$} (max 945) & 1{,}216\,B @ $2^{32}$; $\approx$832\,B @ $10^6$, derived (parity) & 8{,}192\,B fixed ($\approx$9$\times$ larger) \\
-Client lookup verify & \textbf{$\approx$\SI{128}{\micro\second}, indep.\ of $N$} (incl.\ VRF + STH sig) & \SI{159}{\micro\second} path @ $10^7$ $+\sim$\SI{400}{\micro\second} sig $=$ \SI{559}{\micro\second} (derived); excl.\ VRF & not published \\
+Client lookup verify & \textbf{$\approx$\SI{128}{\micro\second} @ $10^3$--$10^4$; \SI{147.1}{\micro\second} @ $10^7$} (incl.\ VRF + STH sig) & \SI{159}{\micro\second} path @ $10^7$ $+\sim$\SI{400}{\micro\second} sig $=$ \SI{559}{\micro\second} (derived); excl.\ VRF & not published \\
 Catch-up @ $W{=}720$ & \textbf{320\,B} (1 windowed proof) & $\Theta(W)$; $\sim$530\,kB, derived & Monitor endpoint \\
 MitM detection & \textbf{automatic, in-band (dual-index)} & manual SN + self-monitor & lookup check (AKV) + self-monitor; no peer warning \\
 Key coverage & identity \textbf{+ per-session labels} & identity only & ACI, E164, username \\
@@ -525,16 +552,18 @@ per epoch at $N \approx 2^{32}$), so the derived total is indicative rather than
 plausible churn it remains over three orders of magnitude larger than the windowed proof
 ($529{,}920/320 \approx 1{,}656\times$).
 
-Fourth, full client verification is $\approx$\SI{128}{\micro\second} and independent of $N$. CONIKS
+Fourth, full client verification stays below \SI{150}{\micro\second} through $10^7$ labels. CONIKS
 reports \SI{159}{\micro\second} to verify the authentication path at $N = 10^7$ and approximately
 \SI{400}{\micro\second} to verify the signed-tree-root signature, and reports no VRF-verification
 time~\cite[\S5.3]{melara2015coniks}; the total of \SI{559}{\micro\second} is our sum of their two
-published figures. Our figure is therefore about $4.2\times$ lower while covering a strictly larger
-check: it \emph{includes} the VRF verification that CONIKS's figures omit, in addition to the
+published figures. The comparison must be taken at matched scale, so it is our $10^7$ median of
+\SI{147.1}{\micro\second} that belongs beside it, not the $\approx$\SI{128}{\micro\second} we measure
+at $N \le 10^4$: our figure is therefore about $3.8\times$ lower while covering a strictly larger
+check, since it \emph{includes} the VRF verification that CONIKS's figures omit, in addition to the
 signature verification that both totals include. Because the two measurements come from different
 hardware (CONIKS's 2015 2\,GHz laptop CPU against our 2022 mobile CPU; see the comparability note),
-the $4.2\times$ factor is indicative only; the claims that stand on our hardware alone are the
-sub-\SI{150}{\micro\second} median cost of the full five-step chain and its measured independence of $N$.
+the $3.8\times$ factor is indicative only; the claim that stands on our hardware alone is the
+sub-\SI{150}{\micro\second} median cost of the full five-step chain across the whole measured range.
 
 \begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different hardware (a 2015
 Xeon through to 2023 cloud instances), different scales ($10^6$ versus $2^{32}$), and database-backed

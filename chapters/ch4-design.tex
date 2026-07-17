@@ -541,7 +541,7 @@ RFC~9162 guarantees that such a proof has size
 \end{equation}
 growing only logarithmically with the current log size $n = m + W$ rather than linearly
 with the number of intermediate epochs (\cref{fig:design-windowed}). The bound in
-\cref{eq:design-proofsize} is what makes the window free: the client verifies the
+\cref{eq:design-proofsize} is what bounds the window's cost: the client verifies the
 proof against the signed root of that tree head, so the new state is accepted only if it
 is a signed, append-only extension of the state already trusted. The catch-up cost
 therefore depends only logarithmically on the sizes of the previously trusted and current

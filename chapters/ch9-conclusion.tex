@@ -22,12 +22,15 @@ of \cref{ch:threat}.
 
 The evaluation (\cref{ch:eval}) shows that this detection is added essentially for free. The
 dual-index lookup proof is at size parity with CONIKS while carrying the warning channel CONIKS lacks;
-median full client verification is under \SI{150}{\micro\second} and effectively independent of directory size, about
-four times faster than CONIKS at the same scale even though it includes the VRF check that CONIKS's
-figures omit (both totals include the signature check); a month-long offline catch-up costs a few hundred bytes against the hundreds of
-kilobytes naïve monitoring would spend; the detection check itself runs in microseconds with no false
-positives over a thousand clean sessions, and the cross-vantage auditor closes the equivocation case
-at under \SI{30}{\micro\second} per epoch. The adversarial suite detects the full substitution and
+median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
+far more slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}), about
+\num{3.8} times faster than CONIKS at matched scale even though it includes the VRF check that CONIKS's
+figures omit (both totals include the signature check, and the cross-hardware comparison is
+indicative only); a month-long offline catch-up sends one proof rather than $W$, a few hundred raw
+path bytes against the hundreds of kilobytes naïve monitoring would spend; the warning-slot read
+costs microseconds on top of a lookup the client already verifies, with no false
+positives over a thousand clean sessions, and the cross-vantage auditor's local fork check runs at a
+median \SI{27.9}{\micro\second} (p95 \SI{34.2}{\micro\second}) against one observed head. The adversarial suite detects the full substitution and
 equivocation taxonomy, and a STRIDE analysis leaves four residual risks --- one the label-to-user
 mapping inherent to any semi-trusted-server directory, the other three availability functions left to
 a production deployment.
