@@ -60,7 +60,7 @@ Contribution & Artefact & Strongest evidence \\
 Conceptual & dual-index warning scheme; ACKA-log instantiation (\cref{sec:design-dual,sec:design-acka}) & automatic bidirectional detection, full adversarial suite passes (\cref{sec:eval-security}) \\
 Cryptographic & windowed consistency proof + size bound; dual-index detection experiment (\cref{lem:windowed-size,def:dualindex-detect}) & 320\,B catch-up at $W{=}720$, one proof regardless of window (\cref{ssec:eval-catchup}) \\
 Systems & Rust \texttt{kt} crate, server, auditor; TypeScript verifier in Signal Desktop (\cref{ch:impl}) & byte-for-byte parity; live cross-process demonstration (\cref{ssec:impl-demo}) \\
-Empirical & benchmark campaign M1--M13; STRIDE/MITRE evaluation (\cref{ch:eval,app:security}) & per-lookup proof not enlarged by detection (warning check is an additional lookup of the same shape); sub-\SI{150}{\micro\second} verify (\cref{sec:eval-micro}) \\
+Empirical & benchmark campaign M1--M13; STRIDE/MITRE evaluation (\cref{ch:eval,app:security}) & per-lookup proof not enlarged by detection (warning check is an additional lookup of the same shape); median verify below \SI{150}{\micro\second} (\cref{sec:eval-micro}) \\
 \bottomrule
 \end{tabular}
 \end{table}
