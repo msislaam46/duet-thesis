@@ -41,18 +41,13 @@ Methodology caveats recorded with the run: the server is in-memory (no network, 
 sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to $32\lceil\lg E\rceil$
 bytes to each lookup proof; memory is resident set size after build, not peak; and the throughput
 figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
-portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to the
-hardware instruction at run time, so a host lacking it takes a software path for every hash. An
-auxiliary run of the same code on a different machine --- an Intel i9-9900K, which has neither SHA-NI
-nor the same microarchitecture or clock --- measured the hash-bound operations (the prefix and full
-verify, M5, the M8 update, M9, and M13) roughly \num{1.3} to \num{4.6} times slower. That difference
-is attributable to the two changes together, the missing instruction and the different processor, and
-this experiment cannot separate them: it varies both at once. It is reported as evidence that the
-timings do not transfer between hosts, not as a measurement of SHA-NI's contribution. Consistently,
-the same auxiliary host was \emph{faster} on the VRF-bound operations, where SHA-256 is off the
-critical path. Pinning the toolchain does not make timings portable; they are
-therefore reported as measurements of this configuration, not as properties of the scheme. The proof
-sizes, being computed rather than timed, are hardware-independent.
+portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to
+the hardware instruction at run time, so a host without it takes a software path for every hash, and
+the hash-bound operations --- the prefix and full verify, detection, the M8 update, M9, and M13 ---
+would be materially slower there, while the VRF-bound operations, where SHA-256 is off the critical
+path, would be largely unaffected. The timings below are therefore reported as measurements of this
+configuration rather than as properties of the scheme, and pinning the toolchain does not make them
+portable. The proof sizes, being computed rather than timed, are hardware-independent.
 
 % ----------------------------------------------------------------------------
 \section{Proof sizes (M1) and catch-up bandwidth (M4)}\label{sec:bench-sizes}
