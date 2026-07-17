@@ -306,10 +306,10 @@ Metric & Criterion group & CSV source \\
 M1  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M1}) \\
 M2  & \texttt{M2\_proof\_generation}   & \texttt{rust\_benchmark\_timings.csv} (\texttt{M2\_search\_gen}) \\
 M3  & \texttt{M3\_proof\_verification} & \texttt{rust\_benchmark\_timings.csv} (\texttt{M3\_prefix\_verify}, \texttt{M3\_vrf\_verify}, \texttt{M3\_full\_client\_verify}) \\
-M4  & \texttt{M4\_catchup\_cost}       & \texttt{rust\_benchmark\_results.csv} (\texttt{M4}) \\
+M4  & \texttt{M4\_catchup\_cost}       & bandwidth: \texttt{rust\_benchmark\_results.csv} (\texttt{M4}); generation time (slope): Criterion \texttt{m4\_catchup\_cost} (see \texttt{results/PROVENANCE.md}) \\
 M5  & \texttt{M5\_mitm\_detection}     & \texttt{rust\_benchmark\_timings.csv} (\texttt{M5\_detection}) \\
 M6  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M6}) \\
-M7  & \texttt{M7\_scale\_verification} & \texttt{rust\_benchmark\_m7.csv} \\
+M7  & \texttt{M7\_scale\_verification} & sizes / build / RSS: \texttt{rust\_benchmark\_m7.csv}; full-client-verify median: Criterion \texttt{m7\_scale\_verification/windowed\_full\_client\_verify} (see \texttt{results/PROVENANCE.md}) \\
 M8  & \texttt{M8\_throughput}          & \texttt{rust\_benchmark\_timings.csv} (\texttt{M8\_lookup}, \texttt{M8\_update}) \\
 M9  & \texttt{M9\_key\_rotation}       & \texttt{rust\_benchmark\_timings.csv} (\texttt{M9\_rotation}, \texttt{M9\_epoch\_commit}) \\
 M10 & \texttt{M10\_vrf\_isolation}     & \texttt{rust\_benchmark\_timings.csv} (\texttt{M10\_vrf\_prove}, \texttt{M10\_vrf\_verify}) \\
