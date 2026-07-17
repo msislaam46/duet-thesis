@@ -31,7 +31,8 @@ a specific later chapter:
   and how does it compare with existing key-transparency systems? \emph{(Answered by
   \cref{sec:eval-micro,sec:eval-compare}.)}
   \item[RQ3 (offline).] Can a client that has been offline for an arbitrarily long window
-  re-synchronize with the log at a cost independent of that window's length? \emph{(Answered by the
+  re-synchronize with the log in a single proof, at a cost that grows logarithmically in the
+  endpoint log sizes rather than linearly in the epochs missed? \emph{(Answered by the
   windowed consistency proof of \cref{sec:design-windowed} and its measurement in
   \cref{ssec:eval-catchup}.)}
   \item[RQ4 (deployability).] Does the scheme integrate into a real, deployed messaging client at a
@@ -52,20 +53,24 @@ realization at the time of writing), the first concrete instantiation and measur
 append-only-log component of the ACKA framework~\cite{dowling2023acka}, and frames the guarantee
 precisely as detection over a semi-trusted directory rather than prevention.
 
-\paragraph{Cryptographic.} A \emph{windowed consistency proof} that lets an offline client re-verify
-the log in a single proof whose size is bounded by the endpoint log sizes and is independent of the
-number of missed epochs (\cref{sec:design-windowed}, \cref{lem:windowed-size}), and a formal
-detection experiment for the dual-index scheme, stated over standard assumptions with a reduction
-sketch, the full reduction being left as future work (\cref{def:dualindex-detect}).
+\paragraph{Cryptographic.} A formal detection experiment for the dual-index scheme, stated over
+standard assumptions with a reduction sketch, the full reduction being left as future work
+(\cref{def:dualindex-detect}).
 
-\paragraph{Systems.} A complete implementation in two independent layers held to byte-for-byte
+\paragraph{Systems.} The \emph{windowed consistency proof}: the application of a standard RFC~9162
+distant-head consistency proof to the offline-monitoring policy, letting a client re-verify the log
+in one proof rather than $W$, with size logarithmic in the endpoint log sizes rather than linear in
+the epochs missed (\cref{sec:design-windowed}, \cref{lem:windowed-size}); \cref{ch:design} disclaims
+any new cryptographic object here, and its security limitations are argued and its trade-off
+measured. Alongside it, a complete implementation in two independent layers held to byte-for-byte
 parity: a standalone Rust reference implementation (the \texttt{kt} crate, an HTTP directory server,
 and a cross-vantage auditor) and an embedded TypeScript verifier integrated into a fork of the real
 Signal Desktop client (\cref{ch:impl}).
 
 \paragraph{Empirical.} A benchmark campaign (metrics M1--M13) establishing that the dual-index lookup
 proof is at size parity with CONIKS while adding a detection channel it lacks, that median full client
-verification is under \SI{150}{\micro\second} and effectively independent of directory size, and that a
+verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than
+$N$ (\SIrange{128.1}{147.1}{\micro\second}), and that a
 month-long offline catch-up costs a few hundred bytes against the hundreds of kilobytes naïve
 monitoring would spend; together with a systematic security evaluation (STRIDE and MITRE ATT\&CK
 coverage) of the resulting system (\cref{ch:eval}).
