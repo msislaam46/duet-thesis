@@ -227,11 +227,14 @@ is the epoch commit, which snapshots the tree by a deep clone; \cref{ch:eval} qu
 
 Because the evaluation of \cref{ch:eval} rests on the numbers this harness produces, its methodology
 belongs here, with the results themselves deferred. Measurements are taken two ways. Criterion drives
-the statistical benchmarks, warming up for a fixed interval before repeating each operation until its
-confidence interval stabilizes and emitting the full distribution; a lightweight companion harness
-times a fixed number of iterations (\num{2000} per operation) against a monotonic clock and records
-the median, 95th percentile, and a 95\% confidence half-width to CSV. The two agree, and the
-companion medians are the figures quoted in \cref{ch:eval}.
+the statistical benchmarks, warming up for a fixed interval and then collecting a configured number
+of samples over a fixed measurement window --- its sampling is parameterized, not stopped on any
+convergence criterion --- from which it derives confidence intervals by bootstrap resampling and
+emits the full distribution; a lightweight companion harness times a fixed number of iterations
+(\num{2000} per operation) against a monotonic clock and records the median, 95th percentile, and a
+95\% confidence half-width \emph{of the mean} (normal approximation) to CSV. The companion medians
+are the figures quoted in \cref{ch:eval}; no formal agreement test between the two is claimed, and
+\cref{sec:eval-method} states what each statistic does and does not license.
 
 Workloads are synthetic and deterministic. A directory of a configurable size $N$ is built by
 inserting seeded pseudorandom users, and both the VRF key and the sampling generator are fixed to
