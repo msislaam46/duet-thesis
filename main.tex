@@ -7,21 +7,6 @@
 %
 % OVERLEAF SETUP: upload this whole folder as a project; compiler:
 % pdfLaTeX; main document: main.tex.
-%
-% HOUSE RULES (from supervisor feedback — enforce in every chapter):
-%  F1  Every \section and \subsection starts with a signpost paragraph:
-%      "In this section we introduce X. This is relevant because Y."
-%      Never put two headers adjacent with no text between.
-%  F11 Use the notation macros in kt-macros.sty EVERYWHERE (\pkid{A},
-%      \sharedS, \lblself, \lblpeer, \lblwarn, ...). Never invent ad-hoc symbols inline.
-%  F21 Never show an equation without defining every symbol right below
-%      it on first use.
-%  F17 Non-breaking space before citations: "CONIKS~\cite{melara2015coniks}".
-%  RFC Every construction cites its spec: RFC 9162 (log proofs),
-%      RFC 9381 (ECVRF), RFC 5869 (HKDF), draft-ietf-keytrans-protocol.
-%  Recap rule: when reusing a concept introduced >2 pages back, add
-%      "recall that ... (\cref{...})".
-%  Writing order: Ch2 -> Ch3 -> Ch4 -> Ch5 -> Ch6 -> Ch7 -> Ch1 (last).
 % =====================================================================
 \documentclass[11pt,a4paper,oneside]{report}
 
@@ -81,17 +66,14 @@
 %   \end{definition}
 \newcommand{\intuition}[1]{\emph{Intuition: #1}\\[2pt]}
 
-% ── Screenshot placeholder (Th3 recapture) ──────────────────────────
-% The submitted screenshots are being recaptured under controlled
-% conditions (synthetic identities, no personal paths, no DevTools
-% counters, fixed zoom/theme, one scenario per capture). Until the
-% replacements land, each slot is marked here so its position and target
-% asset are unambiguous. Grep for \screenshotplaceholder to find them.
+% ── Screenshot placeholder ───────────────────────────────────────────
+% Each slot marks the position and target asset of a figure whose final
+% capture is pending. Grep for \screenshotplaceholder to find them.
 % Usage: \screenshotplaceholder{<width>}{<intended figures/asset.png>}
 \newcommand{\screenshotplaceholder}[2]{%
   \fbox{\parbox[c][0.26\textheight][c]{\dimexpr#1-2\fboxsep-2\fboxrule\relax}{%
     \centering\ttfamily\footnotesize #2\\[6pt]%
-    \normalfont\itshape [screenshot placeholder: recapture per Th3]}}}
+    \normalfont\itshape [screenshot placeholder]}}}
 
 % ── Experiment block for security games (ACKA-paper style, F25) ──
 % A proper framed box in the clean crypto-paper style (thin black rule all

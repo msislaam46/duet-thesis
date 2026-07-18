@@ -14,9 +14,41 @@
 \SetAlCapFnt{\small}
 \SetAlCapNameFnt{\small}
 
-Conventions: $\Hash(\cdot)=$ SHA-256; domain-separated tree hashing per RFC 6962/9162,
-$\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$;
-$\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
+This appendix collects the eight algorithms the thesis refers to. They fall into two groups.
+Algorithms~\ref{alg:merklelog}--\ref{alg:dualindex} are the data-structure and derivation
+primitives: the Merkle log tree, the sparse prefix tree, the key-transparency server that combines
+them, and the dual-index label derivation. Algorithms~\ref{alg:client}--\ref{alg:cea} are the
+protocol procedures built on those primitives: client verification, MitM detection and warning
+persistence, the auditor, and the continuous-authentication mode. \Cref{tab:alg-purpose} states the
+purpose of each.
+
+\begin{table}[H]
+\centering
+\caption{Purpose of each algorithm in this appendix.}\label{tab:alg-purpose}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Algorithm & Purpose \\
+\midrule
+\ref{alg:merklelog}~Merkle Log Tree & append-only log with inclusion and consistency proofs \\
+\ref{alg:prefix}~Sparse Prefix Tree & label-keyed authenticated map with (non-)inclusion proofs \\
+\ref{alg:server}~KT Server & combines log and prefix tree; serves signed heads and proofs \\
+\ref{alg:dualindex}~Dual-Index Derivation & derives lookup and warning labels from the shared secret \\
+\ref{alg:client}~Client Verification & verifies a lookup end to end; registers, retrieves, catches up \\
+\ref{alg:detect}~MitM Detection & raises and persists the dual-index warning \\
+\ref{alg:auditor}~Auditor & cross-vantage fork check and per-epoch transition audit \\
+\ref{alg:cea}~CEA Mode & per-ratchet continuous entity authentication \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Notation.} $\Hash(\cdot)$ is SHA-256. Tree hashing is domain-separated per RFC 6962/9162: a
+leaf hashes as $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and an internal node as
+$\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. The operator $\concat$ denotes byte
+concatenation. Identities are fixed-width 16-byte service IDs; this is a precondition of the
+dual-index derivation (Algorithm~\ref{alg:dualindex}), since without a fixed width the
+$\mathit{id_{self}}\concat\mathit{id_{peer}}$ split would be ambiguous, and the reference
+implementation enforces it at the API boundary.
 
 % Set tighter than the 1.5-spaced body (with the \SetAlFnt{\small} above), as
 % code listings conventionally are: at body size and spacing the longest
@@ -179,6 +211,13 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \end{algorithm}
 
+\paragraph{Client verification (Algorithm~\ref{alg:client}).} These procedures are the client's entire
+trust boundary: every value it accepts is checked against a signed tree head before use.
+\textsf{VerifiedLookup} returns a value only when the prefix proof, the log-inclusion proof, and the
+STH signature all verify and bind to the caller's pinned head, and it fails closed on any mismatch.
+\textsf{Register}, \textsf{RetrieveKey}, and \textsf{WindowedCatchUp} build on it to establish, read,
+and re-synchronize client state.
+
 \begin{algorithm}[H]
 \caption{Client Verification, Registration, Retrieval, Windowed Catch-Up}\label{alg:client}
 \KwData{$\mathit{last\_sth}\gets\bot$; per conversation, $\mathit{PRK}$ as extracted in Alg.~\ref{alg:dualindex}}
@@ -192,7 +231,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   \Req $\pi_{\mathrm{prefix}}.\mathit{value}=v$\;
   $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
   \Req $\textsf{VerifyInclusion}(r,\pi_{\mathrm{incl}}.\mathit{index},\pi_{\mathrm{incl}}.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pi_{\mathrm{incl}}.\mathit{path})$\;
-  \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{currency: the proof must cover the LAST log leaf; an older leaf's inclusion also verifies (inclusion $\ne$ currency, RFC 9162)}
+  \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{currency: the proof must cover the last log leaf; an older leaf's inclusion also verifies (inclusion $\ne$ currency, RFC 9162)}
   \KwRet $v$ \tcp*{$v$ may be $\bot$: proven non-inclusion}
 }
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
@@ -232,6 +271,13 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \end{algorithm}
 
 \clearpage
+\paragraph{Detection and persistence (Algorithm~\ref{alg:detect}).} This is the monitoring loop that
+turns a substituted key into an alert. \textsf{DetectMitM} and \textsf{BackgroundMonitor} compare the
+retrieved key against the expected one and, on a mismatch, write the dual-index warning.
+\textsf{RecordWarning} and \textsf{PersistenceCheck} retain verified evidence, so that a later silent
+deletion of a committed warning becomes publishable proof rather than an unobservable loss. No path
+silences a genuine mismatch: the outcome is always a raised alert or retained evidence.
+
 \begin{algorithm}[H]
 \caption{MitM Detection, Warning, and Warning Persistence}\label{alg:detect}
 \KwData{$\mathit{evidence}[]\gets[\,]$; per conversation, $\mathit{PRK}$ as extracted in Alg.~\ref{alg:dualindex}}
@@ -276,6 +322,27 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \end{algorithm}
 
 \clearpage
+\paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor runs against the same networked
+key-transparency server the clients use, from an independent vantage point. It is not an in-process
+copy of the server's state but an external verifier that fetches signed heads and per-epoch deltas
+over the network. It maintains its own mirror of the committed directory, reconstructed by replaying
+each epoch's declared delta from epoch~0, and checks epoch~$e$'s declared root against that
+reconstruction rather than trusting server-supplied per-operation membership proofs, after the manner
+of the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each epoch is replayed onto
+a scratch clone of the mirror, and the live mirror, the audited-epoch cursor, and the head list are
+advanced as a single all-or-nothing transaction only if the entire head passes every stage; a fetch
+failure aborts the transaction and is retried on the next poll rather than latching a fork alarm
+(matching the implementation's \texttt{transition\_complete} guard). Because every leaf commits its
+mutable or immutable kind into its hash, the transition audit distinguishes the two families: a
+rotation is accepted only on a mutable (global-VRF identity) leaf and rejected on an immutable (raw
+dual-index, CEA, or warning) leaf, as is any rotation that misdeclares the kind. This is what
+structurally rejects a post-compromise overwrite of a committed CEA fingerprint that a receiver's
+per-epoch verdict alone cannot catch (\cref{ssec:design-detection}). \textsf{DetectFork} accordingly
+returns one of three verdicts: \textsc{Fork} when two validly signed heads disagree at one epoch or a
+consistency proof between vantages fails; \textsc{InvalidHead} when the second vantage's head is not
+validly signed at all, an availability or transport fault rather than evidence of equivocation; and
+\textsc{Consistent} otherwise.
+
 \begin{algorithm}[H]
 \caption{Auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
 \KwData{$\mathit{heads}[]\gets[\,]$}
@@ -286,15 +353,11 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
     $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
     \Req $\textsf{VerifyConsistency}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{sth_{old}}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$\;
   }
-  \tcc{Staged state: replay every not-yet-audited epoch onto a SCRATCH mirror; the live mirror,
-       audited-epoch cursor, and heads list are committed as ONE transaction only if the ENTIRE
-       head passes every stage. A fetch failure aborts the transaction (retryable next poll) without
-       latching a fork alarm, matching the Rust implementation's \texttt{transition\_complete} guard.}
   $\mathit{scratch}\gets \textsf{clone}(\mathit{mirror})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
     $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e)$\;
     \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable, not a fork}}
-    $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$ \tcp*{replays into scratch; does NOT commit to mirror}
+    $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$ \tcp*{replays into scratch; does not commit to mirror}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
   \tcc{Cross-vantage fork check and any additional stages run here (omitted for brevity)}
@@ -303,26 +366,15 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   }
 }
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e$)}{
-  \tcc{after the manner of the IETF KeyTrans \textsf{AuditorUpdate}, but the auditor maintains its
-       OWN mirror of the committed directory (reconstructed by replaying epochs $0..e{-}1$) so
-       it checks epoch $e$'s declared delta against that mirror (its reconstruction of $r_{e-1}$)
-       rather than trusting server-supplied per-operation membership proofs. The mirror is empty
-       before epoch $0$, so no $r_{-1}$ leaf is required.~\cite{ietf-keytrans-protocol}}
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
   \Req $\pi_{\mathrm{incl}}$ binds $r_{e}$ to leaf $e$ of the log the validated STH signs\;
-  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$ \tcp*[f]{A1: an insert targets an ABSENT label, else an overwrite disguised as an insert}}
+  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$ \tcp*[f]{A1: an insert targets an absent label, else an overwrite disguised as an insert}}
   \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$ \tcp*[f]{reject immutable rotation / kind-misdeclaration / wrong prior value}}
   $r'\gets$ root after applying $\mathit{ops}_e$ to $\mathit{scratch}$ \tcp*{leaves hash as $\Hleaf(\mathit{kind}\concat\ell\concat v)$}
   \Req $r'=r_{e}$ \tcp*{exact transition; on failure the caller discards the scratch entirely}
-  \tcc{each leaf commits its \textsc{mutable}/\textsc{immutable} kind into its hash, so the auditor
-       \emph{distinguishes} the families: a \textsf{Rotate} is accepted only on a mutable
-       (global-VRF identity) leaf and rejected outright on an immutable (raw dual-index / CEA /
-       warning) leaf, as is any rotation misdeclaring the kind. The pss-compromised overwrite of a
-       committed CEA fingerprint (which the receiver's per-epoch verdict cannot catch) is thus
-       rejected structurally here (\cref{ssec:design-detection})}
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
-  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$ \tcp*{from a different vantage point}
+  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$}{\KwRet \textsc{InvalidHead} \tcp*[f]{second vantage's head is not validly signed: transport/availability fault, not a fork}}
   \ForEach{$\mathit{sth}\in \mathit{heads}$}{
     \lIf{$\mathit{sth}.\mathit{epoch}=\mathit{sth_{other}}.\mathit{epoch}\wedge \mathit{sth}.\mathit{root}\ne \mathit{sth_{other}}.\mathit{root}$}{\KwRet \textsc{Fork}$(\mathit{sth},\mathit{sth_{other}})$}
   }
@@ -335,6 +387,13 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \end{algorithm}
 
 \clearpage
+\paragraph{Continuous mode (Algorithm~\ref{alg:cea}).} CEA authenticates the Double Ratchet epoch by
+epoch, following the ACKA CEA construction. It folds each epoch's secret into a chained key $k$ and
+publishes a directional fingerprint over the new ratchet public key, which the receiver recomputes and
+compares. A mismatch means the peer folded a different secret (a fork); because the committed
+fingerprint is immutable, an operator that later overwrites it is caught by the auditor's transition
+audit rather than by the receiver's per-epoch verdict.
+
 \begin{algorithm}[H]
 \caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA CEA construction)}\label{alg:cea}
 \KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and $\mathit{PRK}$

@@ -559,7 +559,8 @@ therefore depends only logarithmically on the sizes of the previously trusted an
 log states, rather than linearly on the number of missed epochs. The warning-slot lookup is
 performed during the same synchronization exchange and so does not change the asymptotic
 complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are given in
-\cref{app:algorithms}.
+\cref{app:algorithms}, alongside the pseudocode for the Merkle log tree, the sparse prefix tree, and
+client verification (\cref{alg:merklelog,alg:prefix,alg:client}).
 
 \begin{figure}[t]
 \centering

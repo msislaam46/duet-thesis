@@ -725,10 +725,10 @@ complete system is taken up in the next subsection.
 The academic VKD literature did not arrive as a set of independent proposals but
 as a sequence of refinements to a shared design space, each construction
 addressing a limitation of its predecessors. CONIKS introduced the basic
-architecture of a privacy-preserving, auditable key directory; SEEMless
+architecture of a privacy-preserving, auditable key directory. SEEMless
 formalized the VKD abstraction and strengthened both privacy and history
-verification; Parakeet improved storage efficiency and deployability, a design line
-since deployed at scale by WhatsApp and independently reviewed~\cite{nccgroup2023akd}; ELEKTRA
+verification. Parakeet improved storage efficiency and deployability, a design line
+since deployed at scale by WhatsApp and independently reviewed~\cite{nccgroup2023akd}. ELEKTRA
 extended the model to multi-device accounts and added privacy recovery after
 server compromise, and OPTIKS, PRISM, and Merkle\textsuperscript{2} explored
 alternative trade-offs between monitoring cost, auditing, and scalability. We
@@ -776,7 +776,7 @@ willing to attack its users openly~\cite[p.~2]{melara2015coniks}.
 
 \subsubsection{SEEMless}
 SEEMless represents the transition from a deployed design pattern to a formally
-defined cryptographic primitive, and that formalization is its headline
+defined cryptographic primitive, and that formalization is its principal
 contribution: it models the \emph{verifiable key directory} as a cryptographic
 primitive, with precise completeness, soundness, and simulation-based privacy
 definitions that CONIKS had only described informally~\cite[p.~2]{chase2019seemless}.
@@ -1209,7 +1209,7 @@ the paper itself never discusses third-party auditing.
 
 Recognizing that ACKA's abstract Logsec-secure log and the malicious, equivocating server that
 key transparency is built to expose are two halves of a single end-to-end
-security picture is what sets the stage for the synthesis this thesis proposes.
+security picture is what motivates the synthesis this thesis proposes.
 
 % ============================================================================
 \section{Comparative Analysis of Existing Systems}\label{sec:bg-compare}
@@ -1493,7 +1493,7 @@ primitive with a security definition (Logsec), leaving the concrete malicious-se
 realization open, whereas the academic VKD literature builds exactly such a directory but
 authenticates only a session or identity binding. They differ in granularity (per-epoch versus
 per-session) and, more to the point, in what each makes concrete: ACKA specifies what the log must
-guarantee, key transparency shows how to build it. We bridge them by instantiating ACKA's abstract
+guarantee, key transparency shows how to build it. We reconcile them by instantiating ACKA's abstract
 logging component with a concrete key-transparency log that need not be trusted, realizing both as
 operating modes and measuring the trade between them. To our knowledge, no prior work spans the continuous and the
 directory worlds. Throughout, we state the coverage trade honestly: we log identity keys

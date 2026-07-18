@@ -11,8 +11,8 @@ run the system.
 \section{Directory Server REST API}\label{sec:apiref-rest}
 
 The standalone server exposes a public API used by clients and auditors. Requests and
-responses are JSON; byte strings are hex-encoded; the verified-lookup endpoints return the
-value together with the prefix proof, the log-inclusion proof, and the signed tree head so
+responses are JSON, and byte strings are hex-encoded. The verified-lookup endpoints return the
+value together with the prefix proof, the log-inclusion proof, and the signed tree head, so
 that the client can run the full verification chain (\cref{ssec:design-verify}).
 \Cref{tab:apiref-public} lists these public endpoints.
 

@@ -6,7 +6,7 @@ reports the microbenchmarks for proof size, verification latency, catch-up bandw
 (\cref{sec:eval-micro}), examines behaviour at scale together with the session-versus-continuous
 mode trade (\cref{sec:eval-scale}), places the results beside prior key-transparency systems
 (\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
-taxonomy (\cref{sec:eval-security}). The headline findings are that the dual-index lookup proof is
+taxonomy (\cref{sec:eval-security}). The principal findings are that the dual-index lookup proof is
 at size parity with CONIKS while adding automatic detection, that offline catch-up needs one proof
 rather than $W$ (\num{695}-fold fewer raw path-hash bytes at a one-month window against this
 chapter's synthetic baseline), and that median full client verification stays below
@@ -91,7 +91,8 @@ it is a coarse hot-path observation and is treated as one. Proof sizes are compu
 so they carry no confidence interval; the scale figures (M7) are distributions over \num{1000}
 random lookups per $N$. All runs use fixed cryptographic and sampling seeds and are reproducible by
 the procedure of \cref{sec:impl-repro}; the full per-parameter tables, at the resolution the CSVs
-record, are collected in \cref{app:benchmarks}. Timing medians are quoted in the body to one decimal
+record, are collected in \cref{app:benchmarks}
+(\cref{tab:bench-env,tab:bench-m1,tab:bench-m4,tab:bench-latency,tab:bench-detection,tab:bench-maint,tab:bench-auditor,tab:bench-scale,tab:bench-modes,tab:bench-repro}). Timing medians are quoted in the body to one decimal
 place ($0.1\,\si{\micro\second}$): finer precision would be spurious for a wall-clock median, and
 sub-microsecond digits vary between runs (for example, the VRF-verify median reads
 \SI{76.0}{\micro\second} in \cref{tab:eval-latency} and \SI{81.5}{\micro\second} in the separate
@@ -626,7 +627,7 @@ extraction onto the out-of-scope Private
 Keys (T1552.004), situating the abstract taxonomy against adversary behaviours seen in
 practice. The cryptographic guarantees of \cref{ch:design}, not this mapping, remain the primary
 security argument; the full technique matrix and the per-category STRIDE tables are given in
-\cref{app:security}.
+\cref{app:security} (\cref{tab:sec-mitre,tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}).
 
 \subsection{STRIDE Coverage}\label{ssec:eval-stride}
 

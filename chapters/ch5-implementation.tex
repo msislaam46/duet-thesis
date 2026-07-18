@@ -60,7 +60,10 @@ the secrecy-dependent guarantees, unlinkability of the slots and the server's in
 pre-position a value on them (\cref{ssec:design-properties}), hold only once the genuine secret is
 bridged in. What the prototype validates end-to-end is the construction, wire format, and detection
 logic; those secrecy-dependent properties are argued against the design, not demonstrated by the
-stand-in.
+stand-in. As a further prototype boundary, the demo server treats mutex poisoning and VRF
+encode-to-curve exhaustion (probability ${\approx}\,2^{-256}$ per attempt, over at most 256 attempts)
+as fatal, aborting rather than degrading gracefully; a production service would surface these as
+recoverable errors.
 
 This separation is deliberate. Keeping the cryptographic core independent of the Signal Desktop
 integration lets all measurements be performed on a standalone reference implementation while
@@ -194,7 +197,11 @@ auditor binary, a small \texttt{ureq} HTTP client, polls the signed tree head, v
 signature, and checks append-only consistency on each new epoch, so that a forked or rewritten
 history is caught from a second vantage point. A benchmark harness completes the set, driving the
 measurements of \cref{ch:eval}; the endpoint list and request formats are given in
-\cref{app:apiref}.
+\cref{app:apiref} (the public, admin, hook, and event interfaces of
+\cref{tab:apiref-public,tab:apiref-admin,tab:apiref-hooks,tab:apiref-events}, with the demonstration
+screens of \cref{fig:demo-baseline,fig:demo-cmd,fig:demo-equivocation}), and the complete test
+catalogue in \cref{app:tests}
+(\cref{tab:tests-rust-prim,tab:tests-rust-server,tab:tests-rust-system,tab:tests-jest-wire,tab:tests-jest-unit,tab:tests-adversarial}).
 
 The directory-immutability safeguards of \cref{ssec:design-detection} are implemented across these
 components rather than left to deployment. The write-once policy lives in the server's raw-label
@@ -222,15 +229,9 @@ but a malicious client could squat an as-yet-empty peer slot (\cref{ch:discussio
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
 \caption[Transition-audit state flow.]{The transition auditor's per-epoch state flow
-(\cref{alg:auditor}). A new head is signature-checked, then rejected outright on a rollback or an
-equal-size head with a different root. A grown head must first pass an append-only check: the auditor
-fetches and verifies an RFC~9162 consistency proof from its baseline to the new head, and fails closed
-(a latched alarm, with no replay) if that proof is missing, malformed or invalid. Only then does it
-fetch the declared transition, replay it into a scratch clone of its committed mirror (rejecting a
-duplicate insert (A1) or an immutable rotation (C2)), and compare the replayed root with the committed
-root: on a match it advances mirror, cursor and head atomically; on a mismatch it raises the
-transition-audit alarm. A same-size, same-root head is an idempotent re-poll and changes no state; a
-fetch failure discards the scratch state and retries without declaring a fork.}
+(\cref{alg:auditor}): each new head is signature- and consistency-checked before its declared
+transition is replayed into a scratch mirror and the roots compared, as described in the text above;
+every failure path fails closed.}
 \label{fig:impl-transition-audit}
 \end{figure}
 
@@ -354,23 +355,22 @@ first). This is the runtime realization of the verification chain of \cref{ssec:
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
-\Cref{fig:impl-e2e} gives the end-to-end account across the five roles: the normal
-registration--fetch--verify--audit path, and one compact attack branch. The live run below exercises
-it inside the real interface.
+\Cref{fig:impl-e2e} gives the end-to-end account across the five roles. In the normal path Alice
+registers and commits, Bob's verifier checks the proof chain and signed tree head, runs the own-key
+self-check, and reads an empty warning slot to return \textsc{safe}, while the auditor polls to
+\textsc{consistent}. In the A1b branch the server overwrites Alice's immutable dual-index slot: the
+client monitor reads the substituted key against the pinned key and raises a red \textsc{warning},
+and independently the auditor's transition replay rejects the declared immutable rotation, so
+detection does not rest on the client path alone. The live run below exercises it inside the real
+interface.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-e2e}
-\caption[End-to-end sequence across the five roles.]{End-to-end sequence across the five roles. Top
-(normal operation): Alice registers her key and commits; Bob's TS verifier fetches it, verifies the
-proof chain and signed tree head, runs the own-key self-check, and reads the empty warning slot to
-return \textsc{safe}; the auditor polls and replays to \textsc{consistent}. Bottom (A1b, overwrite of
-the immutable dual-index slot $\ell_A$): the server overwrites Alice's slot with Mallory's key; the
-client-visible path is a monitor tick that reads the substituted key against the pinned key, after
-which the verifier writes the shared warning slot and raises a red \textsc{warning}. Independently, the
-auditor's transition replay rejects the declared immutable rotation of the label (an
-\textsc{ImmutableRotation} alarm; \cref{fig:impl-transition-audit}), so detection does not rest on the
-client path alone.}
+\caption[End-to-end sequence across the five roles.]{End-to-end sequence across the five roles: the
+normal registration--fetch--verify--audit path (top) and the A1b immutable-slot overwrite (bottom),
+detected on both the client monitor path and the auditor's transition replay, as described in the
+text.}
 \label{fig:impl-e2e}
 \end{figure}
 
@@ -470,10 +470,10 @@ On the \textbf{Rust} side, the core is covered by unit tests run under \texttt{c
 The Merkle log is tested exhaustively (every inclusion proof and every $(m,n)$ consistency
 pair up to size 64, together with forgery attempts) so the RFC~9162 verifiers are checked
 against their full small-input space rather than on a handful of cases. The prefix tree is
-tested by recomputing the root from the compressed proof; the dual-index derivation against
-the cross-implementation HKDF vectors; the VRF against the RFC~9381 suite-\texttt{0x03}
-vectors; the server's signed tree head for correct acceptance and for rejection of a tampered
-or wrong-key signature, and the auditor for both honest audit and fork detection, including
+tested by recomputing the root from the compressed proof. The dual-index derivation is checked
+against the cross-implementation HKDF vectors, and the VRF against the RFC~9381 suite-\texttt{0x03}
+vectors. The server's signed tree head is tested for correct acceptance and for rejection of a tampered
+or wrong-key signature. The auditor is tested for both honest audit and fork detection, including
 the two cases that matter for soundness: that a genuine equivocation (one signer, two roots
 at one epoch) is reported as a fork, and that a divergent head with an invalid signature is
 correctly rejected rather than misclassified as a fork.

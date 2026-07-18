@@ -36,10 +36,10 @@ Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
 \end{tabular}
 \end{table}
 
-Methodology caveats recorded with the run: the server is in-memory (no network, no database); proof
-sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to $32\lceil\lg E\rceil$
-bytes to each lookup proof; memory is resident set size after build, not peak; and the operation-rate
-figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
+Several methodology caveats were recorded with the run. The server is in-memory, with no network and
+no database. Proof sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to
+$32\lceil\lg E\rceil$ bytes to each lookup proof. Memory is resident set size after build, not peak.
+The operation-rate figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
 portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to
 the hardware instruction at run time, so a host without it takes a software path for every hash, and
 the hash-bound operations (the prefix and full verify, detection, the M8 update, M9, and M13)
