@@ -601,15 +601,15 @@ extraction, which no key-transparency system addresses.
 
 \begin{table}[ht]
 \centering
-\caption{Threats, defending mechanisms, evidence, and outcome. Epoch counts in the Result column are the scripted one-action-per-epoch demonstration schedule (\cref{ssec:eval-timeline}), not protocol-wide latency bounds.}
+\caption[Threats, defending mechanisms, evidence, and outcome.]{Threats, defending mechanisms, evidence, and outcome. Epoch counts in the Result column are the scripted one-action-per-epoch demonstration schedule (\cref{ssec:eval-timeline}), not protocol-wide latency bounds.}
 \label{tab:eval-security}
 \footnotesize
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llp{4.6cm}l@{}}
+\begin{tabular}{@{}lp{3.6cm}p{4.4cm}l@{}}
 \toprule
 Attack & Mechanism (goal) & Evidence & Result \\
 \midrule
-A1/A3/A5 key substitution & dual-index warning (G1) & own-key self-check + shared warning slot; scenario suite (\cref{tab:impl-t5b}) & detected, 1--2 epochs \\
+A1/A3/A5 key substitution & proof-chain verification; identity re-fetch / predecessor cross-signature; dual-index self-check + warning (G1) & A1 self-check + warning; A3 forged response fails proof verification; A5 predecessor cross-signature rejection; scenario suite (\cref{tab:impl-t5b}) & detected, 1--2 epochs \\
 A2 warning censorship & self-check key mismatch + proof-verified warning absence (G1) & compound signal: key mismatch and proven non-inclusion of the warning; scenario A2 & detected \\
 A4 split-view equivocation & cross-vantage auditor (G4) & \SI{27.9}{\micro\second} per check; equivocation-detection test & detected, 1 epoch \\
 directory enumeration & ECVRF labels (G3) & RFC~9381 conformance vectors (\cref{sec:impl-tests}) & prevented \\
