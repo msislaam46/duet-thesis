@@ -126,7 +126,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
   \Req $\mathit{live}.\textsf{Lookup}(\mathit{label}).\mathit{value}=\bot$ \tcp*{write-once: occupied labels rejected (\cref{ssec:design-detection})}
-  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value},\textsc{immutable})$ \tcp*{dual-index/CEA: leaf hash $\Hleaf(\textsc{immutable}\concat\mathit{label}\concat\mathit{value})$; kind bound in}
+  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value},\textsc{immutable})$ \tcp*{dual-index/CEA leaf $\Hleaf(\textsc{immutable}\concat\mathit{label}\concat\mathit{value})$}
   record \textsf{Insert}$(\mathit{label},\mathit{value},\textsc{immutable})$ in the epoch's declared delta\;
 }
 \Fn{\normalfont\textsf{CommitEpoch}()}{
@@ -173,7 +173,8 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth},\mathit{PRK}$)}{
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}
   \lIf{$v=\bot$}{\KwRet \textsc{Safe}}
-  \lIf{$\textsf{MAC-Verify}(\textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32),v)$}{\KwRet \textsc{Alert} \tcp*[f]{authentic peer warning}}
+  $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$\;
+  \lIf{$\textsf{MAC-Verify}(k_{\mathrm{mac}},v)$}{\KwRet \textsc{Alert} \tcp*[f]{authentic peer warning}}
   \KwRet \textsc{Alert} \tcp*{unauthenticated data at an unpredictable slot: itself evidence of misbehaviour}
 }
 \end{algorithm}
