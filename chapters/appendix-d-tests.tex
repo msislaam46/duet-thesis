@@ -6,7 +6,7 @@ nine modules, the \num{8}-scenario adversarial integration suite, and \num{13} t
 \texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
 five \texttt{commit\_decision} transaction cases, and an end-to-end partial-fetch-failure test),
 \num{118} tests in total, run under \texttt{cargo test}; the TypeScript
-client is covered by \num{79} Jest tests in seven suites,
+client is covered by \num{91} Jest tests in eight suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
 complete listing follows. Tables are placed exactly where they are discussed.
@@ -166,7 +166,7 @@ Module & Test & Property checked \\
 % ----------------------------------------------------------------------------
 \section{TypeScript (Signal Desktop) Jest Suite}\label{sec:tests-ts}
 
-The embedded client is covered by \num{79} Jest tests in seven suites, of two kinds. The
+The embedded client is covered by \num{91} Jest tests in eight suites, of two kinds. The
 \emph{wire-parity} suite runs the full client verification chain against the live Rust server over
 the network; the \emph{integration} suite and the five \emph{unit} suites back a test double onto a
 real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF, and Ed25519 signer)
@@ -222,7 +222,7 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: client unit suites (\num{41} tests).}
+\caption{Jest tests: client unit suites (\num{55} tests).}
 \label{tab:tests-jest-unit}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}
@@ -273,6 +273,11 @@ Suite & Test \\
 \texttt{getKeysForServiceId\_status} & \texttt{error} $\to$ no status event, no \texttt{kt:verified} emission \\
 \texttt{getKeysForServiceId\_status} & \textsc{key\_not\_in\_log} never produces \texttt{kt:verified} \\
 \texttt{getKeysForServiceId\_status} & a thrown exception never produces \texttt{kt:verified} \\
+\midrule
+\texttt{decoder\_validation} & a well-formed \texttt{/search} response decodes; a non-object body is rejected \\
+\texttt{decoder\_validation} & inclusion path: non-array, non-hex element, and wrong-length element each rejected \\
+\texttt{decoder\_validation} & numeric fields (\texttt{leafIndex}, \texttt{treeSize}, \texttt{epoch}, \texttt{timestamp}) must be non-negative safe integers \\
+\texttt{decoder\_validation} & prefix proof: missing \texttt{kind} and non-array \texttt{siblings} rejected; bad-hex/short root and wrong-length signature rejected \\
 \bottomrule
 \end{tabular}
 \end{table}
