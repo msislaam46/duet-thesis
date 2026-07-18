@@ -517,9 +517,10 @@ surface than continuous mode; a production deployment still needs the hooks and 
 detects the post-compromise active man-in-the-middle that is ACKA's principal security guarantee, at a substantially higher log-write rate. The two are modes of one system, sharing
 the prefix tree, the log, the STH, and the warning channel; their cost is measured in
 \cref{ch:eval}. Two limitations remain and are stated explicitly. First, in the prototype the chained
-secret is advanced deterministically from the shared secret, and binding it to the real
-Double Ratchet root key is the same in-protocol hook left to future work as the production
-binding of the real $\sharedS$ (\cref{ch:discussion}). Second, the construction inherits ACKA's
+secret is advanced deterministically from the shared secret; a production binding would replace this
+simulated epoch input with Signal's live Double Ratchet chain key $ck$, obtained together with the
+public ratchet key $T_t$ at a DH-ratchet-step integration point, which is a distinct hook from the
+session-establishment capture of the initial shared secret $\sharedS$ (\cref{ch:discussion}). Second, the construction inherits ACKA's
 synchronous epoch model: the label chain advances in lockstep on both sides, so a ratchet message
 that is lost before the receiver processes its epoch would leave the two chains permanently
 divergent and every subsequent check failing. The Double Ratchet itself tolerates such loss through
