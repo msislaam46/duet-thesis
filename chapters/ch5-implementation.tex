@@ -134,12 +134,10 @@ crate from the bottom up: its state, the cryptography over it, and the binaries 
 \centering
 \input{figures/tikz/fig-impl-modules}
 \caption[Rust reference architecture by ownership.]{Internal architecture of the Rust reference
-implementation by ownership. The HTTP server exposes the directory service (\texttt{KTServer}), which
-builds authenticated answers from the sparse Merkle prefix tree (the current directory) and the
-append-only Merkle log (its history), resting on the ECVRF, the Ed25519 signer, and a shared SHA-256
-base. Dual-index derivation and continuous monitoring are client/reference components that call the
-server API; the auditor is an independent process that reaches the server only over HTTP and keeps its
-own mirror. Module names and specifications are in \cref{tab:impl-modules}.}
+implementation, grouped by ownership: the HTTP server core (\texttt{KTServer} over the prefix tree,
+Merkle log, ECVRF, Ed25519, and SHA-256), the client/reference components that call the server API,
+and an independent auditor that reaches the server only over HTTP and keeps its own mirror. Module
+names and specifications are in \cref{tab:impl-modules}.}
 \label{fig:impl-modules}
 \end{figure}
 
@@ -293,10 +291,9 @@ networked stack.
 \centering
 \input{figures/tikz/fig-impl-signal}
 \caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
-lifecycle hooks and surfaces verdicts to the badge and banner; it communicates over HTTP with
-the Rust server, which an independent auditor polls and a separate attacker drives
-through a privileged testing interface. The concrete hook functions and verdict-event names are
-listed in \cref{app:apiref}.}
+lifecycle hooks and surfaces verdicts to the badge and banner, over HTTP with the Rust server that
+an independent auditor polls and a testing interface drives. Hook functions and verdict-event names
+are listed in \cref{app:apiref}.}
 \label{fig:impl-signal}
 \end{figure}
 
@@ -345,12 +342,10 @@ reached, so a substituted key or a withheld warning cannot be silently accepted.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-verify}
-\caption[Per-lookup client--server verification exchange.]{The client--server exchange executed on each peer-key retrieval. The client requests a
-key; the server returns the value together with its prefix proof, log-inclusion proof, and signed
-tree head, and the client verifies all of these locally. It then reads the warning slot, whose
-proven (non-)inclusion decides between a clean verdict and a warning. Any failed check aborts
-before the verdict. This is the runtime realization of the verification chain of
-\cref{ssec:design-verify}.}
+\caption[Per-lookup client--server verification exchange.]{The client--server exchange on each peer-key retrieval: the server returns the value with its
+prefix, log-inclusion, and signed-tree-head proofs, all verified locally, and the warning slot's
+proven (non-)inclusion then decides between a clean verdict and a warning (any failed check aborts
+first). This is the runtime realization of the verification chain of \cref{ssec:design-verify}.}
 \label{fig:impl-verify}
 \end{figure}
 

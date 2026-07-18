@@ -1174,14 +1174,11 @@ resistance must extend to the keying material itself~\cite[p.~23]{dowling2023ack
 \centering
 \input{figures/tikz/fig-bg-acka}
 \caption[The three ACKA primitives composed as a pipeline]{The three primitives
-of ACKA composed as a pipeline. A continuous key agreement (CKA) supplies each
-epoch's public key-share to continuous entity authentication (CEA/CEAsec), which
-derives a per-epoch label and fingerprint and posts it to the secure log
-(Logsec); a receiver derives the same label, queries the log, and aborts on a
-colliding or absent fingerprint. Logsec is drawn dashed because the framework
-leaves it \emph{deliberately unspecified}: the Logsec-secure, append-only log it
-specifies but does not build. How this slot is filled is taken up in
-\cref{ch:design}.}
+of ACKA composed as a pipeline. CKA supplies each epoch's public ratchet key
+$T_t$ (which CEA authenticates) and secret input $I_t{=}ck_t$ (which updates the
+fingerprint) to CEA/CEAsec, which posts a per-epoch label and fingerprint to
+Logsec; Logsec is drawn dashed because ACKA specifies but does not build it
+(\cref{ch:design} fills this slot).}
 \label{fig:bg-acka}
 \end{figure}
 

@@ -566,9 +566,8 @@ complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are give
 \input{figures/tikz/fig-design-windowed}
 \caption[Windowed offline catch-up.]{Offline catch-up over a window $W = n-m$ epochs. The na\"ive approach verifies one
 consistency proof per missed epoch (upper arcs, $O(W\log n)$); the windowed approach requests
-a single RFC~9162 consistency proof spanning the previously trusted head $m$ and the current
-head $n$ (lower arc), whose size is bounded by $\lceil\log_2 m\rceil + \lceil\log_2 n\rceil$
-hashes, logarithmic in the log size rather than linear in $W$.}
+a single RFC~9162 consistency proof between the previously trusted head $m$ and the current
+head $n$ (lower arc), logarithmic in the log size rather than linear in $W$.}
 \label{fig:design-windowed}
 \end{figure}
 

@@ -1,17 +1,17 @@
 % fig-bg-acka.tex — extracted from ch2-background.tex
 % Label: \label{fig:bg-acka}
 \begin{tikzpicture}[>=Stealth, font=\small,
-   box/.style={draw, rounded corners, minimum width=27mm, minimum height=16mm,
+   box/.style={draw, rounded corners, minimum width=24mm, minimum height=16mm,
                align=center, inner sep=2pt},
-   open/.style={draw, densely dashed, rounded corners, minimum width=27mm,
+   open/.style={draw, densely dashed, rounded corners, minimum width=24mm,
                 minimum height=16mm, align=center, inner sep=2pt}]
-  \node[box]  (cka) at (0,0)   {\textbf{CKA}\\[2pt]\footnotesize continuous key\\ agreement (the ratchet)};
-  \node[box]  (cea) at (4.6,0) {\textbf{CEA\,/\,CEAsec}\\[2pt]\footnotesize per-epoch\\ label \& fingerprint};
-  \node[open] (log) at (9.2,0) {\textbf{Logsec}\\[2pt]\footnotesize append-only,\\ immutable log};
-  \draw[->] (cka) -- node[above,font=\footnotesize]{public $T_t$ (authenticate)}
-                     node[below,font=\footnotesize]{secret $I_t{=}ck_t$ (update)} (cea);
-  \draw[->] (cea) -- node[above,font=\footnotesize]{post\,/\,query}
-                     node[below,font=\footnotesize]{fingerprint} (log);
-  \node[align=center, text=black!55, font=\footnotesize] at (9.2,-1.7)
+  \node[box]  (cka) at (0,0)    {\textbf{CKA}\\[2pt]\footnotesize continuous key\\ agreement (the ratchet)};
+  \node[box]  (cea) at (5.4,0)  {\textbf{CEA\,/\,CEAsec}\\[2pt]\footnotesize per-epoch\\ label \& fingerprint};
+  \node[open] (log) at (10.6,0) {\textbf{Logsec}\\[2pt]\footnotesize append-only,\\ immutable log};
+  \draw[->] (cka) -- node[above,font=\scriptsize]{public $T_t$}
+                     node[below,font=\scriptsize]{secret $I_t{=}ck_t$} (cea);
+  \draw[->] (cea) -- node[above,font=\scriptsize]{post\,/\,query}
+                     node[below,font=\scriptsize]{fingerprint} (log);
+  \node[align=center, text=black!55, font=\footnotesize] at (10.6,-1.7)
        {\emph{deliberately unspecified}\\ \emph{(the open slot)}};
 \end{tikzpicture}
