@@ -1,24 +1,39 @@
-% fig-eval-attacktree.tex — extracted from ch6-evaluation.tex
-% Label: \label{fig:eval-attacktree}
+% fig-eval-attacktree.tex — AND/OR attack tree (reading Alice--Bob plaintext).
+% Reading plaintext requires BOTH interposing a key AND evading detection; the
+% evasion actions (A2 censorship, A4 equivocation) are not plaintext-reveal paths
+% on their own. Label: \label{fig:eval-attacktree}
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
-  goal/.style={draw,thick,rounded corners,fill=black!6,align=center,minimum height=9mm},
-  atk/.style={draw,rounded corners,draw=red!60!black,align=center,minimum height=8mm,minimum width=3.4cm},
-  det/.style={draw,rounded corners,draw=green!50!black,align=left,minimum height=8mm,minimum width=4.4cm,inner sep=4pt},
-  bnd/.style={draw,rounded corners,draw=orange!80!black,align=left,minimum height=8mm,minimum width=4.4cm,inner sep=4pt}]
-  \node[goal] (g) at (0,0) {Goal:\\read Alice--Bob\\plaintext};
-  \node[atk] (a1) at (4.2,3.3)  {A1 server substitution\\{\scriptsize T1565.002}};
-  \node[atk] (a2) at (4.2,2.0)  {A2 censor warning};
-  \node[atk] (a3) at (4.2,0.7)  {A3 network MitM\\{\scriptsize T1557}};
-  \node[atk] (a4) at (4.2,-0.6) {A4 fork / split-view};
-  \node[atk] (a5) at (4.2,-1.9) {A5 malicious rotation\\{\scriptsize T1565.002}};
-  \node[bnd] (x1) at (4.2,-3.2) {X1 endpoint compromise\\{\scriptsize T1552.004}};
-  \node[det] (o1) at (9.4,3.3)  {detected: self-check $\to$ warning};
-  \node[det] (o2) at (9.4,2.0)  {detected: compound signal};
-  \node[det] (o3) at (9.4,0.7)  {detected: label mismatch};
-  \node[det] (o4) at (9.4,-0.6) {detected: consistency + auditor};
-  \node[det] (o5) at (9.4,-1.9) {detected: identity re-fetch + warning};
-  \node[bnd] (o6) at (9.4,-3.2) {not detectable (KT boundary)};
-  \foreach \a in {a1,a2,a3,a4,a5,x1}{\draw[->,black!45] (g.east) -- (\a.west);}
-  \foreach \a/\o in {a1/o1,a2/o2,a3/o3,a4/o4,a5/o5,x1/o6}{\draw[->,black!45] (\a.east) -- (\o.west);}
-  \node[font=\itshape,text=black!55] at (2.1,-4.2) {any one path suffices (OR)};
+  goal/.style={draw,thick,rounded corners,fill=black!6,align=center,minimum height=8mm,inner sep=4pt},
+  gate/.style={draw,rounded corners,fill=blue!8,draw=blue!55!black,align=center,inner sep=3pt,font=\scriptsize\bfseries},
+  atk/.style={draw,rounded corners,draw=red!60!black,align=center,minimum height=8mm,minimum width=2.3cm,inner sep=3pt},
+  det/.style={font=\scriptsize,text=green!45!black,align=center},
+  oos/.style={draw,dashed,rounded corners,draw=orange!80!black,align=center,minimum height=7mm,inner sep=4pt}]
+
+  % goal and top AND gate
+  \node[goal] (g)    at (0,4.4) {Goal: read Alice--Bob plaintext};
+  \node[gate] (and0) at (0,3.2) {AND \textnormal{(both required)}};
+  \draw[->,black!45] (g) -- (and0);
+
+  % two sub-goals
+  \node[gate] (orA)  at (-4.2,2.0) {OR\textnormal{: interpose a key}};
+  \node[gate] (andB) at ( 4.2,2.0) {AND\textnormal{: evade detection}};
+  \draw[->,black!45] (and0) -- (orA);
+  \draw[->,black!45] (and0) -- (andB);
+
+  % interposition leaves (OR)
+  \node[atk] (a1) at (-6.6,0.4) {A1 server\\substitution\\{\tiny T1565.002}};
+  \node[atk] (a3) at (-4.2,0.4) {A3 network\\MitM\\{\tiny T1557}};
+  \node[atk] (a5) at (-1.8,0.4) {A5 malicious\\rotation\\{\tiny T1565.002}};
+  \foreach \n in {a1,a3,a5}{\draw[->,black!45] (orA) -- (\n);}
+  \node[det] at (-4.2,-1.2) {each detected on its own: self-check,\\label mismatch, or identity re-fetch $\to$ warning};
+
+  % evasion leaves (AND)
+  \node[atk] (a2) at (2.6,0.4) {A2 suppress\\warning};
+  \node[atk] (a4) at (5.8,0.4) {A4 equivocate /\\hide from auditor};
+  \draw[->,black!45] (andB) -- (a2);
+  \draw[->,black!45] (andB) -- (a4);
+  \node[det] at (4.2,-1.2) {each detected: compound suppression\\signal (A2), consistency + auditor (A4)};
+
+  % out of scope
+  \node[oos] (x1) at (0,-2.6) {X1 endpoint compromise: outside the KT trust boundary, not detectable (T1552.004)};
 \end{tikzpicture}

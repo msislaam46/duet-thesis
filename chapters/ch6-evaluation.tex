@@ -678,16 +678,22 @@ write-once policy, the per-epoch transition audit, and the writer's persistence 
 \subsection{Attack Tree}\label{ssec:eval-attacktree}
 
 \Cref{fig:eval-attacktree} places the scenarios under the adversary's ultimate goal: reading a
-conversation. Because any single path suffices, the figure makes the coverage claim visually: every
-single-mechanism path terminates in a key-transparency control, and only the endpoint-compromise
-boundary X1 escapes, exactly as scoped in \cref{ch:threat}.
+conversation. Reading plaintext requires \emph{both} interposing a key (any one of the substitution,
+network-MitM, or malicious-rotation routes) \emph{and} evading detection (suppressing the dual-index
+warning and hiding the divergence from the cross-vantage auditor): censorship or equivocation alone
+reveals nothing. The figure makes the coverage claim visually: each interposition route is detected on
+its own by a key-transparency control, and the two evasion actions are themselves detectable, so the
+compromise cannot both succeed and stay hidden. Only the endpoint-compromise boundary X1 escapes,
+exactly as scoped in \cref{ch:threat}.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-attacktree}
-\caption[Attack tree for reading a conversation.]{Attack tree for the goal of reading a conversation. Each leaf names the key-transparency
-control that answers the attack and the corresponding MITRE ATT\&CK technique; every single-mechanism
-path is detected or prevented except the endpoint-compromise boundary X1.}
+\caption[Attack tree for reading a conversation.]{AND/OR attack tree for reading a conversation: the
+adversary must interpose a key (an OR over the substitution, MitM, and rotation routes) \emph{and}
+evade detection (suppress the warning and hide from the auditor). Each interposition route is answered
+by a key-transparency control and tagged with its MITRE ATT\&CK technique; the evasion actions are
+themselves detectable. Only the endpoint-compromise boundary X1 is out of scope.}
 \label{fig:eval-attacktree}
 \end{figure}
 

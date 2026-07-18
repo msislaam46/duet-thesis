@@ -133,12 +133,13 @@ crate from the bottom up: its state, the cryptography over it, and the binaries 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-modules}
-\caption{Internal architecture of the Rust reference implementation. The HTTP server exposes the
-directory service, which builds authenticated answers from the sparse Merkle prefix tree (the
-current directory), the append-only Merkle log (its history), and the dual-index derivation, all
-resting on the ECVRF, the Ed25519 signer, and a shared SHA-256 base; continuous monitoring is a peer
-service, and the auditor runs as an independent process that reaches the server only over HTTP. Exact
-module names and their specifications are in \cref{tab:impl-modules}.}
+\caption[Rust reference architecture by ownership.]{Internal architecture of the Rust reference
+implementation by ownership. The HTTP server exposes the directory service (\texttt{KTServer}), which
+builds authenticated answers from the sparse Merkle prefix tree (the current directory) and the
+append-only Merkle log (its history), resting on the ECVRF, the Ed25519 signer, and a shared SHA-256
+base. Dual-index derivation and continuous monitoring are client/reference components that call the
+server API; the auditor is an independent process that reaches the server only over HTTP and keeps its
+own mirror. Module names and specifications are in \cref{tab:impl-modules}.}
 \label{fig:impl-modules}
 \end{figure}
 
