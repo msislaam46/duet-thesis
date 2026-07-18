@@ -360,18 +360,19 @@ validly signed at all, an availability or transport fault rather than evidence o
     $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$ \tcp*{replays into scratch; does not commit to mirror}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
-  \tcc{Cross-vantage fork check and any additional stages run here (omitted for brevity)}
-  \If{$\mathit{complete}$ \emph{and} no fork detected}{
-    $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$ \tcp*{single all-or-nothing commit}
+  $\mathit{forkFree}\gets \textbf{true}$ \tcp*{cross-vantage check}
+  \lForEach{peer-vantage head $\mathit{sth_{other}}$ available}{\lIf{$\textsf{DetectFork}(\mathit{sth_{other}})\ne\textsc{Consistent}$}{$\mathit{forkFree}\gets \textbf{false}$}}
+  \If{$\mathit{complete}$ \emph{and} $\mathit{forkFree}$}{
+    $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$ \tcp*{atomic commit}
   }
 }
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
   \Req $\pi_{\mathrm{incl}}$ binds $r_{e}$ to leaf $e$ of the log the validated STH signs\;
-  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$ \tcp*[f]{A1: an insert targets an absent label, else an overwrite disguised as an insert}}
-  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$ \tcp*[f]{reject immutable rotation / kind-misdeclaration / wrong prior value}}
-  $r'\gets$ root after applying $\mathit{ops}_e$ to $\mathit{scratch}$ \tcp*{leaves hash as $\Hleaf(\mathit{kind}\concat\ell\concat v)$}
-  \Req $r'=r_{e}$ \tcp*{exact transition; on failure the caller discards the scratch entirely}
+  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$ \tcp*[f]{insert targets an absent label}}
+  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$ \tcp*[f]{mutable leaf, prior value matches}}
+  $r'\gets$ root after applying $\mathit{ops}_e$ to $\mathit{scratch}$\;
+  \Req $r'=r_{e}$ \tcp*{replayed root must equal committed root}
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
   \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$}{\KwRet \textsc{InvalidHead} \tcp*[f]{second vantage's head is not validly signed: transport/availability fault, not a fork}}

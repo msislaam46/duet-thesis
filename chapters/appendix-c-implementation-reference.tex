@@ -122,8 +122,9 @@ The implementation is organized as follows:
   harness.
   \item \texttt{demo/}: the server, auditor, and attacker orchestration together with
   the served visualization and threat-model pages.
-  \item \texttt{signal-desktop/ts/kt/}: the embedded TypeScript client (mirrored
-  byte-for-byte by the standalone \texttt{signal-desktop-kt/} package).
+  \item \texttt{signal-desktop/ts/kt/}: the embedded TypeScript client, whose eight core
+  verifier modules are mirrored byte-for-byte by the standalone \texttt{signal-desktop-kt/}
+  package (integration wiring and test scaffolding differ between the two).
 \end{itemize}
 
 The system is driven by single commands: \texttt{cargo test} and \texttt{cargo bench}, run from

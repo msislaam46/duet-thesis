@@ -361,15 +361,17 @@ The measured constancy of prefix verification across five orders of magnitude ($
 \SI{25.9}{\micro\second} at $10^3$ and \SI{26.0}{\micro\second} at $10^7$, is strong empirical
 evidence that the tree walk is bounded by the fixed \num{256}-level height rather than by $N$. Full client
 verification is not quite as flat: its median reads \SI{131.9}{\micro\second} at $10^6$ and
-\SI{147.1}{\micro\second} at $10^7$ (direct \texttt{m7\_scale\_verification} medians, measured at
-scale), against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at $N\le10^4$
-(\cref{tab:eval-latency}). Read end to end, the full check therefore rises by roughly \num{15}\,\%
-(about \SI{19}{\micro\second}) while $N$ grows by four orders of magnitude. That residue is not
-tree-depth: the two components that could carry it, the prefix walk and the constant-time VRF, are
-themselves flat across the same range. Part is the wider proof at depth~24 and part is the change of
-measurement context between the two harnesses (\cref{sec:eval-method}); the run does not separate
-them. The claim the data supports is that the check grows far more slowly than the directory, not that
-it is invariant. The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
+\SI{147.1}{\micro\second} at $10^7$. These M7 figures are medians of the randomized \num{1000}-lookup
+distribution recorded to the CSV, whose proof shape varies with the sampled label; the fixed-target
+Criterion group, which repeatedly times a single fixed lookup path, is exploratory and is not the
+reported scale figure. Against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at
+$N\le10^4$ (\cref{tab:eval-latency}), the full check rises by roughly \num{15}\,\%
+(about \SI{19}{\micro\second}) while $N$ grows by four orders of magnitude. The two components that
+could carry a depth-driven increase, the prefix walk and the constant-time VRF, are themselves flat
+across the same range, so the residual is not a tree-depth effect. The experiment does not isolate its
+source; possible contributors include the larger proof representation and differences between the two
+measurement contexts (\cref{sec:eval-method}). The claim the data supports is that the check grows far
+more slowly than the directory, not that it is invariant. The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
 tree takes about 26 minutes and leaves a \SI{20.8}{\giga\byte} resident set, which is why a production
 deployment would move to the persistent, sharded storage this prototype deliberately does not model.
 $^{\dagger}$The $10^7$ full-search 95th percentile of \SI{2404.5}{\micro\second} (an order of magnitude

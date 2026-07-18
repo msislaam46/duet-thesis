@@ -79,10 +79,10 @@ sits at depth~23 (913\,B). The distribution median over \num{1000} random lookup
 \begin{table}[ht]
 \centering
 \caption[M4: catch-up consistency-path hash bytes.]{M4: catch-up, raw consistency-path hash bytes (serialized bandwidth not measured):
-synthetic current-head-anchored sequential baseline versus windowed; identical for
-$N\in\{10^3,10^4,10^5\}$ because over this range the windowed proof size is set by the window
-$W$, and its weak (logarithmic) dependence on $N$ does not change the hash count
-(\cref{lem:windowed-size}). It is not strictly $N$-independent.}
+synthetic current-head-anchored sequential baseline versus windowed; identical across
+$N\in\{10^3,10^4,10^5\}$ because the windowed proof is taken over the epoch log (one leaf per
+committed epoch) and its size depends on the window $W$ through the epoch-log endpoints, not on
+the directory's user count $N$ (\cref{lem:windowed-size}).}
 \label{tab:bench-m4}
 \small
 \begin{tabular}{@{}rrrr@{}}
@@ -310,9 +310,9 @@ and must reproduce byte-for-byte; timings reproduce within noise.
 groups and CSV keys below are frozen provenance identifiers and retain some historical names: in
 particular, \texttt{windowed\_full\_client\_verify} does not time a catch-up proof (it is the M3 full
 signed-head lookup verification), \texttt{M8\_throughput} records per-operation latencies from which a
-single-thread rate is derived, and \texttt{M11\_handshake\_overhead} times the KT verification cost
-added per handshake (one full signed-head client verify), not an end-to-end handshake with X3DH,
-network, and session setup.
+single-thread rate is derived, and \texttt{M11\_handshake\_overhead} measures one complete signed-head
+KT lookup verification invoked at the handshake hook, excluding X3DH/PQXDH, network transfer, session
+establishment, and the remainder of the messaging-client handshake.
 
 \begin{table}[ht]
 \centering
