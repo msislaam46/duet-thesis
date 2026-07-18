@@ -162,11 +162,11 @@ M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 & 0.16 \\
 \end{table}
 
 \medskip\noindent\emph{Operation rates and maintenance (M8--M11): latency-derived single-thread rates, key
-rotation and epoch commit, the VRF in isolation, and the per-handshake client overhead.}
+rotation and epoch commit, the VRF in isolation, and the KT lookup-verification cost at the handshake hook.}
 
 \begin{table}[ht]
 \centering
-\caption{M8--M11: latency-derived single-thread rates, rotation, epoch commit, VRF, and the handshake-hook verification cost.}
+\caption{M8--M11: latency-derived single-thread rates, rotation, epoch commit, VRF, and the KT lookup-verification cost at the handshake hook.}
 \label{tab:bench-maint}
 \small
 \begin{tabular}{@{}llrrr@{}}
@@ -181,8 +181,8 @@ M9 epoch commit (windowed)           & $10^3$ & 464.0 & 486.5 & 2.12 \\
 M9 epoch commit (windowed)           & $10^4$ & 5915.7 & 7056.6 & 67.76 \\
 M10 VRF prove (isolated)             &        & 117.4 & 122.3 & 0.90 \\
 M10 VRF verify (isolated)            &        & 78.5  & 89.9  & 0.68 \\
-M11 KT lookup-verification at handshake hook (windowed baseline)    & $10^3$ & 128.1 & 144.4 & 0.73 \\
-M11 KT lookup-verification at handshake hook (windowed baseline)    & $10^4$ & 128.6 & 152.0 & 0.90 \\
+M11 KT lookup-verification cost at the handshake hook (windowed baseline)    & $10^3$ & 128.1 & 144.4 & 0.73 \\
+M11 KT lookup-verification cost at the handshake hook (windowed baseline)    & $10^4$ & 128.6 & 152.0 & 0.90 \\
 \bottomrule
 \end{tabular}
 \end{table}
