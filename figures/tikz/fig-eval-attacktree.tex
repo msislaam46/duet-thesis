@@ -25,7 +25,7 @@
   \foreach \n in {a1,a3,a5}{\draw[->,black!45] (orG) -- (\n);}
   \node[det] (d1) at (-6.4,0.3) {victim pinned-key self-check $\to$ warning};
   \node[det] (d3) at (-3.7,0.3) {forged key fails the proof under the signed head};
-  \node[det] (d5) at (-1.0,0.3) {immutable-rotation audit rejects the overwrite};
+  \node[det] (d5) at (-1.0,0.3) {identity re-fetch: predecessor cross-signature fails $\to$ warning};
   \foreach \a/\d in {a1/d1,a3/d3,a5/d5}{\draw[->,green!45!black,dashed] (\a) -- (\d);}
 
   % concealment attempts (right): the attacker's defences, each also detected
@@ -35,7 +35,7 @@
   \draw[->,black!45] (chead) -- (a2);
   \draw[->,black!45] (chead) -- (a4);
   \node[det] (d2) at (3.1,0.3) {compound signal: mismatch + proof-verified warning absence};
-  \node[det] (d4) at (5.9,0.3) {cross-vantage auditor: consistency proof fails};
+  \node[det] (d4) at (5.9,0.3) {cross-vantage comparison: same epoch, different signed roots $\to$ fork};
   \foreach \a/\d in {a2/d2,a4/d4}{\draw[->,green!45!black,dashed] (\a) -- (\d);}
 
   % out of scope

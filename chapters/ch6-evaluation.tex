@@ -601,7 +601,7 @@ extraction, which no key-transparency system addresses.
 
 \begin{table}[ht]
 \centering
-\caption{Threats, defending mechanisms, evidence, and outcome.}
+\caption{Threats, defending mechanisms, evidence, and outcome. Epoch counts in the Result column are the scripted one-action-per-epoch demonstration schedule (\cref{ssec:eval-timeline}), not protocol-wide latency bounds.}
 \label{tab:eval-security}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -610,7 +610,7 @@ extraction, which no key-transparency system addresses.
 Attack & Mechanism (goal) & Evidence & Result \\
 \midrule
 A1/A3/A5 key substitution & dual-index warning (G1) & own-key self-check + shared warning slot; scenario suite (\cref{tab:impl-t5b}) & detected, 1--2 epochs \\
-A2 warning censorship & per-lookup signed-head binding; write-once labels + transition audit (\cref{ssec:design-detection}) & signature checked inside every \SI{128}{\micro\second} verify (\cref{ssec:eval-latency}) & detected \\
+A2 warning censorship & self-check key mismatch + proof-verified warning absence (G1) & compound signal: key mismatch and proven non-inclusion of the warning; scenario A2 & detected \\
 A4 split-view equivocation & cross-vantage auditor (G4) & \SI{27.9}{\micro\second} per check; equivocation-detection test & detected, 1 epoch \\
 directory enumeration & ECVRF labels (G3) & RFC~9381 conformance vectors (\cref{sec:impl-tests}) & prevented \\
 X1 key extraction & None (out of scope) & no KT system addresses it & n/a \\

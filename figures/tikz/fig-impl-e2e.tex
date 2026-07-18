@@ -30,7 +30,7 @@
   % ---- attack branch ----
   \node[act,draw=red!60!black,anchor=east,font=\tiny] at (8.05,-6.9) {server substitutes $\ell_A \to$ Mallory};
   \draw[red] (11.4,-7.3) -- node[above,font=\tiny]{poll STH $+$ delta} (8.3,-7.3);
-  \node[act,anchor=north,draw=red!60!black,font=\tiny,align=center] at (11.2,-7.55) {replay: undeclared\\overwrite $\to$ alarm};
+  \node[act,anchor=north,draw=red!60!black,font=\tiny,align=center] at (11.2,-7.55) {replay: declared immutable\\rotation $\to$ reject};
   \draw[m] (5.0,-7.9) -- node[above]{monitor tick: search $\ell_A$} (8.3,-7.9);
   \draw[red] (8.3,-8.6) -- node[above]{Mallory's key} (5.0,-8.6);
   \node[act,anchor=north,draw=red!60!black] at (5.0,-8.9) {pinned-key mismatch};

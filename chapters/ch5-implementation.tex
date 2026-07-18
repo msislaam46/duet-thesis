@@ -368,8 +368,9 @@ return \textsc{safe}; the auditor polls and replays to \textsc{consistent}. Bott
 the immutable dual-index slot $\ell_A$): the server overwrites Alice's slot with Mallory's key; the
 client-visible path is a monitor tick that reads the substituted key against the pinned key, after
 which the verifier writes the shared warning slot and raises a red \textsc{warning}. Independently, the
-auditor's transition replay flags the undeclared overwrite of the immutable label as an alarm
-(\cref{fig:impl-transition-audit}), so detection does not rest on the client path alone.}
+auditor's transition replay rejects the declared immutable rotation of the label (an
+\textsc{ImmutableRotation} alarm; \cref{fig:impl-transition-audit}), so detection does not rest on the
+client path alone.}
 \label{fig:impl-e2e}
 \end{figure}
 
