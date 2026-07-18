@@ -57,10 +57,10 @@ M4  & Offline catch-up bandwidth vs.\ $W$      & na\"ive vs windowed         & \
 M5  & Marginal warning-slot lookup cost        & dual-index                 & \cref{ssec:eval-detection} \\
 M6  & Clean-session false-positive rate        & None                       & \cref{ssec:eval-detection} \\
 M7  & Size + verify at scale ($10^6,10^7$)    & dual-index, windowed       & \cref{ssec:eval-scale} \\
-M8  & Single-thread throughput                 & dual-index                 & \cref{ssec:eval-throughput} \\
+M8  & Latency-derived single-thread op rate    & dual-index                 & \cref{ssec:eval-throughput} \\
 M9  & Key rotation + epoch-commit cost         & dual-index, windowed       & \cref{ssec:eval-throughput} \\
 M10 & VRF prove/verify in isolation            & None                       & \cref{ssec:eval-throughput} \\
-M11 & Added client cost per handshake          & vs no-KT floor             & \cref{ssec:eval-throughput} \\
+M11 & KT lookup-verify cost at handshake hook  & vs no-KT floor             & \cref{ssec:eval-throughput} \\
 M12 & Local signature/consistency kernel + one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
 M13 & Session vs continuous mode               & session vs continuous      & \cref{ssec:eval-modes} \\
 \bottomrule

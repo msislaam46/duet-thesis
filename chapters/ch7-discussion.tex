@@ -118,8 +118,8 @@ rejected the instant it fails to chain. The residual here is not a client-side g
 limitation already stated above: a \emph{fully consistent} split-world, whose branches each chain from
 a shared prefix, cannot be detected by any lone client and relies on the cross-vantage auditor.
 
-\paragraph{Formal Status.} The security argument is a narrative one supported by experiment
-definitions and the adversarial scenario suite, not a complete cryptographic reduction. A combined
+\paragraph{Formal Status.} The security argument is an informal proof sketch supported by explicit experiment
+definitions and the adversarial scenario suite; it is not a complete cryptographic reduction. A combined
 ``dual-CEAsec'' game and its reduction to collision resistance and VRF pseudorandomness are stated as
 an obligation rather than discharged. A further practical limitation is warning-channel abuse: a
 malicious peer can write spurious warnings, a relationship-scoped false-positive nuisance. The

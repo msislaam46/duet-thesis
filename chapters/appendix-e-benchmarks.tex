@@ -130,8 +130,8 @@ M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.2  & 0.36 \\
 M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.1  & 0.36 \\
 M3 VRF verify (dual-index)           & $10^3$ & 76.0  & 92.0  & 0.76 \\
 M3 VRF verify (dual-index)           & $10^4$ & 76.0  & 92.0  & 0.76 \\
-\textbf{M3 full client verify (windowed)} & $10^3$ & \textbf{128.1} & 144.4 & 0.73 \\
-\textbf{M3 full client verify (windowed)} & $10^4$ & \textbf{128.6} & 152.0 & 0.90 \\
+\textbf{M3 full signed-head lookup verify (windowed)} & $10^3$ & \textbf{128.1} & 144.4 & 0.73 \\
+\textbf{M3 full signed-head lookup verify (windowed)} & $10^4$ & \textbf{128.6} & 152.0 & 0.90 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -166,7 +166,7 @@ rotation and epoch commit, the VRF in isolation, and the per-handshake client ov
 
 \begin{table}[ht]
 \centering
-\caption{M8--M11: throughput, rotation, epoch commit, VRF, and handshake overhead.}
+\caption{M8--M11: single-thread op rates, rotation, epoch commit, VRF, and handshake-hook verify cost.}
 \label{tab:bench-maint}
 \small
 \begin{tabular}{@{}llrrr@{}}
@@ -181,8 +181,8 @@ M9 epoch commit (windowed)           & $10^3$ & 464.0 & 486.5 & 2.12 \\
 M9 epoch commit (windowed)           & $10^4$ & 5915.7 & 7056.6 & 67.76 \\
 M10 VRF prove (isolated)             &        & 117.4 & 122.3 & 0.90 \\
 M10 VRF verify (isolated)            &        & 78.5  & 89.9  & 0.68 \\
-M11 handshake overhead (windowed)    & $10^3$ & 128.1 & 144.4 & 0.73 \\
-M11 handshake overhead (windowed)    & $10^4$ & 128.6 & 152.0 & 0.90 \\
+M11 handshake-hook verify (windowed)    & $10^3$ & 128.1 & 144.4 & 0.73 \\
+M11 handshake-hook verify (windowed)    & $10^4$ & 128.6 & 152.0 & 0.90 \\
 \bottomrule
 \end{tabular}
 \end{table}

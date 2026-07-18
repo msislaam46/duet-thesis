@@ -593,11 +593,11 @@ pinned-key lookups at the dual-index slots (\cref{ssec:design-detection}) and, o
 to the shared warning slot. Under the write-once policy, transition audit, and persistence check of
 \cref{ssec:design-detection}, that warning outlives the attack, and the returning client's catch-up
 procedure reads the warning slot in the same synchronization exchange, so the transient substitution
-leaves a durable, in-band trace that the windowed client does see. Windowed catch-up is therefore
-sound in this design \emph{because} the peer-writable, persistent warning channel exists; in a
-directory without such a channel (CONIKS's, for instance), the same windowing would weaken
-detection exactly as CONIKS's authors argue. This soundness is conditional on the warning committing:
-a monitoring victim or a pinned peer must detect the substitution and successfully write the warning.
+leaves a durable, in-band trace that the windowed client does see. Windowed catch-up therefore
+preserves detection \emph{only when the warning commits}: if a monitoring victim or a pinned peer
+detects the substitution and successfully writes it, the peer-writable, persistent warning channel
+leaves a durable trace that survives the attack; in a directory without such a channel (CONIKS's,
+for instance), the same windowing would weaken detection exactly as CONIKS's authors argue.
 If the server censors that write within the window (the A2 threat of \cref{ch:threat}), the endpoint
 consistency proof still establishes append-only consistency and cuts catch-up bandwidth, but it does
 not by itself exclude every transient in-window substitution; the write-once, transition-audit, and
