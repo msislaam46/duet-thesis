@@ -8,7 +8,8 @@
   \node[box]  (cka) at (0,0)   {\textbf{CKA}\\[2pt]\footnotesize continuous key\\ agreement (the ratchet)};
   \node[box]  (cea) at (4.6,0) {\textbf{CEA\,/\,CEAsec}\\[2pt]\footnotesize per-epoch\\ label \& fingerprint};
   \node[open] (log) at (9.2,0) {\textbf{Logsec}\\[2pt]\footnotesize append-only,\\ immutable log};
-  \draw[->] (cka) -- node[above,font=\footnotesize]{key-share} (cea);
+  \draw[->] (cka) -- node[above,font=\footnotesize]{public $T_t$ (authenticate)}
+                     node[below,font=\footnotesize]{secret $I_t{=}ck_t$ (update)} (cea);
   \draw[->] (cea) -- node[above,font=\footnotesize]{post\,/\,query}
                      node[below,font=\footnotesize]{fingerprint} (log);
   \node[align=center, text=black!55, font=\footnotesize] at (9.2,-1.7)

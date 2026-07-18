@@ -10,8 +10,8 @@
   \draw[dashed] (s.south) -- (7.4,-6.6);
   % request key
   \draw[->] (0,-0.9) -- node[above,font=\scriptsize]{request key at label $\ell$} (7.4,-0.9);
-  % response
-  \draw[<-] (0,-1.8) -- node[below,font=\scriptsize]{value $\,+\,$ prefix proof $\,+\,$ log-inclusion proof $\,+\,$ signed STH} (7.4,-1.8);
+  % response (label above the arrow, shortened, so it clears the lifeline + block)
+  \draw[<-] (0,-2.0) -- node[above,font=\scriptsize]{value $+$ proof chain $+$ signed STH} (7.4,-2.0);
   % client-side verification
   \node[act] at (0,-3.05)
      {verify STH signature\\recompute + verify prefix proof\\verify log inclusion\\(and VRF binding on the global path)};
