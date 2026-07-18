@@ -103,7 +103,11 @@ commit uses an $O(N)$ deep-clone snapshot with a transient memory spike, measure
 \cref{ch:eval} and reducible to $O(\log N)$ by structural sharing (below). The Signal Desktop
 integration carries two proof-of-concept stand-ins, both flagged in \cref{ch:impl}: the
 per-conversation shared secret is a deterministic stand-in rather than the live X3DH secret, and
-continuous mode is driven by a seeded simulated ratchet rather than the client's live one. Neither
+continuous mode is driven by a seeded simulated ratchet rather than the client's live one. That
+simulation, specifically, folds the raw ratchet Diffie--Hellman output as its epoch secret $I_t$,
+where ACKA's Signal mapping (their Table~2) specifies $I_t = ck$, the derived chain key; so DUET
+implements the ACKA CEA state transition but simulates that Signal-specific epoch-secret mapping, and
+a faithful instantiation bridges the live Double-Ratchet chain key $ck$ from libsignal. Neither
 changes the construction being exercised, but both must be replaced before the unlinkability and
 active-MitM guarantees hold against a real adversary rather than a simulated one. Finally, the
 networked client ties every search-time signed tree head into one append-only chain: the head is

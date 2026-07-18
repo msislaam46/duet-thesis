@@ -1107,7 +1107,7 @@ leaving abstract exactly the component, a secure log, that key transparency
 supplies. We first define its primitives, taking care to define a continuous key
 agreement before using it; then we set out its adversary model and how it differs
 from the malicious-server adversary that the verifiable key directories of
-\cref{sec:bg-vkd} are built to resist, and then we state the bridge, which turns
+\cref{sec:bg-vkd} are built to resist, and then we state the reconciliation, which turns
 on a question ACKA itself poses.
 
 Before ACKA can be stated, the object it authenticates must be named. A
@@ -1146,7 +1146,7 @@ deliberately open.
 
 The adversary ACKA defends against is different from, and along its own axis
 stronger than, the malicious-server adversary of the VKD line, and that
-difference is the crux of the bridge. ACKA's adversary is a full-compromise
+difference is the crux of the reconciliation. ACKA's adversary is a full-compromise
 active man-in-the-middle on the \emph{channel}: it may learn the pre-shared
 secret state, control the sender's randomness, and actively inject its own forged
 ratchet key-share~\cite[pp.~19--20]{dowling2023acka}, and, per Remark~4, may even

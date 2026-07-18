@@ -183,7 +183,11 @@ observable. A2 also covers the stronger, delayed form of censorship: a server th
 first commits the warning and then removes it in a later epoch. Such a deletion is
 inexpressible in the epoch's declared update set, so it diverges the auditor's
 transition replay, and the warning's writer retains the proofs that turn the
-disappearance into publishable evidence (\cref{ch:design}).
+disappearance into publishable evidence (\cref{ch:design}). For an \emph{offline} client relying on
+windowed catch-up, detection is therefore conditional: the endpoint proof establishes append-only
+consistency, but it flags an in-window substitution only if the warning committed and survived to the
+catch-up read (\cref{ssec:design-catchup}). A transient substitution whose warning write is dropped
+within the window and then reverted is the residual this conditionality names.
 
 \paragraph{A3: Network Man-in-the-Middle.} With no server collusion, a
 Dolev--Yao adversary substitutes a key in the bundle in transit. The two parties

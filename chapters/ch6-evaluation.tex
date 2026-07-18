@@ -446,7 +446,7 @@ the compute floor of the audit, not the end-to-end cost of the protocol.
 
 The design offers two operating modes (\cref{ssec:design-modes}): session mode writes one directory
 entry per signed-pre-key rotation, and continuous mode writes one per ratchet epoch for finer-grained,
-ACKA-faithful detection. The cost of that granularity is not verification time. A per-check operation
+ACKA CEA-style detection. The cost of that granularity is not verification time. A per-check operation
 costs \SI{27.2}{\micro\second} in session mode and \SI{27.5}{\micro\second} in continuous mode (medians, \cref{app:benchmarks}; both include
 server-side proof generation). The two medians differ by \SI{0.3}{\micro\second}, and no ordering
 conclusion is drawn from that gap: the $\pm$ column is a confidence half-width of the \emph{mean}
@@ -758,7 +758,7 @@ in-memory prototype deliberately does not model.
 
 Finally, the two operating modes bound the deployment choice rather than forcing it. Session mode is
 the deployable default (one directory write per signed-pre-key rotation, at parity with existing
-key-transparency systems) while continuous mode offers finer-grained, ACKA-faithful detection at a
+key-transparency systems) while continuous mode offers finer-grained, ACKA CEA-style detection at a
 write amplification of $\approx 720\times$ under the hourly-epoch benchmark model. The ratio scales
 with ratchet cadence rather than sitting at a fixed cap (\cref{ssec:eval-modes}). The measured
 verification path meets the latency target, but the $O(N)$ epoch commit, the memory footprint,
