@@ -79,7 +79,7 @@ overcome end to end.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-overview}
-\caption{The implemented system. A TypeScript client embedded in Signal Desktop verifies keys
+\caption[The implemented system.]{The implemented system. A TypeScript client embedded in Signal Desktop verifies keys
 against the Rust reference implementation, the standalone server that holds all server-side
 components, over HTTP; an independent auditor polls the signed tree head and consistency proofs.
 The client and the Rust implementation are held to byte-for-byte agreement by shared test vectors;
@@ -292,7 +292,7 @@ networked stack.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-signal}
-\caption{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
+\caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
 lifecycle hooks and surfaces verdicts to the badge and banner; it communicates over HTTP with
 the Rust server, which an independent auditor polls and a separate attacker drives
 through a privileged testing interface. The concrete hook functions and verdict-event names are
@@ -345,7 +345,7 @@ reached, so a substituted key or a withheld warning cannot be silently accepted.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-verify}
-\caption{The client--server exchange executed on each peer-key retrieval. The client requests a
+\caption[Per-lookup client--server verification exchange.]{The client--server exchange executed on each peer-key retrieval. The client requests a
 key; the server returns the value together with its prefix proof, log-inclusion proof, and signed
 tree head, and the client verifies all of these locally. It then reads the warning slot, whose
 proven (non-)inclusion decides between a clean verdict and a warning. Any failed check aborts
@@ -394,7 +394,7 @@ clients.
 \centering
 \screenshotplaceholder{\textwidth}{figures/ui-dualindex-self.png}\\[8pt]
 \screenshotplaceholder{\textwidth}{figures/ui-dualindex-contact.png}
-\caption{The dual-index warning firing across two real, linked Signal Desktop clients (scenario A1b).
+\caption[Dual-index warning on both clients (A1b).]{The dual-index warning firing across two real, linked Signal Desktop clients (scenario A1b).
 \emph{Top:} the victim; \emph{bottom:} the peer. Both raise the red Key Transparency banner, and the
 DevTools console beside each shows the victim's \texttt{WRITE warning slot} and the peer's
 \texttt{READ warning slot} at the \emph{identical} label: the bidirectional detection across the two
@@ -417,7 +417,7 @@ produces a conflicting per-epoch fingerprint and the same warning fires.}
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-consistent.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
-\caption{The cross-vantage auditor distinguishes substitution from equivocation. Left: during the
+\caption[Auditor: substitution vs equivocation.]{The cross-vantage auditor distinguishes substitution from equivocation. Left: during the
 substitution attacks above it keeps logging \textsc{consistent} (append-only verified), confirming
 the server did not fork. Right: under a staged equivocation (scenario A4) it raises
 \textsc{alarm: fork}, carrying the two validly-signed divergent roots as evidence.}
@@ -459,7 +459,7 @@ specification conformance up to the end-to-end scenarios and performance benchma
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-testing}
-\caption{The testing pipeline: specification conformance against published vectors, per-module
+\caption[The testing pipeline.]{The testing pipeline: specification conformance against published vectors, per-module
 unit and property tests, cross-language equivalence vectors, end-to-end adversarial scenarios,
 and the performance benchmarks of \cref{ch:eval}.}
 \label{fig:impl-testing}
@@ -527,7 +527,7 @@ key-fetch status integrity & hook (TS) & only a proof-verified match emits \text
 
 \begin{table}[ht]
 \centering
-\caption{Adversarial scenarios and their verdicts (Rust \texttt{tests/adversarial.rs}). All eight
+\caption[Adversarial scenarios and verdicts.]{Adversarial scenarios and their verdicts (Rust \texttt{tests/adversarial.rs}). All eight
 pass; A1 is exercised as two variants (global VRF slot and dual-index session slot), and A5 is a
 first-class asserted test. Quantitative detection latencies are reported in \cref{ch:eval}.}
 \label{tab:impl-t5b}
