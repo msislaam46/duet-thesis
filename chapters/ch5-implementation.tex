@@ -79,7 +79,7 @@ overcome end to end.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-overview}
-\caption{The implemented system. A TypeScript client embedded in Signal Desktop verifies keys
+\caption[The implemented system.]{The implemented system. A TypeScript client embedded in Signal Desktop verifies keys
 against the Rust reference implementation, the standalone server that holds all server-side
 components, over HTTP; an independent auditor polls the signed tree head and consistency proofs.
 The client and the Rust implementation are held to byte-for-byte agreement by shared test vectors;
@@ -133,12 +133,11 @@ crate from the bottom up: its state, the cryptography over it, and the binaries 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-modules}
-\caption{Internal architecture of the Rust reference implementation. The HTTP server exposes the
-directory service, which builds authenticated answers from the sparse Merkle prefix tree (the
-current directory), the append-only Merkle log (its history), and the dual-index derivation, all
-resting on the ECVRF, the Ed25519 signer, and a shared SHA-256 base; continuous monitoring is a peer
-service, and the auditor runs as an independent process that reaches the server only over HTTP. Exact
-module names and their specifications are in \cref{tab:impl-modules}.}
+\caption[Rust reference architecture by ownership.]{Internal architecture of the Rust reference
+implementation, grouped by ownership: the HTTP server core (\texttt{KTServer} over the prefix tree,
+Merkle log, ECVRF, Ed25519, and SHA-256), the client/reference components that call the server API,
+and an independent auditor that reaches the server only over HTTP and keeps its own mirror. Module
+names and specifications are in \cref{tab:impl-modules}.}
 \label{fig:impl-modules}
 \end{figure}
 
@@ -204,9 +203,9 @@ update path: a write to an already-occupied dual-index, CEA, or warning label is
 an explicit unchecked overwrite so the adversarial suite can play a malicious operator. Every commit
 freezes a \emph{declared update set} (the epoch's inserts and rotations, each rotation disclosing
 its prior value), which the server publishes at an \texttt{/epoch-delta} endpoint alongside the
-committed directory root. The auditor consumes exactly this disclosure: it maintains its own mirror
-directory, replays each epoch's declared set, and checks the result against the committed root, so a
-deletion (which the delta format cannot express) or an undeclared modification makes the replay
+committed directory root. The auditor consumes exactly this disclosure (\cref{fig:impl-transition-audit}): it maintains its own
+mirror directory, replays each epoch's declared set, and checks the result against the committed root,
+so a deletion (which the delta format cannot express) or an undeclared modification makes the replay
 diverge and is caught, the role the IETF KeyTrans protocol assigns to third-party auditors through
 its \textsf{AuditorUpdate} structure~\cite{ietf-keytrans-protocol}. Independently of any auditor, the
 \texttt{monitor} module gives a warning's writer a persistence check: it retains the inclusion proof
@@ -218,6 +217,22 @@ warning from one the operator injected once it has learned the slot's label. The
 to deployment is authenticated writes: without account-layer proof of raw-label ownership the
 write-once policy still binds an honest server and the transition audit still binds a malicious one,
 but a malicious client could squat an as-yet-empty peer slot (\cref{ch:discussion}).
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-impl-transition-audit}
+\caption[Transition-audit state flow.]{The transition auditor's per-epoch state flow
+(\cref{alg:auditor}). A new head is signature-checked, then rejected outright on a rollback or an
+equal-size head with a different root. A grown head must first pass an append-only check: the auditor
+fetches and verifies an RFC~9162 consistency proof from its baseline to the new head, and fails closed
+(a latched alarm, with no replay) if that proof is missing, malformed or invalid. Only then does it
+fetch the declared transition, replay it into a scratch clone of its committed mirror (rejecting a
+duplicate insert (A1) or an immutable rotation (C2)), and compare the replayed root with the committed
+root: on a match it advances mirror, cursor and head atomically; on a mismatch it raises the
+transition-audit alarm. A same-size, same-root head is an idempotent re-poll and changes no state; a
+fetch failure discards the scratch state and retries without declaring a fork.}
+\label{fig:impl-transition-audit}
+\end{figure}
 
 The performance profile of the core follows from these choices. State is held entirely in memory, so
 no disk or database access sits on the lookup path; prefix proofs are bitmap-compressed over a
@@ -278,11 +293,10 @@ networked stack.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-signal}
-\caption{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
-lifecycle hooks and surfaces verdicts to the badge and banner; it communicates over HTTP with
-the Rust server, which an independent auditor polls and a separate attacker drives
-through a privileged testing interface. The concrete hook functions and verdict-event names are
-listed in \cref{app:apiref}.}
+\caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
+lifecycle hooks and surfaces verdicts to the badge and banner, over HTTP with the Rust server that
+an independent auditor polls and a testing interface drives. Hook functions and verdict-event names
+are listed in \cref{app:apiref}.}
 \label{fig:impl-signal}
 \end{figure}
 
@@ -331,16 +345,34 @@ reached, so a substituted key or a withheld warning cannot be silently accepted.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-verify}
-\caption{The client--server exchange executed on each peer-key retrieval. The client requests a
-key; the server returns the value together with its prefix proof, log-inclusion proof, and signed
-tree head, and the client verifies all of these locally. It then reads the warning slot, whose
-proven (non-)inclusion decides between a clean verdict and a warning. Any failed check aborts
-before the verdict. This is the runtime realization of the verification chain of
-\cref{ssec:design-verify}.}
+\caption[Per-lookup client--server verification exchange.]{The client--server exchange on each peer-key retrieval: the server returns the value with its
+prefix, log-inclusion, and signed-tree-head proofs, all verified locally, and the warning slot's
+proven (non-)inclusion then decides between a clean verdict and a warning (any failed check aborts
+first). This is the runtime realization of the verification chain of \cref{ssec:design-verify}.}
 \label{fig:impl-verify}
 \end{figure}
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
+
+\Cref{fig:impl-e2e} gives the end-to-end account across the five roles: the normal
+registration--fetch--verify--audit path, and one compact attack branch. The live run below exercises
+it inside the real interface.
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-impl-e2e}
+\caption[End-to-end sequence across the five roles.]{End-to-end sequence across the five roles. Top
+(normal operation): Alice registers her key and commits; Bob's TS verifier fetches it, verifies the
+proof chain and signed tree head, runs the own-key self-check, and reads the empty warning slot to
+return \textsc{safe}; the auditor polls and replays to \textsc{consistent}. Bottom (A1b, overwrite of
+the immutable dual-index slot $\ell_A$): the server overwrites Alice's slot with Mallory's key; the
+client-visible path is a monitor tick that reads the substituted key against the pinned key, after
+which the verifier writes the shared warning slot and raises a red \textsc{warning}. Independently, the
+auditor's transition replay rejects the declared immutable rotation of the label (an
+\textsc{ImmutableRotation} alarm; \cref{fig:impl-transition-audit}), so detection does not rest on the
+client path alone.}
+\label{fig:impl-e2e}
+\end{figure}
 
 The integration runs as a live, multi-actor demonstration: two linked Signal Desktop clients, the
 standalone Rust server, the auditor, and a scripted attacker, driven by the runner scripts of
@@ -363,7 +395,7 @@ clients.
 \centering
 \screenshotplaceholder{\textwidth}{figures/ui-dualindex-self.png}\\[8pt]
 \screenshotplaceholder{\textwidth}{figures/ui-dualindex-contact.png}
-\caption{The dual-index warning firing across two real, linked Signal Desktop clients (scenario A1b).
+\caption[Dual-index warning on both clients (A1b).]{The dual-index warning firing across two real, linked Signal Desktop clients (scenario A1b).
 \emph{Top:} the victim; \emph{bottom:} the peer. Both raise the red Key Transparency banner, and the
 DevTools console beside each shows the victim's \texttt{WRITE warning slot} and the peer's
 \texttt{READ warning slot} at the \emph{identical} label: the bidirectional detection across the two
@@ -375,7 +407,7 @@ client instances.}
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/ui-vrf.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/ui-cea.png}
-\caption{The other two detection fronts, each terminating in the same red banner. Left: the global
+\caption[Global-VRF and CEA detection fronts.]{The other two detection fronts, each terminating in the same red banner. Left: the global
 VRF-derived identity slot, whose overwrite is caught by the account-wide monitor (console: \emph{the
 server replaced it [MitM, A1]}). Right: continuous (CEA) mode, in which an injected ratchet key
 produces a conflicting per-epoch fingerprint and the same warning fires.}
@@ -386,7 +418,7 @@ produces a conflicting per-epoch fingerprint and the same warning fires.}
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-consistent.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
-\caption{The cross-vantage auditor distinguishes substitution from equivocation. Left: during the
+\caption[Auditor: substitution vs equivocation.]{The cross-vantage auditor distinguishes substitution from equivocation. Left: during the
 substitution attacks above it keeps logging \textsc{consistent} (append-only verified), confirming
 the server did not fork. Right: under a staged equivocation (scenario A4) it raises
 \textsc{alarm: fork}, carrying the two validly-signed divergent roots as evidence.}
@@ -428,7 +460,7 @@ specification conformance up to the end-to-end scenarios and performance benchma
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-testing}
-\caption{The testing pipeline: specification conformance against published vectors, per-module
+\caption[The testing pipeline.]{The testing pipeline: specification conformance against published vectors, per-module
 unit and property tests, cross-language equivalence vectors, end-to-end adversarial scenarios,
 and the performance benchmarks of \cref{ch:eval}.}
 \label{fig:impl-testing}
@@ -496,7 +528,7 @@ key-fetch status integrity & hook (TS) & only a proof-verified match emits \text
 
 \begin{table}[ht]
 \centering
-\caption{Adversarial scenarios and their verdicts (Rust \texttt{tests/adversarial.rs}). All eight
+\caption[Adversarial scenarios and verdicts.]{Adversarial scenarios and their verdicts (Rust \texttt{tests/adversarial.rs}). All eight
 pass; A1 is exercised as two variants (global VRF slot and dual-index session slot), and A5 is a
 first-class asserted test. Quantitative detection latencies are reported in \cref{ch:eval}.}
 \label{tab:impl-t5b}

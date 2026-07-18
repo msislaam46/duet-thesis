@@ -1,19 +1,22 @@
-% fig-threat-arch.tex — extracted from ch3-threat-model.tex
+% fig-threat-arch.tex — trust boundaries.
+% The untrusted network is a band BETWEEN the honest clients and the operator;
+% the operator sits wholly outside it, and the auditor is beyond the operator.
 % Label: \label{fig:threat-arch}
 \begin{tikzpicture}[>=Stealth,font=\small,
    actor/.style={draw,rounded corners,minimum width=2.3cm,minimum height=10mm,align=center}]
-  \node[actor] (A) at (0,0.9)  {Alice\\\footnotesize(client)};
-  \node[actor] (B) at (0,-0.9) {Bob\\\footnotesize(client)};
-  \node[actor,fill=black!8] (S) at (5.2,0) {Service operator\\\footnotesize message delivery\\\footnotesize {}+ KT log server};
-  \node[actor] (Au) at (10.2,0) {Auditor};
-  % untrusted network region: the medium BETWEEN clients and server only,
-  % not the honest endpoints Alice/Bob themselves
-  \draw[dashed,red!70!black,rounded corners] (1.35,-1.45) rectangle (4.05,1.45);
-  \node[red!70!black,font=\footnotesize] at (2.7,-1.75) {untrusted network (Dolev--Yao)};
-  % client--server links
+  \node[actor] (A) at (0,0.95)  {Alice\\\footnotesize(client)};
+  \node[actor] (B) at (0,-0.95) {Bob\\\footnotesize(client)};
+  \node[actor,fill=black!8] (S) at (6.0,0) {Service operator\\\footnotesize message delivery\\\footnotesize {}+ KT log server};
+  \node[actor] (Au) at (10.6,0) {Auditor};
+  % untrusted-network band: the medium between clients and operator only, not the
+  % honest endpoints; operator wholly to its right.
+  \fill[red!4,rounded corners] (1.55,-1.7) rectangle (3.75,1.7);
+  \draw[dashed,red!70!black,rounded corners] (1.55,-1.7) rectangle (3.75,1.7);
+  \node[red!70!black,font=\footnotesize,align=center] at (2.65,2.05) {untrusted network\\(Dolev--Yao)};
+  % client--server links pass through the band
   \draw[->] (A.east) -- (S.west);
   \draw[->] (B.east) -- (S.west);
-  \node[font=\footnotesize,align=center] at (5.2,-1.7) {client--server:\\semi-trusted};
-  % server--auditor independent
+  \node[font=\footnotesize,align=center] at (6.0,-1.9) {client\,$\leftrightarrow$\,server:\\semi-trusted};
+  % independent auditor beyond the operator boundary
   \draw[<->,dashed,green!45!black] (S.east) -- node[above,font=\footnotesize]{independent} (Au.west);
 \end{tikzpicture}

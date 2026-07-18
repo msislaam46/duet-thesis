@@ -1,37 +1,42 @@
-% fig-impl-modules.tex — extracted from ch5-implementation.tex
+% fig-impl-modules.tex — Rust architecture by ownership.
+% The server core (KTServer) depends only on the prefix tree, Merkle log, VRF and
+% Ed25519 signing over SHA-256. Dual-index derivation and CEA/monitoring are
+% client/reference components that CALL the server API; the auditor is a separate
+% process that consumes server data and keeps its own mirror.
 % Label: \label{fig:impl-modules}
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
    cmp/.style={draw,rounded corners,align=center,minimum height=8mm,inner sep=3pt,fill=white},
+   grp/.style={draw,dashed,rounded corners,inner sep=6pt},
    band/.style={font={\footnotesize\itshape},anchor=east,text=black!55}]
-  % API layer (two lines so the box does not grow wider than its border)
+
+  % ---- server stack (left/centre) ----
   \node[cmp,minimum width=5.0cm] (api) at (0,5.3) {\textbf{HTTP server}\\lookup / update / consistency API};
-  % Service layer
-  \node[cmp,minimum width=3.0cm] (dir) at (-1.6,3.6) {\textbf{Directory service}\\(\texttt{KTServer})};
-  \node[cmp,minimum width=2.6cm] (cea) at (2.4,3.6) {\textbf{Continuous}\\\textbf{monitoring}};
-  % Authenticated data structures + label derivation
-  \node[cmp,minimum width=2.5cm] (ptree) at (-3.0,1.9) {Sparse Merkle\\prefix tree};
-  \node[cmp,minimum width=2.4cm] (mlog)  at (0.0,1.9)  {Append-only\\Merkle log};
-  \node[cmp,minimum width=2.5cm] (didx)  at (3.0,1.9)  {Dual-index\\derivation};
-  % Cryptography
-  \node[cmp,minimum width=2.5cm] (vrf) at (-1.8,0.3) {ECVRF};
-  \node[cmp,minimum width=2.6cm] (sig) at (1.6,0.3)  {Ed25519 signer};
-  % Base (wide enough to sit under all three crypto columns)
-  \node[cmp,minimum width=6.6cm] (hash) at (0.0,-1.3) {SHA-256 hashing};
-  % band labels, left-aligned clear of every box
-  \foreach \y/\t in {5.3/API, 3.6/services, 0.3/cryptography, -1.3/base}{\node[band] at (-4.9,\y) {\t};}
-  \node[band,align=right] at (-4.9,1.9) {authenticated\\structures};
-  % dependencies (downward)
+  \node[cmp,minimum width=3.0cm] (dir) at (0,3.8) {\textbf{Directory service}\\(\texttt{KTServer})};
+  % KTServer's real dependencies
+  \node[cmp,minimum width=2.3cm] (ptree) at (-3.6,2.1) {Sparse Merkle\\prefix tree};
+  \node[cmp,minimum width=2.1cm] (mlog)  at (-1.2,2.1) {Append-only\\Merkle log};
+  \node[cmp,minimum width=1.9cm] (vrf)   at ( 1.0,2.1) {ECVRF};
+  \node[cmp,minimum width=2.3cm] (sig)   at ( 3.3,2.1) {Ed25519\\signer};
+  \node[cmp,minimum width=8.0cm] (hash)  at (-0.15,0.5) {SHA-256 hashing};
+  % bands
+  \node[band] at (-5.2,5.3) {API};
+  \node[band] at (-5.2,3.8) {server core};
+  \node[band,align=right] at (-5.2,2.1) {authenticated\\structures + crypto};
+  \node[band] at (-5.2,0.5) {base};
+  % server dependency edges
   \draw[->] (api) -- (dir);
-  \draw[->] (dir) -- (cea);
-  \draw[->] (dir) -- (ptree);
-  \draw[->] (dir) -- (mlog);
-  \draw[->] (dir) -- (didx);
-  \draw[->] (ptree) -- (vrf);
-  \draw[->] (mlog) -- (sig);
-  \draw[->] (vrf)  -- (vrf  |- hash.north);
-  \draw[->] (sig)  -- (sig  |- hash.north);
-  \draw[->] (didx) -- (didx |- hash.north);
-  % independent auditor (top-right; horizontal link, label pushed toward the auditor)
-  \node[cmp,minimum width=2.4cm,fill=black!5] (aud) at (7.4,5.3) {\textbf{Auditor}\\(independent process)};
-  \draw[<->,dashed] (api.east) -- node[above,align=center,pos=0.6]{poll STH +\\consistency (HTTP)} (aud.west);
-\end{tikzpicture}
+  \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (dir) -- (\n);}
+  \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (\n) -- (\n |- hash.north);}
+
+  % ---- client / reference utilities (right) : they CALL the API ----
+  \node[cmp,minimum width=3.0cm] (didx) at (7.7,4.2) {Dual-index\\derivation};
+  \node[cmp,minimum width=3.0cm] (cea)  at (7.7,2.9) {CEA +\\continuous monitoring};
+  \node[grp,fit=(didx)(cea),label={[font=\footnotesize\itshape,text=black!55]above:client / reference}] (cg) {};
+  \draw[->,dashed] (cg.west) -- node[above,font=\scriptsize,pos=0.55]{call the API} (api.east);
+
+  % ---- independent auditor ----
+  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.7,6.0) {\textbf{Auditor} (own mirror)\\independent process};
+  \draw[<->,dashed] (aud.west) -- node[above,align=center,font=\scriptsize,pos=0.55]{poll STH +\\consistency} (api.north east);
+\end{tikzpicture}%
+}

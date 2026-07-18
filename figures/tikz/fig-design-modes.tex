@@ -1,20 +1,33 @@
-% fig-design-modes.tex — extracted from ch4-design.tex
+% fig-design-modes.tex — session vs continuous mode.
+% The continuous side is a compact CEA state machine: derive over the pre-update
+% state and authenticate the public T; advance (fold the secret I) only on a
+% confirmed/Consistent step; leave the state unchanged on Fork or NotPosted.
 % Label: \label{fig:design-modes}
 \begin{tikzpicture}[>=Stealth,font=\footnotesize,
-   box/.style={draw,rounded corners,align=center,minimum width=2cm,minimum height=7mm}]
-  \node[font=\small] at (0,1.2) {\textbf{Session mode}};
-  \node[box] (s)  at (0,0.4)  {$\sharedS$};
+   box/.style={draw,rounded corners,align=center,minimum width=2cm,minimum height=7mm},
+   st/.style={draw,rounded corners,align=center,inner sep=3pt,minimum height=6mm},
+   ok/.style={draw,rounded corners,align=center,inner sep=3pt,draw=green!50!black},
+   no/.style={draw,rounded corners,align=center,inner sep=3pt,draw=red!60!black}]
+
+  % ---- session mode (left) ----
+  \node[font=\small] at (0,1.5) {\textbf{Session mode}};
+  \node[box] (s)  at (0,0.5)  {$\sharedS$};
   \node[box] (sl) at (0,-0.7) {labels};
-  \node[box] (sk) at (0,-1.8) {identity key};
+  \node[box] (sk) at (0,-1.9) {identity key};
   \draw[->] (s) -- node[right,font=\footnotesize]{HKDF} (sl);
   \draw[->,dashed] (sl) -- node[right,font=\footnotesize]{stores} (sk);
-  \node[align=center,font=\footnotesize] at (0,-2.8) {one write per\\pre-key rotation};
-  \node[font=\small] at (5.4,1.2) {\textbf{Continuous mode}};
-  \node[box] (k0) at (4.4,0.4)  {$k_0$};
-  \node[box] (k1) at (4.4,-0.7) {$k_1$};
-  \node[box] (k2) at (4.4,-1.8) {$k_2$};
-  \draw[->] (k0) -- (k1); \draw[->] (k1) -- (k2);
-  \node[box] (f) at (6.6,-0.7) {fingerprints};
-  \draw[->,dashed] (k1) -- (f);
-  \node[align=center,font=\footnotesize] at (5.4,-2.8) {one write per\\ratchet epoch};
+  \node[align=center,font=\footnotesize] at (0,-2.9) {one write per\\pre-key rotation};
+
+  % ---- continuous (CEA) mode (right): compact state machine ----
+  \node[font=\small] at (5.3,1.5) {\textbf{Continuous (CEA) mode}};
+  \node[st] (cs) at (4.3,0.5)   {state $k_t$};
+  \node[st] (cd) at (4.3,-0.8)  {derive $L_t,F_t$ over $k_t$ (pre-update);\\authenticate public $T_t$};
+  \node[st] (cw) at (4.3,-2.1)  {verified write / read;\\sender occupied-label check};
+  \node[ok] (cok) at (4.3,-3.5) {\textbf{Consistent} (confirmed): advance,\\fold secret $I_t \to k_{t+1}$};
+  \node[no] (cno) at (9.0,-2.1) {\textbf{Fork} / \textbf{NotPosted}:\\no advance};
+  \draw[->] (cs) -- (cd);
+  \draw[->] (cd) -- (cw);
+  \draw[->,green!50!black] (cw) -- node[right,font=\scriptsize]{confirmed} (cok);
+  \draw[->,red!60!black] (cw.east) -- (cno.west);
+  \node[align=center,font=\footnotesize] at (4.3,-4.5) {one write per ratchet epoch};
 \end{tikzpicture}

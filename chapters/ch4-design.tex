@@ -503,8 +503,11 @@ band, a composition ACKA itself does not provide.
 \centering
 \input{figures/tikz/fig-design-modes}
 \caption[Session mode versus continuous mode.]{Session mode (left): labels derived from the initial secret $\sharedS$, at which
-the identity key is registered once per pre-key rotation. Continuous mode (right): a chained secret
-$k_0 \to k_1 \to k_2 \to \cdots$ producing one fingerprint per ratchet epoch.}
+the identity key is registered once per pre-key rotation. Continuous mode (right), as a CEA state
+machine: at each epoch the label and fingerprint are derived over the pre-update state $k_t$ and
+authenticate the public ratchet key $T_t$; the chain advances only on a confirmed \textsc{consistent}
+step, folding the secret $I_t$ to give $k_{t+1}$, and stays unchanged on \textsc{fork} or
+\textsc{notposted}.}
 \label{fig:design-modes}
 \end{figure}
 
@@ -563,9 +566,8 @@ complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are give
 \input{figures/tikz/fig-design-windowed}
 \caption[Windowed offline catch-up.]{Offline catch-up over a window $W = n-m$ epochs. The na\"ive approach verifies one
 consistency proof per missed epoch (upper arcs, $O(W\log n)$); the windowed approach requests
-a single RFC~9162 consistency proof spanning the previously trusted head $m$ and the current
-head $n$ (lower arc), whose size is bounded by $\lceil\log_2 m\rceil + \lceil\log_2 n\rceil$
-hashes, logarithmic in the log size rather than linear in $W$.}
+a single RFC~9162 consistency proof between the previously trusted head $m$ and the current
+head $n$ (lower arc), logarithmic in the log size rather than linear in $W$.}
 \label{fig:design-windowed}
 \end{figure}
 

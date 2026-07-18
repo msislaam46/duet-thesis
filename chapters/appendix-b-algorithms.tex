@@ -126,7 +126,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
   \Req $\mathit{live}.\textsf{Lookup}(\mathit{label}).\mathit{value}=\bot$ \tcp*{write-once: occupied labels rejected (\cref{ssec:design-detection})}
-  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value},\textsc{immutable})$ \tcp*{dual-index/CEA: leaf hash $\Hleaf(\textsc{immutable}\concat\mathit{label}\concat\mathit{value})$; kind bound in}
+  $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value},\textsc{immutable})$ \tcp*{dual-index/CEA leaf $\Hleaf(\textsc{immutable}\concat\mathit{label}\concat\mathit{value})$}
   record \textsf{Insert}$(\mathit{label},\mathit{value},\textsc{immutable})$ in the epoch's declared delta\;
 }
 \Fn{\normalfont\textsf{CommitEpoch}()}{
@@ -173,7 +173,8 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 \Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth},\mathit{PRK}$)}{
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}
   \lIf{$v=\bot$}{\KwRet \textsc{Safe}}
-  \lIf{$\textsf{MAC-Verify}(\textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32),v)$}{\KwRet \textsc{Alert} \tcp*[f]{authentic peer warning}}
+  $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$\;
+  \lIf{$\textsf{MAC-Verify}(k_{\mathrm{mac}},v)$}{\KwRet \textsc{Alert} \tcp*[f]{authentic peer warning}}
   \KwRet \textsc{Alert} \tcp*{unauthenticated data at an unpredictable slot: itself evidence of misbehaviour}
 }
 \end{algorithm}
@@ -348,12 +349,12 @@ the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaLprint}($\mathit{id_A},\mathit{id_B}$)}{
   \KwRet $\Hash(k\concat \min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B})\concat t)$ \tcp*{canonical order: both parties, one slot per epoch}
 }
-\Fn{\normalfont\textsf{CeaFprint}($\mathit{id_{sender}},\mathit{id_{peer}},\mathit{epk}$)}{
+\Fn{\normalfont\textsf{CeaFprint}($\mathit{id_{sender}},\mathit{id_{peer}},T_t$)}{
   $\mathit{fkey}\gets \KDF(k,\mathit{id_{sender}}\concat \mathit{id_{peer}}\concat t)$\;
-  \KwRet $\Hash(\mathit{fkey}\concat \mathit{epk})$\;
+  \KwRet $\Hash(\mathit{fkey}\concat T_t)$\;
 }
-\Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},\mathit{epk},I,\mathit{sth}$)}{
-  $L\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},\mathit{epk})$ \tcp*{over the current (pre-update) state}
+\Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},T_t,I,\mathit{sth}$)}{
+  $L\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},T_t)$ \tcp*{over the current (pre-update) state}
   \If{$\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})\ne\bot$}{
     \textbf{raise} SecurityAlert \tcp*{ACKA sender check: an occupied label indicates impersonation}
   }
@@ -361,8 +362,8 @@ the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
   \Req $\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth'})=F$ \tcp*{confirmation that the write committed}
   $\textsf{CeaUpdate}(I)$ \tcp*{advance only after the confirmed write (ACKA Fig.~8)}
 }
-\Fn{\normalfont\textsf{CeaVerify}($\mathit{server},\mathit{id_{sender}},\mathit{id_{self}},\mathit{epk},I,\lwarn,\mathit{sth}$)}{
-  $L\gets \textsf{CeaLprint}(\mathit{id_{sender}},\mathit{id_{self}})$;\ \ $F^{*}\gets \textsf{CeaFprint}(\mathit{id_{sender}},\mathit{id_{self}},\mathit{epk})$\;
+\Fn{\normalfont\textsf{CeaVerify}($\mathit{server},\mathit{id_{sender}},\mathit{id_{self}},T_t,I,\lwarn,\mathit{sth}$)}{
+  $L\gets \textsf{CeaLprint}(\mathit{id_{sender}},\mathit{id_{self}})$;\ \ $F^{*}\gets \textsf{CeaFprint}(\mathit{id_{sender}},\mathit{id_{self}},T_t)$\;
   $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
   \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{state unchanged: retried later with the same $L$}}
   \If{$v\ne F^{*}$}{
