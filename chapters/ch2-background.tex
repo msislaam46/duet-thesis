@@ -1437,9 +1437,10 @@ transparency for asynchronous messaging by adding automatic peer notification, e
 recovery, transparent equivocation detection, and continuous authentication over an untrusted
 directory. The mechanisms are parallel, not layered: the log-based warning scheme does not depend on
 the ACKA continuous-mode instantiation, which realizes one operating mode of the system rather than
-its foundation.
+its foundation. The mechanisms developed below realize these four contributions; each heading names
+its parent category, so the number of mechanisms is not a count of separate contributions.
 
-\paragraph{Contribution 1: Dual-Index Warning Scheme.} This addresses Problem 1 by
+\paragraph{Mechanism 1 (Conceptual): Dual-Index Warning Scheme.} This addresses Problem 1 by
 providing automatic, bidirectional, in-band detection of a man-in-the-middle. Alice and
 Bob derive from their shared secret $S$ not only a lookup label but a shared
 \emph{warning} label $\ell_{\mathsf{warn}}$, an initially empty leaf in the same log. If
@@ -1455,19 +1456,28 @@ client-side detection but relies on anonymous
 lookups~\cite{yadav2020poster,yadav2022fakekey}, a cost Parakeet explicitly objects
 to~\cite[p.~14]{malvai2023parakeet} and which our unlinkable derived labels avoid.
 
-\paragraph{Contribution 2: Windowed Consistency Proofs.} These address Problem 2,
-reducing the offline catch-up cost from $O(W \cdot \log N)$ to $O(\log N)$, independent
-of the window $W$, by verifying a single consistency proof from the tree head the client
-last saw to the current one rather than one proof per missed epoch.
+\paragraph{Mechanism 2 (Cryptographic): Windowed Consistency Proofs.} These address Problem 2,
+reducing the offline catch-up cost from $O(W \cdot \log N)$ --- one proof per missed
+epoch --- to a \emph{single} consistency proof spanning the whole window, whose size is
+$O(\log N)$ in the endpoint tree sizes. The saving is in the number of proofs (one rather
+than $W$): the client verifies one consistency proof from the tree head it last saw to the
+current one, and that proof's size grows logarithmically with the directory, not with the
+window $W$. It is not size-independent.
 
-\paragraph{Contribution 3: Cross-Vantage Auditor.} This addresses Problem 3: it
+\paragraph{Mechanism 3 (Systems): Cross-Vantage Auditor.} This addresses Problem 3: it
 cross-checks tree heads observed from a second vantage point and flags two validly-signed
 heads at one epoch as an equivocation, detecting the split-view that local checks cannot.
-Contributions~1 through~3 are the transparency-log half of the work.
+Mechanisms~1 through~3 are the transparency-log half of the work.
 
-\paragraph{Contribution 4: ACKA Instantiation (Continuous Mode).} ACKA itself gives a modular
+\paragraph{Mechanism 4 (Conceptual): ACKA Instantiation (Continuous Mode).} ACKA itself gives a modular
 construction and a specific Signal add-on but leaves its logging component (Logsec) an
-\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}; this is, to our knowledge, the first
+\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}; this is, to our knowledge --- based on a
+survey of the published key-transparency literature (CONIKS~\cite{melara2015coniks},
+SEEMless~\cite{chase2019seemless}, Parakeet~\cite{malvai2023parakeet},
+OPTIKS~\cite{optiks2024}, ELEKTRA~\cite{len2023elektra}, the WhatsApp and Apple
+deployments~\cite{lawlor2023whatsapp,apple-ckv}, and
+draft-ietf-keytrans~\cite{ietf-keytrans-protocol}) and public open-source trees as of
+July~2026 --- the first
 instantiation of that component over a concrete, \emph{malicious-server-resistant}
 key-transparency log: a per-ratchet-epoch fingerprint and label chain that authenticates the
 Double Ratchet epoch by epoch. The claim is deliberately narrow: what is new is the concrete log
@@ -1475,7 +1485,7 @@ instantiation and its measurement, not the ACKA construction. In the prototype t
 deterministically from the shared secret; the in-protocol libsignal hook is future work
 (Chapter~7).
 
-\paragraph{Contribution 5: Reconciliation of ACKA and Key Transparency.} The principal
+\paragraph{Mechanism 5 (Conceptual): Reconciliation of ACKA and Key Transparency.} The principal
 conceptual contribution of this thesis is the reconciliation of ACKA and key
 transparency, which are usually read as separate worlds: ACKA authenticates the
 continuous key agreement per epoch but treats its logging component as an \emph{abstract}
@@ -1491,7 +1501,7 @@ and per-session labels, not the per-user version chains of SEEMless, Parakeet an
 or the multi-device key-chains of ELEKTRA, different coverage, leaner proofs, and
 automatic in-band detection.
 
-\paragraph{Contribution 6: Implementation and Evaluation.} This is the engineering
+\paragraph{Mechanism 6 (Systems, Empirical): Implementation and Evaluation.} This is the engineering
 core of the thesis and a contribution in its own right. The core is a Rust \texttt{kt}
 crate whose library modules total roughly \num{3600} lines (the full Rust implementation, with the
 server, auditor, and benchmark binaries, is about \num{6600}; see \cref{ch:impl}), implementing the

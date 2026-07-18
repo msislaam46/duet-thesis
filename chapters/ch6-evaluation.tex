@@ -357,8 +357,8 @@ Build time / RSS after build & 149\,s / 2.81\,GB & 1{,}536\,s / 20.8\,GB \\
 \end{table}
 
 The measured constancy of prefix verification across five orders of magnitude ($10^2$ to $10^7$),
-\SI{25.9}{\micro\second} at $10^3$ and \SI{26.0}{\micro\second} at $10^7$, is the empirical proof
-that the tree walk is bounded by the fixed \num{256}-level height rather than by $N$. Full client
+\SI{25.9}{\micro\second} at $10^3$ and \SI{26.0}{\micro\second} at $10^7$, is strong empirical
+evidence that the tree walk is bounded by the fixed \num{256}-level height rather than by $N$. Full client
 verification is not quite as flat: its median reads \SI{131.9}{\micro\second} at $10^6$ and
 \SI{147.1}{\micro\second} at $10^7$ (direct \texttt{m7\_scale\_verification} medians, measured at
 scale), against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at $N\le10^4$

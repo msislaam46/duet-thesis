@@ -28,7 +28,7 @@ RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the wi
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 \idt{merkle\_log} exhaustive consistency; \idt{windowed\_consistency} (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
 M4 & \cref{ssec:eval-catchup}: 320\,B @ $W{=}720$, ratio $\approx W$ \\
-RQ4 & the scheme integrates into a real deployed client at practical cost &
+RQ4 & the scheme integrates into a real messaging-client codebase (Signal Desktop) at practical cost &
 TypeScript verifier + lifecycle hooks (\cref{sec:impl-signal}) &
 Jest wire-parity and unit suites (\cref{sec:tests-ts}); live demonstration (\cref{ssec:impl-demo}) &
 M11 & \cref{sec:eval-deploy}: Rust microbenchmark of the KT lookup-verification at the handshake hook (microseconds per verification invocation); the live demonstration (\cref{ssec:impl-demo}) establishes client integration separately \\
@@ -43,8 +43,8 @@ M13 mode benchmark (\cref{sec:bench-modes}) &
 M13 & \cref{ssec:eval-modes}: plateau at $720\times$ \\
 None & a committed warning cannot be removed silently &
 write-once policy + transition audit + persistence evidence (\cref{ssec:design-detection}) &
-\idt{update\_raw\_is\_write\_once}, \idt{attack\_remove\_raw\_is\_not\_declared} (\cref{tab:tests-rust-server}); transition-audit and deletion-evidence tests (\cref{tab:tests-rust-system}); scenario A2 &
-None & \cref{sec:eval-security}: A2 detected \\
+\idt{update\_raw\_is\_write\_once}, \idt{attack\_remove\_raw\_is\_not\_declared} (\cref{tab:tests-rust-server}); transition-audit and deletion-evidence tests (\cref{tab:tests-rust-system}) &
+None & \cref{sec:eval-security}: post-commit deletion is tampering (not A2 censorship), closed by write-once policy, per-epoch transition audit, and persistence evidence \\
 \bottomrule
 \end{tabular}
 \end{table}

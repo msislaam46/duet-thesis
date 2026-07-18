@@ -37,7 +37,7 @@ Go\,$\leftrightarrow$\,DUET interoperability test: the proof encodings differ de
 
 The second layer is an integration into the Signal Desktop client~\cite{signal-desktop}, written
 in TypeScript. Its purpose is to demonstrate that the design runs end to end against real identity
-keys in a deployed messaging client, rather than solely within the benchmark harness. The client
+keys inside the Signal Desktop client codebase, rather than solely within the benchmark harness. The client
 is a pure verifier: it re-implements the same verification primitives (prefix-root recomputation,
 Merkle inclusion, ECVRF, Ed25519) so that no trust is placed in the server, and the Rust and
 TypeScript implementations are held to byte-for-byte agreement on the shared dual-index,
@@ -634,7 +634,7 @@ follow-up. These properties, and the reproducibility of the whole, are taken up 
 \section{Reproducibility}\label{sec:impl-repro}
 
 The measurements of \cref{ch:eval} are made reproducible by pinning the environment and fixing the
-cryptographic and sampling randomness. The toolchain version and build commit are recorded; the VRF
+cryptographic and sampling randomness. The toolchain version is recorded; the VRF
 key and the sampling generator are seeded from fixed constants so that label placement and the
 choice of sampled users are deterministic across runs; each experiment begins from fresh server state
 after an administrative reset, so no residual state carries between runs, and the benchmark suite is

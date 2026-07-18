@@ -43,9 +43,8 @@ behaviour.
 \paragraph{Generalisability Beyond Signal.} Nothing in the design is specific to Signal beyond the
 shape of its inputs: it applies to any messenger with a semi-trusted key directory and a per-session
 shared secret from a ratcheting handshake, from which the labels are derived. In that light, the work
-also gives what, among the published and open-source systems surveyed in \cref{ch:background}, we
-found to be the first concrete implementation and measurement of this piece of the
-ACKA framework rather than a correction to it. ACKA~\cite{dowling2023acka} deliberately leaves its
+also instantiates and measures this piece of the ACKA framework (the instantiation claimed, with
+its survey scope, in \cref{sec:bg-contrib}) rather than correcting it. ACKA~\cite{dowling2023acka} deliberately leaves its
 append-only-log component abstract; that abstraction is a framework-design choice, not a flaw, and
 this thesis fills it in with a Merkle log, sparse prefix tree, and ECVRF following the IETF KeyTrans
 draft~\cite{ietf-keytrans-protocol}, then measures what that instantiation costs
