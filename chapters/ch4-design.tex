@@ -158,7 +158,7 @@ checks (1, 2, 4, 5), and the head-bound wrapper \texttt{verify\_search\_result\_
 step 3 together with the equality binding of the returned head to the caller's independently
 verified head and the latest-leaf currency pin, so a validly signed but stale or forked head
 (or a genuine proof for an older leaf under the current head) is rejected. The live TypeScript client folds the signature check
-and the same currency pin into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verify''
+and the same currency pin into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verification''
 benchmarked in \cref{ch:eval} is the complete five-step chain.
 
 % ============================================================================

@@ -1,12 +1,12 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
-Three suites cover the system. The Rust core is covered by \num{91} unit and property tests across
+The test corpus comprises the following groups. The Rust core is covered by \num{91} unit and property tests across
 nine modules, the \num{8}-scenario adversarial integration suite, and \num{13} tests in the
 \texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
 five \texttt{commit\_decision} transaction cases, and an end-to-end partial-fetch-failure test),
 \num{112} tests in total, run under \texttt{cargo test}; the TypeScript
-client is covered by \num{64} Jest tests in six suites,
+client is covered by \num{77} Jest tests in seven suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
 complete listing follows. Tables are placed exactly where they are discussed.
@@ -166,13 +166,13 @@ Module & Test & Property checked \\
 % ----------------------------------------------------------------------------
 \section{TypeScript (Signal Desktop) Jest Suite}\label{sec:tests-ts}
 
-The embedded client is covered by \num{64} Jest tests in six suites, of two kinds. The
+The embedded client is covered by \num{77} Jest tests in seven suites, of two kinds. The
 \emph{wire-parity} suite runs the full client verification chain against the live Rust server over
-the network; the \emph{integration} suite and the four \emph{unit} suites back a test double onto a
+the network; the \emph{integration} suite and the five \emph{unit} suites back a test double onto a
 real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF, and Ed25519 signer)
 so that every TypeScript check is exercised against real cryptography rather than mocks.
 \Cref{tab:tests-jest-wire} lists the wire-parity and integration tests;
-\cref{tab:tests-jest-unit} lists the four unit suites.
+\cref{tab:tests-jest-unit} lists the five unit suites.
 
 \begin{table}[H]
 \centering
@@ -222,7 +222,7 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: client unit suites (\num{28} tests).}
+\caption{Jest tests: client unit suites (\num{41} tests).}
 \label{tab:tests-jest-unit}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}
@@ -260,6 +260,18 @@ Suite & Test \\
 \texttt{secret\_store} & the pair key is order-independent ($A{,}B = B{,}A$) and 32 bytes \\
 \texttt{secret\_store} & the derived secret is deterministic and depends on the key pair \\
 \texttt{secret\_store} & remember / has / conversations / forget round trip \\
+\midrule
+\texttt{getKeysForServiceId\_status} & \textsc{safe} $\to$ verified \\
+\texttt{getKeysForServiceId\_status} & \textsc{key\_not\_in\_log} $\to$ absent, not verified \\
+\texttt{getKeysForServiceId\_status} & \textsc{key\_mismatch} / \textsc{proof\_invalid} / \textsc{mitm\_warning} $\to$ warning with \texttt{shouldProceed=false} (3 cases) \\
+\texttt{getKeysForServiceId\_status} & a thrown exception $\to$ unreachable status, not verified \\
+\texttt{getKeysForServiceId\_status} & \texttt{verified} $\to$ \texttt{kt:verified} \\
+\texttt{getKeysForServiceId\_status} & \texttt{warning} $\to$ \texttt{kt:warning} \\
+\texttt{getKeysForServiceId\_status} & \texttt{unreachable} $\to$ \texttt{kt:unreachable} carrying the \texttt{serviceId} \\
+\texttt{getKeysForServiceId\_status} & \texttt{absent} $\to$ no status event, no \texttt{kt:verified} emission \\
+\texttt{getKeysForServiceId\_status} & \texttt{error} $\to$ no status event, no \texttt{kt:verified} emission \\
+\texttt{getKeysForServiceId\_status} & \textsc{key\_not\_in\_log} never produces \texttt{kt:verified} \\
+\texttt{getKeysForServiceId\_status} & a thrown exception never produces \texttt{kt:verified} \\
 \bottomrule
 \end{tabular}
 \end{table}

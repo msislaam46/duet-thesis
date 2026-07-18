@@ -489,6 +489,7 @@ equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
 windowed catch-up gate & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding (A2) \\
 availability routing & monitor (TS) & an unreachable server yields amber, not red & a network partition is not an attack \\
+key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified (T1) \\
 \bottomrule
 \end{tabular}
 \end{table}

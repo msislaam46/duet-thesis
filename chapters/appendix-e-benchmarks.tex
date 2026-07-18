@@ -39,7 +39,7 @@ Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
 
 Methodology caveats recorded with the run: the server is in-memory (no network, no database); proof
 sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to $32\lceil\lg E\rceil$
-bytes to each lookup proof; memory is resident set size after build, not peak; and the throughput
+bytes to each lookup proof; memory is resident set size after build, not peak; and the operation-rate
 figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
 portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to
 the hardware instruction at run time, so a host without it takes a software path for every hash, and
@@ -100,11 +100,11 @@ The M6 false-positive rate is $0$ over $1{,}000$ clean sessions (a sanity check;
 at a 256-bit HKDF-derived warning label is cryptographically negligible).
 
 % ----------------------------------------------------------------------------
-\section{Latency, Throughput, and Maintenance (M2, M3, M5, M8--M12)}\label{sec:bench-timings}
+\section{Latency, Operation Rates, and Maintenance (M2, M3, M5, M8--M12)}\label{sec:bench-timings}
 
 The timing families are reported below one per table, each preceded by a one-line statement of what it
 measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the marginal
-warning-slot lookup cost (\cref{tab:bench-detection}), throughput and the maintenance operations
+warning-slot lookup cost (\cref{tab:bench-detection}), operation rates and the maintenance operations
 (\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). All values are
 microseconds unless noted: median, 95th percentile, and a 95\% confidence
 half-width of the \emph{mean} ($\pm$, normal approximation, $1.96\,s/\sqrt{n}$) over the manual
@@ -130,8 +130,8 @@ M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.2  & 0.36 \\
 M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.1  & 0.36 \\
 M3 VRF verify (dual-index)           & $10^3$ & 76.0  & 92.0  & 0.76 \\
 M3 VRF verify (dual-index)           & $10^4$ & 76.0  & 92.0  & 0.76 \\
-\textbf{M3 full signed-head lookup verify (windowed)} & $10^3$ & \textbf{128.1} & 144.4 & 0.73 \\
-\textbf{M3 full signed-head lookup verify (windowed)} & $10^4$ & \textbf{128.6} & 152.0 & 0.90 \\
+\textbf{M3 full signed-head lookup verification (windowed baseline)} & $10^3$ & \textbf{128.1} & 144.4 & 0.73 \\
+\textbf{M3 full signed-head lookup verification (windowed baseline)} & $10^4$ & \textbf{128.6} & 152.0 & 0.90 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -161,38 +161,38 @@ M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 & 0.16 \\
 \end{tabular}
 \end{table}
 
-\medskip\noindent\emph{Throughput and maintenance (M8--M11): single-thread server op rates, key
+\medskip\noindent\emph{Operation rates and maintenance (M8--M11): latency-derived single-thread rates, key
 rotation and epoch commit, the VRF in isolation, and the per-handshake client overhead.}
 
 \begin{table}[ht]
 \centering
-\caption{M8--M11: single-thread op rates, rotation, epoch commit, VRF, and handshake-hook verify cost.}
+\caption{M8--M11: latency-derived single-thread rates, rotation, epoch commit, VRF, and the handshake-hook verification cost.}
 \label{tab:bench-maint}
 \small
 \begin{tabular}{@{}llrrr@{}}
 \toprule
 Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
 \midrule
-M8 lookup throughput (dual-index)    & $10^4$ & 119.6 & 134.8 & 0.55 \\
-M8 update throughput (dual-index)    & $10^4$ & 150.9 & 179.3 & 0.95 \\
+M8 latency-derived lookup rate (dual-index) & $10^4$ & 119.6 & 134.8 & 0.55 \\
+M8 latency-derived update rate (dual-index) & $10^4$ & 150.9 & 179.3 & 0.95 \\
 M9 key rotation (dual-index)         & $10^3$ & 150.2 & 177.0 & 0.92 \\
 M9 key rotation (dual-index)         & $10^4$ & 164.0 & 180.0 & 1.04 \\
 M9 epoch commit (windowed)           & $10^3$ & 464.0 & 486.5 & 2.12 \\
 M9 epoch commit (windowed)           & $10^4$ & 5915.7 & 7056.6 & 67.76 \\
 M10 VRF prove (isolated)             &        & 117.4 & 122.3 & 0.90 \\
 M10 VRF verify (isolated)            &        & 78.5  & 89.9  & 0.68 \\
-M11 handshake-hook verify (windowed)    & $10^3$ & 128.1 & 144.4 & 0.73 \\
-M11 handshake-hook verify (windowed)    & $10^4$ & 128.6 & 152.0 & 0.90 \\
+M11 KT lookup-verification at handshake hook (windowed baseline)    & $10^3$ & 128.1 & 144.4 & 0.73 \\
+M11 KT lookup-verification at handshake hook (windowed baseline)    & $10^4$ & 128.6 & 152.0 & 0.90 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-M8 throughput follows as $10^6 / \text{median}_{\mu s}$: approximately $8{,}360$ lookups/s and
+M8 latency-derived rates follow as $10^6 / \text{median}_{\mu s}$: approximately $8{,}360$ lookups/s and
 $6{,}630$ updates/s, single-thread. M9 epoch commit scales roughly linearly in $N$ ($\approx$$13\times$ for a
 $10\times$ increase), reflecting the deep-clone snapshot (which now also copies each leaf's chain
 memo) discussed in \cref{ch:eval}. \emph{M11 is,
-by construction, the same operation as the M3 full client verify} (the KT cost added per handshake
-\emph{is} one full client verification), so its rows equal the M3 full-verify rows exactly; they are
+by construction, the same operation as M3, the full signed-head lookup verification} (the KT lookup-verification cost added at the handshake hook
+\emph{is} one full signed-head lookup verification), so its rows equal the M3 rows exactly; they are
 listed separately only because the chapter frames the same measurement two ways.
 
 \medskip\noindent\emph{Auditor (M12), the local append-only cryptographic kernel: an STH signature
@@ -237,7 +237,7 @@ Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
 Server full search (median / p95, \si{\micro\second}) & 117.6 / 131.7 & 141.2 / 2404.5$^{\dagger}$ \\
 Prefix verify (median / p95, \si{\micro\second}) & 25.9 / 27.0 & 26.0 / 28.0 \\
 VRF verify (median / p95, \si{\micro\second}) & 80.0 / 92.7 & 81.5 / 107.1 \\
-\textbf{Full client verify (median / p95, \si{\micro\second})} & \textbf{131.9} / 147.9 & \textbf{147.1} / 179.7 \\
+\textbf{Full signed-head lookup verification (median / p95, \si{\micro\second})} & \textbf{131.9} / 147.9 & \textbf{147.1} / 179.7 \\
 Build time & 149.0\,s & 1{,}535.9\,s \\
 RSS after build & 2{,}812\,MB & 20{,}786\,MB \\
 \bottomrule
@@ -301,6 +301,13 @@ CSV file/column that records the exact values, so any row above can be regenerat
 harness lives in \texttt{benches/kt\_bench.rs}; run it via \texttt{run-benches.ps1} (the scale family
 M7 is gated behind \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes are seed-deterministic
 and must reproduce byte-for-byte; timings reproduce within noise.
+
+\medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The Criterion
+groups and CSV keys below are frozen provenance identifiers and retain some historical names: in
+particular, \texttt{windowed\_full\_client\_verify} does not time a catch-up proof (it is the M3 full
+signed-head lookup verification), \texttt{M8\_throughput} records per-operation latencies from which a
+single-thread rate is derived, and \texttt{M11\_handshake\_overhead} is not an end-to-end handshake
+measurement.
 
 \begin{table}[ht]
 \centering
