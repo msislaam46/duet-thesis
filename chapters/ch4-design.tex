@@ -158,7 +158,7 @@ checks (1, 2, 4, 5), and the head-bound wrapper \texttt{verify\_search\_result\_
 step 3 together with the equality binding of the returned head to the caller's independently
 verified head and the latest-leaf currency pin, so a validly signed but stale or forked head
 (or a genuine proof for an older leaf under the current head) is rejected. The live TypeScript client folds the signature check
-and the same currency pin into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verify''
+and the same currency pin into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verification''
 benchmarked in \cref{ch:eval} is the complete five-step chain.
 
 % ============================================================================
@@ -348,8 +348,11 @@ self-check publishes the warning when the victim notices the wrong key under its
 name; in addition, a peer that has trust-on-first-use-pinned the victim's key detects a
 substituted peer-slot and publishes the warning on the victim's behalf, so an offline
 victim is still covered. For a \emph{server-side} substitution (A1), where the server
-makes the served bundle agree with the log, the victim's self-check is the necessary
-detector, because a peer comparing the bundle against the log sees no mismatch. The
+makes the served bundle agree with the log, a peer comparing the freshly served bundle against the
+log sees no mismatch; detection then comes either from the victim's own-key self-check or from a peer
+that has already trust-on-first-use-pinned the victim's key and compares the substituted log value
+against its pin. Only against a \emph{pre-first-contact} substitution, where no peer has yet pinned a
+key, is the victim's self-check the sole detector. The
 residual limitation is the trust-on-first-use caveat of \cref{sec:threat-fair}: a
 substitution that predates first contact pins the incorrect key.
 
@@ -435,14 +438,17 @@ at the cost of one log write per pre-key rotation.
 Alongside it, the system implements a \emph{continuous mode} that binds authentication to
 the \emph{entire} continuous key agreement, following ACKA's example CEA construction
 (\cref{sec:bg-acka}). Each ratchet epoch carries a \emph{public} ratchet key $T_t$ and a \emph{secret} epoch key
-$I_t$ (the Diffie--Hellman output of the asymmetric ratchet). At epoch $t$ the party
-computes, from the current chain state $k_{t-1}$, an evolving label and a fingerprint that
-authenticates $T_t$, and only then folds the secret $I_t$ into the chain:
+$I_t$ (a secret epoch key: ACKA's Signal mapping sets $I_t = ck$, Signal's chain key, itself a KDF
+of the ratchet Diffie--Hellman output, whereas this PoC folds the raw DH output as a stand-in for
+$ck$, see \cref{ch:discussion}). At epoch $t$ the party
+computes, from the current chain state $k_t$ (with $k_0$ the state established by Setup), an evolving
+label and a fingerprint that authenticates $T_t$, and only then folds the secret $I_t$ into the
+chain to produce $k_{t+1}$:
 \begin{equation}\label{eq:design-cea}
 \begin{aligned}
-  L_t &= \Hash\!\big(k_{t-1} \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B) \concat t\big),\\
-  F_t &= \Hash\!\big(\KDF(k_{t-1},\ \mathit{id}_{\mathsf{sender}} \concat \mathit{id}_{\mathsf{peer}} \concat t) \concat T_t\big),\\
-  k_t &= \KDF\!\big(k_{t-1},\ \KDF(I_t, \text{\texttt{"CEA"}})\big) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
+  L_t &= \Hash\!\big(k_t \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B) \concat t\big),\\
+  F_t &= \Hash\!\big(\KDF(k_t,\ \mathit{id}_{\mathsf{sender}} \concat \mathit{id}_{\mathsf{peer}} \concat t) \concat T_t\big),\\
+  k_{t+1} &= \KDF\!\big(k_t,\ \KDF(I_t, \text{\texttt{"CEA"}})\big) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
 \end{aligned}
 \end{equation}
 It registers the pair $(L_t \to F_t)$ of \cref{eq:design-cea} in the same log, one entry per ratchet epoch. The
@@ -459,8 +465,8 @@ fingerprint are computed over the \emph{current} (pre-update) state and the \emp
 only then is the \emph{secret} $I_t$ folded into the chain; folding the secret epoch key rather than
 the public ratchet key keeps the chain unpredictable to an adversary that has compromised the
 pre-shared state: the property the unlinkability and forgery-resistance arguments need. The secret
-is domain-separated before folding ($\KDF(I_t, \text{\texttt{"CEA"}})$, ACKA Figure~8): in deployment
-the same DH output $I_t$ also feeds Signal's session-key derivation (the paper's $\KDF(I_t,
+is domain-separated before folding ($\KDF(I_t, \text{\texttt{"CEA"}})$, ACKA Figure~8): in a faithful
+deployment $I_t$ is Signal's chain key $ck$, which also feeds the session-key derivation (the paper's $\KDF(I_t,
 \text{\texttt{"CKA"}})$), so the \texttt{"CEA"} tag keeps the value folded into the transparency chain
 independent of the session key: the key separation the security argument relies on. Second,
 before posting, the sender checks that the label $L_t$ is unoccupied: ACKA specifies that ``the
@@ -504,14 +510,17 @@ $k_0 \to k_1 \to k_2 \to \cdots$ producing one fingerprint per ratchet epoch.}
 
 The two modes differ in their authentication coverage and cost
 (\cref{fig:design-modes}). \textbf{Session mode} authenticates at the level of the identity key,
-with one write per pre-key rotation, and is straightforwardly deployable.
+with one write per pre-key rotation, and needs fewer directory writes and a smaller integration
+surface than continuous mode; a production deployment still needs the hooks and safeguards of
+\cref{ch:discussion}.
 \textbf{Continuous mode} authenticates each ratchet epoch, with one write per epoch, and
 detects the post-compromise active man-in-the-middle that is ACKA's principal security guarantee, at a substantially higher log-write rate. The two are modes of one system, sharing
 the prefix tree, the log, the STH, and the warning channel; their cost is measured in
 \cref{ch:eval}. Two limitations remain and are stated explicitly. First, in the prototype the chained
-secret is advanced deterministically from the shared secret, and binding it to the real
-Double Ratchet root key is the same in-protocol hook left to future work as the production
-binding of the real $\sharedS$ (\cref{ch:discussion}). Second, the construction inherits ACKA's
+secret is advanced deterministically from the shared secret; a production binding would replace this
+simulated epoch input with Signal's live Double Ratchet chain key $ck$, obtained together with the
+public ratchet key $T_t$ at a DH-ratchet-step integration point, which is a distinct hook from the
+session-establishment capture of the initial shared secret $\sharedS$ (\cref{ch:discussion}). Second, the construction inherits ACKA's
 synchronous epoch model: the label chain advances in lockstep on both sides, so a ratchet message
 that is lost before the receiver processes its epoch would leave the two chains permanently
 divergent and every subsequent check failing. The Double Ratchet itself tolerates such loss through
@@ -585,11 +594,16 @@ pinned-key lookups at the dual-index slots (\cref{ssec:design-detection}) and, o
 to the shared warning slot. Under the write-once policy, transition audit, and persistence check of
 \cref{ssec:design-detection}, that warning outlives the attack, and the returning client's catch-up
 procedure reads the warning slot in the same synchronization exchange, so the transient substitution
-leaves a durable, in-band trace that the windowed client does see. Windowed catch-up is therefore
-sound in this design \emph{because} the peer-writable, persistent warning channel exists; in a
-directory without such a channel (CONIKS's, for instance), the same windowing would weaken
-detection exactly as CONIKS's authors argue. The two contributions are in this sense mutually
-dependent rather than independent optimizations.
+leaves a durable, in-band trace that the windowed client does see. Windowed catch-up therefore
+preserves detection \emph{only when the warning commits}: if a monitoring victim or a pinned peer
+detects the substitution and successfully writes it, the peer-writable, persistent warning channel
+leaves a durable trace that survives the attack; in a directory without such a channel (CONIKS's,
+for instance), the same windowing would weaken detection exactly as CONIKS's authors argue.
+If the server censors that write within the window (the A2 threat of \cref{ch:threat}), the endpoint
+consistency proof still establishes append-only consistency and cuts catch-up bandwidth, but it does
+not by itself exclude every transient in-window substitution; the write-once, transition-audit, and
+persistence-check machinery protects a warning only once it is committed. The two contributions are
+in this sense mutually dependent rather than independent optimizations.
 
 \subsection{Worked Parameterization}\label{ssec:design-param}
 

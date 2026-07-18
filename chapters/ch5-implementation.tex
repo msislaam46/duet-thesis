@@ -351,7 +351,9 @@ victim's next monitor tick the own-key self-check fails, and the client writes t
 once (its log records \texttt{WRITE warning slot label=a480\ldots}) and raises a red conversation
 banner reading that its identity key was replaced. The peer client, monitoring the \emph{same} shared
 label, reads it on its own next tick (\texttt{READ warning slot label=a480\ldots}, the identical hex)
-and raises the matching red banner, so both sides are alerted, whether or not the victim is online.
+and raises the matching red banner, so both sides are alerted whenever a monitoring victim or a
+pinned peer detects the substitution and commits the warning (the conditional case argued in
+\cref{ch:design}).
 Throughout, the auditor polling \texttt{/sth} continues to log \textsc{consistent}
 (\cref{fig:impl-auditor}, left): the attack was a substitution, not an equivocation, and the two
 mechanisms are cleanly distinguished. \Cref{fig:impl-screens} shows the resulting red banner on both
@@ -364,8 +366,8 @@ clients.
 \caption{The dual-index warning firing across two real, linked Signal Desktop clients (scenario A1b).
 \emph{Top:} the victim; \emph{bottom:} the peer. Both raise the red Key Transparency banner, and the
 DevTools console beside each shows the victim's \texttt{WRITE warning slot} and the peer's
-\texttt{READ warning slot} at the \emph{identical} label: the bidirectional detection across two
-machines.}
+\texttt{READ warning slot} at the \emph{identical} label: the bidirectional detection across the two
+client instances.}
 \label{fig:impl-screens}
 \end{figure}
 
@@ -407,7 +409,7 @@ inspection but by test: the parity regime that underwrites it is the subject of 
 The Rust cryptographic core of \cref{sec:impl-modules} and the TypeScript client of
 \cref{sec:impl-signal} are two independent implementations of the same protocol, written in
 different languages and for different purposes, one to be measured, one to be deployed. This
-section is the bridge between them: it describes how the two are held to identical behaviour, and
+section connects them: it describes how the two are held to identical behaviour, and
 how the combined system is then tested against the threat model.
 
 The two are pinned by a single cross-language contract. A fixed set of test vectors fixes the HKDF
@@ -487,6 +489,7 @@ equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
 windowed catch-up gate & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding (A2) \\
 availability routing & monitor (TS) & an unreachable server yields amber, not red & a network partition is not an attack \\
+key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified (T1) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -514,9 +517,8 @@ X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 \end{tabular}
 \end{table}
 
-Reaching this level of agreement, and passing these scenarios end to end, was not free. The
-obstacles overcome along the way, on both sides of the HTTP boundary, are collected in the
-next section.
+The obstacles overcome in reaching this agreement, on both sides of the HTTP boundary, are collected
+in the next section.
 
 % ============================================================================
 \section{System-Wide Engineering Challenges}\label{sec:impl-challenges}

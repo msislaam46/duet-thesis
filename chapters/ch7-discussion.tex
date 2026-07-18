@@ -103,7 +103,11 @@ commit uses an $O(N)$ deep-clone snapshot with a transient memory spike, measure
 \cref{ch:eval} and reducible to $O(\log N)$ by structural sharing (below). The Signal Desktop
 integration carries two proof-of-concept stand-ins, both flagged in \cref{ch:impl}: the
 per-conversation shared secret is a deterministic stand-in rather than the live X3DH secret, and
-continuous mode is driven by a seeded simulated ratchet rather than the client's live one. Neither
+continuous mode is driven by a seeded simulated ratchet rather than the client's live one. That
+simulation, specifically, folds the raw ratchet Diffie--Hellman output as its epoch secret $I_t$,
+where ACKA's Signal mapping (their Table~2) specifies $I_t = ck$, the derived chain key; so DUET
+implements the ACKA CEA state transition but simulates that Signal-specific epoch-secret mapping, and
+a faithful instantiation bridges the live Double-Ratchet chain key $ck$ from libsignal. Neither
 changes the construction being exercised, but both must be replaced before the unlinkability and
 active-MitM guarantees hold against a real adversary rather than a simulated one. Finally, the
 networked client ties every search-time signed tree head into one append-only chain: the head is
@@ -114,8 +118,8 @@ rejected the instant it fails to chain. The residual here is not a client-side g
 limitation already stated above: a \emph{fully consistent} split-world, whose branches each chain from
 a shared prefix, cannot be detected by any lone client and relies on the cross-vantage auditor.
 
-\paragraph{Formal Status.} The security argument is a narrative one supported by experiment
-definitions and the adversarial scenario suite, not a complete cryptographic reduction. A combined
+\paragraph{Formal Status.} The security argument is an informal proof sketch supported by explicit experiment
+definitions and the adversarial scenario suite; it is not a complete cryptographic reduction. A combined
 ``dual-CEAsec'' game and its reduction to collision resistance and VRF pseudorandomness are stated as
 an obligation rather than discharged. A further practical limitation is warning-channel abuse: a
 malicious peer can write spurious warnings, a relationship-scoped false-positive nuisance. The
@@ -131,7 +135,7 @@ scheme's stated scope (\cref{ssec:design-detection}), and a network man-in-the-m
 honest global directory; it does not model a two-leg adversary interposed at first contact, nor a
 server that makes a fabricated pre-key bundle and its log entry mutually consistent, both of which lie
 outside the post-establishment guarantee. Second, the headline latency numbers measure components,
-not a live end-to-end exchange: M11 is the per-handshake KT \emph{verification} (identical to M3), not
+not a live end-to-end exchange: M11 is the KT lookup-verification cost at the handshake hook (identical to M3), not
 a Signal/PQXDH handshake benchmark, and M12 is the auditor's local computation, not the networked
 proof-carrying audit. Third, the DUET test suite is not wired into Signal Desktop's main continuous
 integration and the live wire-parity check skips silently when no Rust server is reachable, and only

@@ -191,7 +191,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   \Req $\pi_{\mathrm{prefix}}.\mathit{value}=v$\;
   $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
   \Req $\textsf{VerifyInclusion}(r,\pi_{\mathrm{incl}}.\mathit{index},\pi_{\mathrm{incl}}.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pi_{\mathrm{incl}}.\mathit{path})$\;
-  \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{currency: the proof must cover the LAST log leaf --- an older leaf's inclusion also verifies (inclusion $\ne$ currency, RFC 9162)}
+  \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{currency: the proof must cover the LAST log leaf; an older leaf's inclusion also verifies (inclusion $\ne$ currency, RFC 9162)}
   \KwRet $v$ \tcp*{$v$ may be $\bot$: proven non-inclusion}
 }
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
@@ -213,12 +213,17 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
   \uIf{$\mathit{last\_sth}=\bot$}{
     $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}); no history to check}
   }\Else{
-    $W\gets \mathit{sth_{new}}.\mathit{epoch}-\mathit{last\_sth}.\mathit{epoch}$\;
-    \lIf{$W=0$}{\KwRet}
-    $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
-    \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi_{\mathrm{cons}})$\;
-    \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
+    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch} \lor \mathit{sth_{new}}.\mathit{size}<\mathit{last\_sth}.\mathit{size}$}{\textbf{raise} Fork}
+    \tcc{an honest append-only head never regresses in epoch or size}
+    \uIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last\_sth}.\mathit{size}$}{
+      \Req $\mathit{sth_{new}}.\mathit{root}=\mathit{last\_sth}.\mathit{root}$ \tcp*{unchanged head: equal size with a differing root is same-epoch equivocation, else \textbf{raise} Fork; only the consistency proof is skipped}
+    }\Else{
+      $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
+      \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi_{\mathrm{cons}})$\;
+      \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
+    }
   }
+  \tcc{the self-key lookup and warning check below run on every tick, including an unchanged head}
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth_{new}})$;\ \ \Req $v\ne\bot$\;
   \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}},\mathit{PRK})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
   $\mathit{last\_sth}\gets \mathit{sth_{new}}$\;
@@ -298,13 +303,13 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 }
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e$)}{
   \tcc{after the manner of the IETF KeyTrans \textsf{AuditorUpdate}, but the auditor maintains its
-       OWN mirror of the committed directory --- reconstructed by replaying epochs $0..e{-}1$ --- so
+       OWN mirror of the committed directory (reconstructed by replaying epochs $0..e{-}1$) so
        it checks epoch $e$'s declared delta against that mirror (its reconstruction of $r_{e-1}$)
        rather than trusting server-supplied per-operation membership proofs. The mirror is empty
        before epoch $0$, so no $r_{-1}$ leaf is required.~\cite{ietf-keytrans-protocol}}
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
   \Req $\pi_{\mathrm{incl}}$ binds $r_{e}$ to leaf $e$ of the log the validated STH signs\;
-  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$ \tcp*[f]{A1: an insert targets an ABSENT label --- else an overwrite disguised as an insert}}
+  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$ \tcp*[f]{A1: an insert targets an ABSENT label, else an overwrite disguised as an insert}}
   \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$ \tcp*[f]{reject immutable rotation / kind-misdeclaration / wrong prior value}}
   $r'\gets$ root after applying $\mathit{ops}_e$ to $\mathit{scratch}$ \tcp*{leaves hash as $\Hleaf(\mathit{kind}\concat\ell\concat v)$}
   \Req $r'=r_{e}$ \tcp*{exact transition; on failure the caller discards the scratch entirely}
@@ -312,7 +317,7 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
        \emph{distinguishes} the families: a \textsf{Rotate} is accepted only on a mutable
        (global-VRF identity) leaf and rejected outright on an immutable (raw dual-index / CEA /
        warning) leaf, as is any rotation misdeclaring the kind. The pss-compromised overwrite of a
-       committed CEA fingerprint --- which the receiver's per-epoch verdict cannot catch --- is thus
+       committed CEA fingerprint (which the receiver's per-epoch verdict cannot catch) is thus
        rejected structurally here (\cref{ssec:design-detection})}
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
@@ -330,9 +335,9 @@ $\concat$ is byte concatenation; identities are fixed-width 16-byte service IDs.
 
 \clearpage
 \begin{algorithm}[H]
-\caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA-faithful)}\label{alg:cea}
+\caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA CEA construction)}\label{alg:cea}
 \KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and $\mathit{PRK}$
-from Alg.~\ref{alg:dualindex} (the label uses canonical $\min/\max$ id order --- one slot per epoch;
+from Alg.~\ref{alg:dualindex} (the label uses canonical $\min/\max$ id order: one slot per epoch;
 the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id_A},\mathit{id_B}$)}{
   $k\gets \KDF(\mathit{pss},\min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B}))$;\ \ $t\gets 0$ \tcp*{canonical id order}
