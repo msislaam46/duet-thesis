@@ -191,7 +191,7 @@ prefix-root recompute, the VRF verify, and the full five-step chain of \cref{sse
 \caption{Generation and verification latency (median, manual harness, \num{2000} iterations).}
 \label{tab:eval-latency}
 \small
-\begin{tabular}{@{}lrrl@{}}
+\begin{tabular}{@{}L{5.8cm}rrL{3.2cm}@{}}
 \toprule
 Operation & $N=10^3$ & $N=10^4$ & Scaling \\
 \midrule
@@ -678,31 +678,34 @@ write-once policy, the per-epoch transition audit, and the writer's persistence 
 \subsection{Attack Tree}\label{ssec:eval-attacktree}
 
 \Cref{fig:eval-attacktree} places the scenarios under the adversary's ultimate goal: reading a
-conversation. Reading plaintext requires \emph{both} interposing a key (any one of the substitution,
-network-MitM, or malicious-rotation routes) \emph{and} evading detection (suppressing the dual-index
-warning and hiding the divergence from the cross-vantage auditor): censorship or equivocation alone
-reveals nothing. The figure makes the coverage claim visually: each interposition route is detected on
-its own by a key-transparency control, and the two evasion actions are themselves detectable, so the
-compromise cannot both succeed and stay hidden. Only the endpoint-compromise boundary X1 escapes,
-exactly as scoped in \cref{ch:threat}.
+conversation. Any one interposition route (substitution A1, network-MitM A3, or malicious rotation
+A5) suffices to interpose an attacker-controlled key and read at least one message; reading does not
+require staying hidden, so there is no AND with evasion. What the figure adds is the defence layer:
+each interposition route is detected on its own by a key-transparency control, and the two
+concealment attempts an adversary might mount to stay hidden (suppressing the dual-index warning, A2;
+equivocating to hide the divergence from the cross-vantage auditor, A4) are themselves detected. An
+adversary can therefore interpose a key but cannot do so undetectably: every route and every
+concealment attempt raises a signal. Only the endpoint-compromise boundary X1 escapes, exactly as
+scoped in \cref{ch:threat}.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-attacktree}
-\caption[Attack tree for reading a conversation.]{AND/OR attack tree for reading a conversation: the
-adversary must interpose a key (an OR over the substitution, MitM, and rotation routes) \emph{and}
-evade detection (suppress the warning and hide from the auditor). Each interposition route is answered
-by a key-transparency control and tagged with its MITRE ATT\&CK technique; the evasion actions are
-themselves detectable. Only the endpoint-compromise boundary X1 is out of scope.}
+\caption[Attack--defence tree for interposing an attacker key.]{Attack--defence tree for reading a
+conversation. Any one interposition route (an OR over the substitution A1, MitM A3, and rotation A5
+routes) suffices to interpose an attacker-controlled key, and each is answered by a key-transparency
+control. The concealment attempts A2 (suppress the warning) and A4 (equivocate) are separate
+adversary defences, each itself detected. Only the endpoint-compromise boundary X1 is out of scope.}
 \label{fig:eval-attacktree}
 \end{figure}
 
 \subsection{Detection Timeline}\label{ssec:eval-timeline}
 
-\Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1): the attack at epoch
-$E$ is flagged by the victim's self-check at $E{+}1$, the warning is committed at $E{+}2$, and the
-peer's monitor reads it by $E{+}3$: the victim's verdict within one epoch of the attack, the
-peer's alert within three (two after the warning commits), and no user action at any step.
+\Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1) in the scripted
+one-action-per-epoch demonstration: the attack at epoch $E$ is flagged by the victim's self-check at
+$E{+}1$, the warning is committed at $E{+}2$, and the peer's monitor reads it at $E{+}3$. These epoch
+positions describe the demonstration schedule (one action per epoch, monitors polling once per
+epoch), not a protocol-wide latency bound; no user action is required at any step.
 
 \begin{figure}[ht]
 \centering
@@ -715,7 +718,7 @@ key in an earlier epoch flags the change directly on its next fetch.}
 \subsection{Residual Risks and Posture}\label{ssec:eval-posture}
 
 The overall posture follows from the preceding artefacts. Detection is automatic and fast (tens of
-microseconds of client work, a verdict within one to two epochs) and the false-positive rate over
+microseconds of client work) and the false-positive rate over
 \num{1000} clean sessions is \num{0}, so the warning channel raises no spurious alarms. The residual
 risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the label$\leftrightarrow$user
 mapping, outside what any transparency layer removes) and three availability functions left to a

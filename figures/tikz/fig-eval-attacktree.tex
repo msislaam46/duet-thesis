@@ -1,39 +1,44 @@
-% fig-eval-attacktree.tex — AND/OR attack tree (reading Alice--Bob plaintext).
-% Reading plaintext requires BOTH interposing a key AND evading detection; the
-% evasion actions (A2 censorship, A4 equivocation) are not plaintext-reveal paths
-% on their own. Label: \label{fig:eval-attacktree}
+% fig-eval-attacktree.tex — attack-defence tree for interposing an attacker key.
+% Any ONE interposition route (A1/A3/A5) suffices to read plaintext, and each is
+% detected by a KT control; the concealment attempts (A2 suppression, A4
+% equivocation) are separate defences the attacker mounts to stay undetected,
+% and each is itself detected. X1 (endpoint compromise) is outside the boundary.
+% Label: \label{fig:eval-attacktree}
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
   goal/.style={draw,thick,rounded corners,fill=black!6,align=center,minimum height=8mm,inner sep=4pt},
   gate/.style={draw,rounded corners,fill=blue!8,draw=blue!55!black,align=center,inner sep=3pt,font=\scriptsize\bfseries},
   atk/.style={draw,rounded corners,draw=red!60!black,align=center,minimum height=8mm,minimum width=2.3cm,inner sep=3pt},
-  det/.style={font=\scriptsize,text=green!45!black,align=center},
+  det/.style={draw,rounded corners,draw=green!45!black,fill=green!5,font=\scriptsize,text=green!25!black,align=center,text width=2.5cm,inner sep=3pt},
+  lbl/.style={font=\scriptsize\itshape,text=black!60,align=center},
   oos/.style={draw,dashed,rounded corners,draw=orange!80!black,align=center,minimum height=7mm,inner sep=4pt}]
 
-  % goal and top AND gate
-  \node[goal] (g)    at (0,4.4) {Goal: read Alice--Bob plaintext};
-  \node[gate] (and0) at (0,3.2) {AND \textnormal{(both required)}};
-  \draw[->,black!45] (g) -- (and0);
+  % goal
+  \node[goal] (g) at (-3.7,5.0) {Goal: interpose an attacker-controlled key\\(read Alice--Bob plaintext)};
 
-  % two sub-goals
-  \node[gate] (orA)  at (-4.2,2.0) {OR\textnormal{: interpose a key}};
-  \node[gate] (andB) at ( 4.2,2.0) {AND\textnormal{: evade detection}};
-  \draw[->,black!45] (and0) -- (orA);
-  \draw[->,black!45] (and0) -- (andB);
+  % interposition OR-tree (left): any one route suffices
+  \node[gate] (orG) at (-3.7,3.5) {OR: any one route interposes};
+  \draw[->,black!45] (g) -- (orG);
+  \node[atk] (a1) at (-6.4,2.0) {A1 server\\substitution};
+  \node[atk] (a3) at (-3.7,2.0) {A3 network\\MitM};
+  \node[atk] (a5) at (-1.0,2.0) {A5 malicious\\rotation};
+  \foreach \n in {a1,a3,a5}{\draw[->,black!45] (orG) -- (\n);}
+  \node[det] (d1) at (-6.4,0.3) {victim pinned-key self-check $\to$ warning};
+  \node[det] (d3) at (-3.7,0.3) {forged key fails the proof under the signed head};
+  \node[det] (d5) at (-1.0,0.3) {immutable-rotation audit rejects the overwrite};
+  \foreach \a/\d in {a1/d1,a3/d3,a5/d5}{\draw[->,green!45!black,dashed] (\a) -- (\d);}
 
-  % interposition leaves (OR)
-  \node[atk] (a1) at (-6.6,0.4) {A1 server\\substitution\\{\tiny T1565.002}};
-  \node[atk] (a3) at (-4.2,0.4) {A3 network\\MitM\\{\tiny T1557}};
-  \node[atk] (a5) at (-1.8,0.4) {A5 malicious\\rotation\\{\tiny T1565.002}};
-  \foreach \n in {a1,a3,a5}{\draw[->,black!45] (orA) -- (\n);}
-  \node[det] at (-4.2,-1.2) {each detected on its own: self-check,\\label mismatch, or identity re-fetch $\to$ warning};
-
-  % evasion leaves (AND)
-  \node[atk] (a2) at (2.6,0.4) {A2 suppress\\warning};
-  \node[atk] (a4) at (5.8,0.4) {A4 equivocate /\\hide from auditor};
-  \draw[->,black!45] (andB) -- (a2);
-  \draw[->,black!45] (andB) -- (a4);
-  \node[det] at (4.2,-1.2) {each detected: compound suppression\\signal (A2), consistency + auditor (A4)};
+  % concealment attempts (right): the attacker's defences, each also detected
+  \node[lbl] (chead) at (4.5,4.0) {Concealment attempts\\(to stay undetected)};
+  \node[atk] (a2) at (3.1,2.0) {A2 suppress\\warning};
+  \node[atk] (a4) at (5.9,2.0) {A4 equivocate\\/ split-view};
+  \draw[->,black!45] (chead) -- (a2);
+  \draw[->,black!45] (chead) -- (a4);
+  \node[det] (d2) at (3.1,0.3) {compound signal: mismatch + proof-verified warning absence};
+  \node[det] (d4) at (5.9,0.3) {cross-vantage auditor: consistency proof fails};
+  \foreach \a/\d in {a2/d2,a4/d4}{\draw[->,green!45!black,dashed] (\a) -- (\d);}
 
   % out of scope
-  \node[oos] (x1) at (0,-2.6) {X1 endpoint compromise: outside the KT trust boundary, not detectable (T1552.004)};
-\end{tikzpicture}
+  \node[oos] (x1) at (0,-1.7) {X1 endpoint compromise: outside the KT trust boundary, not a directory attack (T1552.004)};
+\end{tikzpicture}%
+}
