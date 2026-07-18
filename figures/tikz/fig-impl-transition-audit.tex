@@ -1,0 +1,32 @@
+% fig-impl-transition-audit.tex — the transition auditor's state flow (Alg 7).
+% Label: \label{fig:impl-transition-audit}
+\begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=5.5mm,
+  proc/.style={draw,rounded corners,align=center,inner sep=3pt,minimum width=5.4cm,minimum height=7mm},
+  dec/.style={draw,align=center,inner sep=3pt,minimum width=5.4cm,minimum height=7mm,fill=blue!6},
+  bad/.style={draw,rounded corners,align=center,inner sep=3pt,draw=red!60!black,fill=red!3},
+  rtr/.style={draw,rounded corners,align=center,inner sep=3pt,draw=orange!80!black,fill=orange!4},
+  good/.style={draw,rounded corners,align=center,inner sep=3pt,draw=green!50!black,fill=green!4,minimum width=5.4cm}]
+
+  \node[proc] (n1) {receive new head; verify STH signature};
+  \node[dec,below=of n1] (n2) {rollback, or equal size with a different root?};
+  \node[proc,below=of n2] (n3) {fetch the epoch's declared transition (delta)};
+  \node[proc,below=of n3] (n4) {clone the committed mirror into scratch};
+  \node[proc,below=of n4] (n5) {replay each Insert / Rotate into scratch\\(A1: reject a duplicate insert; C2: reject an immutable rotation)};
+  \node[dec,below=of n5] (n6) {replayed scratch root $=$ committed root?};
+  \node[good,below=of n6] (n7) {commit mirror, cursor and head atomically};
+
+  \draw[->] (n1) -- (n2);
+  \draw[->] (n2) -- node[left,pos=0.45]{no} (n3);
+  \draw[->] (n3) -- (n4);
+  \draw[->] (n4) -- (n5);
+  \draw[->] (n5) -- (n6);
+  \draw[->] (n6) -- node[left,pos=0.45]{yes} (n7);
+
+  % failure / retry branches to the right
+  \node[bad,right=10mm of n2] (b2) {reject: raise Fork};
+  \draw[->] (n2.east) -- node[above,font=\tiny]{yes} (b2.west);
+  \node[rtr,right=10mm of n3] (b3) {on fetch failure: discard\\scratch, retry (no fork)};
+  \draw[->] (n3.east) -- node[above,font=\tiny]{fail} (b3.west);
+  \node[bad,right=10mm of n6] (b6) {ALARM: transition\\audit failed};
+  \draw[->] (n6.east) -- node[above,font=\tiny]{no} (b6.west);
+\end{tikzpicture}
