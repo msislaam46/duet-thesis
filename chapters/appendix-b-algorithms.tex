@@ -353,8 +353,9 @@ per-epoch verdict alone cannot catch (\cref{ssec:design-detection}).
 baseline head $\mathit{last}$ and, once replay succeeds, runs \textsf{DetectFork} against one current
 second-vantage head. \textsf{AuditEpoch} classifies the new head against the baseline (First,
 Regression, SameSizeForked, Grew with a consistency proof, or an Idempotent re-poll), requests a
-consistency proof only on growth, and propagates a verdict: it alarms and returns \textsc{Malformed},
-\textsc{Rollback}, \textsc{Fork}, or \textsc{TransitionFailed} on the corresponding failure, holds
+consistency proof only on growth, and propagates a verdict: it returns \textsc{Unavailable} when the
+primary head cannot be fetched or parsed, alarms and returns \textsc{Malformed}, \textsc{Rollback},
+\textsc{Fork}, or \textsc{TransitionFailed} on the corresponding failure, holds
 without committing on an \textsc{Incomplete} epoch-delta fetch, and otherwise commits the mirror,
 cursor, and baseline as one transaction. After committing it distinguishes \textsc{Consistent} (a valid
 second vantage was available and agreed) from \textsc{ConsistentNoVantage} (no valid second-vantage head
@@ -378,6 +379,7 @@ step, fetching and verifying the consistency proof between the two vantage sizes
 empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
+  \lIf{$\mathit{sth_{new}}=\bot$}{\KwRet \textsc{Unavailable} \tcp*[f]{fetch/parse failed: retryable, state unchanged}}
   \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})\ \vee\ \mathit{sth_{new}}.\mathit{epoch}+1\ne \mathit{sth_{new}}.\mathit{size}$}{\textbf{alarm};\ \KwRet \textsc{Malformed}}
   \If{$\mathit{last}\ne\bot$}{
     \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{size}<\mathit{last}.\mathit{size}$}{\textbf{alarm};\ \KwRet \textsc{Rollback}}
@@ -389,9 +391,9 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   }
   $\mathit{scratch}\gets \textsf{clone}(\mathit{mirror})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
-    $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e)$\;
+    $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e,\mathit{sth_{new}}.\mathit{size})$ \tcp*{delta pinned to the signed tree size}
     \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable}}
-    \lIf{$\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
+    \lIf{$\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e,\mathit{sth_{new}}.\mathit{root},\mathit{sth_{new}}.\mathit{size})=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
   \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
@@ -401,9 +403,9 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed; no G4 verdict}}
   \KwRet \textsc{Consistent}\;
 }
-\Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e$)}{
+\Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e,r_{\mathrm{head}},\mathit{size}_{\mathrm{head}}$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
-  \lIf{$\pi_{\mathrm{incl}}$ does not bind $r_{e}$ to leaf $e$ of the log the validated STH signs}{\KwRet \textsc{TransitionFailed}}
+  \lIf{$\pi_{\mathrm{incl}}$ does not prove leaf index $e$ with value $r_{e}$ included under $r_{\mathrm{head}}$ at tree size $\mathit{size}_{\mathrm{head}}$}{\KwRet \textsc{TransitionFailed}}
   \ForEach{operation $o\in \mathit{ops}_e$ \emph{in declared order}}{
     \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\lIf{$\mathit{scratch}.\textsf{get}(\ell)\ne\bot$}{\KwRet \textsc{TransitionFailed}} \textbf{else} insert $(\ell,\mathit{kind},v)$\;}
     \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$: \lIf{$\neg(\mathit{kind}=\textsc{mutable}\wedge \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}})$}{\KwRet \textsc{TransitionFailed}} \textbf{else} set $\ell\mapsto v$\;}

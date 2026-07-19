@@ -32,13 +32,14 @@ $N=10^6$ (a \num{6.4}\% difference), rather than to a non-VRF single-index log, 
 smaller by the VRF proof; this cross-paper comparison (\cref{sec:eval-compare}; \cref{ssec:eval-sizes}
 gives the single- versus VRF-indexed decomposition) is descriptive, not a falsification criterion.
 \emph{Operationally}, detection's cost is in requests and writes, not proof bytes. This has a
-source-verified part and a measured part. The source-verified part is the request count: \texttt{detectMitm}
-performs two label-bound raw-label lookups per check (the owner slot and the warning slot), plus one
-directory write per ratchet epoch in continuous mode, and this is falsified only by the code performing
-more than that. The combined end-to-end latency of the two verified lookups is \emph{not} measured
-here: M5 measures only the marginal \emph{unverified} server-side warning-slot read (a lower floor for a
-proof-verified network lookup, not the full detection cost), and M13 measures the continuous-mode write
-trade. \emph{Does client
+source-verified part and a measured part. The source-verified part is the request count, from
+inspecting \texttt{detectMitm}: every check performs one label-bound owner-slot lookup and, only when
+that slot verifies and matches, a second label-bound warning-slot lookup, so a check costs one or two
+raw-label lookups (two on the clean and warning-carrying paths, one when the owner slot already shows
+substitution), plus one directory write per ratchet epoch in continuous mode. The combined end-to-end
+latency of these lookups is \emph{not} measured here: M5 measures only one \emph{unverified}
+server-side warning-slot read, a lower bound on the verification-free read component of a single lookup
+rather than the full detection cost, and M13 measures the continuous-mode write trade. \emph{Does client
 verification remain inexpensive as the directory grows?} Falsified if the full-chain verify grew in
 proportion to $N$, or exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}).
 \emph{Can an offline client re-synchronize in a single proof, rather than one per missed epoch?}
@@ -351,9 +352,11 @@ negligible. M5 must therefore not be interpreted as detector latency. The refere
 (\texttt{detectMitm}, \cref{sec:impl-signal}) performs \emph{two} proof-carrying lookups: the client's
 own slot must still verifiably equal its key, and the warning slot must be verifiably \emph{empty},
 a non-inclusion proof, since an unproven ``empty'' would let the server censor the warning. M5 times
-neither. It times the marginal, unverified read of the warning slot, in clean state. Each of the two
-verified lookups is of the shape M3 measures ($\approx$\SI{128}{\micro\second} median locally), which
-bounds one of them; no two-request total is derived from that here, because the workflow those
+neither. It times the marginal, unverified read of the warning slot, in clean state. Each detector lookup is a
+raw-label lookup that verifies a prefix-tree and log path \emph{without} the VRF component, so the full
+VRF-indexed verification M3 times ($\approx$\SI{128}{\micro\second} median locally) is only a
+conservative local \emph{upper} proxy for the verification work of one such lookup, not a measurement
+of either detector request; no two-request total is derived from it here, because the workflow those
 requests belong to (including the network round-trips a deployment adds) was not measured, and
 end-to-end detection latency is therefore not a figure this thesis reports. Detection remains
 automatic and silent, in sharp contrast to the manual safety-number ceremony it replaces, which only
