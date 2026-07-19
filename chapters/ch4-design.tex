@@ -121,7 +121,7 @@ rather than a silent one.
 A client accepts no server response without independently verifying it: every lookup is
 ultimately authenticated against a signed tree head. Each verification traverses the same three-layer architecture
 introduced in \cref{sec:design-arch}: first the prefix tree, then the append-only log,
-and finally the signed tree head. The verification chain is the five-step pipeline of
+and finally the signed tree head. The verification chain is the pipeline of
 \cref{fig:design-verify}.
 
 \begin{figure}[t]

@@ -1,11 +1,14 @@
-% fig-design-verify.tex — extracted from ch4-design.tex
+% fig-design-verify.tex — the client verification chain (VerifiedLookup).
 % Label: \label{fig:design-verify}
 \begin{tikzpicture}[>=Stealth,font=\footnotesize,
-   vstep/.style={draw,rounded corners,text width=13cm,minimum height=8mm,align=left,inner sep=5pt}]
-  \node[vstep] (s1) {\textbf{1. VRF label binding}: verify the ECVRF proof; check $\beta[0{:}32]$ equals the proof label (RFC~9381)};
-  \node[vstep,below=4mm of s1.south,anchor=north] (s2) {\textbf{2. Value binding}: verify the proof binds to the returned value};
-  \node[vstep,below=4mm of s2.south,anchor=north] (s3) {\textbf{3. STH signature}: verify the Ed25519 signature on the STH returned with the search};
-  \node[vstep,below=4mm of s3.south,anchor=north] (s4) {\textbf{4. Prefix root}: recompute the prefix-tree root from the proof (siblings + 32-byte bitmap)};
-  \node[vstep,below=4mm of s4.south,anchor=north] (s5) {\textbf{5. Log inclusion}: check the recomputed root is a leaf under the signed log root};
-  \foreach \a/\b in {s1/s2,s2/s3,s3/s4,s4/s5}{\draw[->] (\a) -- (\b);}
+   vstep/.style={draw,rounded corners,text width=13cm,minimum height=8mm,align=left,inner sep=5pt},
+   note/.style={font=\scriptsize\itshape,text=black!55,text width=13cm,align=left}]
+  \node[vstep] (s1) {\textbf{1. Requested-label binding} (every path): require $\pi_{\mathrm{prefix}}.\mathit{label}$ equals the label the client queried, so a valid proof for a different label is rejected};
+  \node[vstep,below=3mm of s1.south,anchor=north] (s2) {\textbf{2. VRF label binding} (VRF path only): verify the ECVRF proof and require $\beta[0{:}32]$ equals that same queried label (RFC~9381)};
+  \node[vstep,below=3mm of s2.south,anchor=north] (s3) {\textbf{3. STH signature and head pinning}: verify the Ed25519 signature on the returned STH, and require it equals the caller's already-verified (pinned) head, so a signed but stale or forked head is rejected};
+  \node[vstep,below=3mm of s3.south,anchor=north] (s4) {\textbf{4. Value binding}: require the prefix proof binds to the returned value};
+  \node[vstep,below=3mm of s4.south,anchor=north] (s5) {\textbf{5. Prefix root}: recompute the prefix-tree root from the proof (siblings $+$ 32-byte bitmap)};
+  \node[vstep,below=3mm of s5.south,anchor=north] (s6) {\textbf{6. Log inclusion and currency}: check the recomputed root is a leaf under the signed log root, and that the inclusion covers the \emph{last} log leaf (inclusion of an older leaf is not currency)};
+  \foreach \a/\b in {s1/s2,s2/s3,s3/s4,s4/s5,s5/s6}{\draw[->] (\a) -- (\b);}
+  \node[note,below=3mm of s6.south,anchor=north] {The warning slot is checked by a separate invocation of this same chain (\textsf{CheckWarning}), so its proven (non-)inclusion is verified independently.};
 \end{tikzpicture}

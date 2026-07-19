@@ -230,18 +230,11 @@ predecessor) is demonstrated in the adversarial suite.)
 victim's own private key, it derives the same shared secret, the same labels, and
 the same proofs, and is indistinguishable from the victim. X1 is included to
 delineate the guarantee: key transparency protects the channel between honest
-endpoints, not the endpoints themselves. \Cref{fig:threat-tree} organizes these
-scenarios as an attack tree, showing which are detected and which fall outside the
-guarantee.
-
-\begin{figure}[t]
-\centering
-\input{figures/tikz/fig-threat-tree}
-\caption[Attack taxonomy.]{Attack taxonomy. Each in-scope scenario (A1--A5) is annotated with the
-mechanism that detects it; the endpoint-compromise case (X1) is shown as the
-out-of-scope boundary.}
-\label{fig:threat-tree}
-\end{figure}
+endpoints, not the endpoints themselves. The attack--defence structure of these
+scenarios, separating the interposition routes that place an attacker key (A1, A3,
+A5) from the concealment attempts that try to hide it (A2, A4) and from the
+out-of-scope endpoint boundary (X1), is presented with the evaluation in
+\cref{fig:eval-attacktree}.
 
 % ============================================================================
 \section{Justification of the Threat Model}\label{sec:threat-fair}
