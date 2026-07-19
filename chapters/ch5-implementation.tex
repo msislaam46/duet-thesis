@@ -229,10 +229,14 @@ but a malicious client could squat an as-yet-empty peer slot (\cref{ch:discussio
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
-\caption[Transition-audit state flow.]{The transition auditor's per-epoch state flow
-(\cref{alg:auditor}): each new head is signature- and consistency-checked before its declared
-transition is replayed into a scratch mirror and the roots compared, as described in the text above;
-every failure path fails closed.}
+\caption[Transition-audit state flow.]{The transition auditor (\cref{alg:auditor}), in two parts.
+(a) Head classification: a new head is signature-checked and classified; a rollback or a same-size
+head with a different root alarms as a fork, only a \emph{grown} head is consistency-checked against
+the baseline, an equal already-audited head is an idempotent no-op, and the first head skips the
+prior-head consistency proof but is still replayed. (b) Transactional replay: every not-yet-audited
+epoch (including epoch~0) is replayed into a scratch mirror and its root compared to the declared
+root, and only if all pass are the mirror, cursor, and baseline committed as one transaction. Every
+failure path fails closed.}
 \label{fig:impl-transition-audit}
 \end{figure}
 

@@ -121,32 +121,37 @@ rather than a silent one.
 A client accepts no server response without independently verifying it: every lookup is
 ultimately authenticated against a signed tree head. Each verification traverses the same three-layer architecture
 introduced in \cref{sec:design-arch}: first the prefix tree, then the append-only log,
-and finally the signed tree head. The verification chain is the pipeline of
+and finally the signed tree head. The verification chain is the six-step pipeline of
 \cref{fig:design-verify}.
 
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-design-verify}
-\caption[The five-step client verification chain.]{The five-step client verification chain. Every lookup is checked locally
+\caption[The six-step client verification chain.]{The six-step client verification chain. Every lookup is checked locally
 against a signed root.}
 \label{fig:design-verify}
 \end{figure}
 
-Step~1 is the anti-substitution binding on the global path: it ties the queried
-identity, through the VRF, to the exact slot the proof speaks about. It is skipped on
+Step~1 is a mandatory requested-label binding on \emph{every} path: the prefix proof must
+concern the exact label the client queried, so a genuine proof for a different leaf is rejected.
+Step~2 is the anti-substitution VRF binding on the global path: it ties the queried
+identity, through the VRF, to that same slot (on the global path the VRF output equalling the
+queried label is what supplies step~1). Step~2 is skipped on
 the dual-index path, where the client derived the label itself from the shared secret
-and so needs no server-supplied VRF proof to know which slot to read. Step~3 anchors the
+and so needs no server-supplied VRF proof to know which slot to read; there step~1's binding stands
+on its own. Step~3 anchors the
 whole chain to a signed head, and the head verified there must be the same head against
-which the inclusion proof of step~5 is checked; a proof against an unsigned or stale head
+which the inclusion proof of step~6 is checked; a proof against an unsigned or stale head
 is refused. Concretely, the client requires the head returned alongside the proof to be identical
 to the head it independently obtained and verified: the latest head it fetched, or, during
 catch-up, the new head whose append-only consistency with its last trusted head it has just
 verified. A response anchored to any other head is rejected even if that head carries a valid
 signature, since a validly signed but stale or forked head is precisely what the equivocation
-adversary of attack A4 would supply. Steps~4 and~5 are the two layers of the combined tree: the prefix proof shows
-the entry is at its label in the dictionary, and the log-inclusion proof shows that
+adversary of attack A4 would supply. Step~4 checks that the proof binds to the returned value.
+Steps~5 and~6 are the two layers of the combined tree: the prefix proof (step~5) shows
+the entry is at its label in the dictionary, and the log-inclusion proof (step~6) shows that
 dictionary state is the one the signed head commits to. Because each commit appends the
-new directory root as the log's \emph{last} leaf, step~5 additionally pins the inclusion to
+new directory root as the log's \emph{last} leaf, step~6 additionally pins the inclusion to
 that latest leaf ($\mathit{leaf\_index} = \mathit{tree\_size} - 1$ at exactly the signed
 size): a genuine inclusion proof for an \emph{earlier} leaf still verifies against the
 current log root, so without this pin a server could answer with a stale directory snapshot
@@ -154,14 +159,19 @@ current log root, so without this pin a server could answer with a stale directo
 membership, not \emph{currency} (RFC~9162 §2.1.3.2); the currency pin closes that gap. This is the combined-tree
 semantics of the Key Transparency draft (\cref{ssec:bg-keytrans}).
 
-The verification work is split across the implementation as follows. In the Rust reference,
-\texttt{verify\_search\_result} performs the VRF, value, prefix-root, and log-inclusion
-checks (1, 2, 4, 5), and the head-bound wrapper \texttt{verify\_search\_result\_against} adds
-step 3 together with the equality binding of the returned head to the caller's independently
-verified head and the latest-leaf currency pin, so a validly signed but stale or forked head
-(or a genuine proof for an older leaf under the current head) is rejected. The live TypeScript client folds the signature check
-and the same currency pin into \texttt{verifyChain}, so every lookup enforces all five. The ``full client verification''
-benchmarked in \cref{ch:eval} is the complete five-step chain.
+The verification work is split across the implementation as follows. In the Rust reference, step~1's
+requested-label binding is enforced by the label-bound entry points: \texttt{verify\_search\_result\_raw\_for}
+on the dual-index path (which requires \texttt{prefix\_proof.label} to equal the queried label), and,
+on the global path, \texttt{verify\_search\_result}, where the VRF-output check (step~2) already ties
+the proof to the queried label. \texttt{verify\_search\_result} performs the VRF, value, prefix-root,
+and log-inclusion checks (steps~2, 4, 5, 6), and the head-bound wrappers
+\texttt{verify\_search\_result\_against} (global) and \texttt{verify\_search\_result\_raw\_against}
+(dual-index) add step~3 together with the equality binding of the returned head to the caller's
+independently verified head and the latest-leaf currency pin, so a validly signed but stale or forked
+head (or a genuine proof for an older leaf under the current head) is rejected. The live TypeScript
+client folds the label binding, the signature check, and the same currency pin into
+\texttt{verifyChain}, so every lookup enforces all six. The ``full client verification''
+benchmarked in \cref{ch:eval} is the complete six-step chain.
 
 % ============================================================================
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}

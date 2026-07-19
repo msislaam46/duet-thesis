@@ -192,7 +192,7 @@ check is a second lookup of the same shape, not a larger proof).
 
 A proof that is small is of little use if it is slow to check on the client. \Cref{tab:eval-latency}
 reports the server-side generation cost and the client-side verification cost, broken into the
-prefix-root recompute, the VRF verify, and the full five-step chain of \cref{ssec:design-verify}.
+prefix-root recompute, the VRF verify, and the full six-step chain of \cref{ssec:design-verify}.
 
 \begin{table}[ht]
 \centering
@@ -478,7 +478,7 @@ does not change the conclusion that granularity costs write rate, not verificati
 dual-index and CEA paths use client-derived rather than VRF-derived labels
 (\cref{ssec:design-verify}), and neither includes the signed-tree-head signature verification that
 the full specified check of \cref{app:algorithms} performs; \cref{ssec:eval-latency} shows that the
-complete five-step chain, including that signature, costs $\approx$\SI{128}{\micro\second}. The cost
+complete six-step chain, including that signature, costs $\approx$\SI{128}{\micro\second}. The cost
 of the granularity is instead the number of directory writes. \Cref{tab:eval-modes} reports the write
 counts over a conversation of $E$ hourly epochs, with a signed-pre-key rotation every 30 days
 ($R=720$).
@@ -594,7 +594,7 @@ check, since it \emph{includes} the VRF verification that CONIKS's figures omit,
 signature verification that both totals include. Because the two measurements come from different
 hardware (CONIKS's 2015 2\,GHz laptop CPU against our 2022 mobile CPU; see the comparability note),
 the $3.8\times$ factor is indicative only; the claim that stands on our hardware alone is the
-sub-\SI{150}{\micro\second} median cost of the full five-step chain across the whole measured range.
+sub-\SI{150}{\micro\second} median cost of the full six-step chain across the whole measured range.
 
 \begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different hardware (a 2015
 Xeon through to 2023 cloud instances), different scales ($10^6$ versus $2^{32}$), and database-backed
