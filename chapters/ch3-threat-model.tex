@@ -230,18 +230,11 @@ predecessor) is demonstrated in the adversarial suite.)
 victim's own private key, it derives the same shared secret, the same labels, and
 the same proofs, and is indistinguishable from the victim. X1 is included to
 delineate the guarantee: key transparency protects the channel between honest
-endpoints, not the endpoints themselves. \Cref{fig:threat-tree} organizes these
-scenarios as an attack tree, showing which are detected and which fall outside the
-guarantee.
-
-\begin{figure}[t]
-\centering
-\input{figures/tikz/fig-threat-tree}
-\caption[Attack taxonomy.]{Attack taxonomy. Each in-scope scenario (A1--A5) is annotated with the
-mechanism that detects it; the endpoint-compromise case (X1) is shown as the
-out-of-scope boundary.}
-\label{fig:threat-tree}
-\end{figure}
+endpoints, not the endpoints themselves. The attack--defence structure of these
+scenarios, separating the interposition routes that place an attacker key (A1, A3,
+A5) from the concealment attempts that try to hide it (A2, A4) and from the
+out-of-scope endpoint boundary (X1), is presented with the evaluation in
+\cref{fig:eval-attacktree}.
 
 % ============================================================================
 \section{Justification of the Threat Model}\label{sec:threat-fair}
@@ -333,16 +326,18 @@ each goal precise are given in \cref{app:definitions}, and each is demonstrated
 empirically in \cref{ch:eval}.
 
 \paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
-adversary (A3) substitutes a key, an honest party detects the substitution within
-at most one epoch of its next check. G1 is realized bidirectionally: the victim
-detects the wrong key under its own name, and a peer that has pinned the victim's
-key detects it on its next key-fetch; either can raise the in-band warning, so an
-offline victim remains covered.
+adversary (A3) substitutes a key, an honest party detects it once an honest monitor completes the
+required verified lookups and, where the peer's warning is needed, that warning write commits. G1 is
+realized bidirectionally: the victim detects the wrong key under its own name, and a peer that has
+pinned the victim's key detects it on its next key-fetch; either can raise the in-band warning, so an
+offline victim remains covered. The scripted demonstration flags the change within one or two epochs
+of the next check, which is a demonstration schedule rather than a protocol-wide latency bound.
 
 \paragraph{G2: Consistency Across Offline Windows.} A client returning after an
-offline period can confirm that the log it now sees is an append-only extension of
-the one it last verified, at a cost bounded by the endpoint log sizes rather than
-growing with the length of the absence. This property ensures that intermittent connectivity does not impose a
+offline period requests one distant-head consistency proof rather than one per missed epoch, and
+confirms that the log it now sees is an append-only extension of the one it last verified. The
+proof's size depends on the endpoint log sizes rather than on a proof count fixed directly to the
+window $W$; the endpoints themselves grow as the log grows. This property ensures that intermittent connectivity does not impose a
 growing verification burden on returning clients.
 
 \paragraph{G3: Directory Privacy.} The mapping between a user's identity and its
@@ -391,13 +386,14 @@ The following are explicitly out of scope.
   keys.
   \item \textbf{Query privacy from the operator.} The server learns which
   identities it is asked to resolve, which is a separate privacy property from the
-  directory privacy of goal~G3 (\cref{sec:threat-goals}); no deployed key-transparency
+  directory privacy of Goal~G3 (Directory Privacy) (\cref{sec:threat-goals}); no deployed key-transparency
   system hides the queried identity from the operator, and a distributed-OPRF extension
   is noted as future work (\cref{ch:discussion}).
   \item \textbf{Group messaging.} The design is pairwise; extending warning
   propagation to group settings such as Sender Keys or MLS is left to future work.
-  \item \textbf{Multi-device keychains.} Of the kind ELEKTRA targets
-  (\cref{sec:bg-vkd}); the model is single-device per identity.
+  \item \textbf{Multi-device keychains.} Extending the warning to the multi-device
+  keychains ELEKTRA targets (\cref{sec:bg-vkd}) is out of scope; the model assumes one
+  device per identity.
 \end{itemize}
 
 Each boundary is revisited, with the corresponding future-work direction, in

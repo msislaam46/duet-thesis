@@ -341,16 +341,18 @@ head. The client verifies all of these locally, it recomputes the prefix root fr
 returned proof, checks that this root is included in the log, and validates the tree-head
 signature, adding the VRF binding of the label on the global-lookup path. It then issues a second
 lookup for the shared warning slot, whose proven inclusion or non-inclusion is what separates a
-clean verdict from a warning. Any check that fails aborts the exchange before a verdict is
-reached, so a substituted key or a withheld warning cannot be silently accepted.
+clean verdict from a warning. Any check that fails makes the verifier return a rejecting verdict
+rather than a clean one, so a substituted key or a withheld warning cannot pass verification
+silently; the prototype hook surfaces that verdict as a banner but does not itself yet block session
+establishment (\cref{ssec:impl-demo}).
 
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-verify}
 \caption[Per-lookup client--server verification exchange.]{The client--server exchange on each peer-key retrieval: the server returns the value with its
 prefix, log-inclusion, and signed-tree-head proofs, all verified locally, and the warning slot's
-proven (non-)inclusion then decides between a clean verdict and a warning (any failed check aborts
-first). This is the runtime realization of the verification chain of \cref{ssec:design-verify}.}
+proven (non-)inclusion then decides between a clean verdict and a warning (any failed check yields
+a rejecting verdict, which the advisory hook surfaces but does not use to block the session). This is the runtime realization of the verification chain of \cref{ssec:design-verify}.}
 \label{fig:impl-verify}
 \end{figure}
 
@@ -358,9 +360,9 @@ first). This is the runtime realization of the verification chain of \cref{ssec:
 
 \Cref{fig:impl-e2e} gives the end-to-end account across the four roles (Alice and Bob, each a client
 with its verifier embedded; the KT server; and the auditor). In the normal path Alice registers her
-key and commits; Bob's verifier then performs three label-bound, proof-verified lookups --- the peer
+key and commits; Bob's verifier then performs three label-bound, proof-verified lookups (the peer
 slot $\ell_A$ it retrieves Alice from, its own slot $\ell_B$, and the shared warning slot
-$\ell_{\mathsf{warn}}$, which is verifiably empty --- and returns \textsc{safe}, while the auditor
+$\ell_{\mathsf{warn}}$, which is verifiably empty) and returns \textsc{safe}, while the auditor
 polls and replays to \textsc{consistent}. In the A1b branch the server overwrites Alice's own
 dual-index slot $\ell_A$ (which is also Bob's peer slot): Alice's monitor reads the substituted value
 against her pinned key, finds a mismatch, and writes the shared warning slot; Bob's monitor then reads
@@ -368,15 +370,13 @@ that warning and both clients go red. Independently, the auditor's transition re
 declared immutable rotation, so detection does not rest on the client path alone. The live run below
 exercises it inside the real interface.
 
-\begin{figure}[ht]
+\begin{figure}[p]
 \centering
 \input{figures/tikz/fig-impl-e2e}
-\caption[End-to-end sequence across the four roles.]{End-to-end sequence across the four roles
-(Alice, Bob, the KT server, and the auditor): the normal registration--fetch--verify--audit path
-(top), where Bob's verifier performs three label-bound verified lookups (peer, own, and warning
-slots), and the A1b overwrite of Alice's own slot $\ell_A$ (bottom), detected by Alice's monitor
-(which writes the warning Bob's monitor then reads) and, independently, by the auditor's transition
-replay. Described in the text.}
+\caption[Normal and A1b attack paths across the four roles.]{Normal and A1b attack paths across the
+client, directory, and auditor roles. The lower panel separates the client-side warning propagation
+(Alice's own-slot mismatch, her warning write, and Bob's warning read) from the auditor's rejection of
+the immutable-slot rotation.}
 \label{fig:impl-e2e}
 \end{figure}
 
@@ -392,9 +392,13 @@ label, reads it on its own next tick (\texttt{READ warning slot label=a480\ldots
 and raises the matching red banner, so both sides are alerted whenever a monitoring victim or a
 pinned peer detects the substitution and commits the warning (the conditional case argued in
 \cref{ch:design}).
-Throughout, the auditor polling \texttt{/sth} continues to log \textsc{consistent}
-(\cref{fig:impl-auditor}, left): the attack was a substitution, not an equivocation, and the two
-mechanisms are cleanly distinguished. \Cref{fig:impl-screens} shows the resulting red banner on both
+Independently of the clients, the auditor's per-epoch transition audit rejects this A1b overwrite: the
+dual-index slot is immutable, so the declared in-place rotation is an \textsc{ImmutableRotation} the
+replay refuses and the epoch alarms (\cref{fig:impl-auditor}). Its cross-vantage fork check separately
+reports no equivocation, since A1b is a substitution rather than a split view. This is the opposite of
+the global-slot case A1a, where the identity slot is mutable and a malicious rotation is a legal
+declared operation the auditor cannot tell from an honest key change; there the auditor stays
+\textsc{consistent} and detection rests on the client self-check alone. \Cref{fig:impl-screens} shows the resulting red banner on both
 clients: the DevTools console beside each records the victim's \texttt{WRITE warning slot} and the
 peer's \texttt{READ warning slot} at the \emph{identical} label, the bidirectional detection across
 the two client instances.
@@ -423,10 +427,13 @@ produces a conflicting per-epoch fingerprint and the same warning fires.}
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-consistent.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
-\caption[Auditor: substitution vs equivocation.]{The cross-vantage auditor distinguishes substitution from equivocation. Left: during the
-substitution attacks above it keeps logging \textsc{consistent} (append-only verified), confirming
-the server did not fork. Right: under a staged equivocation (scenario A4) it raises
-\textsc{alarm: fork}, carrying the two validly-signed divergent roots as evidence.}
+\caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's outputs
+depend on the slot and the attack. Left: during the global-slot substitution A1a it logs
+\textsc{consistent}, because the identity slot is \textsc{mutable} and the malicious rotation is a
+legal declared operation it cannot tell from an honest key change, so detection there rests on the
+client self-check. The immutable-slot overwrite A1b instead trips its per-epoch transition audit
+(\textsc{ImmutableRotation}), and an equivocation (A4, right) raises \textsc{alarm: fork}, carrying the
+two validly-signed divergent roots as evidence.}
 \label{fig:impl-auditor}
 \end{figure}
 
@@ -630,8 +637,9 @@ the red warning, but the hook does not yet abort session establishment. Turning 
 left to future work (\cref{ch:discussion}); the guarantee proven here is that the verifier never
 \emph{accepts} a bad answer, not that the current integration blocks the session on one. Availability failures are the one
 case deliberately \emph{not} treated as an attack: an unreachable server yields the amber notice of
-\cref{ssec:impl-verifier}, never the red verdict, so a network outage cannot be mistaken for
-misbehaviour nor a substitution hidden behind a feigned outage. Hardening every request handler against
+\cref{ssec:impl-verifier}, never the red verdict. The prototype classifies an outage as an availability failure rather than as
+successful verification, but it does not distinguish a benign outage from a malicious refusal to
+serve; treating a persistent outage as suspicious is a deployment-policy decision left to future work. Hardening every request handler against
 a poisoned lock, rather than relying on the genesis-epoch bootstrap above, is noted as a production
 follow-up. These properties, and the reproducibility of the whole, are taken up next.
 

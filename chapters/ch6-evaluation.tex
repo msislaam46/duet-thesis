@@ -125,10 +125,17 @@ spend to catch up, and how quickly and reliably an attack is detected.
 \subsection{Lookup Proof Size (M1)}\label{ssec:eval-sizes}
 
 The size of a lookup proof determines the bandwidth cost of every key fetch, so it is the first
-quantity to pin down. \Cref{tab:eval-sizes} reports the single-index and dual-index proof
-sizes as the directory grows. A proof carries one hash per non-empty sibling on the label's path,
-whose number $h$ has expected value $\approx\lceil\lg N\rceil$, so both grow logarithmically in $N$
-as the sparse-tree design predicts (\cref{ssec:design-structures}).
+quantity to pin down. \Cref{tab:eval-sizes} reports two measured objects as the directory grows: the
+implemented (VRF-indexed) DUET lookup proof, which bundles a prefix proof, an 80-byte VRF proof, and a
+log-inclusion component, and, as a reference point, a dense Merkle-log inclusion proof over $N$ user
+entries. The table therefore compares the implemented VRF-indexed lookup against a plain log
+inclusion at the same $N$; it is not a measurement of the raw dual-index path (which calls
+\texttt{search(label)} and carries no VRF proof) and it does not isolate a like-for-like single-
+versus dual-index directory overhead. Each row is one seed-deterministic path; M7
+(\cref{ssec:eval-scale}) supplies the sampled distribution. A prefix proof carries one hash per
+non-empty sibling on the label's path, whose number $h$ has expected value $\approx\lceil\lg N\rceil$,
+so both objects grow logarithmically in $N$ as the sparse-tree design predicts
+(\cref{ssec:design-structures}).
 
 \begin{table}[ht]
 \centering
@@ -225,9 +232,12 @@ context between the harnesses.
 
 \subsection{Offline Catch-Up Bandwidth (M4)}\label{ssec:eval-catchup}
 
-The bandwidth a client spends after being offline is where the windowed-consistency contribution of
-\cref{ssec:design-catchup} yields its largest saving. A naïve client verifies one consistency proof per missed epoch;
-the windowed client verifies a single proof spanning the whole gap.
+The bandwidth a client spends after being offline is where the windowed-consistency policy of
+\cref{ssec:design-catchup} yields its largest saving over a repeated-proof workload. The baseline
+here is synthetic: it re-fetches one current-head-anchored consistency proof for each of the $W$
+missed epochs. The windowed client instead verifies a single distant-head proof spanning the whole
+gap, which standard RFC~9162 already supports directly; the saving is therefore in the number of
+proofs a monitoring policy chooses to fetch, not a cost RFC~9162 forces on an offline client.
 \Cref{tab:eval-catchup} reports both as the offline window $W$ grows. Because catch-up proofs are
 taken over the epoch log, one leaf per epoch, their size is independent of the number of users
 $N$; the table therefore holds for every $N$ measured.
@@ -393,10 +403,11 @@ the unchanged user identifier, which a production server would cache, leaving on
 microseconds of tree work. The verifiable random function, measured in isolation, is constant-time
 to prove and to verify, confirming its $N$-independence; its isolated rows in \cref{app:benchmarks}
 differ from the in-path figures by a few percent in either direction, the benchmark-context and
-run-order sensitivity noted in \cref{sec:eval-method}. The
-key-transparency cost a deployment pays at the handshake hook is exactly the
-$\approx$\SI{128}{\micro\second} full signed-head lookup verification, against a no-KT floor of a single hash:
-microseconds of client work per conversation.
+run-order sensitivity noted in \cref{sec:eval-method}. M11 measures the local CPU cost of one complete signed-head KT lookup verification invoked at the
+handshake hook, $\approx$\SI{128}{\micro\second} against a no-KT floor of a single hash. It excludes
+network transfer, X3DH/PQXDH, session establishment, and the remainder of the messaging-client
+handshake, so it is a component measurement, not the full deployment overhead: microseconds of client
+CPU work per conversation on top of everything else the handshake already does.
 
 \begin{table}[ht]
 \centering
@@ -535,8 +546,10 @@ Directory privacy (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF)
 Four claims follow from the comparison; for each cross-system figure we state explicitly whether it
 is published or derived, and from what.
 
-First, the dual-index lookup proof is at \emph{size parity} with CONIKS at matched directory size.
-CONIKS publishes \num{1216}\,bytes at $N = 2^{32}$; instantiating CONIKS's own per-lookup accounting
+First, the implemented (VRF-indexed) lookup proof is at \emph{size parity} with CONIKS at matched
+directory size; this is the like-for-like comparison, since CONIKS lookups are likewise VRF-indexed,
+and the raw dual-index lookup used elsewhere in DUET carries no VRF proof and is correspondingly
+smaller. CONIKS publishes \num{1216}\,bytes at $N = 2^{32}$; instantiating CONIKS's own per-lookup accounting
 (one \num{32}-byte hash per tree level plus one, a \num{96}-byte VRF proof, and the \num{64}-byte
 signed-tree-root signature~\cite[\S5.3, Table~1]{melara2015coniks}) at $N = 10^6$ gives
 $32 \cdot 21 + 96 + 64 = 832$\,bytes, a figure we derive; the paper itself states no number at
@@ -635,14 +648,16 @@ security argument; the full technique matrix and the per-category STRIDE tables 
 
 A STRIDE enumeration over the three trust domains (the server (Merkle log, prefix tree, signed
 tree head), the client (registration, verification, warning monitor), and the auditor) yields
-twenty distinct threats. \Cref{tab:eval-stride} summarizes the outcome: sixteen are mitigated
-and four are residual.
+twenty distinct threats. \Cref{tab:eval-stride} summarizes the outcome: sixteen are addressed by an
+implemented control (some by cryptographic prevention, the rest by after-the-fact detection through
+the transparency log, the warning channel, or the auditor) and four are residual.
 
 \begin{table}[ht]
 \centering
-\caption[STRIDE coverage of the key-transparency system.]{STRIDE coverage of the key-transparency system. A threat is counted \emph{mitigated} when an
-implemented control prevents or detects the principal attack outcome, and \emph{residual} when no
-implemented control addresses it (\cref{app:security}).}
+\caption[STRIDE coverage of the key-transparency system.]{STRIDE coverage of the key-transparency system. A threat is counted \emph{addressed} when an
+implemented control prevents or detects the principal attack outcome (the per-row control column in
+\cref{app:security} states which of the two applies), and \emph{residual} when no
+implemented control addresses it.}
 \label{tab:eval-stride}
 \small
 \begin{tabular}{@{}lccp{6.0cm}@{}}
@@ -673,8 +688,8 @@ than realizing a distrusted one. The other three are availability functions the 
 does not implement (write rate-limiting, a published-epoch staleness timeout, and a gossip
 transport that would surface proof-omission), each a deployment-layer engineering task
 (\cref{ch:discussion}) rather than a flaw in the construction. (A2's write censorship is, by
-contrast, mitigated: the compound signal, a key mismatch from the self-check together with a
-proof-verified \emph{absence} of the warning, is itself confirmation of compromise. Deleting a
+contrast, detected: the compound signal, a key mismatch from the self-check together with a
+proof-verified \emph{absence} of the warning, is a strong indication of compromise. Deleting a
 warning \emph{after} it commits is tampering rather than censorship, and is separately closed by the
 write-once policy, the per-epoch transition audit, and the writer's persistence evidence.)
 
@@ -720,9 +735,11 @@ key in an earlier epoch flags the change directly on its next fetch.}
 
 \subsection{Residual Risks and Posture}\label{ssec:eval-posture}
 
-The overall posture follows from the preceding artefacts. Detection is automatic and fast (tens of
-microseconds of client work) and the false-positive rate over
-\num{1000} clean sessions is \num{0}, so the warning channel raises no spurious alarms. The residual
+The overall posture follows from the preceding artefacts. The marginal in-memory warning-slot read
+costs tens of microseconds of client work; end-to-end detection latency, which additionally requires
+the verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure,
+was not quantified. No false alarms were observed over
+\num{1000} clean deterministic sessions, so the warning channel raised no spurious alarms in that run. The residual
 risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the label$\leftrightarrow$user
 mapping, outside what any transparency layer removes) and three availability functions left to a
 production deployment. This is the gap the design set out to close: where the deployed WhatsApp
@@ -757,7 +774,7 @@ complete~\cite{vaziripour2017}.
 
 On the server, the picture is more qualified, and the qualifications are exactly what a production
 deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one
-operation that grows with $N$ ($\approx O(N)$, \SI{6.00}{\milli\second} at $10^4$,
+operation that grows with $N$ ($\approx O(N)$, \SI{5.92}{\milli\second} at $10^4$,
 \cref{ssec:eval-throughput}), because the current server deep-clones its committed snapshot; a
 copy-on-write tree would reduce this to $O(\lg N)$ and is the single most valuable server-side change.
 Second, the per-lookup and per-rotation VRF prove (\SI{117.4}{\micro\second} measured in isolation,

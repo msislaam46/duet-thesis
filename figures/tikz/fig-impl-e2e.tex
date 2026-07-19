@@ -1,51 +1,56 @@
-% fig-impl-e2e.tex — end-to-end sequence across the four roles: the normal path
-% (top) and one compact attack branch (bottom). Label: \label{fig:impl-e2e}
-% Two client lifelines (Alice, Bob), each with its verifier embedded; the KT
-% server; and the auditor. Every proof-verified lookup is drawn separately.
+% fig-impl-e2e.tex — end-to-end sequence across the four roles, as two aligned
+% panels: (a) normal operation and (b) the A1b attack. Every proof-verified lookup
+% is drawn as a separate request/response. Label: \label{fig:impl-e2e}
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
   hd/.style={draw,rounded corners,fill=black!6,align=center,minimum height=9mm,minimum width=21mm,inner sep=3pt},
-  act/.style={draw,fill=black!4,align=center,font=\tiny,inner sep=2.5pt,rounded corners,text width=2.9cm},
-  ract/.style={act,draw=red!60!black},
+  act/.style={draw,fill=black!4,align=center,font=\tiny,inner sep=2.5pt,rounded corners,text width=2.8cm},
   gact/.style={act,draw=green!45!black,fill=green!7},
   m/.style={->,shorten >=1pt},
-  red/.style={->,red!65!black,shorten >=1pt},
-  grn/.style={->,green!50!black,shorten >=1pt},
   mlbl/.style={fill=white,inner sep=1.5pt,font=\scriptsize}]
-
-  % lifelines (x positions): Alice 0, Bob 3.4, KT server 7.0, Auditor 10.6
+  % ===== Panel (a): normal operation =====
   \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{KT server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
-    \draw[dashed,black!45] (\x,-0.55) -- (\x,-11.4);
-  }
-  \node[font=\itshape,text=black!55,anchor=west,fill=white,inner sep=1.5pt] at (-0.95,-0.9) {normal operation};
+    \draw[dashed,black!45] (\x,-0.55) -- (\x,-6.3);}
+  \node[font=\itshape,text=black!55,anchor=west,fill=white,inner sep=1.5pt] at (-0.95,-0.9) {(a) normal operation};
+  \draw[m] (0,-1.4) -- node[above,mlbl]{register Alice's key at $\ell_A$; commit epoch} (7.0,-1.4);
+  \draw[m] (3.4,-2.1) -- node[above,mlbl]{1. search peer slot $\ell_A$} (7.0,-2.1);
+  \draw[m] (7.0,-2.6) -- node[above,mlbl]{value $+$ proof $+$ STH} (3.4,-2.6);
+  \draw[m] (3.4,-3.3) -- node[above,mlbl]{2. search own slot $\ell_B$} (7.0,-3.3);
+  \draw[m] (7.0,-3.8) -- node[above,mlbl]{own key $+$ proof} (3.4,-3.8);
+  \draw[m] (3.4,-4.5) -- node[above,mlbl]{3. search warning slot $\ell_{\mathsf{warn}}$} (7.0,-4.5);
+  \draw[m] (7.0,-5.0) -- node[above,mlbl]{proven non-inclusion (empty)} (3.4,-5.0);
+  \node[gact,anchor=north] at (3.4,-5.35) {all three verified\\$\Rightarrow$ \textsc{safe} (green)};
+  \draw[m] (10.6,-2.35) -- node[above,mlbl,font=\tiny]{poll STH $+$ delta} (7.0,-2.35);
+  \node[act,anchor=north] at (10.6,-2.7) {replay transition:\\consistent};
+\end{tikzpicture}%
+}
 
-  % ---- normal path ----
-  \draw[m] (0,-1.5) -- node[above,mlbl]{register Alice's key at $\ell_A$; commit epoch} (7.0,-1.5);
-  \draw[m] (3.4,-2.3) -- node[above,mlbl]{search peer slot $\ell_A$} (7.0,-2.3);
-  \draw[m] (7.0,-3.0) -- node[above,mlbl]{value $+$ proof chain $+$ STH} (3.4,-3.0);
-  \node[act,anchor=north] at (3.4,-3.35) {three label-bound verified lookups:\\peer slot $\ell_A$, own slot $\ell_B$,\\warning slot $\ell_{\mathsf{warn}}$ (empty)};
-  \node[gact,anchor=north] at (3.4,-5.15) {\textsc{safe} (green)};
-  \draw[m] (10.6,-4.1) -- node[above,mlbl]{poll STH $+$ delta} (7.0,-4.1);
-  \node[act,anchor=north] at (10.6,-4.45) {replay transition:\\consistent};
+\vspace{6pt}
 
-  % ---- divider ---- (lifelines span x=0..10.6; midpoint 5.3)
-  \draw[dashed,red!55!black] (-0.95,-6.1) -- (11.55,-6.1);
-  \node[font=\itshape,text=red!60!black,fill=white,inner sep=2pt] at (5.3,-6.42)
-    {under attack (A1b: overwrite of the immutable dual-index slot $\ell_A$)};
-
-  % ---- attack branch ----
-  % server overwrites the value (box centred on the server lifeline)
-  \node[ract,anchor=north,text width=2.5cm] at (7.0,-6.85) {server overwrites the value at $\ell_A$ with Mallory's key};
-  % auditor detects the illegal rotation (kept clear of the server box, right of it)
-  \draw[red] (10.6,-8.05) -- node[above,mlbl,font=\tiny,pos=0.4]{poll STH $+$ delta} (7.0,-8.05);
-  \node[ract,anchor=north] at (10.6,-8.4) {replay: declared immutable rotation $\to$ reject};
-  % Alice's monitor detects the overwrite of her own slot
-  \draw[m] (0,-8.7) -- node[above,mlbl]{monitor tick: search own slot $\ell_A$} (7.0,-8.7);
-  \draw[red] (7.0,-9.3) -- node[above,mlbl]{Mallory's key} (0,-9.3);
-  \node[ract,anchor=north] at (0,-9.65) {own-slot mismatch:\\pinned key $\ne$ Mallory};
-  % Alice writes the warning
-  \draw[red] (0,-10.55) -- node[above,mlbl]{write warning slot $\ell_{\mathsf{warn}}$} (7.0,-10.55);
-  % Bob's monitor reads the warning
-  \draw[red] (7.0,-11.05) -- node[above,mlbl]{Bob monitor: warning present} (3.4,-11.05);
-  \node[ract,anchor=north] at (3.4,-11.4) {\textsc{warning} (red)};
-\end{tikzpicture}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[>=Stealth,font=\scriptsize,
+  hd/.style={draw,rounded corners,fill=black!6,align=center,minimum height=9mm,minimum width=21mm,inner sep=3pt},
+  act/.style={draw,fill=black!4,align=center,font=\tiny,inner sep=2.5pt,rounded corners,text width=2.8cm},
+  ract/.style={act,draw=red!60!black},
+  m/.style={->,shorten >=1pt},
+  red/.style={->,red!65!black,shorten >=1pt},
+  mlbl/.style={fill=white,inner sep=1.5pt,font=\scriptsize}]
+  % ===== Panel (b): under attack (A1b) =====
+  \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{KT server}/S, 10.6/Auditor/U}{
+    \node[hd] (\id) at (\x,0) {\name};
+    \draw[dashed,black!45] (\x,-0.55) -- (\x,-6.6);}
+  \node[font=\itshape,text=red!60!black,anchor=west,fill=white,inner sep=1.5pt] at (-0.95,-0.9)
+    {(b) under attack: A1b overwrite of the immutable dual-index slot $\ell_A$};
+  \node[ract,anchor=north,text width=2.6cm] at (7.0,-1.25) {server overwrites the value at $\ell_A$ with Mallory's key};
+  \draw[red] (10.6,-2.55) -- node[above,mlbl,font=\tiny,pos=0.4]{poll STH $+$ delta} (7.0,-2.55);
+  \node[ract,anchor=north] at (10.6,-2.9) {replay: immutable rotation $\to$ reject};
+  \draw[m] (0,-3.2) -- node[above,mlbl]{Alice monitor: search own slot $\ell_A$} (7.0,-3.2);
+  \draw[red] (7.0,-3.7) -- node[above,mlbl]{Mallory's key} (0,-3.7);
+  \node[ract,anchor=north] at (0,-4.05) {own-slot mismatch:\\pinned key $\ne$ Mallory};
+  \draw[red] (0,-4.95) -- node[above,mlbl]{write warning slot $\ell_{\mathsf{warn}}$} (7.0,-4.95);
+  \draw[m] (3.4,-5.5) -- node[above,mlbl]{Bob monitor: search $\ell_{\mathsf{warn}}$} (7.0,-5.5);
+  \draw[red] (7.0,-6.0) -- node[above,mlbl]{warning present (proof-verified)} (3.4,-6.0);
+  \node[ract,anchor=north] at (3.4,-6.35) {\textsc{warning} (red)};
+\end{tikzpicture}%
+}

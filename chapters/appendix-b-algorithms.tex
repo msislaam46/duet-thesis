@@ -225,8 +225,9 @@ and re-synchronize client state.
   $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
   \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to the caller's verified head; a signed but stale/forked head is rejected}
+  \Req $\pi_{\mathrm{prefix}}.\mathit{label}=\mathit{label}$ \tcp*{label binding (every path): the proof must speak about the requested label, so a valid proof for a different label is rejected}
   \If{$\mathit{user\_id}$ given}{
-    $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\pi_{\mathrm{prefix}}.\mathit{label}$\;
+    $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\mathit{label}$ \tcp*[f]{VRF path: the derived label equals the requested one}\;
   }
   \Req $\pi_{\mathrm{prefix}}.\mathit{value}=v$\;
   $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
@@ -348,8 +349,10 @@ validly signed at all, an availability or transport fault rather than evidence o
 
 \begin{algorithm}[H]
 \caption{Auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
-\KwData{$\mathit{heads}[]\gets[\,]$}
-\Fn{\normalfont\textsf{AuditEpoch}($\mathit{server}$)}{
+\KwData{$\mathit{heads}[]\gets[\,]$; committed $\mathit{mirror}$ (a PrefixTree, empty initially);
+audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
+\Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
+  \tcp{$\mathit{server}$: the networked directory; $\mathit{peer}$: an independent second-vantage head source}
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
   \If{$\mathit{heads}\ne[\,]$}{
     $\mathit{sth_{old}}\gets \mathit{heads}.\textsf{last}$;\ \ \Req $\mathit{sth_{new}}$ monotonic in epoch \emph{and} size\;
@@ -363,7 +366,7 @@ validly signed at all, an availability or transport fault rather than evidence o
     $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$ \tcp*{replays into scratch; does not commit to mirror}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
-  $\mathit{forkFree}\gets$ no available peer-vantage head $\mathit{sth_{other}}$ has $\textsf{DetectFork}(\mathit{sth_{other}})=\textsc{Fork}$\;
+  $\mathit{forkFree}\gets$ for every head $\mathit{sth_{other}}$ obtainable from $\mathit{peer}$, $\textsf{DetectFork}(\mathit{sth_{other}},\mathit{peer})\ne\textsc{Fork}$\;
   \If{$\mathit{complete}$ \emph{and} $\mathit{forkFree}$}{
     $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$ \tcp*{atomic commit}
   }
@@ -371,19 +374,22 @@ validly signed at all, an availability or transport fault rather than evidence o
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
   \Req $\pi_{\mathrm{incl}}$ binds $r_{e}$ to leaf $e$ of the log the validated STH signs\;
-  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$}
-  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$}
-  $r'\gets$ root after applying $\mathit{ops}_e$ to $\mathit{scratch}$\;
-  \Req $r'=r_{e}$
+  \ForEach{operation $o\in \mathit{ops}_e$ \emph{in declared order}}{
+    \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$, then insert $(\ell,\mathit{kind},v)$\;}
+    \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$:\ \Req $\mathit{kind}=\textsc{mutable}\wedge \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$, then set $\ell\mapsto v$\;}
+  }
+  \Req $\mathit{scratch}.\textsf{root}()=r_{e}$ \tcp*{the ordered replay of the declared delta must reproduce the committed root}
 }
-\Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
+\Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}},\mathit{src}$)}{
+  \tcp{$\mathit{sth_{other}}$: a head from a second vantage; $\mathit{src}$: the view that supplies the consistency proof}
   \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$}{\KwRet \textsc{InvalidHead}}
   \ForEach{$\mathit{sth}\in \mathit{heads}$}{
     \lIf{$\mathit{sth}.\mathit{epoch}=\mathit{sth_{other}}.\mathit{epoch}\wedge \mathit{sth}.\mathit{root}\ne \mathit{sth_{other}}.\mathit{root}$}{\KwRet \textsc{Fork}$(\mathit{sth},\mathit{sth_{other}})$}
   }
   \If{$\mathit{sth_{other}}.\mathit{epoch}$ matches no recorded head}{
-    $\mathit{sth}_{\mathrm{near}}\gets$ recorded head of nearest size;\ \ $\pi\gets \mathit{server}.\textsf{ConsistencyProof}$ between the smaller and larger of the two sizes\;
-    \lIf{refused $\vee\ \neg\,\textsf{VerifyConsistency}(\cdots,\pi)$}{\KwRet \textsc{Fork}$(\mathit{sth}_{\mathrm{near}},\mathit{sth_{other}})$}
+    $\mathit{sth}_{\mathrm{near}}\gets$ recorded head of nearest size;\ \ $m,n\gets$ smaller, larger of $\mathit{sth}_{\mathrm{near}}.\mathit{size}$ and $\mathit{sth_{other}}.\mathit{size}$\;
+    $\pi\gets \mathit{src}.\textsf{ConsistencyProof}(m,n)$ \tcp*{proof supplied by the named vantage, not an ambient server}
+    \lIf{refused $\vee\ \neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m\text{ and }n,\ \pi)$}{\KwRet \textsc{Fork}$(\mathit{sth}_{\mathrm{near}},\mathit{sth_{other}})$}
   }
   \KwRet \textsc{Consistent}\;
 }

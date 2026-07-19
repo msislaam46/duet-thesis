@@ -86,8 +86,10 @@ observer from enumerating the directory.
 \subsection{Epoch Lifecycle: Update, Commit, and the Signed Tree Head}\label{ssec:design-epoch}
 
 The directory evolves in epochs. An $\textsf{update}(\mathit{label}, \mathit{value})$
-mutates the live prefix tree in place, re-hashing only the dirty leaf-to-root path, so
-a single update is $O(\log N)$ rather than $O(N)$.
+mutates the live prefix tree in place, re-hashing only the dirty leaf-to-root path. The running time
+is therefore $O(256)$, one hash per level of the fixed 256-bit label space and so constant in $N$,
+rather than $O(N)$. The number of \emph{transmitted} non-default siblings in the resulting proof is a
+separate quantity, whose expected value is $\approx\lceil\lg N\rceil$.
 
 A $\textsf{commit\_epoch}()$ then closes the epoch. It reads the current prefix-tree
 root, appends it to the log as the next leaf, recomputes the log root, snapshots the
@@ -119,7 +121,7 @@ rather than a silent one.
 A client accepts no server response without independently verifying it: every lookup is
 ultimately authenticated against a signed tree head. Each verification traverses the same three-layer architecture
 introduced in \cref{sec:design-arch}: first the prefix tree, then the append-only log,
-and finally the signed tree head. The verification chain is the five-step pipeline of
+and finally the signed tree head. The verification chain is the pipeline of
 \cref{fig:design-verify}.
 
 \begin{figure}[t]
@@ -305,18 +307,18 @@ outright} (as well as any rotation that misdeclares the leaf's kind). An adversa
 compromised the pre-shared state and tries to overwrite a committed CEA fingerprint $F_t$ with one
 over its injected key must route the write through the privileged interface and declare it as a
 rotation; because the target leaf is immutable the transition audit rejects that rotation, so the
-epoch fails to replay and loses the auditor's counter-signature. Entry immutability is thus enforced
+epoch fails the auditor's validation and raises an alarm. Entry immutability is thus enforced
 \emph{structurally at the auditor}, not merely surfaced. The owner-side self-checks remain as defence
 in depth for the dual-index labels: a replaced lookup slot fails the owner's self-check and a
 replaced warning slot still alerts (any value at the slot alerts). But note the CEA fingerprint
 overwrite is one the receiver's per-epoch verdict alone \emph{cannot} catch under a pre-shared-state
 compromise (the substituted fingerprint matches what the victim recomputes for the injected key), so
-it is precisely the auditor's structural rejection of the immutable-leaf rotation that closes it. This is exactly
+it is the auditor's structural rejection of the immutable-leaf rotation that closes it. This is
 the update-validity role the IETF KeyTrans protocol assigns to third-party auditors, whose
 \textsf{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
-proof against the prior tree, precisely so that the auditor can recompute both roots of the
+proof against the prior tree, so that the auditor can recompute both roots of the
 transition~\cite{ietf-keytrans-protocol}. A deletion or overwrite therefore cannot be committed
-without either forgoing the auditor's counter-signature or presenting the auditor a transition that
+without either failing the auditor's validation and raising its alarm, or presenting the auditor a transition that
 fails to replay.
 \item \textbf{Persistence check.} Independently of any auditor, the writer of a warning retains the
 inclusion proof and signed tree head of the epoch at which its warning committed, and its background
@@ -363,9 +365,9 @@ $\Expt{dual\text{-}det}{\Pi,\Adv}$ below, in which $\Pi$ denotes the dual-index 
 $\Adv$ a probabilistic polynomial-time adversary (written $\Adv$ rather than $\A$, which
 already denotes Alice); the notation adapts ACKA's $\CEAsec$
 experiment~\cite{dowling2023acka}. The experiment is run by a challenger that invokes
-$\Adv$. The adversary controls the directory server and, following ACKA, even chooses the
-session secret and identities, security rests on the consistency of the registered keys,
-not on their secrecy. After the honest keys are registered, $\Adv$ publishes a directory
+$\Adv$. The adversary controls the directory server and, following ACKA, may choose the
+session secret and the identities. Security therefore rests on consistency of the registered keys
+rather than on secrecy of those inputs. After the honest keys are registered, $\Adv$ publishes a directory
 state and a signed tree head and answers each honest lookup with a value and proof of its
 choosing. The adversary succeeds if an honest party accepts a substituted key while no
 detection mechanism is triggered: both parties' self-checks pass and the warning slot is
@@ -416,7 +418,7 @@ label under one root, implying a violation of the collision resistance of the Me
 construction. Suppressing the warning after a detected mismatch likewise requires a forged
 non-inclusion proof. The remaining attack is equivocation, serving Alice and Bob
 different signed heads (attack A4), which lies outside this experiment and is handled by
-the cross-vantage auditor (Goal~G4, Fork Detection). A fully quantified reduction with concrete
+the cross-vantage auditor Goal~G4 (Fork Detection). A fully quantified reduction with concrete
 advantage bounds, and a unified treatment of the network and malicious-server adversaries,
 is left to future work (\cref{ch:discussion}).
 
@@ -665,12 +667,12 @@ Three deliberate departures from the paper are stated plainly, because each corr
 the ACKA limitations identified in \cref{sec:bg-acka}, and instantiating $\Logsec$ lets
 us address it. First, where $\CEA$ authenticates fingerprints, the session-mode scheme
 additionally derives \emph{labels} from the shared secret, adding the in-band
-peer-warning channel ACKA lacks. Second, ACKA's combined $\mathsf{CKALOG}$ construction performs no
-deferred verification, a client must verify each epoch as it arrives, whereas the
-windowed consistency proof of \cref{sec:design-windowed} adds exactly the deferred,
+peer-warning channel ACKA lacks. Second, ACKA's combined $\mathsf{CKALOG}$ construction provides no
+deferred-verification procedure. A client verifies each epoch as it arrives. The windowed policy
+of \cref{sec:design-windowed} instead adds exactly the deferred,
 batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is
 honest and provides no out-of-band cross-checking of tree heads; the cross-vantage auditor
-of the threat model (Goal~G4, Fork Detection; attack A4) adds equivocation detection on top of the
+of the threat model, which realizes Goal~G4 (Fork Detection) against attack A4, adds equivocation detection on top of the
 instantiated log. Closing these three gaps is what turns ACKA's abstract framework into a
 deployable system.
 
@@ -705,8 +707,8 @@ Truncate VRF output $\beta$ to 32 bytes & 256-bit label space; matches the prefi
 
 \paragraph{Directory Structure.} The directory is a sparse binary Merkle tree rather
 than an $n$-ary trie or a cryptographic accumulator. A binary tree gives uniform node
-semantics, every internal node hashes exactly two children under the RFC~6962 node tag,
-which keeps both the client verifier and the audit surface small, and it makes
+semantics: every internal node hashes two children under the RFC~6962 node tag. This
+keeps both the client verifier and the audit surface small, and it makes
 non-inclusion a first-class, cheap proof: an absent label resolves to a default-hash path,
 which is exactly what the warning tripwire (\cref{ssec:design-detection}) relies on to
 prove a slot empty. An accumulator would shorten membership proofs but make the
@@ -728,5 +730,5 @@ tree for the current directory and an append-only log of its committed roots, ra
 than a single structure. One tree alone would authenticate the present state but not its
 history, leaving append-only violations undetectable. The log supplies exactly the
 consistency proofs that windowed catch-up (\cref{sec:design-windowed}) and the
-cross-vantage auditor (Goal~G4, Fork Detection) depend on. The cost is one extra log-inclusion path per
+cross-vantage auditor Goal~G4 (Fork Detection) depend on. The cost is one extra log-inclusion path per
 lookup, up to $32\lceil\lg E\rceil$ bytes, quantified in \cref{ch:eval}.
