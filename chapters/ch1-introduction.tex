@@ -85,7 +85,8 @@ and a cross-vantage auditor) and an embedded TypeScript verifier integrated into
 Signal Desktop client (\cref{ch:impl}).
 
 \paragraph{Empirical.} A benchmark campaign (metrics M1--M13) establishing that the implemented VRF-indexed lookup
-proof is at rough size parity with CONIKS while adding a detection channel it lacks, that median full client
+proof is at rough size parity with CONIKS, with the detection channel CONIKS lacks obtained through
+additional same-shape lookups rather than a larger proof, that median full client
 verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than
 $N$ (\SIrange{128.1}{147.1}{\micro\second}), and that a
 month-long offline catch-up costs a few hundred bytes against the hundreds of kilobytes naïve

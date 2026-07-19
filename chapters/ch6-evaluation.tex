@@ -7,7 +7,8 @@ reports the microbenchmarks for proof size, verification latency, catch-up bandw
 mode trade (\cref{sec:eval-scale}), places the results beside prior key-transparency systems
 (\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
 taxonomy (\cref{sec:eval-security}). The principal findings are that the implemented VRF-indexed lookup proof is
-at rough size parity with CONIKS while adding automatic detection, that offline catch-up needs one proof
+at rough size parity with CONIKS, and separately that detection is obtained through additional lookups
+of the same shape rather than any enlargement of that proof, that offline catch-up needs one proof
 rather than $W$ (\num{695}-fold fewer raw path-hash bytes at a one-month window against this
 chapter's synthetic baseline), and that median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
@@ -21,10 +22,16 @@ value of a transparency system is not any single cost but the trade between proo
 time, and the bandwidth a client must spend to stay synchronized.
 
 The evaluation is organized around four questions, one per design claim, each stated so that it could
-be falsified. \emph{Is detection free in proof size?} The warning check is a separate lookup of the same shape
-as a key lookup, so by construction it adds no bytes to the key-lookup proof; empirically this is
-falsified if the implemented lookup proof were materially larger than the single-index baseline at the
-same $N$ (\cref{ssec:eval-sizes}). \emph{Does client
+be falsified. \emph{Is detection free in individual proof size?} This separates into three claims that
+must be falsified separately. \emph{Structurally}, the warning check is a separate lookup of the same
+shape as a key lookup, so enabling detection changes neither the format nor the size of any single
+lookup proof; falsified if turning detection on enlarged or restructured an individual proof.
+\emph{Empirically}, the measured VRF-indexed lookup sits at rough size parity with the like-for-like
+VRF-indexed baseline (CONIKS), not with a non-VRF single-index log, which is necessarily smaller by
+the VRF proof; falsified if the VRF-indexed proof were materially larger than that VRF-indexed
+baseline at the same $N$ (\cref{ssec:eval-sizes}). \emph{Operationally}, detection's cost is an extra
+lookup per check (and, in continuous mode, extra directory writes), not extra bytes in the proof;
+falsified if detection could not be realized without enlarging the individual proof. \emph{Does client
 verification remain inexpensive as the directory grows?} Falsified if the full-chain verify grew in
 proportion to $N$, or exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}).
 \emph{Can an offline client re-synchronize in a single proof, rather than one per missed epoch?}
@@ -52,15 +59,15 @@ group of the same name.}
 \toprule
 Metric & What it measures & Baseline(s) & Reported in \\
 \midrule
-M1  & Lookup proof size vs.\ $N$              & single- vs dual-index      & \cref{ssec:eval-sizes} \\
-M2  & Proof generation latency (server)        & dual-index                 & \cref{ssec:eval-latency} \\
-M3  & Full signed-head lookup verification latency & dual-index, windowed       & \cref{ssec:eval-latency} \\
+M1  & Lookup proof size vs.\ $N$              & single- vs VRF-indexed     & \cref{ssec:eval-sizes} \\
+M2  & Proof generation latency (server)        & VRF-indexed                & \cref{ssec:eval-latency} \\
+M3  & Full signed-head lookup verification latency & VRF-indexed, windowed      & \cref{ssec:eval-latency} \\
 M4  & Offline catch-up bandwidth vs.\ $W$      & na\"ive vs windowed         & \cref{ssec:eval-catchup} \\
-M5  & Marginal warning-slot lookup cost        & dual-index                 & \cref{ssec:eval-detection} \\
+M5  & Marginal warning-slot lookup cost        & VRF-indexed                & \cref{ssec:eval-detection} \\
 M6  & Clean-session false-positive rate        & None                       & \cref{ssec:eval-detection} \\
-M7  & Size + verify at scale ($10^6,10^7$)    & dual-index, windowed       & \cref{ssec:eval-scale} \\
-M8  & Latency-derived single-thread operation rate & dual-index                 & \cref{ssec:eval-throughput} \\
-M9  & Key rotation + epoch-commit cost         & dual-index, windowed       & \cref{ssec:eval-throughput} \\
+M7  & Size + verify at scale ($10^6,10^7$)    & VRF-indexed, windowed      & \cref{ssec:eval-scale} \\
+M8  & Latency-derived single-thread operation rate & VRF-indexed                & \cref{ssec:eval-throughput} \\
+M9  & Key rotation + epoch-commit cost         & VRF-indexed, windowed      & \cref{ssec:eval-throughput} \\
 M10 & VRF prove/verify in isolation            & None                       & \cref{ssec:eval-throughput} \\
 M11 & KT lookup-verification cost at the handshake hook & vs no-KT floor             & \cref{ssec:eval-throughput} \\
 M12 & Local signature/consistency kernel + one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
@@ -76,8 +83,13 @@ setup with no key transparency: a single hash, the cost a deployment pays anyway
 carries the warning slot), and the \emph{windowed} full scheme (dual-index plus windowed consistency
 proofs). These form an ablation: the no-KT floor isolates the cost of key transparency at all,
 single-index removes the dual-index warning, dual-index removes windowing, and windowed is the
-complete client verification. Read together with the session-versus-continuous comparison (M13), they
-let the contribution of each mechanism be attributed directly.
+complete client verification. In the size, latency, and rotation families this dual-index stage is
+exercised through the \emph{VRF-indexed} \texttt{search\_by\_user\_id} lookup the client actually runs
+(recorded under the harness's historical label \texttt{dual\_index}), which carries an \num{80}-byte
+VRF proof that the raw \texttt{search(label)} path omits; the tables therefore report it as the
+VRF-indexed lookup, the like-for-like counterpart to CONIKS. Read together with the
+session-versus-continuous comparison (M13), they let the contribution of each mechanism be attributed
+directly.
 
 Timings are collected two ways. Criterion provides the confidence intervals and regression plots;
 in parallel, a manual harness of \num{2000} timed iterations per operation records the median, the
@@ -142,7 +154,7 @@ so both objects grow logarithmically in $N$ as the sparse-tree design predicts
 \begin{table}[ht]
 \centering
 \caption{Lookup proof size versus directory size $N$ (single-epoch log, seed-deterministic). The
-harness records the VRF-indexed lookup under the frozen identifier \texttt{dual\_index}
+harness records the VRF-indexed lookup under the historical benchmark identifier \texttt{dual\_index}
 (\cref{app:benchmarks}).}
 \label{tab:eval-sizes}
 \small
@@ -177,7 +189,7 @@ top of $32$ bytes per prefix hash, giving
   |\pi| \;=\; 32h \;+\; 32h_{\mathrm{log}} \;+\; 177 \ \text{bytes},
   \qquad \mathbb{E}[h]\approx\lceil\lg N\rceil,\quad h_{\mathrm{log}}\le\lceil\lg E\rceil,
 \end{equation}
-where $h$ is the number of non-empty siblings on the queried label's path (the ``dual-index prefix
+where $h$ is the number of non-empty siblings on the queried label's path (the ``VRF prefix
 hashes'' column of \cref{tab:eval-sizes}) and $h_{\mathrm{log}}$ is the length of the current root's
 log-inclusion path. Because the current directory root is always the \emph{last} log leaf (the
 currency pin, \cref{ssec:design-verify}), $h_{\mathrm{log}}$ is the number of complete subtrees to its
@@ -569,17 +581,23 @@ DUET lookup response also returns the signed tree head \emph{per lookup} (\cref{
 a whole-response comparison would add each system's signature material to both sides and leave the
 proof bodies at the same rough parity.
 
-Second, the proof is roughly $9\times$ smaller than Signal's deployed wire format
-($8192/945 = 8.7\times$ at our $10^7$ median; $8192/817 = 10.0\times$ at $10^6$). This is a
-verified property of the deployed code, not an estimate: Signal's key-transparency server pads every
-prefix proof to the full \num{256}-sibling copath with seed-derived stand-in hashes, and its verifier
+Second, restricted to the prefix-proof sibling representation, DUET's bitmap-compressed proof carries
+roughly one-ninth the sibling-hash bytes of Signal's fixed \num{256}-sibling copath at the measured
+sizes. This is a like-for-like comparison of one component, not a whole-response wire-format claim.
+Signal's key-transparency server pads every prefix proof to the full \num{256}-sibling copath
+($256 \times 32 = \num{8192}$\,bytes) with seed-derived stand-in hashes, and its verifier
 (\texttt{evaluateProof} in \texttt{tree/prefix/verify.go}) rejects any proof that does not contain
-exactly \num{256} siblings of \num{32}\,bytes each~\cite{signal-kt-server}. The padding is a
-deliberate trade of bandwidth for the hiding of tree density, which our \num{32}-byte bitmap instead
-reveals; the comparison is therefore $\sim$$9\times$ bandwidth in exchange for
-$\sim\lceil\lg N\rceil$ bits of density metadata. SEEMless's measured $\approx$8.6\,kB lookup proofs
-at $10^7$~\cite[p.~12]{chase2019seemless} confirm that both deployed-lineage systems ship $\sim$8\,kB
-proofs.
+exactly \num{256} siblings of \num{32}\,bytes each~\cite{signal-kt-server}; DUET's prefix proof
+instead ships only the non-empty siblings plus a \num{32}-byte bitmap. Taking DUET's \emph{whole}
+lookup proof (prefix payload plus the \num{80}-byte VRF proof) as a conservative upper bound on its
+prefix component gives $8192/945 = 8.7\times$ at our $10^7$ median and $8192/817 = 10.0\times$ at
+$10^6$, so the prefix-only advantage is at least this large. The padding is a deliberate trade of
+bandwidth for the hiding of tree density, which our bitmap instead reveals, so the comparison is
+$\sim$$9\times$ sibling-hash bytes in exchange for $\sim\lceil\lg N\rceil$ bits of density metadata;
+it does not net against the signed tree head, which a full DUET response carries per lookup
+(\cref{sec:impl-signal}) and which Signal's \num{8192}-byte copath figure excludes on both sides.
+SEEMless's measured $\approx$8.6\,kB lookup proofs at $10^7$~\cite[p.~12]{chase2019seemless} confirm
+that both deployed-lineage systems ship $\sim$8\,kB prefix proofs.
 
 Third, offline catch-up at $W = 720$ costs \num{320}\,bytes against approximately \num{530}\,kB for
 CONIKS-style per-epoch monitoring over the same window. The \num{530}\,kB figure is derived from
@@ -767,9 +785,9 @@ with their caveats attached, not as recommendations.
 On the client, the cost is small and grows far more slowly than the service. Full verification is
 $\approx$\SI{128}{\micro\second} at $N\le10^4$ and \SI{147.1}{\micro\second} at $10^7$
 (\cref{ssec:eval-latency,ssec:eval-scale}),
-and a lookup proof is \num{817}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}): at parity
-with CONIKS and roughly $9\times$ smaller than Signal's deployed, density-hiding wire format
-(\cref{sec:eval-compare}). A client offline for a month catches up in a single \num{320}\,byte proof
+and a lookup proof is \num{817}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}): at rough size
+parity with CONIKS and, on the prefix-proof sibling representation alone, roughly $9\times$ smaller
+than Signal's fixed \num{256}-sibling copath (\cref{sec:eval-compare}). A client offline for a month catches up in a single \num{320}\,byte proof
 rather than the approximately \num{222}\,kB that one-proof-per-epoch verification costs over the same
 window (\cref{ssec:eval-catchup}); for comparison, CONIKS's published per-epoch monitoring costs
 imply approximately \num{530}\,kB for the same month (\cref{sec:eval-compare}). This matters most for
