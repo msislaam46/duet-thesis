@@ -360,8 +360,7 @@ validly signed at all, an availability or transport fault rather than evidence o
     $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$ \tcp*{replays into scratch; does not commit to mirror}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
-  $\mathit{forkFree}\gets \textbf{true}$ \tcp*{cross-vantage check}
-  \lForEach{peer-vantage head $\mathit{sth_{other}}$ available}{\lIf{$\textsf{DetectFork}(\mathit{sth_{other}})\ne\textsc{Consistent}$}{$\mathit{forkFree}\gets \textbf{false}$}}
+  $\mathit{forkFree}\gets$ no available peer-vantage head $\mathit{sth_{other}}$ has $\textsf{DetectFork}(\mathit{sth_{other}})=\textsc{Fork}$ \tcp*{\textsc{InvalidHead} is inadmissible evidence, not a fork}
   \If{$\mathit{complete}$ \emph{and} $\mathit{forkFree}$}{
     $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$ \tcp*{atomic commit}
   }

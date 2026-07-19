@@ -1387,8 +1387,10 @@ therefore $O(W \cdot \log E)$, linear in the missed-epoch count $W$. To show thi
 is not hypothetical, consider hourly epochs with pre-keys rotating every $r = 30$
 days: a client offline for a full rotation period faces $W = r \cdot 24 = 720$
 epochs, and must re-verify 720 consistency proofs in sequence for a single month
-offline --- prohibitive on a metered mobile link, and growing linearly with the
-gap. This is an acknowledged open problem rather than an oversight: the
+offline --- a linear, avoidable overhead that grows with the gap. \Cref{ssec:eval-catchup}
+measures the synthetic sequential baseline for this window at \num{222528} raw
+consistency-path hash bytes (serialized transfer was not measured), which the windowed
+proof replaces with a single proof. This is an acknowledged open problem rather than an oversight: the
 IETF draft flags ``reasonable monitoring windows'' for mobile clients as
 unspecified~\cite{ietf-keytrans-protocol}, and CONIKS names the linear offline
 cost as an open extension, conceding that its own remedy ``may not be realistic in
