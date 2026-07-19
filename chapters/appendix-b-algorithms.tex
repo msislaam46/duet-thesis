@@ -347,41 +347,50 @@ admitted only against an absent label, so an overwrite cannot masquerade as an i
 replayed root must equal the epoch's declared root, so any divergence between a declared delta and
 its committed effect alarms. This is what
 structurally rejects a post-compromise overwrite of a committed CEA fingerprint that a receiver's
-per-epoch verdict alone cannot catch (\cref{ssec:design-detection}). \textsf{DetectFork} accordingly
-returns one of three verdicts: \textsc{Fork} when two validly signed heads disagree at one epoch or a
-consistency proof between vantages fails; \textsc{InvalidHead} when the second vantage's head is not
-validly signed at all, an availability or transport fault rather than evidence of equivocation; and
-\textsc{Consistent} otherwise.
+per-epoch verdict alone cannot catch (\cref{ssec:design-detection}).
+
+\Cref{alg:auditor} specifies the \emph{networked} auditor binary, which keeps a single trusted
+baseline head $\mathit{last}$ and, once replay succeeds, runs \textsf{DetectFork} against one current
+second-vantage head. \textsf{AuditEpoch} classifies the new head against the baseline (First,
+Regression, SameSizeForked, Grew with a consistency proof, or an Idempotent re-poll), requests a
+consistency proof only on growth, and propagates a verdict: it alarms on \textsc{Malformed},
+\textsc{Rollback}, or \textsc{Fork}, holds without committing on an \textsc{Incomplete} fetch, and
+commits the mirror, cursor, and baseline as one transaction only on \textsc{Consistent}.
+\textsf{DetectFork} first requires the second-vantage head to be present, validly signed, \emph{and}
+well-formed; if it is not, it returns \textsc{InvalidHead}, an availability or transport fault that
+yields no equivocation verdict and, because $\textsc{InvalidHead}\ne\textsc{Fork}$, does not block the
+primary commit (G4 detection needs an honest second vantage, \cref{ssec:eval-auditor}). Given a valid
+second-vantage head it returns \textsc{Fork} when the two heads share a size but differ in root, or a
+consistency proof between the two vantages is refused or fails, and \textsc{Consistent} otherwise. The
+in-process library auditor (used by the unit tests) is the same test generalized from one baseline to
+the full vector of observed heads: it compares an incoming second-vantage head against every recorded
+head and adds a nearest-size consistency check for a head at an unrecorded epoch.
 
 \begin{algorithm}[H]
-\caption{Auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
-\KwData{$\mathit{heads}[]\gets[\,]$; committed $\mathit{mirror}$ (a PrefixTree, empty initially);
-audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
+\caption{Networked auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
+\KwData{trusted baseline head $\mathit{last}$ (initially $\bot$); committed $\mathit{mirror}$ (a PrefixTree,
+empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
-  \tcp{$\mathit{server}$: the networked directory; $\mathit{peer}$: an independent second-vantage head source}
-  $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
-  \Req $\mathit{sth_{new}}.\mathit{epoch}+1=\mathit{sth_{new}}.\mathit{size}$ \tcp*{well-formed: else later leaves escape the audit}
-  \If{$\mathit{heads}\ne[\,]$ \emph{(classify against the baseline; only a grown head is consistency-checked)}}{
-    $\mathit{sth_{old}}\gets \mathit{heads}.\textsf{last}$\;
-    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{sth_{old}}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{size}<\mathit{sth_{old}}.\mathit{size}$}{\KwRet \tcp*[f]{Regression: advance nothing}}
-    \lIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{sth_{old}}.\mathit{size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{sth_{old}}.\mathit{root}$}{\KwRet \tcp*[f]{SameSizeForked}}
-    \uIf{$\mathit{sth_{new}}.\mathit{size}>\mathit{sth_{old}}.\mathit{size}$}{
-      $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
-      \Req $\textsf{VerifyConsistency}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{sth_{old}}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$ \tcp*{Grew}
+  $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
+  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})\ \vee\ \mathit{sth_{new}}.\mathit{epoch}+1\ne \mathit{sth_{new}}.\mathit{size}$}{\textbf{alarm};\ \KwRet \textsc{Malformed}}
+  \If{$\mathit{last}\ne\bot$}{
+    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{size}<\mathit{last}.\mathit{size}$}{\textbf{alarm};\ \KwRet \textsc{Rollback}}
+    \lIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last}.\mathit{size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+    \If{$\mathit{sth_{new}}.\mathit{size}>\mathit{last}.\mathit{size}$}{
+      $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
+      \lIf{$\neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
     }
-    \lElse{\emph{Idempotent} (same size, same root): the replay below no-ops if already audited}
   }
   $\mathit{scratch}\gets \textsf{clone}(\mathit{mirror})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
     $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e)$\;
-    \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable, not a fork}}
-    $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$ \tcp*{replays into scratch; does not commit to mirror}
-    $\mathit{cursor}\gets \mathit{cursor}+1$\;
+    \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable}}
+    $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$;\ \ $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
-  $\mathit{forkFree}\gets$ for every head $\mathit{sth_{other}}$ obtainable from $\mathit{peer}$, $\textsf{DetectFork}(\mathit{sth_{other}},\mathit{peer})\ne\textsc{Fork}$\;
-  \If{$\mathit{complete}$ \emph{and} $\mathit{forkFree}$}{
-    $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$ \tcp*{atomic commit}
-  }
+  \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
+  \If{$\textsf{DetectFork}(\mathit{peer}.\textsf{CurrentHead}(),\mathit{sth_{new}},\mathit{server})=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+  $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
+  \KwRet \textsc{Consistent}\;
 }
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
@@ -390,18 +399,17 @@ audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mat
     \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$, then insert $(\ell,\mathit{kind},v)$\;}
     \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$:\ \Req $\mathit{kind}=\textsc{mutable}\wedge \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$, then set $\ell\mapsto v$\;}
   }
-  \Req $\mathit{scratch}.\textsf{root}()=r_{e}$ \tcp*{the ordered replay of the declared delta must reproduce the committed root}
+  \Req $\mathit{scratch}.\textsf{root}()=r_{e}$\;
 }
-\Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}},\mathit{src}$)}{
-  \tcp{$\mathit{sth_{other}}$: a head from a second vantage; $\mathit{src}$: the view that supplies the consistency proof}
-  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$}{\KwRet \textsc{InvalidHead}}
-  \ForEach{$\mathit{sth}\in \mathit{heads}$}{
-    \lIf{$\mathit{sth}.\mathit{epoch}=\mathit{sth_{other}}.\mathit{epoch}\wedge \mathit{sth}.\mathit{root}\ne \mathit{sth_{other}}.\mathit{root}$}{\KwRet \textsc{Fork}$(\mathit{sth},\mathit{sth_{other}})$}
+\Fn{\normalfont\textsf{DetectFork}($\mathit{sth_b},\mathit{sth_{new}},\mathit{server}$)}{
+  \lIf{$\mathit{sth_b}=\bot\ \vee\ \neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_b})\ \vee\ \mathit{sth_b}.\mathit{epoch}+1\ne\mathit{sth_b}.\mathit{size}$}{\KwRet \textsc{InvalidHead} \tcp*[f]{no G4 verdict; does not block the primary commit}}
+  \uIf{$\mathit{sth_b}.\mathit{size}=\mathit{sth_{new}}.\mathit{size}$}{
+    \lIf{$\mathit{sth_b}.\mathit{root}\ne\mathit{sth_{new}}.\mathit{root}$}{\KwRet \textsc{Fork}}
   }
-  \If{$\mathit{sth_{other}}.\mathit{epoch}$ matches no recorded head}{
-    $\mathit{sth}_{\mathrm{near}}\gets$ recorded head of nearest size;\ \ $m,n\gets$ smaller, larger of $\mathit{sth}_{\mathrm{near}}.\mathit{size}$ and $\mathit{sth_{other}}.\mathit{size}$\;
-    $\pi\gets \mathit{src}.\textsf{ConsistencyProof}(m,n)$ \tcp*{proof supplied by the named vantage, not an ambient server}
-    \lIf{refused $\vee\ \neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m\text{ and }n,\ \pi)$}{\KwRet \textsc{Fork}$(\mathit{sth}_{\mathrm{near}},\mathit{sth_{other}})$}
+  \Else{
+    $m,n\gets$ smaller, larger of $\mathit{sth_b}.\mathit{size}$ and $\mathit{sth_{new}}.\mathit{size}$\;
+    $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(m,n)$\;
+    \lIf{refused $\vee\ \neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m,n,\ \pi)$}{\KwRet \textsc{Fork}}
   }
   \KwRet \textsc{Consistent}\;
 }

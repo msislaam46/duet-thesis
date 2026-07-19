@@ -229,13 +229,10 @@ but a malicious client could squat an as-yet-empty peer slot (\cref{ch:discussio
 \begin{figure}[htbp]
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
-\caption[Transition-audit state flow.]{The transition auditor (\cref{alg:auditor}), in two parts.
-(a)~A new head is signature- and well-formedness-checked, then classified: a rollback or a same-size
-head with a different root alarms, only a \emph{grown} head is consistency-checked, an already-audited
-equal head is a no-op, and first, grown, and incomplete heads proceed to~(b). (b)~Each not-yet-audited
-epoch (including epoch~0) is replayed into a scratch mirror and its root compared to the declared root,
-and the mirror, cursor, and baseline are committed as one transaction only after both the replay and
-the cross-vantage head check pass; every failure path fails closed.}
+\caption[Transition-audit state flow.]{The networked auditor (\cref{alg:auditor}), in two parts:
+(a)~head classification and (b)~transactional replay gate the atomic state update. A valid
+second-vantage head additionally gates it when available; an unavailable one yields no fork verdict
+and does not block the commit.}
 \label{fig:impl-transition-audit}
 \end{figure}
 

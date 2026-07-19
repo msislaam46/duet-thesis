@@ -12,7 +12,7 @@
   nop/.style={term,draw=orange!80!black,fill=orange!4},
   go/.style={term,draw=green!50!black,fill=green!5}]
 
-  \node[proc] (a0) {\textbf{(a) head classification}\\receive new head; verify STH signature};
+  \node[proc] (a0) {\textbf{(a) head classification}\\receive new head; verify STH signature and well-formedness};
   \node[dec,below=of a0] (a1) {first head? (no recorded baseline)};
   \node[dec,below=of a1] (a2) {rollback, or equal size with a different root?};
   \node[dec,below=of a2] (a3) {log grew (new size $>$ baseline)?};
@@ -55,8 +55,8 @@
 
   \node[proc] (b0) {\textbf{(b) transactional replay} (entered from (a))\\clone the committed mirror into scratch; $\mathit{cursor}\gets\mathit{audited\_epochs}$};
   \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$ (cursor\,$\to$\,current, incl.\ $e{=}0$): fetch delta$_e$; replay each Insert / Rotate (reject a duplicate insert (A1) or an immutable rotation (C2)); require scratch root $=$ declared root$_e$};
-  \node[cv,below=of b1] (bcv) {\textbf{cross-vantage head check:} fetch a second-vantage head; alarm if two validly signed heads share an epoch but differ in root, or a between-vantage consistency proof fails};
-  \node[good,below=of bcv] (b2) {every stage passed: commit mirror, cursor, \emph{and} the baseline atomically};
+  \node[cv,below=of b1] (bcv) {\textbf{cross-vantage head check} (\emph{if} a valid second-vantage head is available): alarm on a same-epoch different-root head or a failed between-vantage consistency proof; an unavailable or invalid head yields no fork verdict and does not block the commit};
+  \node[good,below=of bcv] (b2) {replay passed and no divergence found: commit mirror, cursor, \emph{and} baseline atomically};
   \draw[->] (b0) -- (b1);
   \draw[->] (b1) -- (bcv);
   \draw[->] (bcv) -- (b2);
