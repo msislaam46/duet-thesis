@@ -2,7 +2,7 @@
 % in two coordinated diagrams: (a) head classification and (b) the transactional
 % per-epoch replay followed by the cross-vantage head check. First / grown /
 % incomplete heads all proceed to (b); the baseline is adopted only in (b)'s
-% atomic commit, after both replay and the cross-vantage check pass.
+% atomic commit, after replay and any available valid cross-vantage comparison.
 % Label: \label{fig:impl-transition-audit}
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=4mm,
   proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.6cm,minimum height=6mm},
@@ -55,15 +55,19 @@
 
   \node[proc] (b0) {\textbf{(b) transactional replay} (entered from (a))\\clone the committed mirror into scratch; $\mathit{cursor}\gets\mathit{audited\_epochs}$};
   \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$ (cursor\,$\to$\,current, incl.\ $e{=}0$): fetch delta$_e$; replay each Insert / Rotate (reject a duplicate insert (A1) or an immutable rotation (C2)); require scratch root $=$ declared root$_e$};
-  \node[cv,below=of b1] (bcv) {\textbf{cross-vantage head check} (\emph{if} a valid second-vantage head is available): alarm on a same-epoch different-root head or a failed between-vantage consistency proof; an unavailable or invalid head yields no fork verdict and does not block the commit};
-  \node[good,below=of bcv] (b2) {replay passed and no divergence found: commit mirror, cursor, \emph{and} baseline atomically};
+  \node[cv,below=of b1] (bcv) {\textbf{cross-vantage:} valid second-vantage head available?};
+  \node[cv,below=6mm of bcv] (bcmp) {diverges from the primary head? (same-epoch different root, or a failed between-vantage consistency proof)};
+  \node[good,below=6mm of bcmp] (b2) {commit mirror, cursor, \emph{and} baseline atomically};
   \draw[->] (b0) -- (b1);
   \draw[->] (b1) -- (bcv);
-  \draw[->] (bcv) -- (b2);
+  \draw[->] (bcv) -- node[left,font=\tiny]{yes} (bcmp);
+  \draw[->] (bcmp) -- node[left,font=\tiny]{no: agree} (b2);
   \node[bad,right=12mm of b1] (r2) {root mismatch / A1 / C2: ALARM (audit failed)};
   \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard scratch, retry (not a fork)};
   \draw[->] (b1.east) -- node[above,font=\tiny]{replay fail} (r2.west);
   \draw[->] (b1.north east) -- node[above,font=\tiny,pos=0.55]{fetch fail} (r1.west);
-  \node[bad,right=12mm of bcv] (r3) {vantages diverge: ALARM (equivocation / fork)};
-  \draw[->] (bcv.east) -- node[above,font=\tiny]{diverge} (r3.west);
+  \node[bad,right=12mm of bcmp] (r3) {vantages diverge: ALARM (equivocation / fork)};
+  \draw[->] (bcmp.east) -- node[above,font=\tiny]{yes} (r3.west);
+  \coordinate (byp) at ([xshift=-9mm]bcv.west);
+  \draw[->] (bcv.west) -- node[above,font=\tiny,align=center]{no / invalid:\\no G4 verdict} (byp) |- (b2.west);
 \end{tikzpicture}
