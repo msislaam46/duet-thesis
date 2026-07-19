@@ -392,9 +392,13 @@ label, reads it on its own next tick (\texttt{READ warning slot label=a480\ldots
 and raises the matching red banner, so both sides are alerted whenever a monitoring victim or a
 pinned peer detects the substitution and commits the warning (the conditional case argued in
 \cref{ch:design}).
-Throughout, the auditor polling \texttt{/sth} continues to log \textsc{consistent}
-(\cref{fig:impl-auditor}, left): the attack was a substitution, not an equivocation, and the two
-mechanisms are cleanly distinguished. \Cref{fig:impl-screens} shows the resulting red banner on both
+Independently of the clients, the auditor's per-epoch transition audit rejects this A1b overwrite: the
+dual-index slot is immutable, so the declared in-place rotation is an \textsc{ImmutableRotation} the
+replay refuses and the epoch alarms (\cref{fig:impl-auditor}). Its cross-vantage fork check separately
+reports no equivocation, since A1b is a substitution rather than a split view. This is the opposite of
+the global-slot case A1a, where the identity slot is mutable and a malicious rotation is a legal
+declared operation the auditor cannot tell from an honest key change; there the auditor stays
+\textsc{consistent} and detection rests on the client self-check alone. \Cref{fig:impl-screens} shows the resulting red banner on both
 clients: the DevTools console beside each records the victim's \texttt{WRITE warning slot} and the
 peer's \texttt{READ warning slot} at the \emph{identical} label, the bidirectional detection across
 the two client instances.
@@ -423,10 +427,13 @@ produces a conflicting per-epoch fingerprint and the same warning fires.}
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-consistent.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
-\caption[Auditor: substitution vs equivocation.]{The cross-vantage auditor distinguishes substitution from equivocation. Left: during the
-substitution attacks above it keeps logging \textsc{consistent} (append-only verified), confirming
-the server did not fork. Right: under a staged equivocation (scenario A4) it raises
-\textsc{alarm: fork}, carrying the two validly-signed divergent roots as evidence.}
+\caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's outputs
+depend on the slot and the attack. Left: during the global-slot substitution A1a it logs
+\textsc{consistent}, because the identity slot is \textsc{mutable} and the malicious rotation is a
+legal declared operation it cannot tell from an honest key change, so detection there rests on the
+client self-check. The immutable-slot overwrite A1b instead trips its per-epoch transition audit
+(\textsc{ImmutableRotation}), and an equivocation (A4, right) raises \textsc{alarm: fork}, carrying the
+two validly-signed divergent roots as evidence.}
 \label{fig:impl-auditor}
 \end{figure}
 
