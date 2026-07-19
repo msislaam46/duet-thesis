@@ -107,7 +107,9 @@ identities of the communicating parties and nothing else directly. The signed
 pre-key is authenticated only \emph{indirectly}, by its signature
 $\sig{\spk{}}$ under the identity key, so it is authentic relative to an
 authentic identity key but is not itself covered by the Safety Number. The
-one-time pre-keys are unsigned and are not authenticated at all. What no part of
+one-time pre-keys are unsigned and carry no individual authentication (they are not signed under the
+identity key), though the identity and signed-pre-key terms still bind the handshake to the true
+parties. What no part of
 this mechanism provides is authentication of the particular \emph{session}: the
 specific keys actually combined in a given handshake are never checked together.
 This per-session gap, rather than a mere shortfall in the number of keys
@@ -221,9 +223,12 @@ the public key material used during session establishment, not only the identity
 keys: three distinct classes of key material (identity keys, signed pre-keys,
 and one-time pre-keys) contribute directly to its derivation. Consequently, the
 authenticity of every key in Bob's published bundle affects the resulting
-session, and if an attacker can substitute any of these values during bundle
-distribution, the security guarantees of the resulting session may be
-compromised. This is precisely the gap that \cref{ssec:bg-gap} develops when it
+session, but the effect of a substitution depends on which value is replaced.
+Substituting the identity key or the signed pre-key can interpose an attacker-controlled key, the
+case this thesis targets; substituting only the one-time pre-key, whose optional DH term both peers
+must agree on, normally causes Alice and Bob to derive different secrets and the session to fail
+rather than enabling impersonation, since the identity and signed-pre-key DH terms still bind the true
+parties. This is precisely the gap that \cref{ssec:bg-gap} develops when it
 evaluates the scope of Signal's authentication mechanisms. \Cref{fig:bg-x3dh}
 shows the full message sequence, from Bob publishing his bundle to Alice's initial
 message.
@@ -609,10 +614,14 @@ hardens the standard design. The server signs each head with Ed25519 over the
 epoch number, the tree size, the log root and a timestamp. Earlier systems such
 as CONIKS instead published a \emph{linear hash chain} of signed roots, each
 committing to the previous one by including the hash of its predecessor. That
-chain is their mechanism for non-equivocation. The Merkle-log design used here
-obtains the same property differently: the log root already commits to every
-prior epoch's root, and a single consistency proof certifies append-only growth
-in $O(\log n)$, whereas walking the hash chain costs one step per missed epoch.
+chain is their mechanism for verifying append-only growth. The Merkle-log design used here
+obtains that property differently: the log root already commits to every
+prior epoch's root, and a single consistency proof certifies append-only growth against one earlier
+head in $O(\log n)$, whereas walking the hash chain costs one step per missed epoch. Neither a hash
+chain nor a consistency proof, on its own, catches equivocation: both certify a single client's view
+as append-only, but a server can still sign two divergent histories and show each to a different
+client. Detecting that requires comparing heads observed from a second vantage, which is the
+cross-vantage auditor's job (\cref{sec:design-acka}).
 This work keeps the Merkle-log history but borrows one element of CONIKS's signed
 root that a bare tree head omits: a commitment to the provider's \emph{policy}.
 The signed message additionally binds a hash of the configuration (the VRF
@@ -1296,8 +1305,8 @@ Cryptographic material & Signal's Safety Number & Proposed scheme (this work) \\
 \midrule
 Long-term identity key ($\pkid{}$) & Yes, by manual out-of-band comparison & Yes:
   automatically logged and checked by a background monitor \\
-Signed pre-key ($\spk{}$) & No & Yes: bound per session epoch
-  (\cref{ch:design}) \\
+Signed pre-key ($\spk{}$) & No & Not logged individually; a signed-pre-key
+  rotation triggers re-registration of the identity-key binding (\cref{ch:design}) \\
 One-time pre-key ($\opk{}{i}$) & No & Not logged individually (single-use and
   ephemeral); see \cref{ch:design} \\
 \bottomrule

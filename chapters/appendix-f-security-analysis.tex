@@ -28,7 +28,7 @@ ID & Technique & Vector in KT & KT mitigation & Scen. \\
 T1557 & Adversary-in-the-Middle & network interception of X3DH & label mismatch (different secret $\Rightarrow$ different label) & A3 \\
 T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & shared-secret divergence & A3 \\
 T1565 & Data Manipulation & modify key bindings in the tree & Merkle inclusion-proof verification & A1,A3,A4 \\
-T1565.002 & Transmitted Data Manipulation & replace a key in transit & self-check + warning-label propagation & A1 \\
+T1565.002 & Transmitted Data Manipulation & replace a key in transit & label mismatch (different secret) + warning-label propagation & A3 \\
 T1552.004 & Private Keys & extract insecurely stored private keys from a device & \emph{none}: KT boundary (endpoint compromise) & X1 \\
 \bottomrule
 \end{tabular}
@@ -49,7 +49,12 @@ censoring writes, and presenting divergent signed views (equivocation).
 
 The STRIDE enumeration covers the server (Merkle log, prefix tree, signed tree head), the client
 (registration, verification, warning monitor), and the auditor. Of twenty threats, sixteen are
-mitigated and four are residual; the summary is \cref{tab:eval-stride} in \cref{ch:eval}, and
+addressed by an implemented control and four are residual. The distinction between prevention and
+after-the-fact detection matters and is stated per row in the control column: forgery of a VRF label,
+a Merkle proof, or a signature is cryptographically prevented, whereas several actions a malicious
+server can still attempt (planting a first-write registration, censoring a warning, or fabricating a
+divergent head) are not prevented but detected by the transparency log, the warning channel, or the
+cross-vantage auditor. The summary is \cref{tab:eval-stride} in \cref{ch:eval}, and
 the per-category detail follows in \cref{tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}.
 
 A threat is counted \emph{mitigated} when an implemented control prevents or detects the principal
@@ -60,7 +65,7 @@ mitigated.
 
 \begin{table}[ht]
 \centering
-\caption{Spoofing (4/4 mitigated).}
+\caption{Spoofing (4/4 addressed).}
 \label{tab:stride-s}
 \footnotesize
 \begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
@@ -68,7 +73,7 @@ mitigated.
 Threat & KT control & Residual \\
 \midrule
 Forge a VRF label & ECVRF-EDWARDS25519-SHA512-TAI binding & none (cryptographic) \\
-Impersonate a user registration & detected by the owner's self-check + peer warning (A1) & write API unauthenticated in the PoC; production requires account-layer authorization (\cref{ch:discussion}) \\
+Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the PoC, so a first write can be planted; the owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorization (\cref{ch:discussion}) \\
 Forge a Merkle proof & SHA-256 collision resistance & negligible ($2^{128}$) \\
 Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \bottomrule
@@ -77,7 +82,7 @@ Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 
 \begin{table}[ht]
 \centering
-\caption{Tampering (3/3 mitigated).}
+\caption{Tampering (3/3 addressed).}
 \label{tab:stride-t}
 \footnotesize
 \begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
@@ -93,16 +98,16 @@ Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (c
 
 \begin{table}[ht]
 \centering
-\caption{Repudiation (3/3 mitigated).}
+\caption{Repudiation (3/3 addressed).}
 \label{tab:stride-r}
 \footnotesize
 \begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Deny a key change & append-only log records every mutation & none (immutable log) \\
+Deny a key change & each epoch commits a signed root, so any change to a committed history is detectable by inclusion/consistency proof & none for a committed change (cryptographic) \\
 Deny an attack occurred & warning entry + inclusion proof & none (cryptographic evidence) \\
-Deny STH issuance & Ed25519 signature is non-repudiable & none (cryptographic) \\
+Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under the configured key & none for a signed head (cryptographic) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -133,8 +138,8 @@ Leak the shared secret from a label & HKDF-Expand (dual-index labels) and ECVRF 
 Threat & KT control & Residual \\
 \midrule
 Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented; freshness alarm left to deployment} \\
-Refuse to serve proofs & cross-vantage comparison by the auditor & \emph{gossip transport not implemented in the PoC; prototype fetches a second vantage directly} \\
-Censor warning writes & compound signal (A2): key mismatch from the self-check + proof-verified \emph{absence} of the warning $=$ confirmed compromise & client out-of-band alert \\
+Refuse to serve proofs & \emph{detected}, not prevented: a refusal is an observable availability signal; the KT cannot force the server to serve & no gossip transport in the PoC (the prototype fetches a second vantage directly) \\
+Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & client out-of-band alert \\
 Flood with fake registrations & deployment-level rate limiting & \emph{not implemented in the PoC (operational risk)} \\
 \bottomrule
 \end{tabular}
@@ -142,7 +147,7 @@ Flood with fake registrations & deployment-level rate limiting & \emph{not imple
 
 \begin{table}[ht]
 \centering
-\caption{Elevation of Privilege (3/3 mitigated).}
+\caption{Elevation of Privilege (3/3 addressed).}
 \label{tab:stride-e}
 \footnotesize
 \begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
@@ -150,8 +155,8 @@ Flood with fake registrations & deployment-level rate limiting & \emph{not imple
 Threat & KT control & Residual \\
 \midrule
 Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
-Server fabricates a tree head & consistency-proof chain + Ed25519 STH & none (cryptographic) \\
-Client escalates to server writes & write-once policy rejects overwrites of occupied labels & authenticated writes left to deployment (empty-slot squatting; \cref{ch:discussion}) \\
+Server fabricates a divergent tree head & \emph{detected}, not prevented: the server holds the STH key, so the signature does not stop it; a fabricated divergent head is caught by the append-only consistency check and the cross-vantage fork check & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
+Client escalates to server writes & write-once policy rejects overwrites of occupied labels, but does not authenticate the first write to an empty label & first-write authorization (empty-slot squatting) left to deployment (\cref{ch:discussion}) \\
 \bottomrule
 \end{tabular}
 \end{table}

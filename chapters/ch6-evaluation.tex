@@ -648,14 +648,16 @@ security argument; the full technique matrix and the per-category STRIDE tables 
 
 A STRIDE enumeration over the three trust domains (the server (Merkle log, prefix tree, signed
 tree head), the client (registration, verification, warning monitor), and the auditor) yields
-twenty distinct threats. \Cref{tab:eval-stride} summarizes the outcome: sixteen are mitigated
-and four are residual.
+twenty distinct threats. \Cref{tab:eval-stride} summarizes the outcome: sixteen are addressed by an
+implemented control (some by cryptographic prevention, the rest by after-the-fact detection through
+the transparency log, the warning channel, or the auditor) and four are residual.
 
 \begin{table}[ht]
 \centering
-\caption[STRIDE coverage of the key-transparency system.]{STRIDE coverage of the key-transparency system. A threat is counted \emph{mitigated} when an
-implemented control prevents or detects the principal attack outcome, and \emph{residual} when no
-implemented control addresses it (\cref{app:security}).}
+\caption[STRIDE coverage of the key-transparency system.]{STRIDE coverage of the key-transparency system. A threat is counted \emph{addressed} when an
+implemented control prevents or detects the principal attack outcome (the per-row control column in
+\cref{app:security} states which of the two applies), and \emph{residual} when no
+implemented control addresses it.}
 \label{tab:eval-stride}
 \small
 \begin{tabular}{@{}lccp{6.0cm}@{}}
@@ -686,8 +688,8 @@ than realizing a distrusted one. The other three are availability functions the 
 does not implement (write rate-limiting, a published-epoch staleness timeout, and a gossip
 transport that would surface proof-omission), each a deployment-layer engineering task
 (\cref{ch:discussion}) rather than a flaw in the construction. (A2's write censorship is, by
-contrast, mitigated: the compound signal, a key mismatch from the self-check together with a
-proof-verified \emph{absence} of the warning, is itself confirmation of compromise. Deleting a
+contrast, detected: the compound signal, a key mismatch from the self-check together with a
+proof-verified \emph{absence} of the warning, is a strong indication of compromise. Deleting a
 warning \emph{after} it commits is tampering rather than censorship, and is separately closed by the
 write-once policy, the per-epoch transition audit, and the writer's persistence evidence.)
 
