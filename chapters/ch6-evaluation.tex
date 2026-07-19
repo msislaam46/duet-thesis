@@ -31,13 +31,14 @@ to the like-for-like VRF-indexed baseline (CONIKS), \num{817} against \num{768} 
 $N=10^6$ (a \num{6.4}\% difference), rather than to a non-VRF single-index log, which is necessarily
 smaller by the VRF proof; this cross-paper comparison (\cref{sec:eval-compare}; \cref{ssec:eval-sizes}
 gives the single- versus VRF-indexed decomposition) is descriptive, not a falsification criterion.
-\emph{Operationally}, detection's cost is in requests and writes, not proof bytes: \texttt{detectMitm}
+\emph{Operationally}, detection's cost is in requests and writes, not proof bytes. This has a
+source-verified part and a measured part. The source-verified part is the request count: \texttt{detectMitm}
 performs two label-bound raw-label lookups per check (the owner slot and the warning slot), plus one
-directory write per ratchet epoch in continuous mode; falsified if realizing detection required more
-than these two lookups (or, in continuous mode, more than the per-epoch write) or measurably inflated
-verification latency beyond them. M5 times only the marginal \emph{unverified} warning-slot read, so it
-bounds the incremental read cost rather than the full two-lookup detection cost, and M13 covers the
-continuous-mode write trade. \emph{Does client
+directory write per ratchet epoch in continuous mode, and this is falsified only by the code performing
+more than that. The combined end-to-end latency of the two verified lookups is \emph{not} measured
+here: M5 measures only the marginal \emph{unverified} server-side warning-slot read (a lower floor for a
+proof-verified network lookup, not the full detection cost), and M13 measures the continuous-mode write
+trade. \emph{Does client
 verification remain inexpensive as the directory grows?} Falsified if the full-chain verify grew in
 proportion to $N$, or exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}).
 \emph{Can an offline client re-synchronize in a single proof, rather than one per missed epoch?}

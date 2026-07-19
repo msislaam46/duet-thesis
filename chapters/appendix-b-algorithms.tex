@@ -330,9 +330,9 @@ over the network. It maintains its own mirror of the committed directory, recons
 each epoch's declared delta from epoch~0, and checks epoch~$e$'s declared root against that
 reconstruction rather than trusting server-supplied per-operation membership proofs, after the manner
 of the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each epoch is replayed onto
-a scratch clone of the mirror, and the live mirror, the audited-epoch cursor, and the head list are
-advanced as a single all-or-nothing transaction only if the entire head passes every stage; a fetch
-failure aborts the transaction and is retried on the next poll rather than latching a fork alarm
+a scratch clone of the mirror, and the live mirror, the audited-epoch cursor, and the baseline head are
+advanced as a single all-or-nothing transaction only if the entire head passes every stage; an
+epoch-delta fetch failure aborts the transaction and is retried on the next poll rather than latching a fork alarm
 (matching the implementation's \texttt{transition\_complete} guard). \Cref{alg:auditor} states this
 whole-head boundary as realized by the networked auditor binary, which stages the entire epoch range
 and commits the mirror, the cursor, and the baseline head together; the in-process library auditor
@@ -353,18 +353,24 @@ per-epoch verdict alone cannot catch (\cref{ssec:design-detection}).
 baseline head $\mathit{last}$ and, once replay succeeds, runs \textsf{DetectFork} against one current
 second-vantage head. \textsf{AuditEpoch} classifies the new head against the baseline (First,
 Regression, SameSizeForked, Grew with a consistency proof, or an Idempotent re-poll), requests a
-consistency proof only on growth, and propagates a verdict: it alarms on \textsc{Malformed},
-\textsc{Rollback}, or \textsc{Fork}, holds without committing on an \textsc{Incomplete} fetch, and
-commits the mirror, cursor, and baseline as one transaction only on \textsc{Consistent}.
+consistency proof only on growth, and propagates a verdict: it alarms and returns \textsc{Malformed},
+\textsc{Rollback}, \textsc{Fork}, or \textsc{TransitionFailed} on the corresponding failure, holds
+without committing on an \textsc{Incomplete} epoch-delta fetch, and otherwise commits the mirror,
+cursor, and baseline as one transaction. After committing it distinguishes \textsc{Consistent} (a valid
+second vantage was available and agreed) from \textsc{ConsistentNoVantage} (no valid second-vantage head
+was available, so the primary chain advanced but no G4 verdict was obtained), so a caller can never read
+a missing cross-vantage check as a passed one.
 \textsf{DetectFork} first requires the second-vantage head to be present, validly signed, \emph{and}
 well-formed; if it is not, it returns \textsc{InvalidHead}, an availability or transport fault that
 yields no equivocation verdict and, because $\textsc{InvalidHead}\ne\textsc{Fork}$, does not block the
 primary commit (G4 detection needs an honest second vantage, \cref{ssec:eval-auditor}). Given a valid
 second-vantage head it returns \textsc{Fork} when the two heads share a size but differ in root, or a
 consistency proof between the two vantages is refused or fails, and \textsc{Consistent} otherwise. The
-in-process library auditor (used by the unit tests) is the same test generalized from one baseline to
-the full vector of observed heads: it compares an incoming second-vantage head against every recorded
-head and adds a nearest-size consistency check for a head at an unrecorded epoch.
+in-process library auditor (used by the unit tests) implements only the pure head-comparison half: it
+compares an incoming second-vantage head against every recorded head and reports a fork on a same-epoch
+root or size disagreement, an equal-size different-root pair, or a later-but-smaller rollback, but it
+does \emph{not} itself fetch a between-size consistency proof; the networked binary adds exactly that
+step, fetching and verifying the consistency proof between the two vantage sizes.
 
 \begin{algorithm}[H]
 \caption{Networked auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
@@ -385,21 +391,25 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
     $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e)$\;
     \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable}}
-    $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$;\ \ $\mathit{cursor}\gets \mathit{cursor}+1$\;
+    \lIf{$\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
+    $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
   \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
-  \If{$\textsf{DetectFork}(\mathit{peer}.\textsf{CurrentHead}(),\mathit{sth_{new}},\mathit{server})=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+  $\mathit{vb}\gets\textsf{DetectFork}(\mathit{peer}.\textsf{CurrentHead}(),\mathit{sth_{new}},\mathit{server})$\;
+  \lIf{$\mathit{vb}=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
   $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
+  \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed; no G4 verdict}}
   \KwRet \textsc{Consistent}\;
 }
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
-  \Req $\pi_{\mathrm{incl}}$ binds $r_{e}$ to leaf $e$ of the log the validated STH signs\;
+  \lIf{$\pi_{\mathrm{incl}}$ does not bind $r_{e}$ to leaf $e$ of the log the validated STH signs}{\KwRet \textsc{TransitionFailed}}
   \ForEach{operation $o\in \mathit{ops}_e$ \emph{in declared order}}{
-    \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$, then insert $(\ell,\mathit{kind},v)$\;}
-    \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$:\ \Req $\mathit{kind}=\textsc{mutable}\wedge \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$, then set $\ell\mapsto v$\;}
+    \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\lIf{$\mathit{scratch}.\textsf{get}(\ell)\ne\bot$}{\KwRet \textsc{TransitionFailed}} \textbf{else} insert $(\ell,\mathit{kind},v)$\;}
+    \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$: \lIf{$\neg(\mathit{kind}=\textsc{mutable}\wedge \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}})$}{\KwRet \textsc{TransitionFailed}} \textbf{else} set $\ell\mapsto v$\;}
   }
-  \Req $\mathit{scratch}.\textsf{root}()=r_{e}$\;
+  \lIf{$\mathit{scratch}.\textsf{root}()\ne r_{e}$}{\KwRet \textsc{TransitionFailed}}
+  \KwRet \textsc{Pass}\;
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_b},\mathit{sth_{new}},\mathit{server}$)}{
   \lIf{$\mathit{sth_b}=\bot\ \vee\ \neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_b})\ \vee\ \mathit{sth_b}.\mathit{epoch}+1\ne\mathit{sth_b}.\mathit{size}$}{\KwRet \textsc{InvalidHead} \tcp*[f]{no G4 verdict; does not block the primary commit}}
