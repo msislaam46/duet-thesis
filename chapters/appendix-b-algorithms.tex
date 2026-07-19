@@ -335,7 +335,10 @@ failure aborts the transaction and is retried on the next poll rather than latch
 (matching the implementation's \texttt{transition\_complete} guard). Because every leaf commits its
 mutable or immutable kind into its hash, the transition audit distinguishes the two families: a
 rotation is accepted only on a mutable (global-VRF identity) leaf and rejected on an immutable (raw
-dual-index, CEA, or warning) leaf, as is any rotation that misdeclares the kind. This is what
+dual-index, CEA, or warning) leaf, as is any rotation that misdeclares the kind. An insert is
+admitted only against an absent label, so an overwrite cannot masquerade as an insert, and the
+replayed root must equal the epoch's declared root, so any divergence between a declared delta and
+its committed effect alarms. This is what
 structurally rejects a post-compromise overwrite of a committed CEA fingerprint that a receiver's
 per-epoch verdict alone cannot catch (\cref{ssec:design-detection}). \textsf{DetectFork} accordingly
 returns one of three verdicts: \textsc{Fork} when two validly signed heads disagree at one epoch or a
@@ -360,7 +363,7 @@ validly signed at all, an availability or transport fault rather than evidence o
     $\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e)$ \tcp*{replays into scratch; does not commit to mirror}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
-  $\mathit{forkFree}\gets$ no available peer-vantage head $\mathit{sth_{other}}$ has $\textsf{DetectFork}(\mathit{sth_{other}})=\textsc{Fork}$ \tcp*{\textsc{InvalidHead} is inadmissible evidence, not a fork}
+  $\mathit{forkFree}\gets$ no available peer-vantage head $\mathit{sth_{other}}$ has $\textsf{DetectFork}(\mathit{sth_{other}})=\textsc{Fork}$\;
   \If{$\mathit{complete}$ \emph{and} $\mathit{forkFree}$}{
     $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{heads}.\textsf{append}(\mathit{sth_{new}})$ \tcp*{atomic commit}
   }
@@ -368,13 +371,13 @@ validly signed at all, an availability or transport fault rather than evidence o
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
   \Req $\pi_{\mathrm{incl}}$ binds $r_{e}$ to leaf $e$ of the log the validated STH signs\;
-  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$ \tcp*[f]{insert targets an absent label}}
-  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$ \tcp*[f]{mutable leaf, prior value matches}}
+  \lForEach{\textsf{Insert}$(\ell,\mathit{kind},v)\in \mathit{ops}_e$}{\Req $\mathit{scratch}.\textsf{get}(\ell)=\bot$}
+  \lForEach{\textsf{Rotate}$(\ell,\mathit{kind},v_{\mathrm{old}},v)\in \mathit{ops}_e$}{\Req $\mathit{kind}=\textsc{mutable}\ \wedge\ \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\ \wedge\ \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}}$}
   $r'\gets$ root after applying $\mathit{ops}_e$ to $\mathit{scratch}$\;
-  \Req $r'=r_{e}$ \tcp*{replayed root must equal committed root}
+  \Req $r'=r_{e}$
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_{other}}$)}{
-  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$}{\KwRet \textsc{InvalidHead} \tcp*[f]{second vantage's head is not validly signed: transport/availability fault, not a fork}}
+  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{other}})$}{\KwRet \textsc{InvalidHead}}
   \ForEach{$\mathit{sth}\in \mathit{heads}$}{
     \lIf{$\mathit{sth}.\mathit{epoch}=\mathit{sth_{other}}.\mathit{epoch}\wedge \mathit{sth}.\mathit{root}\ne \mathit{sth_{other}}.\mathit{root}$}{\KwRet \textsc{Fork}$(\mathit{sth},\mathit{sth_{other}})$}
   }

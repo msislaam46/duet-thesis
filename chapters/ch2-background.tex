@@ -1387,7 +1387,7 @@ therefore $O(W \cdot \log E)$, linear in the missed-epoch count $W$. To show thi
 is not hypothetical, consider hourly epochs with pre-keys rotating every $r = 30$
 days: a client offline for a full rotation period faces $W = r \cdot 24 = 720$
 epochs, and must re-verify 720 consistency proofs in sequence for a single month
-offline --- a linear, avoidable overhead that grows with the gap. \Cref{ssec:eval-catchup}
+offline: a linear, avoidable overhead that grows with the gap. \Cref{ssec:eval-catchup}
 measures the synthetic sequential baseline for this window at \num{222528} raw
 consistency-path hash bytes (serialized transfer was not measured), which the windowed
 proof replaces with a single proof. This is an acknowledged open problem rather than an oversight: the
@@ -1460,8 +1460,8 @@ lookups~\cite{yadav2020poster,yadav2022fakekey}, a cost Parakeet explicitly obje
 to~\cite[p.~14]{malvai2023parakeet} and which our unlinkable derived labels avoid.
 
 \paragraph{Mechanism 2 (Cryptographic): Windowed Consistency Proofs.} These address Problem 2,
-reducing the offline catch-up from $W$ sequential consistency proofs --- one per missed
-epoch --- to a \emph{single} RFC~9162 consistency proof spanning the whole window. The saving
+reducing the offline catch-up from $W$ sequential consistency proofs (one per missed
+epoch) to a \emph{single} RFC~9162 consistency proof spanning the whole window. The saving
 is in the number of proofs (one rather than $W$): the client verifies one proof from the
 epoch-log head it last saw to the current one, of size $O(\log E_1)$ in the current epoch-log
 length $E_1$ (\cref{lem:windowed-size}), logarithmic in the log length and independent of the
@@ -1475,13 +1475,13 @@ Mechanisms~1 through~3 are the transparency-log half of the work.
 
 \paragraph{Mechanism 4 (Conceptual): ACKA Instantiation (Continuous Mode).} ACKA itself gives a modular
 construction and a specific Signal add-on but leaves its logging component (Logsec) an
-\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}; this is, to our knowledge --- based on a
+\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}; this is, to our knowledge (based on a
 survey of the published key-transparency literature (CONIKS~\cite{melara2015coniks},
 SEEMless~\cite{chase2019seemless}, Parakeet~\cite{malvai2023parakeet},
 OPTIKS~\cite{optiks2024}, ELEKTRA~\cite{len2023elektra}, the WhatsApp and Apple
 deployments~\cite{lawlor2023whatsapp,apple-ckv}, and
 draft-ietf-keytrans~\cite{ietf-keytrans-protocol}) and public open-source trees as of
-July~2026 --- the first
+July~2026), the first
 instantiation of that component over a concrete, \emph{malicious-server-resistant}
 key-transparency log: a per-ratchet-epoch fingerprint and label chain that authenticates the
 Double Ratchet epoch by epoch. The claim is deliberately narrow: what is new is the concrete log

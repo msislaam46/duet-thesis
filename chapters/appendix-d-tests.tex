@@ -6,7 +6,7 @@ nine modules, the \num{8}-scenario adversarial integration suite, and \num{13} t
 \texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
 five \texttt{commit\_decision} transaction cases, and an end-to-end partial-fetch-failure test),
 \num{118} tests in total, run under \texttt{cargo test}; the TypeScript
-client is covered by \num{93} Jest tests in eight suites,
+client is covered by \num{97} Jest tests in eight suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
 complete listing follows. Tables are placed exactly where they are discussed.
@@ -173,8 +173,8 @@ server over the network; it is a separate gate (\texttt{npm run test:wire}) that
 to be running, and its five tests early-return as no-ops when the server is absent, so a bare
 \texttt{npm test} run does not by itself establish wire parity. The integration suite and the
 cryptographic unit suites (\texttt{remote\_kt\_client}, \texttt{cea}, \texttt{secret\_store}) exercise
-the verifier against a real in-process \texttt{KTServer} --- a genuine prefix tree, Merkle log, ECVRF,
-and Ed25519 signer. The remaining unit suites use test doubles by design: \texttt{background\_monitor}
+the verifier against a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF,
+and Ed25519 signer). The remaining unit suites use test doubles by design: \texttt{background\_monitor}
 and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to-event routing, and
 \texttt{decoder\_validation} drives the DTO decoders through a mocked transport to check
 malformed-response rejection. \Cref{tab:tests-jest-wire} lists the wire-parity and integration tests;
@@ -228,7 +228,7 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: client unit suites (\num{57} tests).}
+\caption{Jest tests: client unit suites (\num{61} tests).}
 \label{tab:tests-jest-unit}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}
@@ -285,6 +285,7 @@ Suite & Test \\
 \texttt{decoder\_validation} & numeric fields (\texttt{leafIndex}, \texttt{treeSize}, \texttt{epoch}, \texttt{timestamp}) must be non-negative safe integers \\
 \texttt{decoder\_validation} & prefix proof: missing \texttt{kind} and non-array \texttt{siblings} rejected; bad-hex/short root and wrong-length signature rejected \\
 \texttt{decoder\_validation} & STH \texttt{configHash} required as exactly 32 bytes (missing or wrong-length rejected) \\
+\texttt{decoder\_validation} & \texttt{/vrf-public-key} and \texttt{/sth-public-key}: non-object, invalid-hex, and wrong-length key responses each rejected \\
 \bottomrule
 \end{tabular}
 \end{table}
