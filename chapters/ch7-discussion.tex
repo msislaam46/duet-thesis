@@ -9,6 +9,10 @@ that turns a prototype into a deployable system (\cref{sec:disc-future}).
 % ============================================================================
 \section{Discussion}\label{sec:disc-discussion}
 
+This section interprets the results of \cref{ch:eval}: what the measurements establish, where the
+detection guarantee actually comes from, how far the design generalizes beyond Signal, and the
+deployments for which it is the wrong tool.
+
 \paragraph{Interpretation: Detection at No Asymptotic Cost.} The central finding of this work is that
 automatic, in-band detection of key substitution can be
 added to a messaging directory without changing the asymptotic cost of the proofs the directory
@@ -43,9 +47,8 @@ behaviour.
 \paragraph{Generalisability Beyond Signal.} Nothing in the design is specific to Signal beyond the
 shape of its inputs: it applies to any messenger with a semi-trusted key directory and a per-session
 shared secret from a ratcheting handshake, from which the labels are derived. In that light, the work
-also gives what, among the published and open-source systems surveyed in \cref{ch:background}, we
-found to be the first concrete implementation and measurement of this piece of the
-ACKA framework rather than a correction to it. ACKA~\cite{dowling2023acka} deliberately leaves its
+also instantiates and measures this piece of the ACKA framework (the instantiation claimed, with
+its survey scope, in \cref{sec:bg-contrib}) rather than correcting it. ACKA~\cite{dowling2023acka} deliberately leaves its
 append-only-log component abstract; that abstraction is a framework-design choice, not a flaw, and
 this thesis fills it in with a Merkle log, sparse prefix tree, and ECVRF following the IETF KeyTrans
 draft~\cite{ietf-keytrans-protocol}, then measures what that instantiation costs
@@ -134,7 +137,7 @@ each is a matter of proof-of-concept scope rather than a hidden result. First, t
 scheme's stated scope (\cref{ssec:design-detection}), and a network man-in-the-middle against an
 honest global directory; it does not model a two-leg adversary interposed at first contact, nor a
 server that makes a fabricated pre-key bundle and its log entry mutually consistent, both of which lie
-outside the post-establishment guarantee. Second, the headline latency numbers measure components,
+outside the post-establishment guarantee. Second, the principal latency numbers measure components,
 not a live end-to-end exchange: M11 is the KT lookup-verification cost at the handshake hook (identical to M3), not
 a Signal/PQXDH handshake benchmark, and M12 is the auditor's local computation, not the networked
 proof-carrying audit. Third, the DUET test suite is not wired into Signal Desktop's main continuous
@@ -150,13 +153,13 @@ The limitations above map onto a concrete programme of future work. The items ar
 those that turn the prototype into a deployment to those that broaden the design's reach.
 
 \paragraph{Production Shared-Secret Binding.} The single change that most advances the work is
-bridging the genuine X3DH/PQXDH shared secret out of libsignal at the pre-key-bundle hook and binding
+extracting the genuine X3DH/PQXDH shared secret from libsignal at the pre-key-bundle hook and binding
 the dual-index labels to it, in place of the deterministic stand-in. libsignal folds the shared
 secret into the ratchet root key and discards it immediately after session initialization, so the
 work is to capture it at that hook and hand it to the label derivation; everything downstream is
 unchanged. This is what turns the labels from ``stable per account'' into ``unguessable by the server,
 per session,'' and it is the prerequisite for the active-network-MitM detection of \cref{ch:threat} to
-hold against a real adversary. It is the headline deployment-path item.
+hold against a real adversary. It is the principal deployment-path item.
 
 \paragraph{An $O(\log N)$ Epoch Commit.} The commit cost measured in \cref{ch:eval} is an artefact of
 a single-process design that deep-clones the committed tree so concurrent lookups see a stable view.
@@ -224,12 +227,12 @@ the chain from cryptographic detection to human response, continuing the line of
 that motivated the design~\cite{vaziripour2017}.
 
 \paragraph{Evidence-Carrying Alerts and Operational Response.} The prototype's verdicts are
-user-facing events; a production service would add an operator-facing layer: a structured alert
-schema carrying the scenario class, the epoch, and the signed tree heads and proofs that constitute
-the evidence; notification interfaces through which an operator or auditor can reproduce an
-incident from that evidence alone; and an explicit response policy defining when the system rejects
-a proof, requests a key rotation, or escalates to a human: automated detection with
-human-in-the-loop response. Any such telemetry must be minimized so that the alerting layer does
+user-facing events. A production service would add an operator-facing layer with three parts. First,
+a structured alert schema carrying the scenario class, the epoch, and the signed tree heads and proofs
+that constitute the evidence. Second, notification interfaces through which an operator or auditor can
+reproduce an incident from that evidence alone. Third, an explicit response policy defining when the
+system rejects a proof, requests a key rotation, or escalates to a human. Together these give
+automated detection with human-in-the-loop response. Any such telemetry must be minimized so that the alerting layer does
 not itself leak the metadata the pseudorandom labels were designed to hide.
 
 \paragraph{A Networked, Persistent Benchmark Campaign.} Finally, the algorithmic numbers of

@@ -23,6 +23,11 @@ formalizes this distinction between detectable interference and availability.
 
 \section{Aims and Objectives}\label{sec:intro-aims}
 
+This section states what the thesis sets out to achieve and how its success is judged. It gives the
+central claim the dissertation defends, then decomposes that claim into four research questions, each
+paired later with the evidence that answers it and the criterion by which it could have been
+falsified.
+
 \paragraph{Thesis Statement.} The central claim this dissertation defends is that automatic, in-band
 detection of key substitution can be added to a deployed messaging key directory at essentially the
 asymptotic cost the directory already pays without a manual user ceremony, without enlarging the
@@ -45,8 +50,8 @@ a specific later chapter:
   endpoint log sizes rather than linearly in the epochs missed? \emph{(Answered by the
   windowed consistency proof of \cref{sec:design-windowed} and its measurement in
   \cref{ssec:eval-catchup}.)}
-  \item[RQ4 (client-integration feasibility).] Does the scheme integrate into a real, deployed messaging client at a
-  practical cost, rather than only into a standalone model? \emph{(Answered by the Signal Desktop
+  \item[RQ4 (client-integration feasibility).] Does the scheme integrate into a real messaging-client
+  codebase (Signal Desktop) at a practical cost, rather than only into a standalone model? \emph{(Answered by the Signal Desktop
   integration of \cref{ch:impl} and the deployment analysis of \cref{sec:eval-deploy}.)}
 \end{description}
 
@@ -59,22 +64,22 @@ each pair of users a shared warning slot in the directory, derived with the HMAC
 Extract-and-Expand Key Derivation Function (HKDF), that either party can raise
 and that a malicious server can neither pre-position nor censor undetectably, turning a silent
 substitution into an automatic, bidirectional, in-band alert (\cref{sec:design-dual}). More broadly,
-the thesis provides what is, to our knowledge (we are aware of no prior published or open-source
-realization at the time of writing), the first concrete instantiation and measurement of the abstract
+the thesis frames this scheme as a concrete instantiation and measurement of the abstract
 append-only-log component of the Authenticated Continuous Key Agreement (ACKA)
-framework~\cite{dowling2023acka}, and frames the guarantee
+framework~\cite{dowling2023acka} (the instantiation claimed, with its scope, in
+\cref{sec:bg-contrib}), and frames the guarantee
 precisely as detection over a semi-trusted directory rather than prevention.
 
 \paragraph{Cryptographic.} A formal detection experiment for the dual-index scheme, stated over
 standard assumptions with a reduction sketch, the full reduction being left as future work
-(\cref{def:dualindex-detect}).
+(\cref{def:dualindex-detect}); and the \emph{windowed consistency proof}, the application of a
+standard RFC~9162 distant-head consistency proof to the offline-monitoring policy, letting a client
+re-verify the log in one proof rather than $W$, with size logarithmic in the endpoint log sizes
+rather than linear in the epochs missed (\cref{sec:design-windowed}, \cref{lem:windowed-size}).
+\cref{ch:design} disclaims any new cryptographic primitive here: the contribution is the proof
+construction and its measured trade-off, not a new object.
 
-\paragraph{Systems.} The \emph{windowed consistency proof}: the application of a standard RFC~9162
-distant-head consistency proof to the offline-monitoring policy, letting a client re-verify the log
-in one proof rather than $W$, with size logarithmic in the endpoint log sizes rather than linear in
-the epochs missed (\cref{sec:design-windowed}, \cref{lem:windowed-size}); \cref{ch:design} disclaims
-any new cryptographic object here, and its security limitations are argued and its trade-off
-measured. Alongside it, a complete implementation in two independent layers held to byte-for-byte
+\paragraph{Systems.} A complete implementation in two independent layers held to byte-for-byte
 parity: a standalone Rust reference implementation (the \texttt{kt} crate, an HTTP directory server,
 and a cross-vantage auditor) and an embedded TypeScript verifier integrated into a fork of the real
 Signal Desktop client (\cref{ch:impl}).
@@ -96,9 +101,9 @@ attack taxonomy, and security goals. \Cref{ch:design} presents the design (the c
 architecture, the dual-index warning scheme, and windowed consistency proofs) and instantiates
 ACKA. \Cref{ch:impl} describes the two-layer implementation and its integration into Signal Desktop.
 \Cref{ch:eval} evaluates the system empirically and against the threat model, and draws out the
-implications for deployment. \Cref{ch:discussion} discusses results, limitations, and future work;
-\cref{ch:lsepi} covers the legal, social, ethical, and professional dimensions; and
-\cref{ch:conclusion} concludes. Supporting material is collected in the appendices: formal
+implications for deployment. \Cref{ch:discussion} discusses the results, limitations, and future work.
+\Cref{ch:lsepi} considers the legal, social, ethical, and professional dimensions.
+\Cref{ch:conclusion} concludes the thesis. Supporting material is collected in the appendices: formal
 definitions (\cref{app:definitions}), algorithms (\cref{app:algorithms}), the implementation and
 API reference (\cref{app:apiref}), the test catalogue (\cref{app:tests}), the full benchmark
 results (\cref{app:benchmarks}), the security-analysis tables (\cref{app:security}), a traceability

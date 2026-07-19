@@ -11,40 +11,40 @@ strongest supporting evidence.
 \centering
 \caption[Research-question traceability.]{Research question $\to$ claim $\to$ mechanism $\to$ test $\to$ benchmark $\to$ evidence.}
 \label{tab:trace-rq}
-\small
-\begin{tabular}{@{}L{0.9cm}L{3.9cm}L{3.4cm}L{5.0cm}L{1.9cm}L{5.2cm}@{}}
+\footnotesize
+\begin{tabular}{@{}L{1.6cm}L{4.3cm}L{3.7cm}L{5.4cm}L{1.7cm}L{5.4cm}@{}}
 \toprule
 RQ & Design claim & Mechanism & Test / scenario & Benchmark & Evidence \\
 \midrule
 RQ1 & substitution is detected automatically, in band, by both parties &
 dual-index warning scheme (\cref{sec:design-dual}) &
-scenarios A1--A5 (\cref{tab:tests-adversarial}); \idt{dual\_index} label tests (\cref{tab:tests-rust-prim}) &
+scenarios A1--A5 (\cref{tab:tests-adversarial}); dual-index derivation tests (\cref{tab:tests-rust-prim}) &
 M5, M6 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M6 finds no false alarms in the clean deterministic exercise (M5 is a marginal warning-slot read, not detector latency) \\
 RQ2 & detection does not enlarge an individual per-lookup proof; verification stays below the latency target and grows far more slowly than $N$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
-\idt{prefix\_tree}, \texttt{vrf}, \idt{merkle\_log} tests; cross-language vectors (\cref{app:tests}) &
+prefix-tree, VRF, and Merkle-log tests; cross-language vectors (\cref{app:tests}) &
 M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; \SI{128.1}{\micro\second} at $10^3$--$10^4$, rising to \SI{147.1}{\micro\second} at $10^7$ \\
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
-\idt{merkle\_log} exhaustive consistency; \idt{windowed\_consistency} (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
+Merkle-log exhaustive-consistency and windowed-consistency tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
 M4 & \cref{ssec:eval-catchup}: 320\,B @ $W{=}720$, ratio $\approx W$ \\
-RQ4 & the scheme integrates into a real deployed client at practical cost &
+RQ4 & the scheme integrates into a real messaging-client codebase (Signal Desktop) at practical cost &
 TypeScript verifier + lifecycle hooks (\cref{sec:impl-signal}) &
 Jest wire-parity and unit suites (\cref{sec:tests-ts}); live demonstration (\cref{ssec:impl-demo}) &
 M11 & \cref{sec:eval-deploy}: Rust microbenchmark of the KT lookup-verification at the handshake hook (microseconds per verification invocation); the live demonstration (\cref{ssec:impl-demo}) establishes client integration separately \\
 \midrule
-None & equivocation (split-view) is caught from a second vantage &
+Supporting & equivocation (split-view) is caught from a second vantage &
 cross-vantage auditor (\cref{sec:design-acka}) &
 scenario A4; auditor equivocation tests (\cref{sec:tests-rust}) &
 M12 & \cref{ssec:eval-auditor}: \SI{27.9}{\micro\second}/check (median; local one-head fork check) \\
-None & continuous mode trades write volume for finer detection &
+Supporting & continuous mode trades write volume for finer detection &
 CEA continuous mode (\cref{ssec:design-modes}) &
 M13 mode benchmark (\cref{sec:bench-modes}) &
 M13 & \cref{ssec:eval-modes}: plateau at $720\times$ \\
-None & a committed warning cannot be removed silently &
+Supporting & a committed warning cannot be removed silently &
 write-once policy + transition audit + persistence evidence (\cref{ssec:design-detection}) &
-\idt{update\_raw\_is\_write\_once}, \idt{attack\_remove\_raw\_is\_not\_declared} (\cref{tab:tests-rust-server}); transition-audit and deletion-evidence tests (\cref{tab:tests-rust-system}); scenario A2 &
-None & \cref{sec:eval-security}: A2 detected \\
+write-once and undeclared-removal tests (\cref{tab:tests-rust-server}); transition-audit and deletion-evidence tests (\cref{tab:tests-rust-system}) &
+None & \cref{sec:eval-security}: post-commit deletion is tampering (not A2 censorship), closed by write-once policy, per-epoch transition audit, and persistence evidence \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -60,8 +60,8 @@ None & \cref{sec:eval-security}: A2 detected \\
 Contribution & Artefact & Strongest evidence \\
 \midrule
 Conceptual & dual-index warning scheme; ACKA-log instantiation (\cref{sec:design-dual,sec:design-acka}) & automatic bidirectional detection, full adversarial suite passes (\cref{sec:eval-security}) \\
-Cryptographic & dual-index detection experiment (\cref{def:dualindex-detect}) & detection reduced to standard assumptions; reduction sketched, full reduction future work \\
-Systems & windowed consistency proof: RFC~9162 distant-head proof applied to offline monitoring, size bound (\cref{lem:windowed-size}); Rust \texttt{kt} crate, server, auditor; TypeScript verifier in Signal Desktop (\cref{ch:impl}) & \num{320}\,B raw path bytes at $W{=}720$, one proof rather than $W$, size logarithmic in endpoint log sizes (\cref{ssec:eval-catchup}); byte-for-byte parity on the shared cross-implementation test vectors; live cross-process demonstration (\cref{ssec:impl-demo}) \\
+Cryptographic & dual-index detection experiment (\cref{def:dualindex-detect}); windowed consistency proof: RFC~9162 distant-head proof applied to offline monitoring, size bound (\cref{lem:windowed-size}) & detection reduced to standard assumptions (reduction sketched, full reduction future work); \num{320}\,B raw path bytes at $W{=}720$, one proof rather than $W$, size logarithmic in endpoint log sizes (\cref{ssec:eval-catchup}) \\
+Systems & Rust \texttt{kt} crate, server, auditor; TypeScript verifier in Signal Desktop (\cref{ch:impl}) & byte-for-byte parity on the shared cross-implementation test vectors; live cross-process demonstration (\cref{ssec:impl-demo}) \\
 Empirical & benchmark campaign M1--M13; STRIDE/MITRE evaluation (\cref{ch:eval,app:security}) & per-lookup proof not enlarged by detection (warning check is an additional lookup of the same shape); median verify below \SI{150}{\micro\second} (\cref{sec:eval-micro}) \\
 \bottomrule
 \end{tabular}

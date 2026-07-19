@@ -164,6 +164,11 @@ X1 & endpoint holder & impersonate using the victim's key & out of scope (bounda
 
 \subsection{Attack Scenarios}\label{ssec:threat-scenarios}
 
+The scenarios below turn the adversary model of \cref{tab:threat-attacks} into concrete attacks,
+ordered from the primary key-substitution threat through its network and equivocation variants to the
+endpoint-compromise boundary. Each is described the same way: what the adversary does, what the
+victim would observe, and which mechanism detects it.
+
 \paragraph{A1: Key Substitution.} A1 is the primary attack in the model: a
 compromised or coerced server writes its own key in place of the victim's. The
 substituted key is internally consistent, since the malicious server has

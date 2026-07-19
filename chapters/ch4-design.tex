@@ -559,7 +559,9 @@ therefore depends only logarithmically on the sizes of the previously trusted an
 log states, rather than linearly on the number of missed epochs. The warning-slot lookup is
 performed during the same synchronization exchange and so does not change the asymptotic
 complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are given in
-\cref{app:algorithms}.
+\cref{app:algorithms}, alongside the pseudocode for the Merkle log tree, the sparse prefix tree, and
+client verification (\cref{alg:merklelog,alg:prefix,alg:client}); \cref{tab:alg-purpose} maps each of
+the eight algorithms to its purpose.
 
 \begin{figure}[t]
 \centering
@@ -632,10 +634,9 @@ The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:
   \item \textbf{$\Logsec$}: an abstract secure log (append-only, with consistency and exclusion); its concrete realization left open.
 \end{itemize}
 
-The three mechanisms of this chapter, together with the cross-vantage auditor, form,
-to our knowledge (we are aware of no prior published or open-source realization at the time of
-writing), the first concrete instantiation of ACKA's abstract logging component
-($\Logsec$) (\cref{sec:bg-acka}). The contribution is to
+The three mechanisms of this chapter, together with the cross-vantage auditor, form the
+concrete instantiation of ACKA's abstract logging component
+($\Logsec$) claimed in \cref{sec:bg-contrib} (\cref{sec:bg-acka}). The contribution is to
 instantiate the component ACKA leaves abstract, $\Logsec$, with a concrete,
 malicious-server-resistant verifiable key directory built on the IETF Key Transparency
 specification~\cite{ietf-keytrans-protocol} and the lineage of Meta's

@@ -364,9 +364,9 @@ cannot deceive users''~\cite[p.~40]{vaziripour2017}.
 
 In conclusion, these findings reveal a persistent authentication gap. The public
 keys used during session establishment are distributed by a party that could
-substitute them; verification mechanisms remain dependent on assumptions about
+substitute them. Verification mechanisms remain dependent on assumptions about
 the consistency of directory views and the availability of auditing
-infrastructure; authentication is tied primarily to key bindings rather than the
+infrastructure. Authentication is tied primarily to key bindings rather than the
 evolving protocol state, and manual user verification remains uncommon in
 practice. The remainder of this chapter examines the principal approaches
 proposed to address these limitations, beginning with key transparency and
@@ -725,10 +725,10 @@ complete system is taken up in the next subsection.
 The academic VKD literature did not arrive as a set of independent proposals but
 as a sequence of refinements to a shared design space, each construction
 addressing a limitation of its predecessors. CONIKS introduced the basic
-architecture of a privacy-preserving, auditable key directory; SEEMless
+architecture of a privacy-preserving, auditable key directory. SEEMless
 formalized the VKD abstraction and strengthened both privacy and history
-verification; Parakeet improved storage efficiency and deployability, a design line
-since deployed at scale by WhatsApp and independently reviewed~\cite{nccgroup2023akd}; ELEKTRA
+verification. Parakeet improved storage efficiency and deployability, a design line
+since deployed at scale by WhatsApp and independently reviewed~\cite{nccgroup2023akd}. ELEKTRA
 extended the model to multi-device accounts and added privacy recovery after
 server compromise, and OPTIKS, PRISM, and Merkle\textsuperscript{2} explored
 alternative trade-offs between monitoring cost, auditing, and scalability. We
@@ -776,7 +776,7 @@ willing to attack its users openly~\cite[p.~2]{melara2015coniks}.
 
 \subsubsection{SEEMless}
 SEEMless represents the transition from a deployed design pattern to a formally
-defined cryptographic primitive, and that formalization is its headline
+defined cryptographic primitive, and that formalization is its principal
 contribution: it models the \emph{verifiable key directory} as a cryptographic
 primitive, with precise completeness, soundness, and simulation-based privacy
 definitions that CONIKS had only described informally~\cite[p.~2]{chase2019seemless}.
@@ -1209,7 +1209,7 @@ the paper itself never discusses third-party auditing.
 
 Recognizing that ACKA's abstract Logsec-secure log and the malicious, equivocating server that
 key transparency is built to expose are two halves of a single end-to-end
-security picture is what sets the stage for the synthesis this thesis proposes.
+security picture is what motivates the synthesis this thesis proposes.
 
 % ============================================================================
 \section{Comparative Analysis of Existing Systems}\label{sec:bg-compare}
@@ -1379,15 +1379,18 @@ check''~\cite[p.~6]{pusch2025prism}.
 \paragraph{Problem 2 (Linear Offline Catch-Up).} A mobile,
 intermittently-connected client faces an efficiency gap that the per-epoch
 protocol does not address: a client offline for $W$ epochs must verify $W$
-sequential consistency proofs, each of size $O(\log N)$, for a total of
-$O(W \cdot \log N)$. To show this is not hypothetical, consider a directory of $N = 10^7$
-users, each maintaining about $c = 5$ active conversations, with pre-keys rotating
-every $r = 30$ days. With one label written per conversation, the directory holds
-roughly 50 million labels and grows by about 1.67 million records per day, or
-about 69{,}000 per hourly epoch. A client offline for a full rotation period faces
-$W = r \cdot 24 = 720$ epochs, and $O(W \cdot \log N)$ then amounts to on the order of
-17{,}000 sibling hashes for a single month offline, prohibitive on a metered
-mobile link. This is an acknowledged open problem rather than an oversight: the
+sequential consistency proofs before it can trust the current head. Each proof is
+taken over the append-only \emph{epoch log}, which appends one directory root per
+committed epoch, so its size is $O(\log E)$ in the number of committed epochs $E$
+and is independent of the directory's user count $N$; the sequential total is
+therefore $O(W \cdot \log E)$, linear in the missed-epoch count $W$. To show this
+is not hypothetical, consider hourly epochs with pre-keys rotating every $r = 30$
+days: a client offline for a full rotation period faces $W = r \cdot 24 = 720$
+epochs, and must re-verify 720 consistency proofs in sequence for a single month
+offline: a linear, avoidable overhead that grows with the gap. \Cref{ssec:eval-catchup}
+measures the synthetic sequential baseline for this window at \num{222528} raw
+consistency-path hash bytes (serialized transfer was not measured), which the windowed
+proof replaces with a single proof. This is an acknowledged open problem rather than an oversight: the
 IETF draft flags ``reasonable monitoring windows'' for mobile clients as
 unspecified~\cite{ietf-keytrans-protocol}, and CONIKS names the linear offline
 cost as an open extension, conceding that its own remedy ``may not be realistic in
@@ -1426,10 +1429,10 @@ three problems are not addressed \emph{together} by any system surveyed in
 These limitations motivate the four principal contributions announced in
 \cref{ch:intro} (conceptual, cryptographic, systems, and empirical), which this section develops.
 The \emph{conceptual} contribution is the dual-index warning scheme, together with its framing as a
-concrete instantiation of the ACKA append-only-log component; the \emph{cryptographic} contribution
-is the windowed consistency proof and the dual-index detection experiment; the \emph{systems}
-contribution is the byte-parity Rust and TypeScript implementation with its cross-vantage auditor;
-and the \emph{empirical} contribution is the benchmark campaign and security evaluation. Not every
+concrete instantiation of the ACKA append-only-log component. The \emph{cryptographic} contribution
+is the windowed consistency proof and the dual-index detection experiment. The \emph{systems}
+contribution is the byte-parity Rust and TypeScript implementation with its cross-vantage auditor.
+The \emph{empirical} contribution is the benchmark campaign and security evaluation. Not every
 mechanism is equally novel, and the text is careful to say which: the windowed proof and the
 cross-vantage auditor reuse ideas established in prior work (\S6.3 of CONIKS; CT/CONIKS gossip) and
 are claimed as instantiation-and-measurement, not as new primitives. Together they strengthen key
@@ -1437,9 +1440,10 @@ transparency for asynchronous messaging by adding automatic peer notification, e
 recovery, transparent equivocation detection, and continuous authentication over an untrusted
 directory. The mechanisms are parallel, not layered: the log-based warning scheme does not depend on
 the ACKA continuous-mode instantiation, which realizes one operating mode of the system rather than
-its foundation.
+its foundation. The mechanisms developed below realize these four contributions; each heading names
+its parent category, so the number of mechanisms is not a count of separate contributions.
 
-\paragraph{Contribution 1: Dual-Index Warning Scheme.} This addresses Problem 1 by
+\paragraph{Mechanism 1 (Conceptual): Dual-Index Warning Scheme.} This addresses Problem 1 by
 providing automatic, bidirectional, in-band detection of a man-in-the-middle. Alice and
 Bob derive from their shared secret $S$ not only a lookup label but a shared
 \emph{warning} label $\ell_{\mathsf{warn}}$, an initially empty leaf in the same log. If
@@ -1455,43 +1459,53 @@ client-side detection but relies on anonymous
 lookups~\cite{yadav2020poster,yadav2022fakekey}, a cost Parakeet explicitly objects
 to~\cite[p.~14]{malvai2023parakeet} and which our unlinkable derived labels avoid.
 
-\paragraph{Contribution 2: Windowed Consistency Proofs.} These address Problem 2,
-reducing the offline catch-up cost from $O(W \cdot \log N)$ to $O(\log N)$, independent
-of the window $W$, by verifying a single consistency proof from the tree head the client
-last saw to the current one rather than one proof per missed epoch.
+\paragraph{Mechanism 2 (Cryptographic): Windowed Consistency Proofs.} These address Problem 2,
+reducing the offline catch-up from $W$ sequential consistency proofs (one per missed
+epoch) to a \emph{single} RFC~9162 consistency proof spanning the whole window. The saving
+is in the number of proofs (one rather than $W$): the client verifies one proof from the
+epoch-log head it last saw to the current one, of size $O(\log E_1)$ in the current epoch-log
+length $E_1$ (\cref{lem:windowed-size}), logarithmic in the log length and independent of the
+directory's user count $N$, rather than linear in the window $W$. It does not make the proof
+size independent of the current head.
 
-\paragraph{Contribution 3: Cross-Vantage Auditor.} This addresses Problem 3: it
+\paragraph{Mechanism 3 (Systems): Cross-Vantage Auditor.} This addresses Problem 3: it
 cross-checks tree heads observed from a second vantage point and flags two validly-signed
 heads at one epoch as an equivocation, detecting the split-view that local checks cannot.
-Contributions~1 through~3 are the transparency-log half of the work.
+Mechanisms~1 through~3 are the transparency-log half of the work.
 
-\paragraph{Contribution 4: ACKA Instantiation (Continuous Mode).} ACKA itself gives a modular
+\paragraph{Mechanism 4 (Conceptual): ACKA Instantiation (Continuous Mode).} ACKA itself gives a modular
 construction and a specific Signal add-on but leaves its logging component (Logsec) an
-\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}; this is, to our knowledge, the first
+\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}. To our knowledge, this is the first
 instantiation of that component over a concrete, \emph{malicious-server-resistant}
 key-transparency log: a per-ratchet-epoch fingerprint and label chain that authenticates the
-Double Ratchet epoch by epoch. The claim is deliberately narrow: what is new is the concrete log
+Double Ratchet epoch by epoch. This claim rests on a survey of the published key-transparency
+literature (CONIKS~\cite{melara2015coniks}, SEEMless~\cite{chase2019seemless},
+Parakeet~\cite{malvai2023parakeet}, OPTIKS~\cite{optiks2024}, ELEKTRA~\cite{len2023elektra}, the
+WhatsApp and Apple deployments~\cite{lawlor2023whatsapp,apple-ckv}, and
+draft-ietf-keytrans~\cite{ietf-keytrans-protocol}) and publicly available open-source implementations
+as of July~2026. The claim is deliberately narrow: what is new is the concrete log
 instantiation and its measurement, not the ACKA construction. In the prototype the ratchet is driven
 deterministically from the shared secret; the in-protocol libsignal hook is future work
 (Chapter~7).
 
-\paragraph{Contribution 5: Reconciliation of ACKA and Key Transparency.} The principal
+\paragraph{Mechanism 5 (Conceptual): Reconciliation of ACKA and Key Transparency.} The principal
 conceptual contribution of this thesis is the reconciliation of ACKA and key
-transparency, which are usually read as separate worlds: ACKA authenticates the
+transparency, which are usually treated separately: ACKA authenticates the
 continuous key agreement per epoch but treats its logging component as an \emph{abstract}
 primitive with a security definition (Logsec), leaving the concrete malicious-server-resistant
 realization open, whereas the academic VKD literature builds exactly such a directory but
 authenticates only a session or identity binding. They differ in granularity (per-epoch versus
 per-session) and, more to the point, in what each makes concrete: ACKA specifies what the log must
-guarantee, key transparency shows how to build it. We bridge them by instantiating ACKA's abstract
+guarantee, key transparency shows how to build it. We reconcile them by instantiating ACKA's abstract
 logging component with a concrete key-transparency log that need not be trusted, realizing both as
-operating modes and measuring the trade between them. To our knowledge, no prior work spans the continuous and the
-directory worlds. Throughout, we state the coverage trade honestly: we log identity keys
+operating modes and measuring the trade between them. To our knowledge, no system in the surveyed
+corpus (\cref{sec:bg-compare}) combines per-ratchet continuous entity authentication with a publicly
+auditable, untrusted-server key directory in one implemented design. Throughout, we state the coverage trade honestly: we log identity keys
 and per-session labels, not the per-user version chains of SEEMless, Parakeet and OPTIKS
 or the multi-device key-chains of ELEKTRA, different coverage, leaner proofs, and
 automatic in-band detection.
 
-\paragraph{Contribution 6: Implementation and Evaluation.} This is the engineering
+\paragraph{Mechanism 6 (Systems, Empirical): Implementation and Evaluation.} This is the engineering
 core of the thesis and a contribution in its own right. The core is a Rust \texttt{kt}
 crate whose library modules total roughly \num{3600} lines (the full Rust implementation, with the
 server, auditor, and benchmark binaries, is about \num{6600}; see \cref{ch:impl}), implementing the

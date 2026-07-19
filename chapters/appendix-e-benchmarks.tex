@@ -29,7 +29,6 @@ CPU SHA extensions (SHA-NI) & yes (hardware SHA-256) \\
 RAM & 31.7\,GB \\
 OS / architecture & Windows, x86\_64 \\
 Rust toolchain & \texttt{rustc 1.96.0} \\
-Build commit & \texttt{66ffa77} \\
 Profile & \texttt{bench} (opt-level 3), single-threaded loops \\
 VRF seed & \texttt{[42;32]} (fixed) \\
 Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
@@ -37,10 +36,10 @@ Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
 \end{tabular}
 \end{table}
 
-Methodology caveats recorded with the run: the server is in-memory (no network, no database); proof
-sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to $32\lceil\lg E\rceil$
-bytes to each lookup proof; memory is resident set size after build, not peak; and the operation-rate
-figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
+Several methodology caveats were recorded with the run. The server is in-memory, with no network and
+no database. Proof sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to
+$32\lceil\lg E\rceil$ bytes to each lookup proof. Memory is resident set size after build, not peak.
+The operation-rate figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
 portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to
 the hardware instruction at run time, so a host without it takes a software path for every hash, and
 the hash-bound operations (the prefix and full verify, detection, the M8 update, M9, and M13)
@@ -80,8 +79,10 @@ sits at depth~23 (913\,B). The distribution median over \num{1000} random lookup
 \begin{table}[ht]
 \centering
 \caption[M4: catch-up consistency-path hash bytes.]{M4: catch-up, raw consistency-path hash bytes (serialized bandwidth not measured):
-synthetic current-head-anchored sequential baseline versus windowed; identical for
-$N\in\{10^3,10^4,10^5\}$ because catch-up size is independent of $N$.}
+synthetic current-head-anchored sequential baseline versus windowed; identical across
+$N\in\{10^3,10^4,10^5\}$ because the windowed proof is taken over the epoch log (one leaf per
+committed epoch) and its size depends on the window $W$ through the epoch-log endpoints, not on
+the directory's user count $N$ (\cref{lem:windowed-size}).}
 \label{tab:bench-m4}
 \small
 \begin{tabular}{@{}rrrr@{}}
@@ -136,7 +137,7 @@ M3 VRF verify (dual-index)           & $10^4$ & 76.0  & 92.0  & 0.76 \\
 \end{tabular}
 \end{table}
 
-\medskip\noindent\emph{Marginal warning-slot lookup (M5): the cost of the warning-slot read on top
+\medskip\noindent\emph{The marginal warning-slot lookup (M5) is the cost of the warning-slot read on top
 of a lookup the client already verifies. This is \emph{not} the detector: it is an unverified read,
 taken in clean state, whereas the detector performs two proof-carrying lookups
 (\cref{ssec:eval-detection}). The read's underlying cost is data-dependent (a compressed-leaf sibling on the
@@ -149,7 +150,8 @@ distribution, not one label's path (\cref{ssec:eval-detection}).}
 \begin{table}[ht]
 \centering
 \caption[M5: marginal warning-slot lookup cost.]{M5: marginal warning-slot lookup cost, an unverified read (distribution over \num{1000}
-sampled conversations). Not the detector: see \cref{ssec:eval-detection}.}
+sampled conversations). This row measures only the marginal warning-slot read; detector behaviour is
+evaluated in \cref{ssec:eval-detection}.}
 \label{tab:bench-detection}
 \small
 \begin{tabular}{@{}llrrr@{}}
@@ -220,6 +222,8 @@ M12 detect fork (windowed)  & $10^4$ & 27.9 & 34.2 & 0.46 \\
 % ----------------------------------------------------------------------------
 \section{CONIKS-Scale Results (M7)}\label{sec:bench-scale}
 
+``CONIKS-scale'' here means a directory of $10^7$ labels, the largest size at which the CONIKS paper
+reported client-verification cost, chosen so the M7 figures can be read against that reference point.
 The distribution of proof sizes and verification times over one thousand random lookups at each
 directory size is given in \cref{tab:bench-scale}.
 
@@ -306,8 +310,9 @@ and must reproduce byte-for-byte; timings reproduce within noise.
 groups and CSV keys below are frozen provenance identifiers and retain some historical names: in
 particular, \texttt{windowed\_full\_client\_verify} does not time a catch-up proof (it is the M3 full
 signed-head lookup verification), \texttt{M8\_throughput} records per-operation latencies from which a
-single-thread rate is derived, and \texttt{M11\_handshake\_overhead} is not an end-to-end handshake
-measurement.
+single-thread rate is derived, and \texttt{M11\_handshake\_overhead} measures one complete signed-head
+KT lookup verification invoked at the handshake hook, excluding X3DH/PQXDH, network transfer, session
+establishment, and the remainder of the messaging-client handshake.
 
 \begin{table}[ht]
 \centering
