@@ -242,8 +242,10 @@ failure path fails closed.}
 
 The performance profile of the core follows from these choices. State is held entirely in memory, so
 no disk or database access sits on the lookup path; prefix proofs are bitmap-compressed over a
-path-compressed tree, so a proof carries only the siblings that actually exist, and the server is
-asynchronous, so many client verifications proceed concurrently. The one cost that is not sublinear
+path-compressed tree, so a proof carries only the siblings that actually exist. The Axum server
+accepts connections concurrently, though accesses to the single in-memory \texttt{KTServer} are
+serialized through one mutex; the client-side cryptographic verification of a response then proceeds
+independently once the response is received. The one cost that is not sublinear
 is the epoch commit, which snapshots the tree by a deep clone; \cref{ch:eval} quantifies it and
 \cref{ch:discussion} notes the copy-on-write remedy.
 
@@ -268,7 +270,7 @@ directly, so an operation measures only its cryptographic work, with the \texttt
 and the Electron client deliberately excluded: their overhead is not the quantity being
 characterized, and separating them keeps the measurement of the design faithful. Memory is captured
 separately as the resident set size after building the tree, via the \texttt{sysinfo} crate, and the
-CONIKS-scale runs report distributions over a thousand random lookups per size. Each experiment
+the $10^7$-label runs used for comparison with CONIKS report distributions over a thousand random lookups per size. Each experiment
 begins from fresh server state, an administrative reset rebuilds the directory from its seed, so
 no residual state from a previous run can leak into a measurement.
 
@@ -457,15 +459,16 @@ inspection but by test: the parity regime that underwrites it is the subject of 
 The Rust cryptographic core of \cref{sec:impl-modules} and the TypeScript client of
 \cref{sec:impl-signal} are two independent implementations of the same protocol, written in
 different languages and for different purposes, one to be measured, one to be deployed. This
-section connects them: it describes how the two are held to identical behaviour, and
-how the combined system is then tested against the threat model.
+section connects them: it describes how the two are held to agreement on the protocol operations that
+the shared vectors cover, and how the combined system is then tested against the threat model.
 
 The two are pinned by a single cross-language contract. A fixed set of test vectors fixes the HKDF
 dual-index derivation and the CEA construction byte-for-byte across the Rust and TypeScript
 implementations, and the same discipline keeps their Ed25519 signed-tree-head and Merkle
-computations in step, so the two layers cannot silently diverge. This contract is what licenses
-the use of the TypeScript client as a faithful verifier of the Rust server's outputs; without it,
-agreement in one test would be no evidence of agreement in the next.
+computations in step, so the two layers cannot silently diverge on the operations those vectors
+cover; the remaining behaviour is supported by language-specific unit and integration tests. This
+contract is what licenses the use of the TypeScript client as a faithful verifier of the Rust
+server's outputs; without it, agreement in one test would be no evidence of agreement in the next.
 
 On top of that contract, testing is organized around two questions: whether each component
 conforms to its specification, and whether the system as a whole detects the attacks of the threat

@@ -16,8 +16,8 @@ deployments for which it is the wrong tool.
 \paragraph{Interpretation: Detection at No Asymptotic Cost.} The central finding of this work is that
 automatic, in-band detection of key substitution can be
 added to a messaging directory without changing the asymptotic cost of the proofs the directory
-already serves, at the measured cost of additional proof-shaped lookups. \Cref{ch:eval} shows that the dual-index lookup
-proof is at size parity with CONIKS while carrying a warning channel CONIKS lacks, that full client
+already serves, at the measured cost of additional proof-shaped lookups. \Cref{ch:eval} shows that the implemented VRF-indexed lookup
+proof is at rough size parity with CONIKS while carrying a warning channel CONIKS lacks, that full client
 median verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more
 slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}), and that an offline
 client catches up in a few hundred bytes where naïve monitoring would spend hundreds of kilobytes.
