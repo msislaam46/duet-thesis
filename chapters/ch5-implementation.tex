@@ -226,17 +226,16 @@ to deployment is authenticated writes: without account-layer proof of raw-label 
 write-once policy still binds an honest server and the transition audit still binds a malicious one,
 but a malicious client could squat an as-yet-empty peer slot (\cref{ch:discussion}).
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
 \caption[Transition-audit state flow.]{The transition auditor (\cref{alg:auditor}), in two parts.
-(a) Head classification: a new head is signature-checked and classified; a rollback or a same-size
-head with a different root alarms as a fork, only a \emph{grown} head is consistency-checked against
-the baseline, an equal already-audited head is an idempotent no-op, and the first head skips the
-prior-head consistency proof but is still replayed. (b) Transactional replay: every not-yet-audited
-epoch (including epoch~0) is replayed into a scratch mirror and its root compared to the declared
-root, and only if all pass are the mirror, cursor, and baseline committed as one transaction. Every
-failure path fails closed.}
+(a)~A new head is signature- and well-formedness-checked, then classified: a rollback or a same-size
+head with a different root alarms, only a \emph{grown} head is consistency-checked, an already-audited
+equal head is a no-op, and first, grown, and incomplete heads proceed to~(b). (b)~Each not-yet-audited
+epoch (including epoch~0) is replayed into a scratch mirror and its root compared to the declared root,
+and the mirror, cursor, and baseline are committed as one transaction only after both the replay and
+the cross-vantage head check pass; every failure path fails closed.}
 \label{fig:impl-transition-audit}
 \end{figure}
 
@@ -467,8 +466,9 @@ the shared vectors cover, and how the combined system is then tested against the
 The two are pinned by a single cross-language contract. A fixed set of test vectors fixes the HKDF
 dual-index derivation and the CEA construction byte-for-byte across the Rust and TypeScript
 implementations, and the same discipline keeps their Ed25519 signed-tree-head and Merkle
-computations in step, so any divergence on a covered operation surfaces as a vector failure rather
-than passing silently; the remaining behaviour is supported, not proved, by language-specific unit and
+computations in step, so any divergence on a covered operation-and-input vector surfaces as a vector
+failure rather than passing silently; another input to the same operation can still diverge, so the
+remaining behaviour is supported, not proved, by language-specific unit and
 integration tests. This contract is the basis for treating the TypeScript client as a faithful
 verifier of the Rust server's outputs on the covered operations; without it, agreement in one test
 would be weak evidence of agreement in the next.
