@@ -79,13 +79,14 @@ rather than linear in the epochs missed (\cref{sec:design-windowed}, \cref{lem:w
 \cref{ch:design} disclaims any new cryptographic primitive here: the contribution is the proof
 construction and its measured trade-off, not a new object.
 
-\paragraph{Systems.} A complete implementation in two independently implemented layers checked against shared cross-language vectors, byte-for-byte
-parity: a standalone Rust reference implementation (the \texttt{kt} crate, an HTTP directory server,
+\paragraph{Systems.} A complete implementation in two independently implemented layers whose shared
+protocol operations are checked byte-for-byte against cross-language test vectors: a standalone Rust reference implementation (the \texttt{kt} crate, an HTTP directory server,
 and a cross-vantage auditor) and an embedded TypeScript verifier integrated into a fork of the real
 Signal Desktop client (\cref{ch:impl}).
 
-\paragraph{Empirical.} A benchmark campaign (metrics M1--M13) establishing that the dual-index lookup
-proof is at size parity with CONIKS while adding a detection channel it lacks, that median full client
+\paragraph{Empirical.} A benchmark campaign (metrics M1--M13) establishing that the implemented VRF-indexed lookup
+proof is at rough size parity with CONIKS, with the detection channel CONIKS lacks obtained through
+additional same-shape lookups rather than a larger proof, that median full client
 verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than
 $N$ (\SIrange{128.1}{147.1}{\micro\second}), and that a
 month-long offline catch-up costs a few hundred bytes against the hundreds of kilobytes naïve

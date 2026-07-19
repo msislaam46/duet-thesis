@@ -1,45 +1,62 @@
-% fig-impl-transition-audit.tex — the transition auditor's state flow (Alg 7).
-% Covers the first-head bootstrap, the append-only consistency check for a grown
-% head, the per-epoch replay loop, and the two equal-head cases (already audited
-% vs. an incomplete transition that must be retried). Label: \label{fig:impl-transition-audit}
-\resizebox{\linewidth}{!}{%
-\begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=5.0mm,
-  proc/.style={draw,rounded corners,align=center,inner sep=3pt,minimum width=6.0cm,minimum height=7mm},
-  dec/.style={draw,align=center,inner sep=3pt,minimum width=6.0cm,minimum height=7mm,fill=blue!6},
-  bad/.style={draw,rounded corners,align=center,inner sep=3pt,draw=red!60!black,fill=red!3,text width=3.4cm},
-  rtr/.style={draw,rounded corners,align=center,inner sep=3pt,draw=orange!80!black,fill=orange!4,text width=3.4cm},
-  good/.style={draw,rounded corners,align=center,inner sep=3pt,draw=green!50!black,fill=green!4,minimum width=6.0cm}]
+% fig-impl-transition-audit.tex — the transition auditor's state flow (Alg 7),
+% in two coordinated diagrams: (a) head classification and (b) the transactional
+% per-epoch replay. First / grown / incomplete heads all proceed to (b); the
+% baseline is adopted only in (b)'s atomic commit. Label: \label{fig:impl-transition-audit}
+\begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=4mm,
+  proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.6cm,minimum height=6mm},
+  dec/.style={draw,align=center,inner sep=3pt,text width=4.6cm,minimum height=6mm,fill=blue!6},
+  term/.style={draw,rounded corners,align=center,inner sep=3pt,text width=3.5cm,minimum height=6mm},
+  bad/.style={term,draw=red!60!black,fill=red!3},
+  nop/.style={term,draw=orange!80!black,fill=orange!4},
+  go/.style={term,draw=green!50!black,fill=green!5}]
 
-  \node[proc] (n1) {receive new head; verify STH signature};
-  \node[dec,below=of n1] (nf) {first head? (no recorded baseline)};
-  \node[dec,below=of nf] (n2) {rollback, or equal size with a different root?};
-  \node[dec,below=of n2] (nc) {log grew (new size $>$ baseline)?};
-  \node[proc,below=of nc] (ncp) {fetch $+$ verify RFC~9162 consistency proof\\(append-only, baseline\,$\to$\,new head)};
-  \node[proc,below=of ncp,minimum height=13mm] (loop) {\textbf{for each not-yet-audited epoch} $e$ (cursor\,$\to$\,new, incl.\ $e{=}0$):\\clone mirror into scratch; fetch delta$_e$; replay each Insert / Rotate\\(A1: reject duplicate insert; C2: reject immutable rotation);\\require replayed scratch root $=$ declared root$_e$};
-  \node[good,below=of loop] (n7) {every epoch replayed: commit mirror, cursor, head atomically};
+  \node[proc] (a0) {\textbf{(a) head classification}\\receive new head; verify STH signature};
+  \node[dec,below=of a0] (a1) {first head? (no recorded baseline)};
+  \node[dec,below=of a1] (a2) {rollback, or equal size with a different root?};
+  \node[dec,below=of a2] (a3) {log grew (new size $>$ baseline)?};
+  \node[dec,below=9mm of a3] (a4) {equal head (same root): all epochs already audited?};
+  \node[go,below=9mm of a4] (gob) {$\to$ transactional replay (b)};
+  \draw[->] (a0) -- (a1);
+  \draw[->] (a2) -- node[left,font=\tiny]{no} (a3);
+  \draw[->] (a3) -- node[left,font=\tiny]{no} (a4);
+  \draw[->] (a4) -- node[left,font=\tiny]{no: incomplete} (gob);
 
-  \draw[->] (n1) -- (nf);
-  \draw[->] (nf) -- node[left,font=\tiny]{no} (n2);
-  \draw[->] (n2) -- node[left,font=\tiny]{no} (nc);
-  \draw[->] (nc) -- node[left,font=\tiny]{yes} (ncp);
-  \draw[->] (ncp) -- (loop);
-  \draw[->] (loop) -- (n7);
+  % right terminal column: alarms, no-op, and the grown-head consistency step
+  \node[bad,right=12mm of a2] (t2) {yes: ALARM (rollback / fork)};
+  \draw[->] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
+  \node[proc,right=12mm of a3,text width=3.5cm] (a3p) {verify RFC~9162 consistency proof};
+  \draw[->] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
+  \node[bad,below=5mm of a3p] (t3) {invalid: ALARM (latch), no replay};
+  \draw[->] (a3p) -- node[right,font=\tiny]{invalid} (t3);
+  \node[nop,below=4mm of t3] (t4) {yes: idempotent re-poll, no state change};
+  \draw[->] (a4.east) |- node[below,font=\tiny,pos=0.85]{yes} (t4.west);
 
-  % ---- side branches (right) ----
-  \node[good,right=9mm of nf] (bf) {yes: trust-on-first-use, adopt as baseline (no consistency or transition check)};
-  \draw[->] (nf.east) -- node[above,font=\tiny]{yes} (bf.west);
-  \node[bad,right=9mm of n2] (b2) {yes: reject, raise Fork};
-  \draw[->] (n2.east) -- node[above,font=\tiny]{yes} (b2.west);
-  \node[dec,right=9mm of nc,minimum width=3.4cm,align=center] (nq) {equal head: all epochs already audited?};
-  \draw[->] (nc.east) -- node[above,font=\tiny]{no} (nq.west);
-  \node[rtr,above=5mm of nq] (bnc) {yes: idempotent re-poll, no state change};
-  \draw[->] (nq.north) -- node[right,font=\tiny]{yes} (bnc.south);
-  \draw[->] (nq.south) |- node[pos=0.25,right,font=\tiny]{no: retry unaudited transition} (loop.east);
-  \node[bad,right=9mm of ncp] (bcp) {fail: ALARM (latch), no replay};
-  \draw[->] (ncp.east) -- node[above,font=\tiny]{invalid} (bcp.west);
-  \node[bad,below=8mm of bcp] (b6) {root mismatch / A1 / C2: ALARM, transition audit failed};
-  \draw[->] (loop.east) -- node[above,font=\tiny]{no} (b6.west);
-  \node[rtr,below=5mm of b6] (b3) {delta-fetch failure: discard scratch, retry (incomplete, not a fork)};
-  \draw[->] (loop.south east) -- node[below,font=\tiny,pos=0.2]{fetch fail} (b3.west);
-\end{tikzpicture}%
-}
+  % far-right bus: first-head (skip consistency) and valid-consistency both proceed to (b)
+  \coordinate (chan) at ([xshift=10mm]a3p.east);
+  \draw[->] (a1) -- node[left,font=\tiny]{no} (a2);
+  \draw (a1.east) -- node[above,font=\tiny,pos=0.62]{yes: skip consistency} (a1.east -| chan);
+  \draw (a3p.east) -- node[above,font=\tiny]{valid} (a3p.east -| chan);
+  \draw (a1.east -| chan) -- (gob.east -| chan);
+  \draw[->] (gob.east -| chan) -- (gob.east);
+\end{tikzpicture}
+
+\vspace{7pt}
+
+\begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=4mm,
+  proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm},
+  loop/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=12mm},
+  term/.style={draw,rounded corners,align=center,inner sep=3pt,text width=3.5cm,minimum height=6mm},
+  bad/.style={term,draw=red!60!black,fill=red!3},
+  rtr/.style={term,draw=orange!80!black,fill=orange!4},
+  good/.style={term,draw=green!50!black,fill=green!5,text width=5.6cm}]
+
+  \node[proc] (b0) {\textbf{(b) transactional replay} (entered from (a))\\clone the committed mirror into scratch; $\mathit{cursor}\gets\mathit{audited\_epochs}$};
+  \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$ (cursor\,$\to$\,current, incl.\ $e{=}0$): fetch delta$_e$; replay each Insert / Rotate (reject a duplicate insert (A1) or an immutable rotation (C2)); require scratch root $=$ declared root$_e$};
+  \node[good,below=of b1] (b2) {all epochs replayed: commit mirror and cursor \emph{and adopt the new baseline} atomically};
+  \draw[->] (b0) -- (b1);
+  \draw[->] (b1) -- (b2);
+  \node[rtr,right=12mm of b0] (r1) {delta-fetch failure: discard scratch, retry (incomplete, not a fork)};
+  \draw[->] (b1.north east) -- node[above,font=\tiny,pos=0.4]{fetch fail} (r1.west);
+  \node[bad,right=12mm of b1] (r2) {root mismatch / A1 / C2: ALARM, transition audit failed};
+  \draw[->] (b1.east) -- node[above,font=\tiny]{fail} (r2.west);
+\end{tikzpicture}

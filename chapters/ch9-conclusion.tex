@@ -22,7 +22,7 @@ of \cref{ch:threat}.
 
 The evaluation (\cref{ch:eval}) shows that this detection is added without changing the asymptotic
 complexity of the lookup proof, using additional lookups of the shape the client already verifies. The
-implemented (VRF-indexed) lookup proof is at size parity with CONIKS, while the scheme adds a warning
+implemented (VRF-indexed) lookup proof is at rough size parity with CONIKS, while the scheme adds a warning
 channel CONIKS lacks.
 Median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
 far more slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}), about
@@ -42,7 +42,7 @@ a production deployment.
 Read against the research questions of \cref{sec:intro-aims}, the evidence is direct. RQ1 (in-band
 detection) is answered by the dual-index warning and its clean pass across the full
 adversarial suite, with no false alarms observed in the clean deterministic trials. RQ2 (cost) is
-answered by the \num{817}\,byte VRF-indexed lookup proof at parity with CONIKS and the
+answered by the \num{817}\,byte VRF-indexed lookup proof at rough parity with CONIKS and the
 $\approx$\SI{128}{\micro\second} verification at $N\le10^4$, rising only to $\approx$\SI{147}{\micro\second} at $10^7$. RQ3 (offline) is answered by
 the \num{320}\,byte month-long catch-up, whose size is bounded by the endpoint log sizes rather than
 the window's length. RQ4 (client-integration feasibility) is answered by the

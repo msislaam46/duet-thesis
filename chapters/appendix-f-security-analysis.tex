@@ -57,11 +57,12 @@ divergent head) are not prevented but detected by the transparency log, the warn
 cross-vantage auditor. The summary is \cref{tab:eval-stride} in \cref{ch:eval}, and
 the per-category detail follows in \cref{tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}.
 
-A threat is counted \emph{mitigated} when an implemented control prevents or detects the principal
+A threat is counted \emph{addressed} when an implemented control prevents or detects the principal
 attack outcome, even where a limitation remains; it is counted \emph{residual} when no implemented
-control addresses that outcome. The Residual column records both cases: the four counted residual
-threats are \emph{italicized}, while upright entries are limitations of rows that are counted
-mitigated.
+control addresses that outcome. Observability of an availability failure (for instance, a client
+seeing that a server refuses to serve) does not by itself count as addressing it. The Residual column
+records both cases: the four counted residual threats are \emph{italicized}, while upright entries
+are limitations of rows that are counted addressed.
 
 \begin{table}[ht]
 \centering
@@ -138,7 +139,7 @@ Leak the shared secret from a label & HKDF-Expand (dual-index labels) and ECVRF 
 Threat & KT control & Residual \\
 \midrule
 Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented; freshness alarm left to deployment} \\
-Refuse to serve proofs & \emph{detected}, not prevented: a refusal is an observable availability signal; the KT cannot force the server to serve & no gossip transport in the PoC (the prototype fetches a second vantage directly) \\
+Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve; a refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the PoC; counted as an availability residual} \\
 Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & client out-of-band alert \\
 Flood with fake registrations & deployment-level rate limiting & \emph{not implemented in the PoC (operational risk)} \\
 \bottomrule
@@ -156,7 +157,7 @@ Threat & KT control & Residual \\
 \midrule
 Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
 Server fabricates a divergent tree head & \emph{detected}, not prevented: the server holds the STH key, so the signature does not stop it; a fabricated divergent head is caught by the append-only consistency check and the cross-vantage fork check & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
-Client escalates to server writes & write-once policy rejects overwrites of occupied labels, but does not authenticate the first write to an empty label & first-write authorization (empty-slot squatting) left to deployment (\cref{ch:discussion}) \\
+Client escalates to server writes & partly prevented, partly \emph{detected}: write-once cryptographically rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration; a first write to an empty slot by a participant who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorization on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
 \bottomrule
 \end{tabular}
 \end{table}

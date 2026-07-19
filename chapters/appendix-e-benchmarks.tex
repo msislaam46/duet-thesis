@@ -6,7 +6,10 @@ seed-deterministic, and timings are medians (with the 95th percentile and a 95\%
 half-width where the harness records them). The metric families M1--M13 are as defined by the
 measurement map in \cref{sec:eval-method} (\cref{tab:eval-map}); baselines are named, not coded
 (\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed}) and mean the same
-thing here as in the chapter. The code$\to$group$\to$CSV mapping for reproducing each row is given in
+thing here as in the chapter. Where a row is qualified \emph{(dual-index)}, it reports the
+VRF-indexed \texttt{search\_by\_user\_id} lookup that realizes that ablation stage, recorded under the
+harness's historical label \texttt{dual\_index} (see the baseline definitions in
+\cref{sec:eval-method}). The code$\to$group$\to$CSV mapping for reproducing each row is given in
 \cref{sec:bench-repro}.
 
 % ----------------------------------------------------------------------------
@@ -61,7 +64,7 @@ catch-up raw consistency-path hash bytes against the window in \cref{tab:bench-m
 \small
 \begin{tabular}{@{}rrrrr@{}}
 \toprule
-$N$ & single-index hashes & single-index bytes & dual-index prefix hashes & dual-index lookup bytes \\
+$N$ & single-index hashes & single-index bytes & VRF prefix hashes & VRF lookup bytes \\
 \midrule
 $10^2$ & 7  & 224 & 7  & 401 \\
 $10^3$ & 10 & 320 & 10 & 497 \\
@@ -71,7 +74,7 @@ $10^6$ & 20 & 640 & 23 & 913 \\
 \bottomrule
 \end{tabular}
 
-\vspace{2pt}{\footnotesize The dual-index bytes are the single seeded-leaf path; at $10^6$ that leaf
+\vspace{2pt}{\footnotesize The VRF lookup bytes are the single seeded-leaf path; at $10^6$ that leaf
 sits at depth~23 (913\,B). The distribution median over \num{1000} random lookups is \num{817}\,bytes
 (\cref{tab:bench-scale}, \cref{ssec:eval-scale}), the figure quoted in the text.}
 \end{table}
