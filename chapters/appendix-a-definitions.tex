@@ -73,7 +73,7 @@ recompute the root and confirm the leaf is present.}
 An inclusion proof $\pincl$ for the entry at index $i$ in a log of size $n$ is the audit path of
 RFC~9162~\cite{rfc9162}: the sequence of subtree hashes that, combined with $d_i$ along the path from
 leaf $i$ to the root, recomputes $\MTH(D)$. Verification recomputes the candidate root from $d_i$ and
-$\pincl$ and accepts iff it equals the committed $\logroot{t}$. Used in \cref{ssec:design-verify}.
+$\pincl$ and accepts exactly when it equals the committed $\logroot{t}$. Used in \cref{ssec:design-verify}.
 \end{definition}
 
 \begin{definition}[Consistency proof]\label{def:consistency}
@@ -81,16 +81,20 @@ $\pincl$ and accepts iff it equals the committed $\logroot{t}$. Used in \cref{ss
 one, with nothing reordered, modified, or deleted.}
 For sizes $m\le n$, a consistency proof $\pcons(m,n)$ is the set of subtree hashes of
 RFC~9162~\cite{rfc9162} that proves the size-$m$ tree is a prefix of the size-$n$ tree, i.e.\ that
-$\MTH(D[0{:}m])$ is consistent with $\MTH(D[0{:}n])$. Verification accepts iff the two committed roots
-can be reconstructed from the proof. Used in \cref{ssec:design-catchup}.
+$\MTH(D[0{:}m])$ is consistent with $\MTH(D[0{:}n])$. Verification accepts only when the proof
+reconstructs both committed roots. Used in \cref{ssec:design-catchup}.
 \end{definition}
 
 \begin{definition}[Sparse Merkle prefix tree]\label{def:prefix-tree}
 \intuition{A Merkle tree over the whole space of possible labels, so that a label's slot has a fixed
 position and even an \emph{absent} label has a provable (empty) location.}
 A sparse Merkle prefix tree is a binary Merkle tree of depth $256$ indexed by 256-bit labels
-$\ell$, in which the leaf at position $\ell$ commits to $\Hash(\ell\concat \mathit{value})$ and every
-empty subtree collapses to a fixed default hash. Following the IETF Key Transparency
+$\ell$, in which a present leaf at position $\ell$ commits to
+$\Hash(\mathit{kind}\concat\ell\concat \mathit{value})$, where
+$\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$ is bound into the hash and authenticates
+whether the slot may later be rotated (global VRF-indexed identity slots are \textsc{mutable}; raw
+dual-index, CEA, and warning slots are \textsc{immutable}), and every empty subtree collapses to a
+fixed default hash. Following the IETF Key Transparency
 draft~\cite{ietf-keytrans-protocol} and CONIKS~\cite{melara2015coniks}, the tree is path-compressed
 (single-child chains are elided) and proofs are transmitted with a bitmap recording which siblings
 are non-default, so a proof carries only the siblings that actually exist. The prefix root at epoch
@@ -178,18 +182,18 @@ Lookups are always served against the last committed epoch, never the live tree.
 \intuition{Every commit publishes the exact list of changes it made; an auditor replays that list and
 checks it reproduces the committed directory, so a deletion, which the list cannot even express,
 is caught.}
-Each $\mathsf{commit}$ freezes a \emph{declared update set} $\Delta_t$: the epoch's
-$\textsf{Insert}(\ell,\mathit{value})$ operations on fresh labels and
-$\textsf{Rotate}(\ell,\mathit{value}_{\mathrm{old}},\mathit{value})$ operations, each rotation
-disclosing the exact value it replaces; the format cannot express a deletion. The \emph{transition
-audit} replays $\Delta_t$ onto the directory of the previous committed root $\prefroot{t-1}$,
-requiring every \textsf{Insert} label to be proven absent there and every \textsf{Rotate} label to
-be proven present with exactly the declared prior value, and accepts iff the result equals the
-committed $\prefroot{t}$: any undeclared mutation, in particular any deletion, makes the
-replay diverge. Because labels are opaque, the audit guarantees that no mutation is silent rather
-than that every declared rotation is lawful; a declared overwrite of a write-once label is forced
-into the open, where the label's owner detects it. Specified in \cref{ssec:design-detection};
-realized by \textsf{AuditTransition} (\cref{alg:auditor}).
+Each $\mathsf{commit}$ records a \emph{declared update set} $\Delta_t$ of two operation types.
+$\textsf{Insert}(\ell,\mathit{value})$ adds a label that was absent from the previous committed
+directory. $\textsf{Rotate}(\ell,\mathit{value}_{\mathrm{old}},\mathit{value}_{\mathrm{new}})$
+replaces the value at an existing \textsc{mutable} label and declares both the previous and the
+replacement values. The format contains no deletion operation. The \emph{transition auditor} starts
+from a clone of the directory committed by $\prefroot{t-1}$ and processes the operations in their
+declared order. Before applying an \textsf{Insert} it verifies that the label is absent; before
+applying a \textsf{Rotate} it verifies that the label is present, is \textsc{mutable}, and holds the
+declared previous value. It accepts exactly when the resulting root equals $\prefroot{t}$. An
+undeclared modification or deletion causes the replayed root to differ, and an attempted rotation of
+an \textsc{immutable} dual-index, CEA, or warning label is rejected directly. Specified in
+\cref{ssec:design-detection}; realized by \textsf{AuditTransition} (\cref{alg:auditor}).
 \end{definition}
 
 \begin{definition}[Windowed consistency proof]\label{def:windowed}
@@ -326,10 +330,15 @@ Let $\Adv$ be a probabilistic polynomial-time adversary controlling the server a
 the model of \cref{ch:threat}. In the experiment $\Expt{dual\text{-}det}{\Adv}$, $\Adv$ interacts with
 an honest client and peer and wins if it causes the client to accept a peer key
 $\mathit{pk}'\neq\mathit{pk}_{\B}$ under a signed head $\STH_t$ for which $\mathsf{CheckWarning}$
-returns \textsc{clear}. The scheme achieves key-substitution detection (goal G1 of \cref{ch:threat})
+returns \textsc{clear}. The scheme achieves key-substitution detection (Goal~G1, Key-Substitution Detection)
 if $\advantage{dual\text{-}det}{\Adv}=\Pr[\Expt{dual\text{-}det}{\Adv}=1]$ is negligible in
-$\secpar$, under the collision resistance of $\Hash$ (\cref{def:hash}), the unforgeability of the
-signature (\cref{def:sig}), and the uniqueness of the VRF (\cref{def:vrf-security}). The
+$\secpar$. For the raw dual-index path the argument rests on the labels being unpredictable to the
+adversary: it relies on HKDF (\cref{def:hkdf}) behaving as a PRF keyed by an unknown, sufficiently
+high-entropy conversation secret, on the unforgeability of the warning-MAC, on the collision
+resistance of $\Hash$ (\cref{def:hash}), on the soundness of the inclusion and prefix proofs, and on
+the unforgeability of the STH signature (\cref{def:sig}). The uniqueness of the VRF
+(\cref{def:vrf-security}) is what binds the separate global VRF-indexed path, not the secrecy of the
+raw dual-index labels. The
 narrative argument for this claim is given in \cref{ssec:design-detection}; a full reduction is left
 to future work (\cref{ch:discussion}).
 \end{definition}

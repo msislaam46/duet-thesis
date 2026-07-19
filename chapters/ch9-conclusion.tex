@@ -22,27 +22,33 @@ of \cref{ch:threat}.
 
 The evaluation (\cref{ch:eval}) shows that this detection is added without changing the asymptotic
 complexity of the lookup proof, using additional lookups of the shape the client already verifies. The
-dual-index lookup proof is at size parity with CONIKS while carrying the warning channel CONIKS lacks.
+implemented (VRF-indexed) lookup proof is at size parity with CONIKS, while the scheme adds a warning
+channel CONIKS lacks.
 Median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
 far more slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}), about
 \num{3.8} times faster than CONIKS at matched scale even though it includes the VRF check that CONIKS's
 figures omit (both totals include the signature check, and the cross-hardware comparison is
-indicative only). A month-long offline catch-up carries one proof rather than $W$, a few hundred raw
-path bytes against the hundreds of kilobytes naïve monitoring would spend. The warning-slot read
-costs microseconds on top of a lookup the client already verifies, with no false
-positives over a thousand clean sessions, and the cross-vantage auditor's local fork check runs at a
-median \SI{27.9}{\micro\second} (p95 \SI{34.2}{\micro\second}) against one observed head. The adversarial suite detects the full substitution and
+indicative only). A month-long offline catch-up is one distant-head consistency proof rather than $W$
+of them, a few hundred raw path bytes against the hundreds of kilobytes a synthetic baseline that
+re-fetches a current-head-anchored proof for each missed epoch would instead spend. The marginal
+warning-slot read costs microseconds on top of a lookup the client already verifies, with no false
+alarms observed over a thousand clean deterministic sessions, and the cross-vantage auditor's local
+fork check runs at a median \SI{27.9}{\micro\second} (p95 \SI{34.2}{\micro\second}) against one
+observed head. The adversarial suite detects the full substitution and
 equivocation taxonomy, and a STRIDE analysis leaves four residual risks: one the label-to-user
 mapping inherent to any semi-trusted-server directory, the other three availability functions left to
 a production deployment.
 
-Read against the research questions of \cref{sec:intro-aims}, the evidence is direct. RQ1 (automatic,
-in-band detection) is answered by the dual-index warning and its clean pass across the full
-adversarial suite at a zero false-positive rate. RQ2 (cost) is answered by the \num{817}\,byte proof at parity with CONIKS and the
+Read against the research questions of \cref{sec:intro-aims}, the evidence is direct. RQ1 (in-band
+detection) is answered by the dual-index warning and its clean pass across the full
+adversarial suite, with no false alarms observed in the clean deterministic trials. RQ2 (cost) is
+answered by the \num{817}\,byte VRF-indexed lookup proof at parity with CONIKS and the
 $\approx$\SI{128}{\micro\second} verification at $N\le10^4$, rising only to $\approx$\SI{147}{\micro\second} at $10^7$. RQ3 (offline) is answered by
 the \num{320}\,byte month-long catch-up, whose size is bounded by the endpoint log sizes rather than
 the window's length. RQ4 (client-integration feasibility) is answered by the
-verifier running inside a fork of the real Signal Desktop client at that measured cost. The thesis
+verifier running inside a fork of the real Signal Desktop client at that measured local cost; the
+integration is a prototype with an advisory hook and deterministic stand-ins, so it establishes
+feasibility of hook placement and proof verification rather than enforced session blocking. The thesis
 statement, that this detection can be added without changing the asymptotic complexity of the
 proofs the directory already serves using additional lookups of the existing shape, is thereby
 supported on every axis it claimed. The full chain from each research question and contribution kind
