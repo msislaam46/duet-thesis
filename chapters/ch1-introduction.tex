@@ -79,7 +79,7 @@ rather than linear in the epochs missed (\cref{sec:design-windowed}, \cref{lem:w
 \cref{ch:design} disclaims any new cryptographic primitive here: the contribution is the proof
 construction and its measured trade-off, not a new object.
 
-\paragraph{Systems.} A complete implementation in two independent layers held to byte-for-byte
+\paragraph{Systems.} A complete implementation in two independently implemented layers checked against shared cross-language vectors, byte-for-byte
 parity: a standalone Rust reference implementation (the \texttt{kt} crate, an HTTP directory server,
 and a cross-vantage auditor) and an embedded TypeScript verifier integrated into a fork of the real
 Signal Desktop client (\cref{ch:impl}).

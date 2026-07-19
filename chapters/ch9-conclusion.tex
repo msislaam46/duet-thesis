@@ -34,8 +34,8 @@ re-fetches a current-head-anchored proof for each missed epoch would instead spe
 warning-slot read costs microseconds on top of a lookup the client already verifies, with no false
 alarms observed over a thousand clean deterministic sessions, and the cross-vantage auditor's local
 fork check runs at a median \SI{27.9}{\micro\second} (p95 \SI{34.2}{\micro\second}) against one
-observed head. The adversarial suite detects the full substitution and
-equivocation taxonomy, and a STRIDE analysis leaves four residual risks: one the label-to-user
+observed head. The adversarial suite detects every substitution and
+equivocation scenario it enumerates, and a STRIDE analysis leaves four residual risks: one the label-to-user
 mapping inherent to any semi-trusted-server directory, the other three availability functions left to
 a production deployment.
 
@@ -51,7 +51,7 @@ integration is a prototype with an advisory hook and deterministic stand-ins, so
 feasibility of hook placement and proof verification rather than enforced session blocking. The thesis
 statement, that this detection can be added without changing the asymptotic complexity of the
 proofs the directory already serves using additional lookups of the existing shape, is thereby
-supported on every axis it claimed. The full chain from each research question and contribution kind
+supported for the measured prototype properties listed above, subject to the limitations of \cref{ch:discussion}. The full chain from each research question and contribution kind
 to its supporting evidence is tabulated in \cref{app:traceability}
 (\cref{tab:trace-rq,tab:trace-contrib}).
 

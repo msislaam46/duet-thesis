@@ -774,7 +774,7 @@ complete~\cite{vaziripour2017}.
 
 On the server, the picture is more qualified, and the qualifications are exactly what a production
 deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one
-operation that grows with $N$ ($\approx O(N)$, \SI{6.00}{\milli\second} at $10^4$,
+operation that grows with $N$ ($\approx O(N)$, \SI{5.92}{\milli\second} at $10^4$,
 \cref{ssec:eval-throughput}), because the current server deep-clones its committed snapshot; a
 copy-on-write tree would reduce this to $O(\lg N)$ and is the single most valuable server-side change.
 Second, the per-lookup and per-rotation VRF prove (\SI{117.4}{\micro\second} measured in isolation,

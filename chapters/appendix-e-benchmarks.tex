@@ -1,6 +1,6 @@
 \chapter{Full Benchmark Results}\label{app:benchmarks}
 
-This appendix reproduces the complete benchmark data summarized in \cref{ch:eval}. All figures are
+This appendix reproduces the complete committed aggregate benchmark tables summarized in \cref{ch:eval}. All figures are
 from a single measurement campaign on the environment recorded below; sizes are exact and
 seed-deterministic, and timings are medians (with the 95th percentile and a 95\% confidence
 half-width where the harness records them). The metric families M1--M13 are as defined by the
@@ -291,7 +291,7 @@ about the medians in either direction; no equivalence claim is made either, sinc
 margin was defined or tested. The chain memoization flattens the compressed-leaf
 cost that previously separated them.
 Both modes are timed under the identical label-bound proof
-verifier (\texttt{verify\_search\_result\_raw\_for}), so the two medians are apples-to-apples. The
+verifier (\texttt{verify\_search\_result\_raw\_for}), so the two medians are directly comparable under the same local verifier. The
 continuous-mode setup folds a simulated per-epoch ratchet secret that is distinct from the
 authenticated public ratchet key (ACKA's $I$ versus $T$); it is a stand-in for a live Double-Ratchet
 DH output, so the figure captures the transparency-layer cost of an epoch, not the ratchet's own key
