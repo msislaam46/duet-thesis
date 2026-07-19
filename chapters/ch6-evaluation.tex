@@ -22,19 +22,22 @@ value of a transparency system is not any single cost but the trade between proo
 time, and the bandwidth a client must spend to stay synchronized.
 
 The evaluation is organized around four questions, one per design claim, each stated so that it could
-be falsified. \emph{Is detection free in individual proof size?} This separates into three claims that
-must be falsified separately. \emph{Structurally}, the warning check is a separate lookup of the same
-shape as a key lookup, so enabling detection changes neither the format nor the size of any single
-lookup proof; falsified if turning detection on enlarged or restructured an individual proof.
-\emph{Empirically}, the measured VRF-indexed lookup sits at rough size parity, taken here as within
-\num{10}\% at matched $N$, with the like-for-like VRF-indexed baseline (CONIKS), not with a non-VRF
-single-index log, which is necessarily smaller by the VRF proof; this is the prior-systems comparison
-of \cref{sec:eval-compare} (\cref{ssec:eval-sizes} gives the single- versus VRF-indexed decomposition),
-and it is descriptive rather than a hard bound. \emph{Operationally}, detection's cost is measured in
-requests and writes, not proof bytes: one additional same-shape raw-label lookup per check, and in
-continuous mode one directory write per ratchet epoch; falsified if realizing detection required more
-than that extra lookup (or, in continuous mode, more than the per-epoch write) or measurably inflated
-verification latency beyond it (M5, M13). \emph{Does client
+be tested. \emph{Is detection free in individual proof size?} This separates into three claims.
+\emph{Structurally}, the warning check is a separate lookup that reuses the same prefix-tree and
+log-proof structure as a key lookup (without the VRF component), so enabling detection changes neither
+the format nor the size of any single lookup proof; falsified if turning detection on enlarged or
+restructured an individual proof. \emph{Empirically}, the measured VRF-indexed lookup is close in size
+to the like-for-like VRF-indexed baseline (CONIKS), \num{817} against \num{768} derived bytes at
+$N=10^6$ (a \num{6.4}\% difference), rather than to a non-VRF single-index log, which is necessarily
+smaller by the VRF proof; this cross-paper comparison (\cref{sec:eval-compare}; \cref{ssec:eval-sizes}
+gives the single- versus VRF-indexed decomposition) is descriptive, not a falsification criterion.
+\emph{Operationally}, detection's cost is in requests and writes, not proof bytes: \texttt{detectMitm}
+performs two label-bound raw-label lookups per check (the owner slot and the warning slot), plus one
+directory write per ratchet epoch in continuous mode; falsified if realizing detection required more
+than these two lookups (or, in continuous mode, more than the per-epoch write) or measurably inflated
+verification latency beyond them. M5 times only the marginal \emph{unverified} warning-slot read, so it
+bounds the incremental read cost rather than the full two-lookup detection cost, and M13 covers the
+continuous-mode write trade. \emph{Does client
 verification remain inexpensive as the directory grows?} Falsified if the full-chain verify grew in
 proportion to $N$, or exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}).
 \emph{Can an offline client re-synchronize in a single proof, rather than one per missed epoch?}
@@ -66,7 +69,7 @@ M1  & Lookup proof size vs.\ $N$              & single- vs VRF-indexed     & \cr
 M2  & Proof generation latency (server)        & VRF-indexed                & \cref{ssec:eval-latency} \\
 M3  & Full signed-head lookup verification latency & VRF-indexed, windowed      & \cref{ssec:eval-latency} \\
 M4  & Offline catch-up bandwidth vs.\ $W$      & na\"ive vs windowed         & \cref{ssec:eval-catchup} \\
-M5  & Marginal warning-slot lookup cost        & VRF-indexed                & \cref{ssec:eval-detection} \\
+M5  & Marginal warning-slot lookup cost        & raw warning (unverified)   & \cref{ssec:eval-detection} \\
 M6  & Clean-session false-positive rate        & None                       & \cref{ssec:eval-detection} \\
 M7  & Size + verify at scale ($10^6,10^7$)    & VRF-indexed, windowed      & \cref{ssec:eval-scale} \\
 M8  & Latency-derived single-thread operation rate & VRF-indexed                & \cref{ssec:eval-throughput} \\
@@ -581,8 +584,9 @@ signature~\cite[\S5.3, Table~1]{melara2015coniks}) at $N = 10^6$ gives $32 \cdot
 $10^6$. On the same convention as our measurement, proof and VRF without a signature, DUET's
 \num{817}\,bytes sits within \num{7}\% of CONIKS's \num{768}\,bytes: rough parity, with DUET
 marginally larger on the raw proof. This VRF-indexed identity lookup does not itself carry the
-dual-index warning mechanism; detection is supplied separately through additional raw-label lookups of
-the same shape (\cref{sec:design-dual}), none of which enlarges an individual proof. We do not claim a
+dual-index warning mechanism; detection is supplied separately through additional raw-label lookups
+that reuse the same prefix-tree and log-proof structure without the VRF component (\cref{sec:design-dual}),
+none of which enlarges an individual proof. We do not claim a
 wire-format advantage here: a full DUET lookup response also returns the signed tree head \emph{per
 lookup} (\cref{sec:impl-signal}), which this proof-body comparison excludes on both sides.
 
