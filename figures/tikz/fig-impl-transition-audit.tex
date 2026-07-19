@@ -2,6 +2,7 @@
 % Covers the first-head bootstrap, the append-only consistency check for a grown
 % head, the per-epoch replay loop, and the two equal-head cases (already audited
 % vs. an incomplete transition that must be retried). Label: \label{fig:impl-transition-audit}
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=5.0mm,
   proc/.style={draw,rounded corners,align=center,inner sep=3pt,minimum width=6.0cm,minimum height=7mm},
   dec/.style={draw,align=center,inner sep=3pt,minimum width=6.0cm,minimum height=7mm,fill=blue!6},
@@ -40,4 +41,5 @@
   \draw[->] (loop.east) -- node[above,font=\tiny]{no} (b6.west);
   \node[rtr,below=5mm of b6] (b3) {delta-fetch failure: discard scratch, retry (incomplete, not a fork)};
   \draw[->] (loop.south east) -- node[below,font=\tiny,pos=0.2]{fetch fail} (b3.west);
-\end{tikzpicture}
+\end{tikzpicture}%
+}

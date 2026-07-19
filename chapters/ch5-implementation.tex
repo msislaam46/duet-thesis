@@ -370,15 +370,13 @@ that warning and both clients go red. Independently, the auditor's transition re
 declared immutable rotation, so detection does not rest on the client path alone. The live run below
 exercises it inside the real interface.
 
-\begin{figure}[ht]
+\begin{figure}[p]
 \centering
 \input{figures/tikz/fig-impl-e2e}
-\caption[End-to-end sequence across the four roles.]{End-to-end sequence across the four roles
-(Alice, Bob, the KT server, and the auditor): the normal registration--fetch--verify--audit path
-(top), where Bob's verifier performs three label-bound verified lookups (peer, own, and warning
-slots), and the A1b overwrite of Alice's own slot $\ell_A$ (bottom), detected by Alice's monitor
-(which writes the warning Bob's monitor then reads) and, independently, by the auditor's transition
-replay.}
+\caption[Normal and A1b attack paths across the four roles.]{Normal and A1b attack paths across the
+client, directory, and auditor roles. The lower panel separates the client-side warning propagation
+(Alice's own-slot mismatch, her warning write, and Bob's warning read) from the auditor's rejection of
+the immutable-slot rotation.}
 \label{fig:impl-e2e}
 \end{figure}
 
