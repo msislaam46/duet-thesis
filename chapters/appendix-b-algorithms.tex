@@ -393,7 +393,9 @@ validly signed at all, an availability or transport fault rather than evidence o
 \paragraph{Continuous mode (Algorithm~\ref{alg:cea}).} CEA authenticates the Double Ratchet epoch by
 epoch, following the ACKA CEA construction. It folds each epoch's secret into a chained key $k$ and
 publishes a directional fingerprint over the new ratchet public key, which the receiver recomputes and
-compares. A mismatch means the peer folded a different secret (a fork); because the committed
+compares. A mismatch shows that the committed fingerprint is inconsistent with the receiver's chained state and
+authenticated ratchet public key $T_t$; the verifier reports this as a fork without attributing the
+divergence to a particular input. Because the committed
 fingerprint is immutable, an operator that later overwrites it is caught by the auditor's transition
 audit rather than by the receiver's per-epoch verdict. Labels use the canonical $\min/\max$ identity
 order, so both parties address one slot per epoch, and the fingerprint is directional
