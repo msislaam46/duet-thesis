@@ -349,10 +349,11 @@ prefix verify and the remainder of the \SI{128}{\micro\second} chain of \cref{ss
 sessions the false-positive rate (M6) is \num{0}; this is a sanity check rather than independent
 evidence, since a spurious collision at a 256-bit HKDF-derived warning label is cryptographically
 negligible. M5 must therefore not be interpreted as detector latency. The reference detector
-(\texttt{detectMitm}, \cref{sec:impl-signal}) performs \emph{two} proof-carrying lookups: the client's
-own slot must still verifiably equal its key, and the warning slot must be verifiably \emph{empty},
-a non-inclusion proof, since an unproven ``empty'' would let the server censor the warning. M5 times
-neither. It times the marginal, unverified read of the warning slot, in clean state. Each detector lookup is a
+(\texttt{detectMitm}, \cref{sec:impl-signal}) always performs the owner-slot lookup, whose proof-carrying
+result must verifiably equal the client's key, and \emph{then}, only when that check passes, the
+warning-slot lookup, whose result must be verifiably \emph{empty}, a non-inclusion proof, since an
+unproven ``empty'' would let the server censor the warning; the clean path therefore runs both
+proof-carrying lookups. M5 times neither. It times the marginal, unverified read of the warning slot, in clean state. Each detector lookup is a
 raw-label lookup that verifies a prefix-tree and log path \emph{without} the VRF component, so the full
 VRF-indexed verification M3 times ($\approx$\SI{128}{\micro\second} median locally) is only a
 conservative local \emph{upper} proxy for the verification work of one such lookup, not a measurement

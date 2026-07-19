@@ -359,8 +359,12 @@ primary head cannot be fetched or parsed, alarms and returns \textsc{Malformed},
 without committing on an \textsc{Incomplete} epoch-delta fetch, and otherwise commits the mirror,
 cursor, and baseline as one transaction. After committing it distinguishes \textsc{Consistent} (a valid
 second vantage was available and agreed) from \textsc{ConsistentNoVantage} (no valid second-vantage head
-was available, so the primary chain advanced but no G4 verdict was obtained), so a caller can never read
-a missing cross-vantage check as a passed one.
+was available, so the primary chain advanced but no G4 verdict was obtained), so a caller reading the
+returned verdict cannot mistake a missing cross-vantage check for a passed one. Each epoch delta is
+fetched and audited against the \emph{validated} head: \textsf{GetEpochDelta} is pinned to
+$\mathit{sth_{new}}.\mathit{size}$, and \textsf{AuditTransition} accepts the delta only if its inclusion
+proof proves leaf index $e$ with the declared committed root under $\mathit{sth_{new}}.\mathit{root}$ at
+that size, so a stale snapshot or a proof for a different leaf is rejected before any replay.
 \textsf{DetectFork} first requires the second-vantage head to be present, validly signed, \emph{and}
 well-formed; if it is not, it returns \textsc{InvalidHead}, an availability or transport fault that
 yields no equivocation verdict and, because $\textsc{InvalidHead}\ne\textsc{Fork}$, does not block the
@@ -379,7 +383,7 @@ step, fetching and verifying the consistency proof between the two vantage sizes
 empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
-  \lIf{$\mathit{sth_{new}}=\bot$}{\KwRet \textsc{Unavailable} \tcp*[f]{fetch/parse failed: retryable, state unchanged}}
+  \lIf{$\mathit{sth_{new}}=\bot$}{\KwRet \textsc{Unavailable} \tcp*[f]{retryable}}
   \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})\ \vee\ \mathit{sth_{new}}.\mathit{epoch}+1\ne \mathit{sth_{new}}.\mathit{size}$}{\textbf{alarm};\ \KwRet \textsc{Malformed}}
   \If{$\mathit{last}\ne\bot$}{
     \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{size}<\mathit{last}.\mathit{size}$}{\textbf{alarm};\ \KwRet \textsc{Rollback}}
@@ -391,7 +395,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   }
   $\mathit{scratch}\gets \textsf{clone}(\mathit{mirror})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
-    $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e,\mathit{sth_{new}}.\mathit{size})$ \tcp*{delta pinned to the signed tree size}
+    $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e,\mathit{sth_{new}}.\mathit{size})$\;
     \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable}}
     \lIf{$\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e,\mathit{sth_{new}}.\mathit{root},\mathit{sth_{new}}.\mathit{size})=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
@@ -400,7 +404,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   $\mathit{vb}\gets\textsf{DetectFork}(\mathit{peer}.\textsf{CurrentHead}(),\mathit{sth_{new}},\mathit{server})$\;
   \lIf{$\mathit{vb}=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
   $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
-  \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed; no G4 verdict}}
+  \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed, no G4}}
   \KwRet \textsc{Consistent}\;
 }
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e,r_{\mathrm{head}},\mathit{size}_{\mathrm{head}}$)}{
