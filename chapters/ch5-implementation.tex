@@ -356,22 +356,27 @@ first). This is the runtime realization of the verification chain of \cref{ssec:
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
-\Cref{fig:impl-e2e} gives the end-to-end account across the five roles. In the normal path Alice
-registers and commits, Bob's verifier checks the proof chain and signed tree head, runs the own-key
-self-check, and reads an empty warning slot to return \textsc{safe}, while the auditor polls to
-\textsc{consistent}. In the A1b branch the server overwrites Alice's immutable dual-index slot: the
-client monitor reads the substituted key against the pinned key and raises a red \textsc{warning},
-and independently the auditor's transition replay rejects the declared immutable rotation, so
-detection does not rest on the client path alone. The live run below exercises it inside the real
-interface.
+\Cref{fig:impl-e2e} gives the end-to-end account across the four roles (Alice and Bob, each a client
+with its verifier embedded; the KT server; and the auditor). In the normal path Alice registers her
+key and commits; Bob's verifier then performs three label-bound, proof-verified lookups --- the peer
+slot $\ell_A$ it retrieves Alice from, its own slot $\ell_B$, and the shared warning slot
+$\ell_{\mathsf{warn}}$, which is verifiably empty --- and returns \textsc{safe}, while the auditor
+polls and replays to \textsc{consistent}. In the A1b branch the server overwrites Alice's own
+dual-index slot $\ell_A$ (which is also Bob's peer slot): Alice's monitor reads the substituted value
+against her pinned key, finds a mismatch, and writes the shared warning slot; Bob's monitor then reads
+that warning and both clients go red. Independently, the auditor's transition replay rejects the
+declared immutable rotation, so detection does not rest on the client path alone. The live run below
+exercises it inside the real interface.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-e2e}
-\caption[End-to-end sequence across the five roles.]{End-to-end sequence across the five roles: the
-normal registration--fetch--verify--audit path (top) and the A1b immutable-slot overwrite (bottom),
-detected on both the client monitor path and the auditor's transition replay, as described in the
-text.}
+\caption[End-to-end sequence across the four roles.]{End-to-end sequence across the four roles
+(Alice, Bob, the KT server, and the auditor): the normal registration--fetch--verify--audit path
+(top), where Bob's verifier performs three label-bound verified lookups (peer, own, and warning
+slots), and the A1b overwrite of Alice's own slot $\ell_A$ (bottom), detected by Alice's monitor
+(which writes the warning Bob's monitor then reads) and, independently, by the auditor's transition
+replay. Described in the text.}
 \label{fig:impl-e2e}
 \end{figure}
 
@@ -505,7 +510,7 @@ complete test catalogue is given in \cref{app:tests}.
 
 \begin{table}[ht]
 \centering
-\caption{Representative correctness tests and the requirement each protects.}
+\caption[Representative correctness tests and the requirement each protects.]{Representative correctness tests and the requirement each protects. Goals cited (\cref{sec:threat-goals}): G1 key-substitution detection, G3 directory privacy, G4 fork detection.}
 \label{tab:impl-t5a}
 \footnotesize
 \begin{tabular}{@{}p{3.3cm}p{1.9cm}p{4.0cm}p{3.7cm}@{}}

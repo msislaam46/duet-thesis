@@ -1,39 +1,51 @@
-% fig-impl-e2e.tex — end-to-end sequence across the five roles: the normal path
+% fig-impl-e2e.tex — end-to-end sequence across the four roles: the normal path
 % (top) and one compact attack branch (bottom). Label: \label{fig:impl-e2e}
+% Two client lifelines (Alice, Bob), each with its verifier embedded; the KT
+% server; and the auditor. Every proof-verified lookup is drawn separately.
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
-  hd/.style={draw,rounded corners,fill=black!6,align=center,minimum height=6mm,inner sep=3pt},
-  act/.style={draw,fill=black!4,align=center,font=\tiny,inner sep=2pt,rounded corners},
+  hd/.style={draw,rounded corners,fill=black!6,align=center,minimum height=9mm,minimum width=21mm,inner sep=3pt},
+  act/.style={draw,fill=black!4,align=center,font=\tiny,inner sep=2.5pt,rounded corners,text width=2.9cm},
+  ract/.style={act,draw=red!60!black},
+  gact/.style={act,draw=green!45!black,fill=green!7},
   m/.style={->,shorten >=1pt},
-  red/.style={->,red!65!black,shorten >=1pt}]
+  red/.style={->,red!65!black,shorten >=1pt},
+  grn/.style={->,green!50!black,shorten >=1pt},
+  mlbl/.style={fill=white,inner sep=1.5pt,font=\scriptsize}]
 
-  % lifelines
-  \foreach \x/\name/\id in {0/Alice/A, 2.4/Bob/B, 5.0/{TS verifier}/V, 8.3/{KT server}/S, 11.4/Auditor/U}{
+  % lifelines (x positions): Alice 0, Bob 3.4, KT server 7.0, Auditor 10.6
+  \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{KT server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
-    \draw[dashed,black!45] (\x,-0.35) -- (\x,-10.4);
+    \draw[dashed,black!45] (\x,-0.55) -- (\x,-11.4);
   }
-  \node[font=\itshape,text=black!55,anchor=west] at (-0.6,-0.62) {normal operation};
+  \node[font=\itshape,text=black!55,anchor=west,fill=white,inner sep=1.5pt] at (-0.95,-0.9) {normal operation};
 
   % ---- normal path ----
-  \draw[m] (A) ++(0,-1.35) -- node[above]{register key at $\ell_A$ ($+$ commit)} (8.3,-1.35);
-  \draw[m] (2.4,-2.0) -- node[above]{fetch Alice's key} (5.0,-2.0);
-  \draw[m] (5.0,-2.7) -- node[above]{search $\ell_A$} (8.3,-2.7);
-  \draw[m] (8.3,-3.4) -- node[above]{value $+$ proof chain $+$ STH} (5.0,-3.4);
-  \node[act,anchor=north] at (5.0,-3.7) {verify chain $+$ STH;\\own-key self-check;\\warning slot $\ell_{\mathsf{warn}}$ empty};
-  \draw[m,green!50!black] (5.0,-5.0) -- node[above]{\textsc{safe} (green)} (2.4,-5.0);
-  \draw[m] (11.4,-4.3) -- node[above]{poll STH $+$ delta} (8.3,-4.3);
-  \node[act,anchor=north] at (11.4,-4.6) {replay $\to$\\consistent};
+  \draw[m] (0,-1.5) -- node[above,mlbl]{register Alice's key at $\ell_A$; commit epoch} (7.0,-1.5);
+  \draw[m] (3.4,-2.3) -- node[above,mlbl]{search peer slot $\ell_A$} (7.0,-2.3);
+  \draw[m] (7.0,-3.0) -- node[above,mlbl]{value $+$ proof chain $+$ STH} (3.4,-3.0);
+  \node[act,anchor=north] at (3.4,-3.35) {three label-bound verified lookups:\\peer slot $\ell_A$, own slot $\ell_B$,\\warning slot $\ell_{\mathsf{warn}}$ (empty)};
+  \node[gact,anchor=north] at (3.4,-5.15) {\textsc{safe} (green)};
+  \draw[m] (10.6,-4.1) -- node[above,mlbl]{poll STH $+$ delta} (7.0,-4.1);
+  \node[act,anchor=north] at (10.6,-4.45) {replay transition:\\consistent};
 
-  % ---- divider ----
-  \draw[dashed,red!55!black] (-0.7,-5.7) -- (12.1,-5.7);
-  \node[font=\itshape,text=red!60!black] at (2.6,-6.0) {under attack (A1b: overwrite of the immutable dual-index slot $\ell_A$)};
+  % ---- divider ---- (lifelines span x=0..10.6; midpoint 5.3)
+  \draw[dashed,red!55!black] (-0.95,-6.1) -- (11.55,-6.1);
+  \node[font=\itshape,text=red!60!black,fill=white,inner sep=2pt] at (5.3,-6.42)
+    {under attack (A1b: overwrite of the immutable dual-index slot $\ell_A$)};
 
   % ---- attack branch ----
-  \node[act,draw=red!60!black,anchor=east,font=\tiny] at (8.05,-6.9) {server substitutes $\ell_A \to$ Mallory};
-  \draw[red] (11.4,-7.3) -- node[above,font=\tiny]{poll STH $+$ delta} (8.3,-7.3);
-  \node[act,anchor=north,draw=red!60!black,font=\tiny,align=center] at (11.2,-7.55) {replay: declared immutable\\rotation $\to$ reject};
-  \draw[m] (5.0,-7.9) -- node[above]{monitor tick: search $\ell_A$} (8.3,-7.9);
-  \draw[red] (8.3,-8.6) -- node[above]{Mallory's key} (5.0,-8.6);
-  \node[act,anchor=north,draw=red!60!black] at (5.0,-8.9) {pinned-key mismatch};
-  \draw[red] (5.0,-9.7) -- node[above]{write warning slot $\ell_{\mathsf{warn}}$} (8.3,-9.7);
-  \draw[red] (5.0,-10.2) -- node[below]{\textsc{warning} (red)} (2.4,-10.2);
+  % server overwrites the value (box centred on the server lifeline)
+  \node[ract,anchor=north,text width=2.5cm] at (7.0,-6.85) {server overwrites the value at $\ell_A$ with Mallory's key};
+  % auditor detects the illegal rotation (kept clear of the server box, right of it)
+  \draw[red] (10.6,-8.05) -- node[above,mlbl,font=\tiny,pos=0.4]{poll STH $+$ delta} (7.0,-8.05);
+  \node[ract,anchor=north] at (10.6,-8.4) {replay: declared immutable rotation $\to$ reject};
+  % Alice's monitor detects the overwrite of her own slot
+  \draw[m] (0,-8.7) -- node[above,mlbl]{monitor tick: search own slot $\ell_A$} (7.0,-8.7);
+  \draw[red] (7.0,-9.3) -- node[above,mlbl]{Mallory's key} (0,-9.3);
+  \node[ract,anchor=north] at (0,-9.65) {own-slot mismatch:\\pinned key $\ne$ Mallory};
+  % Alice writes the warning
+  \draw[red] (0,-10.55) -- node[above,mlbl]{write warning slot $\ell_{\mathsf{warn}}$} (7.0,-10.55);
+  % Bob's monitor reads the warning
+  \draw[red] (7.0,-11.05) -- node[above,mlbl]{Bob monitor: warning present} (3.4,-11.05);
+  \node[ract,anchor=north] at (3.4,-11.4) {\textsc{warning} (red)};
 \end{tikzpicture}
