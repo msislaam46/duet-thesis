@@ -75,7 +75,7 @@ and published as the STH. This gives clients and auditors a single authenticated
 that commits to the whole directory and its history. It is the anchor against which
 every lookup is ultimately checked.
 
-\paragraph{Why a VRF?} The VRF carries the directory-privacy goal G3
+\paragraph{Why a VRF?} The VRF carries Goal~G3 (Directory Privacy)
 (\cref{sec:threat-goals}). The operator holds the VRF secret key and maps a user
 identifier to a pseudorandom label, attaching a proof that the label was computed
 correctly; a client verifies that proof against the operator's public key but cannot
@@ -165,7 +165,7 @@ benchmarked in \cref{ch:eval} is the complete five-step chain.
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}
 
 The dual-index warning scheme closes Problem~1 of \cref{sec:bg-open} (the absence of
-an in-band peer-warning channel) and so realizes goal G1 against the substitution
+an in-band peer-warning channel) and so realizes Goal~G1 (Key-Substitution Detection) against the substitution
 attacks A1, A3, and A5 of \cref{ch:threat}.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
@@ -416,7 +416,7 @@ label under one root, implying a violation of the collision resistance of the Me
 construction. Suppressing the warning after a detected mismatch likewise requires a forged
 non-inclusion proof. The remaining attack is equivocation, serving Alice and Bob
 different signed heads (attack A4), which lies outside this experiment and is handled by
-the cross-vantage auditor (goal G4). A fully quantified reduction with concrete
+the cross-vantage auditor (Goal~G4, Fork Detection). A fully quantified reduction with concrete
 advantage bounds, and a unified treatment of the network and malicious-server adversaries,
 is left to future work (\cref{ch:discussion}).
 
@@ -535,7 +535,7 @@ vectors verify byte-for-byte equivalence of the Rust and TypeScript CEA construc
 \section{Windowed Consistency Proofs}\label{sec:design-windowed}
 
 The windowed consistency proof closes Problem~2 of \cref{sec:bg-open}, the linear cost
-of offline catch-up, and so realizes goal G2.
+of offline catch-up, and so realizes Goal~G2 (Consistency Across Offline Windows).
 
 \subsection{The Catch-Up Problem and the Bound}\label{ssec:design-catchup}
 
@@ -670,7 +670,7 @@ deferred verification, a client must verify each epoch as it arrives, whereas th
 windowed consistency proof of \cref{sec:design-windowed} adds exactly the deferred,
 batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is
 honest and provides no out-of-band cross-checking of tree heads; the cross-vantage auditor
-of the threat model (goal G4, attack A4) adds equivocation detection on top of the
+of the threat model (Goal~G4, Fork Detection; attack A4) adds equivocation detection on top of the
 instantiated log. Closing these three gaps is what turns ACKA's abstract framework into a
 deployable system.
 
@@ -728,5 +728,5 @@ tree for the current directory and an append-only log of its committed roots, ra
 than a single structure. One tree alone would authenticate the present state but not its
 history, leaving append-only violations undetectable. The log supplies exactly the
 consistency proofs that windowed catch-up (\cref{sec:design-windowed}) and the
-cross-vantage auditor (goal~G4) depend on. The cost is one extra log-inclusion path per
+cross-vantage auditor (Goal~G4, Fork Detection) depend on. The cost is one extra log-inclusion path per
 lookup, up to $32\lceil\lg E\rceil$ bytes, quantified in \cref{ch:eval}.

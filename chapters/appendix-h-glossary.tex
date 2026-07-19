@@ -38,7 +38,7 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
 \item[Epoch] A committed version of the directory; a commit appends the prefix root to the log and
   publishes a signed tree head (\cref{def:epoch}).
 \item[Equivocation / fork] A malicious server signing two divergent views at one epoch; caught by
-  cross-vantage auditing (attack A4, goal G4).
+  cross-vantage auditing (attack A4; Goal~G4, Fork Detection).
 \item[EUF-CMA] Existential unforgeability under chosen-message attack, the standard signature-security
   notion (\cref{def:sig}).
 \item[HKDF] HMAC-based key-derivation function (RFC~5869), used for the dual-index label derivation
