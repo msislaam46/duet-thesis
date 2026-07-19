@@ -333,7 +333,13 @@ of the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each 
 a scratch clone of the mirror, and the live mirror, the audited-epoch cursor, and the head list are
 advanced as a single all-or-nothing transaction only if the entire head passes every stage; a fetch
 failure aborts the transaction and is retried on the next poll rather than latching a fork alarm
-(matching the implementation's \texttt{transition\_complete} guard). Because every leaf commits its
+(matching the implementation's \texttt{transition\_complete} guard). \Cref{alg:auditor} states this
+whole-head boundary as realized by the networked auditor binary, which stages the entire epoch range
+and commits the mirror, the cursor, and the baseline head together; the in-process library auditor
+used by the unit tests is an incremental variant that advances the mirror and cursor after each
+verified epoch (so only already-verified intermediate states can persist) and appends the head last,
+which is behaviourally equivalent on an honest log and never commits an unverified epoch. Because
+every leaf commits its
 mutable or immutable kind into its hash, the transition audit distinguishes the two families: a
 rotation is accepted only on a mutable (global-VRF identity) leaf and rejected on an immutable (raw
 dual-index, CEA, or warning) leaf, as is any rotation that misdeclares the kind. An insert is
@@ -354,10 +360,16 @@ audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mat
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
   \tcp{$\mathit{server}$: the networked directory; $\mathit{peer}$: an independent second-vantage head source}
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
-  \If{$\mathit{heads}\ne[\,]$}{
-    $\mathit{sth_{old}}\gets \mathit{heads}.\textsf{last}$;\ \ \Req $\mathit{sth_{new}}$ monotonic in epoch \emph{and} size\;
-    $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
-    \Req $\textsf{VerifyConsistency}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{sth_{old}}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$\;
+  \Req $\mathit{sth_{new}}.\mathit{epoch}+1=\mathit{sth_{new}}.\mathit{size}$ \tcp*{well-formed: else later leaves escape the audit}
+  \If{$\mathit{heads}\ne[\,]$ \emph{(classify against the baseline; only a grown head is consistency-checked)}}{
+    $\mathit{sth_{old}}\gets \mathit{heads}.\textsf{last}$\;
+    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{sth_{old}}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{size}<\mathit{sth_{old}}.\mathit{size}$}{\KwRet \tcp*[f]{Regression: advance nothing}}
+    \lIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{sth_{old}}.\mathit{size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{sth_{old}}.\mathit{root}$}{\KwRet \tcp*[f]{SameSizeForked}}
+    \uIf{$\mathit{sth_{new}}.\mathit{size}>\mathit{sth_{old}}.\mathit{size}$}{
+      $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
+      \Req $\textsf{VerifyConsistency}(\mathit{sth_{old}}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{sth_{old}}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$ \tcp*{Grew}
+    }
+    \lElse{\emph{Idempotent} (same size, same root): the replay below no-ops if already audited}
   }
   $\mathit{scratch}\gets \textsf{clone}(\mathit{mirror})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
