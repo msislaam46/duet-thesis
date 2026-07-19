@@ -395,7 +395,12 @@ epoch, following the ACKA CEA construction. It folds each epoch's secret into a 
 publishes a directional fingerprint over the new ratchet public key, which the receiver recomputes and
 compares. A mismatch means the peer folded a different secret (a fork); because the committed
 fingerprint is immutable, an operator that later overwrites it is caught by the auditor's transition
-audit rather than by the receiver's per-epoch verdict.
+audit rather than by the receiver's per-epoch verdict. Labels use the canonical $\min/\max$ identity
+order, so both parties address one slot per epoch, and the fingerprint is directional
+(sender-then-receiver) and computed over the current, pre-update state. On registration the sender
+first checks that its label is unoccupied, since an occupied label signals impersonation, and advances
+its chain only after confirming that the write committed. The receiver advances only on a
+\textsc{Consistent} verdict, leaving its state unchanged on \textsc{Fork} or \textsc{NotPosted}.
 
 \begin{algorithm}[H]
 \caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA CEA construction)}\label{alg:cea}
@@ -403,36 +408,36 @@ audit rather than by the receiver's per-epoch verdict.
 from Alg.~\ref{alg:dualindex} (the label uses canonical $\min/\max$ id order: one slot per epoch;
 the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id_A},\mathit{id_B}$)}{
-  $k\gets \KDF(\mathit{pss},\min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B}))$;\ \ $t\gets 0$ \tcp*{canonical id order}
+  $k\gets \KDF(\mathit{pss},\min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B}))$;\ \ $t\gets 0$\;
 }
 \Fn{\normalfont\textsf{CeaUpdate}($I$)}{
-  $k\gets \KDF(k,\KDF(I,\texttt{"CEA"}))$;\ \ $t\gets t+1$ \tcp*{fold the domain-separated secret (Fig 8)}
+  $k\gets \KDF(k,\KDF(I,\texttt{"CEA"}))$;\ \ $t\gets t+1$\;
 }
 \Fn{\normalfont\textsf{CeaLprint}($\mathit{id_A},\mathit{id_B}$)}{
-  \KwRet $\Hash(k\concat \min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B})\concat t)$ \tcp*{canonical order: both parties, one slot per epoch}
+  \KwRet $\Hash(k\concat \min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B})\concat t)$\;
 }
 \Fn{\normalfont\textsf{CeaFprint}($\mathit{id_{sender}},\mathit{id_{peer}},T_t$)}{
   $\mathit{fkey}\gets \KDF(k,\mathit{id_{sender}}\concat \mathit{id_{peer}}\concat t)$\;
   \KwRet $\Hash(\mathit{fkey}\concat T_t)$\;
 }
 \Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},T_t,I,\mathit{sth}$)}{
-  $L\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},T_t)$ \tcp*{over the current (pre-update) state}
+  $L\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},T_t)$\;
   \If{$\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})\ne\bot$}{
-    \textbf{raise} SecurityAlert \tcp*{ACKA sender check: an occupied label indicates impersonation}
+    \textbf{raise} SecurityAlert\;
   }
   $\mathit{server}.\textsf{UpdateRaw}(L,F)$;\ \ $\mathit{sth'}\gets \mathit{server}.\textsf{CommitEpoch}()$\;
-  \Req $\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth'})=F$ \tcp*{confirmation that the write committed}
-  $\textsf{CeaUpdate}(I)$ \tcp*{advance only after the confirmed write (ACKA Fig.~8)}
+  \Req $\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth'})=F$\;
+  $\textsf{CeaUpdate}(I)$ \tcp*{advance after the confirmed write}
 }
 \Fn{\normalfont\textsf{CeaVerify}($\mathit{server},\mathit{id_{sender}},\mathit{id_{self}},T_t,I,\lwarn,\mathit{sth}$)}{
   $L\gets \textsf{CeaLprint}(\mathit{id_{sender}},\mathit{id_{self}})$;\ \ $F^{*}\gets \textsf{CeaFprint}(\mathit{id_{sender}},\mathit{id_{self}},T_t)$\;
   $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
-  \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{state unchanged: retried later with the same $L$}}
+  \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{no advance}}
   \If{$v\ne F^{*}$}{
     $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t),\mathit{PRK})$\;
-    \KwRet \textsc{Fork} \tcp*{state unchanged: the session is not continued over a fork}
+    \KwRet \textsc{Fork} \tcp*{no advance}
   }
-  $\textsf{CeaUpdate}(I)$ \tcp*{advance only on \textsc{Consistent} (ACKA Fig.~8: state updates only on success)}
+  $\textsf{CeaUpdate}(I)$ \tcp*{advance on \textsc{Consistent}}
   \KwRet \textsc{Consistent}\;
 }
 \end{algorithm}

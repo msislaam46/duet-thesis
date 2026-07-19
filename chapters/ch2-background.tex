@@ -1475,16 +1475,15 @@ Mechanisms~1 through~3 are the transparency-log half of the work.
 
 \paragraph{Mechanism 4 (Conceptual): ACKA Instantiation (Continuous Mode).} ACKA itself gives a modular
 construction and a specific Signal add-on but leaves its logging component (Logsec) an
-\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}; this is, to our knowledge (based on a
-survey of the published key-transparency literature (CONIKS~\cite{melara2015coniks},
-SEEMless~\cite{chase2019seemless}, Parakeet~\cite{malvai2023parakeet},
-OPTIKS~\cite{optiks2024}, ELEKTRA~\cite{len2023elektra}, the WhatsApp and Apple
-deployments~\cite{lawlor2023whatsapp,apple-ckv}, and
-draft-ietf-keytrans~\cite{ietf-keytrans-protocol}) and public open-source trees as of
-July~2026), the first
+\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}. To our knowledge, this is the first
 instantiation of that component over a concrete, \emph{malicious-server-resistant}
 key-transparency log: a per-ratchet-epoch fingerprint and label chain that authenticates the
-Double Ratchet epoch by epoch. The claim is deliberately narrow: what is new is the concrete log
+Double Ratchet epoch by epoch. This claim rests on a survey of the published key-transparency
+literature (CONIKS~\cite{melara2015coniks}, SEEMless~\cite{chase2019seemless},
+Parakeet~\cite{malvai2023parakeet}, OPTIKS~\cite{optiks2024}, ELEKTRA~\cite{len2023elektra}, the
+WhatsApp and Apple deployments~\cite{lawlor2023whatsapp,apple-ckv}, and
+draft-ietf-keytrans~\cite{ietf-keytrans-protocol}) and publicly available open-source implementations
+as of July~2026. The claim is deliberately narrow: what is new is the concrete log
 instantiation and its measurement, not the ACKA construction. In the prototype the ratchet is driven
 deterministically from the shared secret; the in-protocol libsignal hook is future work
 (Chapter~7).
