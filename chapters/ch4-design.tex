@@ -313,10 +313,10 @@ in depth for the dual-index labels: a replaced lookup slot fails the owner's sel
 replaced warning slot still alerts (any value at the slot alerts). But note the CEA fingerprint
 overwrite is one the receiver's per-epoch verdict alone \emph{cannot} catch under a pre-shared-state
 compromise (the substituted fingerprint matches what the victim recomputes for the injected key), so
-it is precisely the auditor's structural rejection of the immutable-leaf rotation that closes it. This is exactly
+it is the auditor's structural rejection of the immutable-leaf rotation that closes it. This is
 the update-validity role the IETF KeyTrans protocol assigns to third-party auditors, whose
 \textsf{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
-proof against the prior tree, precisely so that the auditor can recompute both roots of the
+proof against the prior tree, so that the auditor can recompute both roots of the
 transition~\cite{ietf-keytrans-protocol}. A deletion or overwrite therefore cannot be committed
 without either failing the auditor's validation and raising its alarm, or presenting the auditor a transition that
 fails to replay.
@@ -418,7 +418,7 @@ label under one root, implying a violation of the collision resistance of the Me
 construction. Suppressing the warning after a detected mismatch likewise requires a forged
 non-inclusion proof. The remaining attack is equivocation, serving Alice and Bob
 different signed heads (attack A4), which lies outside this experiment and is handled by
-the cross-vantage auditor (Goal~G4, Fork Detection). A fully quantified reduction with concrete
+the cross-vantage auditor Goal~G4 (Fork Detection). A fully quantified reduction with concrete
 advantage bounds, and a unified treatment of the network and malicious-server adversaries,
 is left to future work (\cref{ch:discussion}).
 
@@ -672,7 +672,7 @@ deferred-verification procedure. A client verifies each epoch as it arrives. The
 of \cref{sec:design-windowed} instead adds exactly the deferred,
 batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is
 honest and provides no out-of-band cross-checking of tree heads; the cross-vantage auditor
-of the threat model (Goal~G4, Fork Detection; attack A4) adds equivocation detection on top of the
+of the threat model, which realizes Goal~G4 (Fork Detection) against attack A4, adds equivocation detection on top of the
 instantiated log. Closing these three gaps is what turns ACKA's abstract framework into a
 deployable system.
 
@@ -730,5 +730,5 @@ tree for the current directory and an append-only log of its committed roots, ra
 than a single structure. One tree alone would authenticate the present state but not its
 history, leaving append-only violations undetectable. The log supplies exactly the
 consistency proofs that windowed catch-up (\cref{sec:design-windowed}) and the
-cross-vantage auditor (Goal~G4, Fork Detection) depend on. The cost is one extra log-inclusion path per
+cross-vantage auditor Goal~G4 (Fork Detection) depend on. The cost is one extra log-inclusion path per
 lookup, up to $32\lceil\lg E\rceil$ bytes, quantified in \cref{ch:eval}.

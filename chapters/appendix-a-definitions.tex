@@ -106,7 +106,7 @@ $t$ is $\prefroot{t}$. Used in \cref{ssec:design-structures}.
 exhibiting the (default) contents of its slot, just as one proves presence.}
 A prefix-tree proof for label $\ell$ is the co-path of sibling hashes from the leaf at position
 $\ell$ to the prefix root $\prefroot{t}$. An \emph{inclusion} proof recomputes $\prefroot{t}$ from
-$\Hash(\ell\concat \mathit{value})$ and the co-path; a \emph{non-inclusion} proof recomputes it from
+$\Hash(\mathit{kind}\concat\ell\concat \mathit{value})$ and the co-path; a \emph{non-inclusion} proof recomputes it from
 the default (empty) leaf value at position $\ell$, establishing that no value is bound at $\ell$
 \cite{melara2015coniks,ietf-keytrans-protocol}. Proven non-inclusion of the warning slot is what
 makes warning censorship detectable (\cref{def:dualindex-check}). Used in \cref{ssec:design-verify}.
@@ -155,8 +155,8 @@ probabilistic polynomial-time adversary wins the experiment $\Expt{vrf\text{-}pr
 RFC~9381~\cite{rfc9381} with advantage non-negligible in $\secpar$: the adversary, given
 $\mathit{pk}$ and a $\VRFeval$ oracle, must distinguish the true output $\beta^\star=\VRFeval(\mathit{sk},\alpha^\star)$
 on a fresh challenge $\alpha^\star$ from a uniform string. Uniqueness underlies label integrity
-in the verification chain (Goal~G1, Key-Substitution Detection); pseudorandomness underlies
-directory privacy (Goal~G3, Directory Privacy).
+in the verification chain Goal~G1 (Key-Substitution Detection); pseudorandomness underlies
+directory privacy Goal~G3 (Directory Privacy).
 \end{definition}
 
 % ============================================================================
@@ -330,7 +330,7 @@ Let $\Adv$ be a probabilistic polynomial-time adversary controlling the server a
 the model of \cref{ch:threat}. In the experiment $\Expt{dual\text{-}det}{\Adv}$, $\Adv$ interacts with
 an honest client and peer and wins if it causes the client to accept a peer key
 $\mathit{pk}'\neq\mathit{pk}_{\B}$ under a signed head $\STH_t$ for which $\mathsf{CheckWarning}$
-returns \textsc{clear}. The scheme achieves key-substitution detection (Goal~G1, Key-Substitution Detection)
+returns \textsc{clear}. The scheme achieves key-substitution detection Goal~G1 (Key-Substitution Detection)
 if $\advantage{dual\text{-}det}{\Adv}=\Pr[\Expt{dual\text{-}det}{\Adv}=1]$ is negligible in
 $\secpar$. For the raw dual-index path the argument rests on the labels being unpredictable to the
 adversary: it relies on HKDF (\cref{def:hkdf}) behaving as a PRF keyed by an unknown, sufficiently
