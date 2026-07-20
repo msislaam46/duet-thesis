@@ -209,8 +209,8 @@ not three). The $O(\lg N + \lg E)$ scaling of \cref{eq:eval-proofsize} is plotte
 path carries $h=\num{23}$ non-empty siblings; the distribution median over \num{1000} random lookups
 at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). We
 therefore report the distribution median in the remainder of this chapter, since it reflects the
-proof size a typical lookup incurs rather than the depth of one particular seeded leaf. Crucially,
-the ECVRF proof and the warning slot add nothing beyond this
+proof size a typical lookup incurs rather than the depth of one particular seeded leaf. The
+ECVRF proof and the warning slot add nothing beyond this
 formula: \emph{the dual-index detection mechanism does not enlarge the per-lookup proof} (a warning
 check is a second lookup of the same shape, not a larger proof).
 
@@ -356,7 +356,7 @@ the verification work of one such lookup. M3 does not measure either detector re
 two-request total is derived from it. The complete workflow, including the network round-trips a
 deployment adds, was not measured. This thesis therefore does not report end-to-end detection latency.
 Detection runs automatically and requires no manual safety-number comparison, in contrast to the
-ceremony it is designed to replace, which only about 14\% of users complete without
+ceremony it is designed to replace, which most users fail to complete without
 guidance~\cite{vaziripour2017}. When it reports a problem, the prototype's advisory hook surfaces a
 warning, although it does not yet block session establishment.
 
@@ -371,7 +371,7 @@ operating mode.
 
 To evaluate the prototype at a published large-directory reference point ($10^7$ labels, the scale
 CONIKS reports), the size and verification measurements were repeated at
-$N=10^6$ and $N=10^7$: the latter the scale at which CONIKS reports its figures.
+$N=10^6$ and $N=10^7$.
 \Cref{tab:eval-scale} gives the distribution over \num{1000} random lookups per $N$.
 
 \begin{table}[ht]
@@ -783,8 +783,8 @@ key in an earlier epoch flags the change directly on its next fetch.}
 
 The overall posture follows from the measurements above. The marginal in-memory warning-slot read (M5)
 costs on the order of a microsecond of server-side work (\SI{1.62}{\micro\second} clean,
-\SI{1.72}{\micro\second} attacked); end-to-end detection latency, which additionally requires the two
-verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure, was
+\SI{1.72}{\micro\second} attacked); end-to-end detection latency, which additionally requires the one
+or two verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure, was
 not quantified. No false alarms were observed over \num{1000} clean deterministic sessions (M6). The
 residual risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the
 label$\leftrightarrow$user mapping, outside what any transparency layer removes) and three availability
@@ -815,8 +815,8 @@ imply approximately \num{530}\,kB for the same month (\cref{sec:eval-compare}). 
 the intermittently connected mobile clients a messenger must serve. The per-conversation overhead a
 deployment pays is therefore microseconds of client work and a few hundred bytes of bandwidth, in
 exchange for automatic in-band detection that replaces a manual ceremony which, as
-\cref{ssec:eval-detection} records, only about 14\% of unprompted users locate and
-complete~\cite{vaziripour2017}.
+\cref{ssec:eval-detection} discusses, most unprompted users never reliably locate and
+complete.
 
 On the server, the picture is more qualified, and the qualifications are exactly what a production
 deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one

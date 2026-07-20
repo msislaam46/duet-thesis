@@ -752,8 +752,8 @@ system for end users, and it established design principles that later VKDs
 retained~\cite{melara2015coniks}. Although CONIKS predates the formal VKD
 abstraction that SEEMless would later introduce, the VKD constructions that
 follow inherit its core architecture of VRF-derived labels, authenticated
-directory commitments, and auditable epoch-by-epoch evolution; it is best read as
-the direct precursor of the VKD line rather than as a VKD itself. Its motivation
+directory commitments, and auditable epoch-by-epoch evolution; it stands as
+the direct precursor of the VKD line rather than a VKD itself. Its motivation
 was to automate the key verification that the manual fingerprint ceremonies of
 \cref{sec:bg-signal} had failed to deliver, without reintroducing a single
 trusted party. Its construction stores identity bindings in a Merkle prefix tree
@@ -1406,18 +1406,14 @@ cost as an open extension, conceding that its own remedy ``may not be realistic 
 all deployments''~\cite[p.~11]{melara2015coniks}.
 
 \paragraph{Problem 3 (Split-View Equivocation).} Append-only is not the same as
-globally consistent. As \cref{ssec:bg-ct2kt} noted, a malicious server can
-maintain two internally consistent logs, presenting tree head $h_A$ to Alice and a
-different $h_B$ to Bob, each backed by valid consistency proofs, and serve
-each party a different key for the other, with neither able to detect it from
-local checks alone. This is the split-view attack, known since Certificate
-Transparency. Defeating it requires cross-checking tree heads observed from
-different vantage points, and \cref{sec:bg-compare} showed the field has no single
-answer: client gossip, CT-anchoring, a witness quorum, and zero-knowledge
-whole-directory verification are all in use. What unites them is the recognition
-that no purely local check can catch a server maintaining two divergent but
-internally valid histories. Detecting equivocation at all requires an independent
-mechanism that observes the directory from outside the victim's own session.
+globally consistent. As \cref{ssec:bg-ct2kt} explained, a malicious server can
+maintain two internally consistent logs and serve Alice and Bob divergent heads,
+each backed by valid consistency proofs, so that neither detects the substitution
+from local checks alone. \Cref{sec:bg-compare} showed the field has no single
+answer to this: client gossip, CT-anchoring, a witness quorum, and zero-knowledge
+whole-directory verification are all in use. What unites them is that detecting
+equivocation at all requires an independent mechanism that observes the directory
+from outside the victim's own session.
 
 These three problems (an absent peer-warning channel, a linear offline catch-up
 cost, and a split-view that local checks cannot expose) are the gaps the
