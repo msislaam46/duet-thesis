@@ -423,13 +423,11 @@ produces a conflicting per-epoch fingerprint and the same warning fires.}
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-consistent.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
-\caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's outputs
-depend on the slot and the attack. Left: during the global-slot substitution A1a it logs
-\textsc{consistent}, because the identity slot is \textsc{mutable} and the malicious rotation is a
-legal declared operation it cannot tell from an honest key change, so detection there rests on the
-client self-check. The immutable-slot overwrite A1b instead trips its per-epoch transition audit
-(\textsc{ImmutableRotation}), and an equivocation (A4, right) raises \textsc{alarm: fork}, carrying the
-two validly-signed divergent roots as evidence.}
+\caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's three
+outputs by slot and attack. The global-slot substitution A1a logs \textsc{consistent} (the identity
+slot is \textsc{mutable}, so the rotation is a legal declared operation and detection rests on the
+client self-check); the immutable-slot overwrite A1b trips the transition audit
+(\textsc{ImmutableRotation}); and an equivocation A4 raises \textsc{alarm: fork}.}
 \label{fig:impl-auditor}
 \end{figure}
 

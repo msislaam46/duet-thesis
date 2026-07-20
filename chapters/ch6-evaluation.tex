@@ -649,12 +649,15 @@ and A1b (dual-index session slot), the censorship, network, and equivocation att
 key-rotation substitution A5, and the X1 endpoint-compromise boundary, each passing.
 
 \Cref{tab:eval-security} maps each threat to the mechanism that answers it, the evidence that the
-mechanism works, and the outcome. The one attack deliberately out of scope is X1, direct key
-extraction, which no key-transparency system addresses.
+mechanism works, and the outcome; the goals it cites (\cref{sec:threat-goals}) are G1
+(key-substitution detection), G3 (directory privacy), and G4 (fork detection), and the epoch counts
+in its Result column are the scripted one-action-per-epoch demonstration schedule
+(\cref{ssec:eval-timeline}), not protocol-wide latency bounds. The one attack deliberately out of
+scope is X1, direct key extraction, which no key-transparency system addresses.
 
 \begin{table}[ht]
 \centering
-\caption[Threats, defending mechanisms, evidence, and outcome.]{Threats, defending mechanisms, evidence, and outcome. Epoch counts in the Result column are the scripted one-action-per-epoch demonstration schedule (\cref{ssec:eval-timeline}), not protocol-wide latency bounds. Goals cited (\cref{sec:threat-goals}): G1 key-substitution detection, G3 directory privacy, G4 fork detection.}
+\caption[Threats, defending mechanisms, evidence, and outcome.]{Threats, defending mechanisms, evidence, and outcome.}
 \label{tab:eval-security}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -747,9 +750,8 @@ scoped in \cref{ch:threat}.
 \centering
 \input{figures/tikz/fig-eval-attacktree}
 \caption[Attack--defence tree for interposing an attacker key.]{Attack--defence tree for reading a
-conversation. Any one interposition route (an OR over the substitution A1, MitM A3, and rotation A5
-routes) suffices to interpose an attacker-controlled key, and each is answered by a key-transparency
-control. The concealment attempts A2 (suppress the warning) and A4 (equivocate) are separate
+conversation. Any one interposition route (A1, A3, A5) suffices to interpose an attacker-controlled
+key and is answered by a key-transparency control; the concealment attempts A2 and A4 are separate
 adversary defences, each itself detected. Only the endpoint-compromise boundary X1 is out of scope.}
 \label{fig:eval-attacktree}
 \end{figure}
