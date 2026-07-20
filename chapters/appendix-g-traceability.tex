@@ -23,7 +23,7 @@ M5, M6 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M6 find
 RQ2 & detection does not enlarge an individual per-lookup proof; verification stays below the latency target and grows far more slowly than $N$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
 prefix-tree, VRF, and Merkle-log tests; cross-language vectors (\cref{app:tests}) &
-M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; \SI{128.1}{\micro\second} at $10^3$--$10^4$, rising to \SI{147.1}{\micro\second} at $10^7$ \\
+M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; \SIrange{128.1}{128.6}{\micro\second} at $10^3$--$10^4$, rising to \SI{147.1}{\micro\second} at $10^7$ \\
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 Merkle-log exhaustive-consistency and windowed-consistency tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
@@ -52,12 +52,12 @@ None & \cref{sec:eval-security}: post-commit deletion is tampering (not A2 censo
 
 \begin{table}[ht]
 \centering
-\caption{Contribution kind $\to$ artefact $\to$ strongest evidence.}
+\caption{Contribution kind $\to$ output $\to$ strongest evidence.}
 \label{tab:trace-contrib}
 \footnotesize
 \begin{tabular}{@{}p{2.1cm}p{6.0cm}p{4.6cm}@{}}
 \toprule
-Contribution & Artefact & Strongest evidence \\
+Contribution & Output & Strongest evidence \\
 \midrule
 Conceptual & dual-index warning scheme; ACKA-log instantiation (\cref{sec:design-dual,sec:design-acka}) & automatic bidirectional detection, full adversarial suite passes (\cref{sec:eval-security}) \\
 Cryptographic & dual-index detection experiment (\cref{def:dualindex-detect}); windowed consistency proof: RFC~9162 distant-head proof applied to offline monitoring, size bound (\cref{lem:windowed-size}) & detection reduced to standard assumptions (reduction sketched, full reduction future work); \num{320}\,B raw path bytes at $W{=}720$, one proof rather than $W$, size logarithmic in endpoint log sizes (\cref{ssec:eval-catchup}) \\

@@ -209,8 +209,8 @@ not three). The $O(\lg N + \lg E)$ scaling of \cref{eq:eval-proofsize} is plotte
 path carries $h=\num{23}$ non-empty siblings; the distribution median over \num{1000} random lookups
 at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). We
 therefore report the distribution median in the remainder of this chapter, since it reflects the
-proof size a typical lookup incurs rather than the depth of one particular seeded leaf. Crucially,
-the ECVRF proof and the warning slot add nothing beyond this
+proof size a typical lookup incurs rather than the depth of one particular seeded leaf. The
+ECVRF proof and the warning slot add nothing beyond this
 formula: \emph{the dual-index detection mechanism does not enlarge the per-lookup proof} (a warning
 check is a second lookup of the same shape, not a larger proof).
 
@@ -356,7 +356,7 @@ the verification work of one such lookup. M3 does not measure either detector re
 two-request total is derived from it. The complete workflow, including the network round-trips a
 deployment adds, was not measured. This thesis therefore does not report end-to-end detection latency.
 Detection runs automatically and requires no manual safety-number comparison, in contrast to the
-ceremony it is designed to replace, which only about 14\% of users complete without
+ceremony it is designed to replace, which most users fail to complete without
 guidance~\cite{vaziripour2017}. When it reports a problem, the prototype's advisory hook surfaces a
 warning, although it does not yet block session establishment.
 
@@ -369,8 +369,9 @@ operating mode.
 
 \subsection{Scale to CONIKS Size (M7)}\label{ssec:eval-scale}
 
-To show the design holds at deployment scale, the size and verification measurements were repeated at
-$N=10^6$ and $N=10^7$: the latter the scale at which CONIKS reports its figures.
+To evaluate the prototype at a published large-directory reference point ($10^7$ labels, the scale
+CONIKS reports), the size and verification measurements were repeated at
+$N=10^6$ and $N=10^7$.
 \Cref{tab:eval-scale} gives the distribution over \num{1000} random lookups per $N$.
 
 \begin{table}[ht]
@@ -378,19 +379,31 @@ $N=10^6$ and $N=10^7$: the latter the scale at which CONIKS reports its figures.
 \caption{Behaviour at CONIKS scale (distribution over \num{1000} random lookups per $N$).}
 \label{tab:eval-scale}
 \small
+\begin{threeparttable}
 \begin{tabular}{@{}lrr@{}}
 \toprule
 Quantity & $N=10^6$ & $N=10^7$ \\
 \midrule
 Leaf depth (median / mean / max) & 20 / 20.3 / 24 & 24 / 23.6 / 27 \\
 Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
-Server full search (median / p95) & 117.6 / \SI{131.7}{\micro\second} & 141.2 / \SI{2404.5}{\micro\second}\,$^{\dagger}$ \\
+Server full search (median / p95) & 117.6 / \SI{131.7}{\micro\second} & 141.2 / \SI{2404.5}{\micro\second}\tnote{$\dagger$} \\
 Prefix verify (median / p95) & 25.9 / \SI{27.0}{\micro\second} & 26.0 / \SI{28.0}{\micro\second} \\
 VRF verify (median / p95) & 80.0 / \SI{92.7}{\micro\second} & 81.5 / \SI{107.1}{\micro\second} \\
 \textbf{Full signed-head lookup verification (median / p95)} & \textbf{131.9} / \SI{147.9}{\micro\second} & \textbf{147.1} / \SI{179.7}{\micro\second} \\
 Build time / RSS after build & 149\,s / 2.81\,GB & 1{,}536\,s / 20.8\,GB \\
 \bottomrule
 \end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item[$\dagger$] The $10^7$ full-search 95th percentile of \SI{2404.5}{\micro\second} (an order of
+magnitude above its \SI{141.2}{\micro\second} median) shows that a small fraction of lookups are far
+slower than the typical one. The proof structure does not account for it: the client-side steps that
+consume the proof (prefix and VRF verify) show no comparable tail. The harness records no paging or
+memory-pressure counters, so the source of the tail was not instrumented; a \SI{20.8}{\giga\byte}
+resident set on a \SI{31.7}{\giga\byte} machine makes memory pressure a plausible candidate, but that
+is a conjecture the data here does not test. The median is the figure quoted in the surrounding text.
+\end{tablenotes}
+\end{threeparttable}
 \end{table}
 
 The measured constancy of prefix verification across five orders of magnitude ($10^2$ to $10^7$),
@@ -410,13 +423,6 @@ measurement contexts (\cref{sec:eval-method}). The claim the data supports is th
 more slowly than the directory, not that it is invariant. The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
 tree takes about 26 minutes and leaves a \SI{20.8}{\giga\byte} resident set, which is why a production
 deployment would move to the persistent, sharded storage this prototype deliberately does not model.
-$^{\dagger}$The $10^7$ full-search 95th percentile of \SI{2404.5}{\micro\second} (an order of magnitude
-above its \SI{141.2}{\micro\second} median) shows that a small fraction of lookups are far slower than
-the typical one. The proof structure does not account for it: the client-side steps that consume the
-proof (prefix and VRF verify) show no comparable tail. The harness records no paging or
-memory-pressure counters, so the source of the tail was not instrumented; a \SI{20.8}{\giga\byte}
-resident set on a \SI{31.7}{\giga\byte} machine makes memory pressure a plausible candidate, but that
-is a conjecture the data here does not test. The median is the figure quoted above.
 
 \subsection{Operation Rates, Rotation, and Epoch Commit (M8--M11)}\label{ssec:eval-throughput}
 
@@ -648,12 +654,15 @@ and A1b (dual-index session slot), the censorship, network, and equivocation att
 key-rotation substitution A5, and the X1 endpoint-compromise boundary, each passing.
 
 \Cref{tab:eval-security} maps each threat to the mechanism that answers it, the evidence that the
-mechanism works, and the outcome. The one attack deliberately out of scope is X1, direct key
-extraction, which no key-transparency system addresses.
+mechanism works, and the outcome; the goals it cites (\cref{sec:threat-goals}) are G1
+(key-substitution detection), G3 (directory privacy), and G4 (fork detection), and the epoch counts
+in its Result column are the scripted one-action-per-epoch demonstration schedule
+(\cref{ssec:eval-timeline}), not protocol-wide latency bounds. The one attack deliberately out of
+scope is X1, direct key extraction, which no key-transparency system addresses.
 
 \begin{table}[ht]
 \centering
-\caption[Threats, defending mechanisms, evidence, and outcome.]{Threats, defending mechanisms, evidence, and outcome. Epoch counts in the Result column are the scripted one-action-per-epoch demonstration schedule (\cref{ssec:eval-timeline}), not protocol-wide latency bounds. Goals cited (\cref{sec:threat-goals}): G1 key-substitution detection, G3 directory privacy, G4 fork detection.}
+\caption[Threats, defending mechanisms, evidence, and outcome.]{Threats, defending mechanisms, evidence, and outcome.}
 \label{tab:eval-security}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -746,13 +755,13 @@ scoped in \cref{ch:threat}.
 \centering
 \input{figures/tikz/fig-eval-attacktree}
 \caption[Attack--defence tree for interposing an attacker key.]{Attack--defence tree for reading a
-conversation. Any one interposition route (an OR over the substitution A1, MitM A3, and rotation A5
-routes) suffices to interpose an attacker-controlled key, and each is answered by a key-transparency
-control. The concealment attempts A2 (suppress the warning) and A4 (equivocate) are separate
+conversation. Any one interposition route (A1, A3, A5) suffices to interpose an attacker-controlled
+key and is answered by a key-transparency control; the concealment attempts A2 and A4 are separate
 adversary defences, each itself detected. Only the endpoint-compromise boundary X1 is out of scope.}
 \label{fig:eval-attacktree}
 \end{figure}
 
+\FloatBarrier
 \subsection{Detection Timeline}\label{ssec:eval-timeline}
 
 \Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1) in the scripted
@@ -769,20 +778,21 @@ key in an earlier epoch flags the change directly on its next fetch.}
 \label{fig:eval-timeline}
 \end{figure}
 
+\FloatBarrier
 \subsection{Residual Risks and Posture}\label{ssec:eval-posture}
 
-The overall posture follows from the preceding artefacts. The marginal in-memory warning-slot read
-costs tens of microseconds of client work; end-to-end detection latency, which additionally requires
-the verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure,
-was not quantified. No false alarms were observed over
-\num{1000} clean deterministic sessions, so the warning channel raised no spurious alarms in that run. The residual
-risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the label$\leftrightarrow$user
-mapping, outside what any transparency layer removes) and three availability functions left to a
-production deployment. This is the gap the design set out to close: where the deployed WhatsApp
-AKD ships with client key-history monitoring not yet enabled and directs the user to verify the
-session \emph{manually} with the contact when an automatic check fails~\cite[pp.~5,
-10]{whatsapp2023whitepaper}, and where unprompted users rarely locate and complete such a manual
-ceremony (\cref{ssec:eval-detection}), DUET delivers the same detection in-band and without user
+The overall posture follows from the measurements above. The marginal in-memory warning-slot read (M5)
+costs on the order of a microsecond of server-side work (\SI{1.62}{\micro\second} clean,
+\SI{1.72}{\micro\second} attacked); end-to-end detection latency, which additionally requires the one
+or two verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure, was
+not quantified. No false alarms were observed over \num{1000} clean deterministic sessions (M6). The
+residual risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the
+label$\leftrightarrow$user mapping, outside what any transparency layer removes) and three availability
+functions left to a production deployment. These bear on the gap the design set out to close: the
+deployed WhatsApp AKD ships with client key-history monitoring not yet enabled and directs the user to
+verify the session \emph{manually} with the contact when an automatic check fails~\cite[pp.~5,
+10]{whatsapp2023whitepaper}, and unprompted users rarely locate and complete such a manual ceremony
+(\cref{ssec:eval-detection}). DUET instead provides automatic, in-band detection that needs no user
 action.
 
 % ============================================================================
@@ -805,8 +815,8 @@ imply approximately \num{530}\,kB for the same month (\cref{sec:eval-compare}). 
 the intermittently connected mobile clients a messenger must serve. The per-conversation overhead a
 deployment pays is therefore microseconds of client work and a few hundred bytes of bandwidth, in
 exchange for automatic in-band detection that replaces a manual ceremony which, as
-\cref{ssec:eval-detection} records, only about 14\% of unprompted users locate and
-complete~\cite{vaziripour2017}.
+\cref{ssec:eval-detection} discusses, most unprompted users never reliably locate and
+complete.
 
 On the server, the picture is more qualified, and the qualifications are exactly what a production
 deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one

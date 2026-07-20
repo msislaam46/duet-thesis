@@ -2,11 +2,12 @@
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
 The test corpus comprises the following groups. The Rust core is covered by \num{97} unit and property tests across
-nine modules, the \num{8}-scenario adversarial integration suite, and \num{13} tests in the
+nine modules, the \num{8}-scenario adversarial integration suite, and \num{22} tests in the
 \texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
-five \texttt{commit\_decision} transaction cases, and an end-to-end partial-fetch-failure test),
-\num{118} tests in total, run under \texttt{cargo test}; the TypeScript
-client is covered by \num{98} Jest tests in eight suites,
+five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-failure test, and nine
+\texttt{PollStatus} tests covering every poll verdict and the exact status-line mapping),
+\num{127} tests in total, run under \texttt{cargo test}; the TypeScript
+client is covered by \num{106} Jest tests in eight suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
 complete listing follows. Tables are placed exactly where they are discussed.
@@ -21,7 +22,7 @@ mode (\cref{tab:tests-rust-system}).
 
 \begin{table}[H]
 \centering
-\caption{Rust tests: primitives and data structures (\num{35} tests).}
+\caption{Rust tests: primitives and data structures (\num{41} tests).}
 \label{tab:tests-rust-prim}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -47,6 +48,11 @@ Module & Test & Property checked \\
 \texttt{prefix\_tree} & \texttt{update\_overwrites\_value} & the tree-level insert overwrites a value; the write-once policy is enforced one layer above, in \texttt{update\_raw} (\cref{tab:tests-rust-server}) \\
 \texttt{prefix\_tree} & \texttt{remove\_deletes\_leaf\_and\_restores\_sibling\_structure} & the admin-only removal leaves a structurally valid tree, so a deletion is detectable only by the transition audit, never by malformedness \\
 \texttt{prefix\_tree} & \texttt{chain\_memo\_is\_transparent} & the compressed-leaf chain memo is purely an optimization: warm and cold trees yield byte-identical roots and proofs across inserts, rotations, splits, removals, and non-inclusion lookups \\
+\texttt{prefix\_tree} & \texttt{update\_rejects\_short\_label} & \texttt{update} rejects a label shorter than 32 bytes (no aliasing to another slot) \\
+\texttt{prefix\_tree} & \texttt{remove\_rejects\_long\_label} & \texttt{remove} rejects a label longer than 32 bytes \\
+\texttt{prefix\_tree} & \texttt{get\_rejects\_short\_label} & \texttt{get} rejects a mis-sized (short) label \\
+\texttt{prefix\_tree} & \texttt{search\_rejects\_long\_label} & \texttt{search} rejects a mis-sized (long) label \\
+\texttt{prefix\_tree} & \texttt{get\_kind\_rejects\_short\_label} & \texttt{get\_kind} rejects a mis-sized (short) label \\
 \midrule
 \texttt{vrf} & \texttt{test\_prove\_then\_verify} & an honest proof verifies \\
 \texttt{vrf} & \texttt{test\_deterministic\_output} & evaluation is deterministic for fixed key and input \\
@@ -68,6 +74,7 @@ Module & Test & Property checked \\
 \texttt{dual\_index} & \texttt{warning\_mac\_rejects\_injected\_or\_tampered\_payload} & an injected or tampered warning payload fails MAC verification (but still alerts, \cref{ssec:design-detection}) \\
 \texttt{dual\_index} & \texttt{warn\_mac\_cross\_impl\_vector} & byte-for-byte agreement with the TypeScript implementation on a fixed sealed-warning MAC vector \\
 \texttt{dual\_index} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte label agreement with the TypeScript implementation on fixed vectors \\
+\texttt{dual\_index} & \texttt{derive\_rejects\_non\_16\_byte\_identity} & label derivation rejects an identity that is not exactly 16 bytes \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -167,7 +174,7 @@ Module & Test & Property checked \\
 % ----------------------------------------------------------------------------
 \section{TypeScript (Signal Desktop) Jest Suite}\label{sec:tests-ts}
 
-The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{98} Jest tests in
+The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{106} Jest tests in
 eight suites: a live-server wire-parity suite, an in-process integration suite, and six unit suites.
 The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust
 server over the network; it is a separate gate (\texttt{npm run test:wire}) that requires the server
@@ -179,7 +186,7 @@ and Ed25519 signer). The remaining unit suites use test doubles by design: \text
 and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to-event routing, and
 \texttt{decoder\_validation} drives the DTO decoders through a mocked transport to check
 malformed-response rejection. \Cref{tab:tests-jest-wire} lists the wire-parity and integration tests;
-\cref{tab:tests-jest-unit} lists the six unit suites.
+\cref{tab:tests-jest-unit,tab:tests-jest-unit-b} list the six unit suites.
 
 \begin{table}[H]
 \centering
@@ -229,10 +236,10 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: client unit suites (\num{62} tests).}
+\caption{Jest tests: client unit suites, part 1 of 2.}
 \label{tab:tests-jest-unit}
 \footnotesize
-\renewcommand{\arraystretch}{0.92}
+\renewcommand{\arraystretch}{0.78}
 \begin{tabular}{@{}lp{10.2cm}@{}}
 \toprule
 Suite & Test \\
@@ -252,6 +259,14 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & true on a validly signed head (TOFU baseline) \\
 \texttt{remote\_kt\_client} & false when the head carries a bad signature (foreign key) \\
 \texttt{remote\_kt\_client} & rejects a genuine proof presented for a different label than queried \\
+\texttt{remote\_kt\_client} & \texttt{writeWarning}: a forged 409 over a provably-empty slot is censorship (throws, guard unset) \\
+\texttt{remote\_kt\_client} & \texttt{writeWarning}: an accepted-then-dropped write (slot still empty) is censorship (throws) \\
+\texttt{remote\_kt\_client} & \texttt{writeWarning}: a genuine occupied slot with a valid inclusion proof counts as published \\
+\texttt{remote\_kt\_client} & \texttt{writeWarning}: a successful confirmed publication resolves \\
+\texttt{remote\_kt\_client} & \texttt{writeWarning}: a proof failure on the confirmation read is censorship (throws) \\
+\texttt{remote\_kt\_client} & caller guard: a censored publication leaves the guard unset (retried next tick) \\
+\texttt{remote\_kt\_client} & caller guard: a confirmed publication sets the guard, suppressing re-writes \\
+\texttt{remote\_kt\_client} & session caller guard: \texttt{sessionWarnedPeers} advances only on a confirmed \texttt{lookup-replaced} write \\
 \midrule
 \texttt{background\_monitor} & \texttt{emitToSignalUI} fires \texttt{kt:warning} (DOM) and does not touch the Whisper bus \\
 \texttt{background\_monitor} & \texttt{emitOfflineToSignalUI} fires \texttt{kt:unreachable} only (never a MitM alert) \\
@@ -268,6 +283,19 @@ Suite & Test \\
 \texttt{secret\_store} & the pair key is order-independent ($A{,}B = B{,}A$) and 32 bytes \\
 \texttt{secret\_store} & the derived secret is deterministic and depends on the key pair \\
 \texttt{secret\_store} & remember / has / conversations / forget round trip \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Jest tests: client unit suites, part 2 of 2.}
+\label{tab:tests-jest-unit-b}
+\footnotesize
+\renewcommand{\arraystretch}{0.78}
+\begin{tabular}{@{}lp{10.2cm}@{}}
+\toprule
+Suite & Test \\
 \midrule
 \texttt{getKeysForServiceId\_status} & \textsc{safe} $\to$ verified \\
 \texttt{getKeysForServiceId\_status} & \textsc{key\_not\_in\_log} $\to$ absent, not verified \\
@@ -308,6 +336,12 @@ verifier of the Rust server's outputs (\cref{sec:impl-tests}).
 
 % ----------------------------------------------------------------------------
 \section{Adversarial Scenario Suite}\label{sec:tests-adversarial}
+
+The suite exercises each in-scope threat scenario of \cref{ch:threat} end to end against the real
+\texttt{duet} crate, asserting both the verdict and the epoch at which detection occurs, so it
+provides machine-checkable coverage of the threat model rather than of isolated components. The
+detection epochs it reports are the schedule of this scripted demonstration, not a protocol-wide
+latency bound.
 
 \begin{table}[H]
 \centering

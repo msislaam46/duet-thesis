@@ -3,8 +3,8 @@
 In this chapter we specify the threat model used throughout the thesis: the
 adversary, its capabilities, and the security properties the system is expected
 to satisfy. Every guarantee claimed in \crefrange{ch:design}{ch:eval} is stated
-relative to this model, so the chapter is intentionally precise rather than
-discursive. We begin by defining the system model and its actors
+relative to this model, so the chapter fixes each term precisely before it is
+used. We begin by defining the system model and its actors
 (\cref{sec:threat-system}), then state the adversary model and the taxonomy of
 attacks it induces (\cref{sec:threat-adversary}). Since a threat model is useful
 only if it is defensible, \cref{sec:threat-fair} justifies the model's foundational
@@ -307,14 +307,10 @@ server-side substitution (A1) and network man-in-the-middle (A3) is performed by
 the communicating clients and depends on no auditor. These claims are distinct:
 the warning mechanism does not inherit the auditor-honesty assumption.
 
-Finally, the model follows a trust-on-first-use (TOFU) approach, as discussed in
-\cref{sec:threat-fair}. The peer-side detection mechanism introduced in
-\cref{ch:design} can detect changes only after a peer's key has been accepted and
-pinned. It therefore does not authenticate the initial key exchange itself: an
-adversary that substitutes the key before the first authenticated key is observed
-causes the client to pin the substituted key as its baseline. This residual
-limitation is acknowledged explicitly rather than assumed away and is revisited in
-\cref{ch:discussion}.
+Finally, the model follows a trust-on-first-use (TOFU) approach (\cref{sec:threat-fair}):
+peer-side detection acts only after a key has been pinned, so a substitution that predates
+first contact poisons the baseline, the first-key limitation noted earlier. This residual
+limitation is revisited in \cref{ch:discussion}.
 
 % ============================================================================
 \section{Security Goals}\label{sec:threat-goals}

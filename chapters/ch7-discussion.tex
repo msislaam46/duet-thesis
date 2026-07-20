@@ -2,7 +2,7 @@
 
 This chapter steps back from the construction and the numbers to ask what they mean. It first
 discusses what the results establish and how the design sits within the wider key-transparency
-landscape (\cref{sec:disc-discussion}), then states the limitations of the work candidly
+literature (\cref{sec:disc-discussion}), then states the limitations of the work
 (\cref{sec:disc-limitations}), and finally sets out the future work the design invites: the part
 that would be needed to turn the prototype into a deployable system (\cref{sec:disc-future}).
 
@@ -26,8 +26,8 @@ logarithmic proofs the directory already produces. This result supports the depl
 argument, because it means a provider does not have to choose between the transparency it already
 runs and the peer-warning channel that closes the gap manual safety numbers leave open.
 
-\paragraph{Where the Guarantee Comes From.} It is worth being precise about how the detection actually
-holds, because the substitution surface is larger than it first appears. A malicious server has two slots in which it can plant a victim's key:
+\paragraph{Where the Guarantee Comes From.} How the detection actually
+holds deserves care, because the substitution surface is larger than it first appears. A malicious server has two slots in which it can plant a victim's key:
 the global VRF-derived slot, which it can both compute and overwrite, and the per-conversation
 dual-index slot, which it cannot derive without the shared secret but can overwrite through the
 registration-metadata link. The scheme does not prevent either overwrite: a server can always
@@ -44,7 +44,7 @@ victim's expected warning label and so faces an empty slot it cannot fill with a
 proof. Detection is therefore a property of where the keys must live, not of the server's good
 behaviour.
 
-\paragraph{Generalisability Beyond Signal.} Nothing in the design is specific to Signal beyond the
+\paragraph{Generalizability Beyond Signal.} Nothing in the design is specific to Signal beyond the
 shape of its inputs: it applies to any messenger with a semi-trusted key directory and a per-session
 shared secret from a ratcheting handshake, from which the labels are derived. In that light, the work
 also instantiates and measures this piece of the ACKA framework (the instantiation claimed, with
@@ -76,7 +76,7 @@ still holds without one.
 % ============================================================================
 \section{Limitations}\label{sec:disc-limitations}
 
-The honest limits of the work fall into four groups: what the design is scoped to, what it must trust,
+The limits of the work fall into four groups: what the design is scoped to, what it must trust,
 what the prototype does not yet realize, and what has not been proved.
 
 \paragraph{Scope.} The scheme is detection, not prevention, and it inherits the trust-on-first-use
@@ -99,7 +99,7 @@ The other three are availability functions the proof-of-concept does not impleme
 rate-limiting, a published-epoch staleness timeout, and a gossip transport for proof-omission), each
 a deployment-layer engineering task rather than a gap in the scheme.
 
-\paragraph{Prototype Bounds.} Several gaps separate the measured artefact from a deployable one. The
+\paragraph{Prototype Bounds.} Several gaps separate the measured prototype from a deployable one. The
 benchmarks are single-machine and in-memory, with no networked or database-backed deployment, so they
 characterize the design's algorithmic cost rather than a production service; relatedly, the epoch
 commit uses an $O(N)$ deep-clone snapshot with a transient memory spike, measured directly in
@@ -149,8 +149,10 @@ re-analysis are left to future work.
 % ============================================================================
 \section{Future Work}\label{sec:disc-future}
 
-The limitations above map onto a concrete programme of future work. The items are ordered roughly from
-those that turn the prototype into a deployment to those that broaden the design's reach.
+The limitations above map onto a concrete programme of future work, grouped into completing the
+protocol and security argument, then deployment and scale, then evaluation, operations, and usability.
+
+\subsection{Completing the Protocol and Security Argument}
 
 \paragraph{Production Shared-Secret Binding.} The single change that most advances the work is
 extracting the genuine X3DH/PQXDH shared secret from libsignal at the pre-key-bundle hook and binding
@@ -161,21 +163,15 @@ unchanged. This is what turns the labels from ``stable per account'' into ``ungu
 per session,'' and it is the prerequisite for the active-network-MitM detection of \cref{ch:threat} to
 hold against a real adversary. It is the principal deployment-path item.
 
-\paragraph{An $O(\log N)$ Epoch Commit.} The commit cost measured in \cref{ch:eval} is an artefact of
-a single-process design that deep-clones the committed tree so concurrent lookups see a stable view.
-Replacing the tree's owned children with reference-counted, copy-on-write nodes makes each epoch an
-immutable version that shares all untouched subtrees with its predecessor and allocates only along the
-$O(\log N)$ root-to-leaf path, matching how production key-transparency systems version epochs. It is a
-self-contained server-side change, orthogonal to the verification-side contribution.
-
 \paragraph{Authenticated Ownership of Raw-Label Writes.} \Cref{ch:design} specifies three safeguards that together guarantee a committed warning or
 CEA fingerprint cannot be silently removed or replaced: a write-once policy on dual-index and CEA
 labels, a per-epoch transition audit in which the auditor replays each epoch's disclosed update set
 against the previous committed root (the role the IETF KeyTrans protocol assigns to third-party
 auditors through its \textsf{AuditorUpdate} structure~\cite{ietf-keytrans-protocol}), and a
 writer-side persistence check that retains inclusion proofs and converts any later disappearance of
-a committed leaf into non-repudiable, publishable evidence of deletion. The prototype now implements
-all three: the server's raw-label update interface enforces the write-once policy and rejects an
+a committed leaf into non-repudiable, publishable evidence of deletion. The prototype implements all
+three, the first two in the live path and the persistence check as a tested reference component not
+yet wired into the live monitor loop (\cref{alg:detect}): the server's raw-label update interface enforces the write-once policy and rejects an
 overwrite of an occupied dual-index, CEA, or warning label; each committed epoch records a declared
 update set that the auditor replays onto its own mirror directory, checking the result against the
 committed root, so a deletion, which the delta format cannot express, makes the replay diverge
@@ -209,6 +205,15 @@ distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cit
 since retired in favour of enclave-based recovery, so the engineering pattern is proven in
 Signal's own lineage; adapting it to the label derivation is the open work.
 
+\subsection{Deployment and Scale}
+
+\paragraph{An $O(\log N)$ Epoch Commit.} The commit cost measured in \cref{ch:eval} is an artefact of
+a single-process design that deep-clones the committed tree so concurrent lookups see a stable view.
+Replacing the tree's owned children with reference-counted, copy-on-write nodes makes each epoch an
+immutable version that shares all untouched subtrees with its predecessor and allocates only along the
+$O(\log N)$ root-to-leaf path, matching how production key-transparency systems version epochs. It is a
+self-contained server-side change, orthogonal to the verification-side contribution.
+
 \paragraph{Post-Quantum, Multi-Device, and Deployment.} Because the labels are hash-derived, a
 post-quantum shared secret (PQXDH~\cite{pqxdh}) can feed the derivation unchanged; the open piece is a
 post-quantum VRF, for which only candidates exist. Multi-device support would follow the keychain
@@ -218,6 +223,8 @@ flag rather than running a parallel log, which requires only a write API for the
 per-session labels, and the fork-detection vantage should be supplied by a real auditor gossip
 ecosystem rather than the demo stand-in, which raises its own open questions of federation
 across providers and of incentives for independent auditors to participate honestly.
+
+\subsection{Evaluation, Operations, and Usability}
 
 \paragraph{Human-Centred Warning Design.} The evaluation shows that the warning fires; it does not
 show that users act on it. A usability study of the warning surfaces (how users interpret the

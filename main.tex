@@ -16,6 +16,8 @@
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{mathtools}
 \usepackage{booktabs}        % professional tables
+\usepackage{tabularx}        % width-filling, balanced text columns
+\usepackage{threeparttable}  % table notes anchored inside the float
 \usepackage{graphicx}
 \usepackage{float}           % [H] to pin figures exactly where placed
 \usepackage{setspace}        % 1.5 line spacing (UK MSc convention)
@@ -31,6 +33,7 @@
 \usepackage{siunitx}         % \SI{159}{\micro\second} etc.
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e} % Algorithms 1-3
 \usepackage{tcolorbox}       % Expt security-game boxes (ACKA-style security games)
+\usepackage{placeins}        % \FloatBarrier: keep floats within their section (no cross-section drift)
 \tcbuselibrary{skins,breakable}
 \usepackage{csquotes}
 \usepackage[backend=biber,style=ieee,sorting=none]{biblatex}

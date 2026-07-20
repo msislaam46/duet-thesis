@@ -229,7 +229,7 @@ The derivation gives the scheme three properties on which detection rests.
 \paragraph{Symmetry.} Under the canonical ordering, $A.\ell_{\mathsf{self}} =
 B.\ell_{\mathsf{peer}}$, $A.\ell_{\mathsf{peer}} = B.\ell_{\mathsf{self}}$, and
 $A.\ell_{\mathsf{warn}} = B.\ell_{\mathsf{warn}}$, so the two parties agree on which slot
-each key lives in and, crucially, on the one warning slot they both watch.
+each key lives in and, above all, on the one warning slot they both watch.
 
 \paragraph{Unlinkability.} The server does not hold $\sharedS$, so the HKDF outputs are
 pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
@@ -334,7 +334,7 @@ fails to replay.
 inclusion proof and signed tree head of the epoch at which its warning committed, and its background
 monitor re-verifies the warning's inclusion on every subsequent check. If the leaf later disappears,
 the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
-$\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three artefacts
+$\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
 constitute non-repudiable, publishable evidence that the server deleted a committed leaf, since all
 three verify against heads the server itself signed.
 \end{enumerate}
@@ -494,16 +494,14 @@ fingerprints per label, and its receiver rejects unless exactly one fingerprint 
 condition is two fingerprints at one label. Our directory stores exactly one value per label, so that
 alarm condition maps onto two mechanisms instead: the honest sender's pre-post check fails against an
 occupied label (the case in which the adversary posted first), and the transition audit
-(\cref{ssec:design-detection}), which, because each leaf commits its mutable/immutable kind into
-its hash, \emph{rejects any rotation of an immutable CEA label outright}, rejects the converse
-case, in which an adversary \emph{overwrites} the honest fingerprint after it committed. Without this
-committed immutability, an active man-in-the-middle that has compromised the pre-shared state
-(exactly the adversary ACKA defends against, and one who can therefore derive $L_t$) could replace
-the honest $F_t$ with a fingerprint over its injected key; the receiver's per-epoch check would pass
-(the substituted fingerprint matches what it recomputes), so detection cannot rest on that verdict
-and instead rests on the auditor's structural rejection. Entry immutability is thus
-not an implementation detail but the property that lets ACKA's security argument carry over to this
-instantiation, and, with the committed leaf kind, it is enforced auditably rather than assumed.
+(\cref{ssec:design-detection}), which rejects the converse case, in which an adversary
+\emph{overwrites} the honest fingerprint after it committed: because each leaf commits its
+mutable/immutable kind into its hash, an immutable-label rotation is structurally rejected. This is
+exactly the pre-shared-state overwrite argued in full above, the case the receiver's per-epoch
+verdict alone cannot catch and that detection instead rests on the auditor to reject. Entry
+immutability is thus not an implementation detail but the property that lets ACKA's security argument
+carry over to this instantiation, and, with the committed leaf kind, it is enforced auditably rather
+than assumed.
 
 Detection then proceeds as in ACKA: an active man-in-the-middle that injects a forged ratchet key
 $T'$ either posts under a label the impersonated party never derives (a different chain gives a

@@ -325,7 +325,7 @@ Specified in \cref{ssec:design-detection}; realized by \textsf{PersistenceCheck}
 
 \begin{definition}[Dual-index detection experiment]\label{def:dualindex-detect}
 \intuition{The adversary wins only if it makes a client accept a substituted key while the warning
-slot stays provably empty, i.e.\ if it substitutes without tripping the wire.}
+slot stays provably empty, i.e.\ if it substitutes without any warning being raised.}
 Let $\Adv$ be a probabilistic polynomial-time adversary controlling the server and the network under
 the model of \cref{ch:threat}. In the experiment $\Expt{dual\text{-}det}{\Adv}$, $\Adv$ interacts with
 an honest client and peer and wins if it causes the client to accept a peer key

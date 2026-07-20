@@ -9,7 +9,7 @@ contributions developed in the remainder of the thesis.
 
 End-to-end encryption protects a message in transit, but its guarantee is only as strong as the public keys the two parties believe they are using. In asynchronous messaging systems such as Signal, clients normally obtain this key material from provider-operated infrastructure, and trust that what they receive is genuine. That trust is a weak point. If that infrastructure substitutes an attacker's key for the recipient's, the protocol may establish an encrypted channel to the attacker rather than to the intended recipient. This is a key-substitution, or ``fake-key,'' attack, and it is invisible to the cryptography itself.
 
-The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. It works in principle but fails in practice because it depends on a human ritual that people rarely perform. In one study, only about 14\% of users completed the ceremony without guidance~\cite{vaziripour2017}, and even a successful comparison is a one-off check that says nothing about whether a key changes later. \emph{Key
+The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. It works in principle but fails in practice because it depends on a human ritual that people rarely perform. In one study, only about 14\% of participant pairs completed the ceremony without guidance~\cite{vaziripour2017}, and even a successful comparison is a one-off check that says nothing about whether a key changes later. \emph{Key
 transparency} (publishing the directory as a verifiable, append-only log so that clients can check their keys against a public, consistent record) is the response the field has converged on, and production systems, such as Signal's Automatic Key Verification, have started deploying it~\cite{signal-akv}.
 
 However, deployed key transparency architectures still leave two critical gaps. \emph{First}, detection is reduced entirely to \emph{self-monitoring}. While a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner; there is no automatic, in-band channel to warn the communicating \emph{peer} that the key they are about to trust is compromised. \emph{Second}, returning clients face an offline monitoring cost that grows linearly with the number of missed epochs.
@@ -30,9 +30,9 @@ falsified.
 
 \paragraph{Thesis Statement.} The central claim this dissertation defends is that automatic, in-band
 detection of key substitution can be added to a deployed messaging key directory at essentially the
-asymptotic cost the directory already pays without a manual user ceremony, without enlarging the
-lookup proof, and while replacing one proof per missed epoch with a single proof whose size grows
-logarithmically in the endpoint log sizes.
+asymptotic cost the directory already pays, without a manual user ceremony. It does so without
+enlarging the lookup proof, and while replacing one proof per missed epoch with a single proof whose
+size grows logarithmically in the endpoint log sizes.
 
 \paragraph{Research Questions.} The work is organized around four research questions, each answered by
 a specific later chapter:
@@ -84,15 +84,14 @@ protocol operations are checked byte-for-byte against cross-language test vector
 and a cross-vantage auditor) and an embedded TypeScript verifier integrated into a fork of the real
 Signal Desktop client (\cref{ch:impl}).
 
-\paragraph{Empirical.} A benchmark campaign (metrics M1--M13) establishing that the implemented VRF-indexed lookup
-proof is at rough size parity with CONIKS, with the detection channel CONIKS lacks obtained through
-additional same-shape lookups rather than a larger proof, that median full client
-verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than
-$N$ (\SIrange{128.1}{147.1}{\micro\second}), and that a
-month-long offline catch-up costs a few hundred bytes against the hundreds of kilobytes naïve
-monitoring would spend; together with a systematic security evaluation using the STRIDE
-threat-classification framework and the MITRE ATT\&CK knowledge base for the resulting system
-(\cref{ch:eval}).
+\paragraph{Empirical.} A benchmark campaign (metrics M1--M13) with four principal findings. The
+implemented VRF-indexed lookup proof is at rough size parity with CONIKS, with the detection channel
+CONIKS lacks obtained through additional same-shape lookups rather than a larger proof. Median full
+client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more
+slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}). A month-long offline catch-up costs a few
+hundred bytes against the hundreds of kilobytes na\"ive monitoring would spend. A systematic security
+evaluation using the STRIDE threat-classification framework and the MITRE ATT\&CK knowledge base
+covers the resulting system (\cref{ch:eval}).
 
 \section{Thesis Roadmap}\label{sec:intro-roadmap}
 
