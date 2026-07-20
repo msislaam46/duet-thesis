@@ -620,8 +620,8 @@ prior epoch's root, and a single consistency proof certifies append-only growth 
 head in $O(\log n)$, whereas walking the hash chain costs one step per missed epoch. Neither a hash
 chain nor a consistency proof, on its own, catches equivocation: both certify a single client's view
 as append-only, but a server can still sign two divergent histories and show each to a different
-client. Detecting that requires comparing heads observed from a second vantage, which is the
-cross-vantage auditor's job (\cref{sec:design-acka}).
+client (the split-view attack of \cref{fig:bg-splitview}). Detecting that requires comparing heads
+observed from a second vantage, which is the cross-vantage auditor's job (\cref{sec:design-acka}).
 This work keeps the Merkle-log history but borrows one element of CONIKS's signed
 root that a bare tree head omits: a commitment to the provider's \emph{policy}.
 The signed message additionally binds a hash of the configuration (the VRF
@@ -915,8 +915,8 @@ device mappings. Its limitations mirror the line's: soundness still requires the
 key's owner to run history checks, and under compaction a user offline during a
 deleted period obtains no guarantee for that
 interval~\cite[pp.~4357, 4360]{optiks2024}. OPTIKS is thus the strongest
-scalability-and-monitoring baseline among the academic systems, yet it still
-provides no in-band signal by which one user could warn another.
+scalability-and-monitoring baseline among the academic systems, yet it shares the
+no-in-band-peer-warning gap common to every system surveyed (\cref{sec:bg-open}).
 
 \subsubsection{PRISM}
 PRISM takes the most different route and is best read as a
