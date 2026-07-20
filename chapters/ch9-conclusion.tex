@@ -42,10 +42,9 @@ a production deployment.
 Read against the research questions of \cref{sec:intro-aims}, the evidence is direct. RQ1 (in-band
 detection) is answered by the dual-index warning and its clean pass across the full
 adversarial suite, with no false alarms observed in the clean deterministic trials. RQ2 (cost) is
-answered by the \num{817}\,byte VRF-indexed lookup proof at rough parity with CONIKS and the
-$\approx$\SI{128}{\micro\second} verification at $N\le10^4$, rising only to $\approx$\SI{147}{\micro\second} at $10^7$. RQ3 (offline) is answered by
-the \num{320}\,byte month-long catch-up, whose size is bounded by the endpoint log sizes rather than
-the window's length. RQ4 (client-integration feasibility) is answered by the
+answered by the proof-size parity and the sub-\SI{150}{\micro\second} verification reported above.
+RQ3 (offline) is answered by the single windowed catch-up proof reported above, whose size is bounded
+by the endpoint log sizes rather than the window's length. RQ4 (client-integration feasibility) is answered by the
 verifier running inside a fork of the real Signal Desktop client at that measured local cost; the
 integration is a prototype with an advisory hook and deterministic stand-ins, so it establishes
 feasibility of hook placement and proof verification rather than enforced session blocking. The thesis
