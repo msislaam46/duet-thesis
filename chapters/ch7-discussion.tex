@@ -107,14 +107,14 @@ commit uses an $O(N)$ deep-clone snapshot with a transient memory spike, measure
 integration carries two proof-of-concept stand-ins, both flagged in \cref{ch:impl}: the
 per-conversation shared secret is a deterministic stand-in rather than the live X3DH secret, and
 continuous mode is driven by a seeded simulated ratchet rather than the client's live one. That
-simulation, specifically, folds the simulated ratchet's raw Diffie--Hellman output as its epoch secret $I_t$,
+simulation, specifically, mixes in the simulated ratchet's raw Diffie--Hellman output as its epoch secret $I_t$,
 where ACKA's Signal mapping (their Table~2) specifies $I_t = ck$, the derived chain key; so DUET
 implements the ACKA CEA state transition but simulates that Signal-specific epoch-secret mapping, and
 a faithful instantiation bridges the live Double-Ratchet chain key $ck$ from libsignal. Neither
 changes the construction being exercised, but both must be replaced before the unlinkability and
 active-MitM guarantees hold against a real adversary rather than a simulated one. Finally, the
 networked client ties every search-time signed tree head into one append-only chain: the head is
-signature-verified per lookup and its root is folded, via the same windowed consistency proof used
+signature-verified per lookup and its root extends the verified chain, via the same windowed consistency proof used
 for offline catch-up, into the client's pinned baseline, so a validly-signed but \emph{forked} head
 served only in a search response (and thus invisible to an auditor polling the public head alone) is
 rejected the instant it fails to chain. The residual here is not a client-side gap but the fundamental
@@ -143,7 +143,7 @@ a Signal/PQXDH handshake benchmark, and M12 is the auditor's local computation, 
 proof-carrying audit. Third, the DUET test suite is not wired into Signal Desktop's main continuous
 integration and the live wire-parity check skips silently when no Rust server is reachable, and only
 aggregate benchmark statistics, not raw Criterion samples, are committed. A two-leg adversarial
-harness, a genuine handshake benchmark, a required CI gate, and archived raw samples for independent
+harness, a genuine handshake benchmark, a required continuous-integration check, and archived raw samples for independent
 re-analysis are left to future work.
 
 % ============================================================================
@@ -181,7 +181,7 @@ proven non-inclusion, and the consistency proof between the two heads into a bun
 against the server's own signatures. The one remaining deployment-path item is authenticated writes
 (account-layer proof that a caller owns the raw label it writes), without which the write-once
 policy still binds an honest server and the auditor still binds a malicious one, but a malicious
-\emph{client} could squat an as-yet-empty peer slot. The in-process implementation and its
+\emph{client} could pre-emptively occupy an as-yet-empty peer slot. The in-process implementation and its
 adversarial tests are described in \cref{ch:impl}; the argument that these safeguards bind
 a fully malicious operator is exactly the suppression argument of \cref{ch:design}.
 

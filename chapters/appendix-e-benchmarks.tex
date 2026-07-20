@@ -304,7 +304,7 @@ agreement.
 \Cref{tab:bench-repro} maps every metric family to the Criterion benchmark group that times it and the
 CSV file/column that records the exact values, so any row above can be regenerated and located. The
 harness lives in \texttt{benches/kt\_bench.rs}; run it via \texttt{run-benches.ps1} (the scale family
-M7 is gated behind \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes are seed-deterministic
+M7 runs only with \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes are seed-deterministic
 and must reproduce byte-for-byte; timings reproduce within noise.
 
 \medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The Criterion

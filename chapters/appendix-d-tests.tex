@@ -177,7 +177,7 @@ Module & Test & Property checked \\
 The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{106} Jest tests in
 eight suites: a live-server wire-parity suite, an in-process integration suite, and six unit suites.
 The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust
-server over the network; it is a separate gate (\texttt{npm run test:wire}) that requires the server
+server over the network; it is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
 to be running, and its five tests early-return as no-ops when the server is absent, so a bare
 \texttt{npm test} run does not by itself establish wire parity. The integration suite and the
 cryptographic unit suites (\texttt{remote\_kt\_client}, \texttt{cea}, \texttt{secret\_store}) exercise

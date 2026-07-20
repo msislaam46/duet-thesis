@@ -1,6 +1,6 @@
 \chapter{Implementation}\label{ch:impl}
 
-This chapter describes how the design of \cref{ch:design} was realized in software. It first
+This chapter describes how the design of \cref{ch:design} was implemented in software. It first
 sets out the architecture and the language boundary between the two layers the system is built
 from (\cref{sec:impl-strategy}). It then describes the cryptographic core, the standalone Rust
 \texttt{kt} crate that holds the transparency log and all server-side components of the prototype
@@ -98,7 +98,7 @@ holds the transparency log and every novel construction of the design, together 
 built on it. Nothing here depends on Signal Desktop, so the crate can be read, and was measured, in
 isolation. It is organized as a small set of modules, each realizing one component of the design and
 each conforming to a named specification. \Cref{tab:impl-modules} lists those modules with the
-specification each realizes and the evidence of conformance, and \cref{fig:impl-modules} shows how
+specification each implements and the evidence of conformance, and \cref{fig:impl-modules} shows how
 they fit together at run time.
 
 \begin{table}[ht]
@@ -165,7 +165,7 @@ ECVRF-EDWARDS25519-SHA512-TAI construction of RFC~9381 (suite \texttt{0x03}), wh
 verifiable pseudorandom labels used on the global-lookup path; the \texttt{dual\_index} module
 derives the three labels $\ell_{\mathsf{self}}$, $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$
 from the shared secret by HKDF-SHA256 (RFC~5869), exactly as specified in
-\cref{ssec:design-labels}, and the \texttt{cea} module realizes the continuous example construction
+\cref{ssec:design-labels}, and the \texttt{cea} module implements the continuous example construction
 of the ACKA framework~\cite{dowling2023acka} that drives ongoing monitoring.
 
 These modules rest on established cryptographic crates rather than custom implementations.
@@ -218,15 +218,15 @@ carries an HKDF-derived MAC (\cref{alg:dualindex}) so that a reader can distingu
 warning from one the operator injected once it has learned the slot's label. The single element left
 to deployment is authenticated writes: without account-layer proof of raw-label ownership the
 write-once policy still binds an honest server and the transition audit still binds a malicious one,
-but a malicious client could squat an as-yet-empty peer slot (\cref{ch:discussion}).
+but a malicious client could pre-emptively occupy an as-yet-empty peer slot (\cref{ch:discussion}).
 
 \begin{figure}[htbp]
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
 \caption[Transition-audit state flow.]{The networked auditor (\cref{alg:auditor}), in two parts:
-(a)~head classification and (b)~transactional replay gate the atomic state update. A valid
-second-vantage head additionally gates it when available; an unavailable one yields no fork verdict
-and does not block the commit.}
+(a)~head classification and (b)~transactional replay must both pass before the state updates
+atomically; a valid second-vantage head, when available, adds a third check; an unavailable one
+yields no fork verdict and does not block the commit.}
 \label{fig:impl-transition-audit}
 \end{figure}
 \FloatBarrier
@@ -293,7 +293,7 @@ networked stack.
 \centering
 \input{figures/tikz/fig-impl-signal}
 \caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
-lifecycle hooks and surfaces verdicts to the badge and banner, over HTTP with the Rust server that
+lifecycle hooks and reports verdicts to the badge and banner, over HTTP with the Rust server that
 an independent auditor polls and a testing interface drives. Hook functions and verdict-event names
 are listed in \cref{app:apiref}.}
 \label{fig:impl-signal}
@@ -325,7 +325,7 @@ peer-key-retrieval hook is the security-critical one: it runs the full verificat
 (\cref{ssec:design-verify}) on a peer's key before that key is accepted. On the Rust side, a
 hook in libsignal's pre-key-bundle processing marks the point at which the live X3DH secret is
 available: the place where the production binding of the real shared secret would attach, and
-where the prototype instead substitutes its deterministic stand-in. Verdicts surface in the user
+where the prototype instead substitutes its deterministic stand-in. Verdicts appear in the user
 interface through a conversation-header badge (green when verified, red on a warning) and a
 banner, driven by DOM events that signal a warning (a detected key substitution or
 man-in-the-middle) and temporary unavailability. The concrete hook functions and event names are
@@ -340,7 +340,7 @@ signature, adding the VRF binding of the label on the global-lookup path. It the
 lookup for the shared warning slot, whose proven inclusion or non-inclusion is what separates a
 clean verdict from a warning. Any check that fails makes the verifier return a rejecting verdict
 rather than a clean one, so a substituted key or a withheld warning cannot pass verification
-silently; the prototype hook surfaces that verdict as a banner but does not itself yet block session
+silently; the prototype hook reports that verdict as a banner but does not itself yet block session
 establishment (\cref{ssec:impl-demo}).
 
 \begin{figure}[H]
@@ -349,7 +349,7 @@ establishment (\cref{ssec:impl-demo}).
 \caption[Per-lookup client--server verification exchange.]{The client--server exchange on each peer-key retrieval: the server returns the value with its
 prefix, log-inclusion, and signed-tree-head proofs, all verified locally, and the warning slot's
 proven (non-)inclusion then decides between a clean verdict and a warning (any failed check yields
-a rejecting verdict, which the advisory hook surfaces but does not use to block the session). This is the runtime realization of the verification chain of \cref{ssec:design-verify}.}
+a rejecting verdict, which the advisory hook reports but does not use to block the session). This is the runtime realization of the verification chain of \cref{ssec:design-verify}.}
 \label{fig:impl-verify}
 \end{figure}
 
@@ -533,7 +533,7 @@ cross-implementation vectors & \texttt{dual\_index} & Rust and TypeScript derive
 STH signature (happy / tamper / wrong-key) & \texttt{server} & only a correctly signed head is accepted & the client trusts only signed roots (A2, A4) \\
 equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\Rightarrow$ fork & split-view detection (A4, G4) \\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
-windowed catch-up gate & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding (A2) \\
+windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding (A2) \\
 availability routing & monitor (TS) & an unreachable server yields amber, not red & a network partition is not an attack \\
 key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified (T1) \\
 \bottomrule

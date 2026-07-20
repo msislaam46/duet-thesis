@@ -37,7 +37,7 @@ This is the ``combined tree'' design of the IETF Key Transparency working group
 append-only log records every committed state of that dictionary, and the head of the
 log is published as a signed commitment. Lookups are served against the \emph{last
 committed epoch}, never the live tree:
-only a committed prefix root has been folded into the log, so only a committed root
+only a committed prefix root has been appended to the log, so only a committed root
 can be tied, through one chain of proofs, back to a signed head.
 
 \begin{figure}[t]
@@ -357,7 +357,7 @@ check by the writer retaining a committed warning's inclusion proof and assembli
 on any later disappearance (\cref{ch:impl}). The one element left to deployment is
 authenticated writes (account-layer proof of raw-label ownership), without which the write-once
 policy still binds an honest server and the transition audit still binds a malicious one, but a
-malicious client could squat an as-yet-empty peer slot (\cref{ch:discussion}).
+malicious client could pre-emptively occupy an as-yet-empty peer slot (\cref{ch:discussion}).
 
 Detection is bidirectional, which matters for the offline case. The victim's own-key
 self-check publishes the warning when the victim notices the wrong key under its own
@@ -455,7 +455,7 @@ Alongside it, the system implements a \emph{continuous mode} that binds authenti
 the \emph{entire} continuous key agreement, following ACKA's example CEA construction
 (\cref{sec:bg-acka}). Each ratchet epoch carries a \emph{public} ratchet key $T_t$ and a \emph{secret} epoch key
 $I_t$ (a secret epoch key: ACKA's Signal mapping sets $I_t = ck$, Signal's chain key, itself a KDF
-of the ratchet Diffie--Hellman output, whereas this PoC folds the raw DH output as a stand-in for
+of the ratchet Diffie--Hellman output, whereas this PoC mixes in the raw DH output as a stand-in for
 $ck$, see \cref{ch:discussion}). At epoch $t$ the party
 computes, from the current chain state $k_t$ (with $k_0$ the state established by Setup), an evolving
 label and a fingerprint that authenticates $T_t$, and only then folds the secret $I_t$ into the
@@ -478,7 +478,7 @@ key $T_t$ and lets a substituted key be detected at the shared label.
 The ordering of operations within an epoch follows ACKA's composed construction
 (their Figure~8) in three respects, each of which matters for correctness. First, the label and
 fingerprint are computed over the \emph{current} (pre-update) state and the \emph{public} key, and
-only then is the \emph{secret} $I_t$ folded into the chain; folding the secret epoch key rather than
+only then is the \emph{secret} $I_t$ mixed into the chain; mixing the secret epoch key rather than
 the public ratchet key keeps the chain unpredictable to an adversary that has compromised the
 pre-shared state: the property the unlinkability and forgery-resistance arguments need. The secret
 is domain-separated before folding ($\KDF(I_t, \text{\texttt{"CEA"}})$, ACKA Figure~8): in a faithful

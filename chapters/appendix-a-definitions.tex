@@ -193,7 +193,7 @@ applying a \textsf{Rotate} it verifies that the label is present, is \textsc{mut
 declared previous value. It accepts exactly when the resulting root equals $\prefroot{t}$. An
 undeclared modification or deletion causes the replayed root to differ, and an attempted rotation of
 an \textsc{immutable} dual-index, CEA, or warning label is rejected directly. Specified in
-\cref{ssec:design-detection}; realized by \textsf{AuditTransition} (\cref{alg:auditor}).
+\cref{ssec:design-detection}; implemented by \textsf{AuditTransition} (\cref{alg:auditor}).
 \end{definition}
 
 \begin{definition}[Windowed consistency proof]\label{def:windowed}
@@ -319,7 +319,7 @@ yields proven non-inclusion at $\lblwarn$, the bundle consisting of the retained
 under $\STH_w$, the non-inclusion proof under $\STH_t$, and the consistency proof
 $\pcons(\STH_w.\mathit{size},\STH_t.\mathit{size})$ verifies entirely against the operator's own
 signatures and constitutes non-repudiable, publishable proof that a committed leaf was removed.
-Specified in \cref{ssec:design-detection}; realized by \textsf{PersistenceCheck}
+Specified in \cref{ssec:design-detection}; implemented by \textsf{PersistenceCheck}
 (\cref{alg:detect}).
 \end{definition}
 

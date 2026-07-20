@@ -229,8 +229,8 @@ prefix-root recompute, the VRF verify, and the full six-step chain of \cref{ssec
 \toprule
 Operation & $N=10^3$ & $N=10^4$ & Scaling \\
 \midrule
-Server full search (gen, incl.\ VRF prove) & \SI{119.5}{\micro\second} & \SI{119.7}{\micro\second} & VRF-dominated, independent of $N$ \\
-Prefix-root verify (client) & \SI{25.9}{\micro\second} & \SI{25.9}{\micro\second} & independent of $N$ \\
+Server full search (gen, incl.\ VRF prove) & \SI{119.5}{\micro\second} & \SI{119.7}{\micro\second} & VRF-dominated, $\approx$flat over $10^3$--$10^4$ \\
+Prefix-root verify (client) & \SI{25.9}{\micro\second} & \SI{25.9}{\micro\second} & grows only with proof depth ($\sim\lg N$) \\
 VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} & constant-time \\
 \textbf{Full signed-head lookup verification (windowed baseline)} & \textbf{\SI{128.1}{\micro\second}} & \textbf{\SI{128.6}{\micro\second}} & \textbf{$\approx$flat over $10^3$--$10^4$} \\
 \bottomrule
@@ -239,13 +239,13 @@ VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} 
 
 The most important result is the last row, M3: the full signed-head lookup verification path, referred to more generally as full client verification (VRF label binding, value binding, prefix
 root recompute, log inclusion, and the Ed25519 signed-tree-head signature) costs about
-\SI{128}{\micro\second} and does not grow with the directory, because its two cost centres, the
-prefix recompute (\SI{25.9}{\micro\second}) and the VRF verify (\SI{76.0}{\micro\second}), are both
-$N$-independent: the first is a fixed \num{256}-level bitmap walk and the second is a constant-time
-elliptic-curve operation. The system therefore meets its sub-millisecond client-verify target with
+\SI{128}{\micro\second} over the measured $10^3$--$10^4$ range and grows only weakly with the
+directory (\cref{ssec:eval-scale}): its dominant cost centre, the VRF verify (\SI{76.0}{\micro\second}),
+is a constant-time elliptic-curve operation, and the prefix recompute (\SI{25.9}{\micro\second}) grows
+only with proof depth ($\sim\lg N$). The system therefore meets its sub-millisecond client-verify target with
 roughly sevenfold headroom, and does so while including the VRF verification that comparable systems
-exclude from their reported figures. The server-side full search is likewise flat rather than
-growing, and this is a direct consequence of the compressed-leaf chain memo (\cref{sec:impl-modules}).
+exclude from their reported figures. The server-side full search is likewise near-flat over this
+range, and this is a direct consequence of the compressed-leaf chain memo (\cref{sec:impl-modules}).
 Before that optimization, proof generation grew with directory depth (from \SI{107}{\micro\second} to
 \SI{159}{\micro\second} across $N=10^3$--$10^4$) because each non-inclusion co-path recomputed a
 compressed leaf's \num{256}-level hash chain. Memoizing that chain top removes the $N$-dependent
@@ -779,9 +779,9 @@ key in an earlier epoch flags the change directly on its next fetch.}
 \end{figure}
 
 \FloatBarrier
-\subsection{Residual Risks and Posture}\label{ssec:eval-posture}
+\subsection{Residual Risks and Security Position}\label{ssec:eval-posture}
 
-The overall posture follows from the measurements above. The marginal in-memory warning-slot read (M5)
+The overall security position follows from the measurements above. The marginal in-memory warning-slot read (M5)
 costs on the order of a microsecond of server-side work (\SI{1.62}{\micro\second} clean,
 \SI{1.72}{\micro\second} attacked); end-to-end detection latency, which additionally requires the one
 or two verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure, was

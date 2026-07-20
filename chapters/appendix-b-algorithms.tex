@@ -61,6 +61,11 @@ implementation enforces it at the API boundary.
 \begin{spacing}{0.92}
 
 \clearpage
+\paragraph{The Merkle log (Algorithm~\ref{alg:merklelog}).} The append-only log layer under every
+signed head. It fixes the RFC~9162 tree-hash and proof conventions used everywhere else: inclusion
+proofs bind one leaf to a root, and consistency proofs bind an old root to a newer one, the
+primitive that windowed catch-up (\cref{sec:design-windowed}) and the auditor's fork check both
+build on. The $m=0$ case is accepted as the local trust-on-first-use convention.
 \begin{algorithm}[H]
 \caption{Merkle Log Tree (RFC 9162)}\label{alg:merklelog}
 \KwData{$\mathit{leaves}[]\gets[\,]$}
@@ -116,6 +121,11 @@ implementation enforces it at the API boundary.
 \end{algorithm}
 
 \clearpage
+\paragraph{The prefix tree (Algorithm~\ref{alg:prefix}).} The label-keyed authenticated dictionary
+holding the directory's current state: a path-compressed binary trie over 256-bit labels whose
+leaves commit their mutable-or-immutable kind into the hash (C2). Its lookups return compressed
+proofs of inclusion \emph{and} of absence; first-class non-inclusion is what lets a client prove a
+warning slot is genuinely empty rather than merely unreported.
 \begin{algorithm}[H]
 \caption{Sparse Binary Merkle Prefix Tree (label-keyed)}\label{alg:prefix}
 \KwData{path-compressed binary trie over 256-bit labels; empty hash $e=\Hash(\varepsilon)$}
@@ -146,6 +156,11 @@ implementation enforces it at the API boundary.
 \end{algorithm}
 
 \clearpage
+\paragraph{The server (Algorithm~\ref{alg:server}).} Composes the two structures into the
+key-transparency service: raw-label writes are write-once, \textsf{CommitEpoch} appends the prefix
+root to the log and signs the head (binding epoch, size, root, timestamp, and the policy
+commitment), and \textsf{Search} answers with the value plus the full proof chain a verifier needs.
+\textsf{SearchByUserId} adds the VRF step that derives global labels privately.
 \begin{algorithm}[H]
 \caption{Key Transparency Server}\label{alg:server}
 \KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$}
@@ -186,6 +201,12 @@ implementation enforces it at the API boundary.
 \end{algorithm}
 
 \clearpage
+\paragraph{Dual-index labels and warnings (Algorithm~\ref{alg:dualindex}).} The per-conversation
+label layer of \cref{sec:design-dual}: from each conversation's shared secret, HKDF derives the two
+participant lookup labels and the canonically ordered shared warning label. \textsf{WriteWarning}
+publishes a MAC-authenticated alert and trusts neither an apparent success nor a write-once
+conflict, confirming publication by a verified read-back (T1); \textsf{CheckWarning} raises
+\textsc{Alert} on any proven non-empty slot.
 \begin{algorithm}[H]
 \caption{Dual-Index Label Derivation (HKDF-SHA256, RFC 5869)}\label{alg:dualindex}
 \KwIn{shared secret $\sharedS$ from X3DH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width); $\min/\max$ below denote the canonically ordered conversation pair $(\mathit{id_A},\mathit{id_B})$}
@@ -224,7 +245,7 @@ trust boundary: every value it accepts is checked against a signed tree head bef
 \textsf{VerifiedLookup} returns a value only when the prefix proof, the log-inclusion proof, and the
 STH signature all verify and bind to the caller's pinned head, and it fails closed on any mismatch.
 \textsf{Register}, \textsf{RetrieveKey}, and \textsf{WindowedCatchUp} build on it to establish, read,
-and re-synchronize client state. In the implementation these are realized by monitor-level composition
+and re-synchronize client state. In the implementation these are provided by monitor-level composition
 (the background \texttt{monitorConversation} loop) rather than as one-to-one methods; \textsf{RetrieveKey}'s
 non-null requirement, for instance, is enforced by that composed monitor rather than by a standalone call.
 
@@ -345,56 +366,23 @@ persistence component, retained evidence.
 \end{algorithm}
 
 \clearpage
-\paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor runs against the same networked
-key-transparency server the clients use, from an independent vantage point. It is not an in-process
-copy of the server's state but an external verifier that fetches signed heads and per-epoch deltas
-over the network. It maintains its own \emph{replica} (an independently reconstructed copy of the committed directory,
-rebuilt by replaying each epoch's declared delta from epoch~0) and checks epoch~$e$'s declared root
-against that reconstruction rather than trusting server-supplied per-operation membership proofs, after
-the manner of the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each epoch is
-replayed onto a temporary \emph{candidate} copy of that replica, and the live replica, the
-audited-epoch cursor, and the baseline head advance as a single all-or-nothing transaction only if the
-whole head passes every stage; an epoch-delta fetch failure aborts the transaction and is retried on
-the next poll rather than latching a fork alarm.\footnote{\Cref{alg:auditor} states this whole-head
+\paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor is an external verifier at an
+independent vantage point: it fetches signed heads and per-epoch deltas over the network and checks
+each declared root against its own \emph{replica}, an independently reconstructed copy of the
+committed directory replayed from epoch~0, after the manner of the IETF KeyTrans
+\textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each head is processed as one all-or-nothing
+transaction: the epoch range is replayed onto a \emph{candidate replica}, and the live replica,
+the audited-epoch cursor, and the trusted baseline advance together only if every stage
+passes;\footnote{\Cref{alg:auditor} states this whole-head
 boundary as the networked binary realizes it, staging the entire epoch range and committing the replica,
 the cursor, and the baseline head together. The in-process library auditor used by the unit tests is an
 incremental variant that advances the replica and cursor after each verified epoch and appends the head
-last; it is behaviourally equivalent on an honest log and never commits an unverified epoch.} Because
-every leaf commits its mutable or immutable kind into its hash, the transition audit distinguishes the
-two families: a rotation is accepted only on a mutable (global-VRF identity) leaf and rejected on an
-immutable (raw dual-index, CEA, or warning) leaf, as is any rotation that misdeclares the kind. An
-insert is admitted only against an absent label, and the replayed root must equal the epoch's declared
-root, so any divergence between a declared delta and its committed effect alarms, structurally
-rejecting a post-compromise overwrite of a committed CEA fingerprint that a receiver's per-epoch verdict
-alone cannot catch (\cref{ssec:design-detection}).
-
-\Cref{alg:auditor} is the \emph{networked} auditor binary: it keeps a single trusted baseline head
-$\mathit{last}$ and, once replay succeeds, runs \textsf{DetectFork} against one current second-vantage
-head to check Goal~G4 (Fork Detection). \textsf{AuditEpoch} distinguishes a first observation, a
-rollback, an equal-size fork, log growth requiring a consistency proof, and an idempotent re-poll
-before producing one of the final verdicts below; it requests a consistency proof only on growth. It
-returns \textsc{Unavailable} when the primary head cannot be fetched or parsed; alarms and returns
-\textsc{Malformed}, \textsc{Rollback}, \textsc{Fork}, or \textsc{TransitionFailed} on the corresponding
-failure; holds without committing on an \textsc{Incomplete} epoch-delta fetch; and otherwise commits the
-replica, cursor, and baseline as one transaction. After committing it distinguishes \textsc{Consistent}
-(a valid second vantage agreed) from \textsc{ConsistentNoVantage} (no valid second-vantage head was
-available, so the primary chain advanced but no G4 verdict was reached), so a caller reading the
-returned verdict cannot mistake a missing cross-vantage check for a passed one. Each epoch delta is
-fetched and audited against the \emph{validated} head: the fetch is pinned to
-$\mathit{sth_{new}}.\mathit{size}$, and the transition audit accepts the delta only if its inclusion
-proof proves leaf index $e$ with the declared committed root under $\mathit{sth_{new}}.\mathit{root}$ at
-that size, so a stale snapshot or a proof for a different leaf is rejected before any replay.
-\textsf{DetectFork} requires the second-vantage head to be present, validly signed, and well-formed;
-otherwise it returns \textsc{InvalidHead}, an availability or transport fault that yields no
-equivocation verdict and, because $\textsc{InvalidHead}\ne\textsc{Fork}$, does not block the primary
-commit (G4 detection needs an honest second vantage, \cref{ssec:eval-auditor}). Given a valid
-second-vantage head it returns \textsc{Fork} when the two heads share a size but differ in root, or a
-between-vantage consistency proof is refused or fails, and \textsc{Consistent}
-otherwise.\footnote{\textsc{InvalidHead} is an explicit verdict of the library auditor's
-\textsf{ForkCheck}; the networked binary represents it implicitly as the no-vantage path that yields
-\textsc{ConsistentNoVantage}. That library auditor implements the pure head-comparison half, comparing
-an incoming second-vantage head against every recorded head, and does not itself fetch the between-size
-consistency proof the networked binary adds.}
+last; it is behaviourally equivalent on an honest log and never commits an unverified epoch.} a failed
+delta fetch aborts and is retried on the next poll rather than raising a fork alarm. Because every leaf
+commits its kind, the replay is kind-aware: rotations are admitted only on mutable leaves, inserts
+only at absent labels. After committing, \textsc{Consistent} (a valid second-vantage head agreed) is
+distinguished from \textsc{ConsistentNoVantage} (no second vantage was available), so a missing
+cross-vantage check can never be mistaken for a passed one.
 
 \begin{algorithm}[H]
 \caption{Networked auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
