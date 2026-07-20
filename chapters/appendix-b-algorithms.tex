@@ -332,7 +332,7 @@ persistence component, retained evidence.
     \textbf{raise} SecurityAlert\;
   }
   \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
-    $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ \tcp*{(b) session monitor: the dual-index self slot the peer reads}\;
+    $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ \tcp*{(b) session monitor: the dual-index self slot the peer reads}
     $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK})$\;
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$\;
     \If{$v\ne\mathit{own\_pk}$}{

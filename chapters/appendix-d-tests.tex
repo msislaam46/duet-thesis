@@ -7,7 +7,7 @@ nine modules, the \num{8}-scenario adversarial integration suite, and \num{22} t
 five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-failure test, and nine
 \texttt{PollStatus} tests covering every poll verdict and the exact status-line mapping),
 \num{127} tests in total, run under \texttt{cargo test}; the TypeScript
-client is covered by \num{105} Jest tests in eight suites,
+client is covered by \num{106} Jest tests in eight suites,
 and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
 complete listing follows. Tables are placed exactly where they are discussed.
@@ -174,7 +174,7 @@ Module & Test & Property checked \\
 % ----------------------------------------------------------------------------
 \section{TypeScript (Signal Desktop) Jest Suite}\label{sec:tests-ts}
 
-The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{105} Jest tests in
+The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{106} Jest tests in
 eight suites: a live-server wire-parity suite, an in-process integration suite, and six unit suites.
 The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust
 server over the network; it is a separate gate (\texttt{npm run test:wire}) that requires the server
@@ -266,6 +266,7 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & \texttt{writeWarning}: a proof failure on the confirmation read is censorship (throws) \\
 \texttt{remote\_kt\_client} & caller guard: a censored publication leaves the guard unset (retried next tick) \\
 \texttt{remote\_kt\_client} & caller guard: a confirmed publication sets the guard, suppressing re-writes \\
+\texttt{remote\_kt\_client} & session caller guard: \texttt{sessionWarnedPeers} advances only on a confirmed \texttt{lookup-replaced} write \\
 \midrule
 \texttt{background\_monitor} & \texttt{emitToSignalUI} fires \texttt{kt:warning} (DOM) and does not touch the Whisper bus \\
 \texttt{background\_monitor} & \texttt{emitOfflineToSignalUI} fires \texttt{kt:unreachable} only (never a MitM alert) \\
