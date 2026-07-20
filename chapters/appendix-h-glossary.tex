@@ -11,6 +11,13 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
 \item[Auditor] An independent party that observes the log from a second vantage point, cross-checks
   signed tree heads (fork detection), and replays each epoch's declared update set against the
   committed root (the transition audit) (\cref{def:epoch-delta}, \cref{alg:auditor}).
+\item[Auditor replica] The auditor's independently reconstructed copy of the committed directory,
+  rebuilt by replaying each epoch's declared update set from epoch~0; the transition audit checks
+  each committed root against it rather than trusting server-supplied membership proofs
+  (\cref{alg:auditor}).
+\item[Candidate replica] A temporary clone of the auditor replica onto which one epoch range is
+  replayed; it is committed back to the live replica only if the whole head passes every check, so a
+  rejected epoch leaves the replica untouched (\cref{alg:auditor}).
 \item[CEA / CEAsec] Continuous entity authentication and its security notion within
   ACKA; the continuous operating mode realizes detection in this style.
 \item[CKA] Continuous Key Agreement, the abstraction of a ratcheting protocol as a stream of evolving

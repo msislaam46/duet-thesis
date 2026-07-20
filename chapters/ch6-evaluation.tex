@@ -480,7 +480,7 @@ does \emph{not} include the networked, proof-carrying exchange a deployed audito
 each epoch's disclosed update set together with the committed-root log-inclusion proof
 (\cref{sec:design-acka}) and verifying that proof against the signed head, whose transfer and
 verification cost is not captured here, nor the full \texttt{audit\_epoch} transition replay, which
-re-applies every disclosed update into a scratch mirror rather than checking a signature and a
+re-applies every disclosed update into a candidate replica rather than checking a signature and a
 consistency proof. The fork figure needs a further caveat, and it is not a constant. The
 implementation's \texttt{detect\_fork} compares the presented head against \emph{every} head it has
 observed (a linear scan of the observed vector), so its cost grows with the number of accumulated

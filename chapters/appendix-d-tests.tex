@@ -142,7 +142,7 @@ Module & Test & Property checked \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_modification} & an in-place modification likewise diverges and alarms \\
 \texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected: the C2/Option B pss-compromise path \\
 \texttt{auditor} & \texttt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert} & the same overwrite declared as an \textsf{Insert} of an already-present label is rejected (A1): closing the other delta-op variant \\
-\texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_mirror} & a rejected transition leaves the auditor's mirror untouched, so a single bad epoch cannot corrupt later audits \\
+\texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_replica} & a rejected transition leaves the auditor's replica untouched, so a single bad epoch cannot corrupt later audits \\
 \texttt{auditor} & \texttt{audit\_rejects\_unsigned\_or\_foreign\_sth} & an unsigned or foreign-key head is rejected before auditing \\
 \texttt{auditor} & \texttt{audit\_requires\_committed\_epoch} & auditing requires a committed epoch \\
 \texttt{auditor} & \texttt{detect\_fork\_flags\_same\_epoch\_different\_root} & two validly signed roots at one epoch are reported as a fork \\

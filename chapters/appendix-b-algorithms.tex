@@ -348,17 +348,17 @@ persistence component, retained evidence.
 \paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor runs against the same networked
 key-transparency server the clients use, from an independent vantage point. It is not an in-process
 copy of the server's state but an external verifier that fetches signed heads and per-epoch deltas
-over the network. It maintains its own \emph{mirror} (an independently reconstructed copy of the committed directory,
+over the network. It maintains its own \emph{replica} (an independently reconstructed copy of the committed directory,
 rebuilt by replaying each epoch's declared delta from epoch~0) and checks epoch~$e$'s declared root
 against that reconstruction rather than trusting server-supplied per-operation membership proofs, after
 the manner of the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each epoch is
-replayed onto a temporary candidate copy (the \emph{scratch} mirror), and the live mirror, the
+replayed onto a temporary \emph{candidate} copy of that replica, and the live replica, the
 audited-epoch cursor, and the baseline head advance as a single all-or-nothing transaction only if the
 whole head passes every stage; an epoch-delta fetch failure aborts the transaction and is retried on
 the next poll rather than latching a fork alarm.\footnote{\Cref{alg:auditor} states this whole-head
-boundary as the networked binary realizes it, staging the entire epoch range and committing the mirror,
+boundary as the networked binary realizes it, staging the entire epoch range and committing the replica,
 the cursor, and the baseline head together. The in-process library auditor used by the unit tests is an
-incremental variant that advances the mirror and cursor after each verified epoch and appends the head
+incremental variant that advances the replica and cursor after each verified epoch and appends the head
 last; it is behaviourally equivalent on an honest log and never commits an unverified epoch.} Because
 every leaf commits its mutable or immutable kind into its hash, the transition audit distinguishes the
 two families: a rotation is accepted only on a mutable (global-VRF identity) leaf and rejected on an
@@ -376,7 +376,7 @@ before producing one of the final verdicts below; it requests a consistency proo
 returns \textsc{Unavailable} when the primary head cannot be fetched or parsed; alarms and returns
 \textsc{Malformed}, \textsc{Rollback}, \textsc{Fork}, or \textsc{TransitionFailed} on the corresponding
 failure; holds without committing on an \textsc{Incomplete} epoch-delta fetch; and otherwise commits the
-mirror, cursor, and baseline as one transaction. After committing it distinguishes \textsc{Consistent}
+replica, cursor, and baseline as one transaction. After committing it distinguishes \textsc{Consistent}
 (a valid second vantage agreed) from \textsc{ConsistentNoVantage} (no valid second-vantage head was
 available, so the primary chain advanced but no G4 verdict was reached), so a caller reading the
 returned verdict cannot mistake a missing cross-vantage check for a passed one. Each epoch delta is
@@ -398,7 +398,7 @@ consistency proof the networked binary adds.}
 
 \begin{algorithm}[H]
 \caption{Networked auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
-\KwData{trusted baseline head $\mathit{last}$ (initially $\bot$); committed $\mathit{mirror}$ (a PrefixTree,
+\KwData{trusted baseline head $\mathit{last}$ (initially $\bot$); committed $\mathit{replica}$ (a PrefixTree,
 empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
@@ -412,28 +412,28 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
       \lIf{$\neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
     }
   }
-  $\mathit{scratch}\gets \textsf{clone}(\mathit{mirror})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
+  $\mathit{candidate}\gets \textsf{clone}(\mathit{replica})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
     $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e,\mathit{sth_{new}}.\mathit{size})$\;
     \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable}}
-    \lIf{$\textsf{AuditTransition}(\mathit{scratch},e,\mathit{delta}_e,\mathit{sth_{new}}.\mathit{root},\mathit{sth_{new}}.\mathit{size})=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
+    \lIf{$\textsf{AuditTransition}(\mathit{candidate},e,\mathit{delta}_e,\mathit{sth_{new}}.\mathit{root},\mathit{sth_{new}}.\mathit{size})=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
   \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
   $\mathit{vb}\gets\textsf{DetectFork}(\mathit{peer}.\textsf{CurrentHead}(),\mathit{sth_{new}},\mathit{server})$\;
   \lIf{$\mathit{vb}=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
-  $\mathit{mirror}\gets \mathit{scratch}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
+  $\mathit{replica}\gets \mathit{candidate}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
   \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed, no G4}}
   \KwRet \textsc{Consistent}\;
 }
-\Fn{\normalfont\textsf{AuditTransition}($\mathit{scratch},e,\mathit{delta}_e,r_{\mathrm{head}},\mathit{size}_{\mathrm{head}}$)}{
+\Fn{\normalfont\textsf{AuditTransition}($\mathit{candidate},e,\mathit{delta}_e,r_{\mathrm{head}},\mathit{size}_{\mathrm{head}}$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
   \lIf{$\pi_{\mathrm{incl}}$ does not prove leaf index $e$ with value $r_{e}$ included under $r_{\mathrm{head}}$ at tree size $\mathit{size}_{\mathrm{head}}$}{\KwRet \textsc{TransitionFailed}}
   \ForEach{operation $o\in \mathit{ops}_e$ \emph{in declared order}}{
-    \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\lIf{$\mathit{scratch}.\textsf{get}(\ell)\ne\bot$}{\KwRet \textsc{TransitionFailed}} \textbf{else} insert $(\ell,\mathit{kind},v)$\;}
-    \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$: \lIf{$\neg(\mathit{kind}=\textsc{mutable}\wedge \mathit{scratch}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{scratch}.\textsf{get}(\ell)=v_{\mathrm{old}})$}{\KwRet \textsc{TransitionFailed}} \textbf{else} set $\ell\mapsto v$\;}
+    \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\lIf{$\mathit{candidate}.\textsf{get}(\ell)\ne\bot$}{\KwRet \textsc{TransitionFailed}} \textbf{else} insert $(\ell,\mathit{kind},v)$\;}
+    \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$: \lIf{$\neg(\mathit{kind}=\textsc{mutable}\wedge \mathit{candidate}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{candidate}.\textsf{get}(\ell)=v_{\mathrm{old}})$}{\KwRet \textsc{TransitionFailed}} \textbf{else} set $\ell\mapsto v$\;}
   }
-  \lIf{$\mathit{scratch}.\textsf{root}()\ne r_{e}$}{\KwRet \textsc{TransitionFailed}}
+  \lIf{$\mathit{candidate}.\textsf{root}()\ne r_{e}$}{\KwRet \textsc{TransitionFailed}}
   \KwRet \textsc{Pass}\;
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_b},\mathit{sth_{new}},\mathit{server}$)}{

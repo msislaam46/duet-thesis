@@ -133,14 +133,14 @@ crate from the bottom up: its state, the cryptography over it, and the binaries 
 \caption[Rust reference architecture by ownership.]{Internal architecture of the Rust reference
 implementation, grouped by ownership: the HTTP server core (\texttt{KTServer} over the prefix tree,
 Merkle log, ECVRF, Ed25519, and SHA-256), the client/reference components that call the server API,
-and an independent auditor that reaches the server only over HTTP and keeps its own mirror. Module
+and an independent auditor that reaches the server only over HTTP and keeps its own replica. Module
 names and specifications are in \cref{tab:impl-modules}.}
 \label{fig:impl-modules}
 \end{figure}
 
 \subsection{Sparse Merkle Tree and Log Implementation}\label{ssec:impl-core-state}
 
-The directory's state lives entirely in memory, in the cooperating structures that mirror the
+The directory's state lives entirely in memory, in the cooperating structures that parallel the
 authenticated-data-structure stack of the design (\cref{ssec:design-structures}). The base
 \texttt{hashing} module fixes the RFC~6962 leaf and node domain tags shared by both structures.
 The \texttt{merkle\_log} module maintains the append-only log as a vector of hashes and implements
@@ -205,7 +205,7 @@ an explicit unchecked overwrite so the adversarial suite can play a malicious op
 freezes a \emph{declared update set} (the epoch's inserts and rotations, each rotation disclosing
 its prior value), which the server publishes at an \texttt{/epoch-delta} endpoint alongside the
 committed directory root. The auditor consumes exactly this disclosure (\cref{fig:impl-transition-audit}): it maintains its own
-mirror directory and replays each epoch's declared set. It accepts the epoch only if the replayed
+replica directory and replays each epoch's declared set. It accepts the epoch only if the replayed
 root equals the committed root. A deletion (which the delta format cannot express) or an undeclared
 modification therefore makes the replay diverge and is caught, the role the IETF KeyTrans protocol
 assigns to third-party auditors through its \textsf{AuditorUpdate}
