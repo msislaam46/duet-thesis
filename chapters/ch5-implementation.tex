@@ -520,7 +520,8 @@ complete test catalogue is given in \cref{app:tests}.
 \caption[Representative correctness tests and the requirement each protects.]{Representative correctness tests and the requirement each protects. Goals cited (\cref{sec:threat-goals}): G1 key-substitution detection, G3 directory privacy, G4 fork detection.}
 \label{tab:impl-t5a}
 \footnotesize
-\begin{tabular}{@{}p{3.3cm}p{1.9cm}p{4.0cm}p{3.7cm}@{}}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabularx}{\textwidth}{@{}Xp{1.9cm}XX@{}}
 \toprule
 Test & Component & Property checked & Why it matters \\
 \midrule
@@ -535,7 +536,7 @@ windowed catch-up gate & client (TS) & catch-up fails on a foreign-key signed he
 availability routing & monitor (TS) & an unreachable server yields amber, not red & a network partition is not an attack \\
 key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified (T1) \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \begin{table}[ht]
@@ -545,7 +546,8 @@ pass; A1 is exercised as two variants (global VRF slot and dual-index session sl
 first-class asserted test. Quantitative detection latencies are reported in \cref{ch:eval}.}
 \label{tab:impl-t5b}
 \footnotesize
-\begin{tabular}{@{}lp{3.7cm}p{4.0cm}ll@{}}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabularx}{\textwidth}{@{}lXXll@{}}
 \toprule
 Scenario & Scripted attack & Detection mechanism & Observed & Latency \\
 \midrule
@@ -558,7 +560,7 @@ A4 & equivocate (split-view) & cross-vantage auditor & pass & 1 epoch \\
 A5 & substitute during a key rotation & identity re-fetch + cross-signature & pass & 1--2 epochs \\
 X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 The obstacles overcome in reaching this agreement, on both sides of the HTTP boundary, are collected

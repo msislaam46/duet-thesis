@@ -379,19 +379,31 @@ $N=10^6$ and $N=10^7$: the latter the scale at which CONIKS reports its figures.
 \caption{Behaviour at CONIKS scale (distribution over \num{1000} random lookups per $N$).}
 \label{tab:eval-scale}
 \small
+\begin{threeparttable}
 \begin{tabular}{@{}lrr@{}}
 \toprule
 Quantity & $N=10^6$ & $N=10^7$ \\
 \midrule
 Leaf depth (median / mean / max) & 20 / 20.3 / 24 & 24 / 23.6 / 27 \\
 Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
-Server full search (median / p95) & 117.6 / \SI{131.7}{\micro\second} & 141.2 / \SI{2404.5}{\micro\second}\,$^{\dagger}$ \\
+Server full search (median / p95) & 117.6 / \SI{131.7}{\micro\second} & 141.2 / \SI{2404.5}{\micro\second}\tnote{$\dagger$} \\
 Prefix verify (median / p95) & 25.9 / \SI{27.0}{\micro\second} & 26.0 / \SI{28.0}{\micro\second} \\
 VRF verify (median / p95) & 80.0 / \SI{92.7}{\micro\second} & 81.5 / \SI{107.1}{\micro\second} \\
 \textbf{Full signed-head lookup verification (median / p95)} & \textbf{131.9} / \SI{147.9}{\micro\second} & \textbf{147.1} / \SI{179.7}{\micro\second} \\
 Build time / RSS after build & 149\,s / 2.81\,GB & 1{,}536\,s / 20.8\,GB \\
 \bottomrule
 \end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item[$\dagger$] The $10^7$ full-search 95th percentile of \SI{2404.5}{\micro\second} (an order of
+magnitude above its \SI{141.2}{\micro\second} median) shows that a small fraction of lookups are far
+slower than the typical one. The proof structure does not account for it: the client-side steps that
+consume the proof (prefix and VRF verify) show no comparable tail. The harness records no paging or
+memory-pressure counters, so the source of the tail was not instrumented; a \SI{20.8}{\giga\byte}
+resident set on a \SI{31.7}{\giga\byte} machine makes memory pressure a plausible candidate, but that
+is a conjecture the data here does not test. The median is the figure quoted in the surrounding text.
+\end{tablenotes}
+\end{threeparttable}
 \end{table}
 
 The measured constancy of prefix verification across five orders of magnitude ($10^2$ to $10^7$),
@@ -411,13 +423,6 @@ measurement contexts (\cref{sec:eval-method}). The claim the data supports is th
 more slowly than the directory, not that it is invariant. The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
 tree takes about 26 minutes and leaves a \SI{20.8}{\giga\byte} resident set, which is why a production
 deployment would move to the persistent, sharded storage this prototype deliberately does not model.
-$^{\dagger}$The $10^7$ full-search 95th percentile of \SI{2404.5}{\micro\second} (an order of magnitude
-above its \SI{141.2}{\micro\second} median) shows that a small fraction of lookups are far slower than
-the typical one. The proof structure does not account for it: the client-side steps that consume the
-proof (prefix and VRF verify) show no comparable tail. The harness records no paging or
-memory-pressure counters, so the source of the tail was not instrumented; a \SI{20.8}{\giga\byte}
-resident set on a \SI{31.7}{\giga\byte} machine makes memory pressure a plausible candidate, but that
-is a conjecture the data here does not test. The median is the figure quoted above.
 
 \subsection{Operation Rates, Rotation, and Epoch Commit (M8--M11)}\label{ssec:eval-throughput}
 
