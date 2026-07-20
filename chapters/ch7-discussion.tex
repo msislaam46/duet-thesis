@@ -169,8 +169,9 @@ labels, a per-epoch transition audit in which the auditor replays each epoch's d
 against the previous committed root (the role the IETF KeyTrans protocol assigns to third-party
 auditors through its \textsf{AuditorUpdate} structure~\cite{ietf-keytrans-protocol}), and a
 writer-side persistence check that retains inclusion proofs and converts any later disappearance of
-a committed leaf into non-repudiable, publishable evidence of deletion. The prototype now implements
-all three: the server's raw-label update interface enforces the write-once policy and rejects an
+a committed leaf into non-repudiable, publishable evidence of deletion. The prototype implements all
+three, the first two in the live path and the persistence check as a tested reference component not
+yet wired into the live monitor loop (\cref{alg:detect}): the server's raw-label update interface enforces the write-once policy and rejects an
 overwrite of an occupied dual-index, CEA, or warning label; each committed epoch records a declared
 update set that the auditor replays onto its own mirror directory, checking the result against the
 committed root, so a deletion, which the delta format cannot express, makes the replay diverge
