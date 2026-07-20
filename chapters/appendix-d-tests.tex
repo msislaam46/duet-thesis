@@ -101,7 +101,7 @@ Test & Property checked \\
 \texttt{verify\_search\_result\_rejects\_wrong\_user} & the VRF label binding rejects a proof for another identity \\
 \texttt{verify\_search\_result\_raw\_dual\_index} & the raw (VRF-less) chain verifies dual-index lookups \\
 \texttt{raw\_verification\_rejects\_proof\_for\_a\_different\_label} & the raw verifier rejects a genuine proof presented for a label other than the one queried (label binding without a VRF) \\
-\texttt{verify\_search\_result\_against\_binds\_to\_head} & the head-bound verifier rejects a valid proof served against any head other than the caller's pinned, signed head (the C4 binding, \cref{ssec:design-verify}) \\
+\texttt{verify\_search\_result\_against\_binds\_to\_head} & the head-bound verifier rejects a valid proof served against any head other than the caller's pinned, signed head (the head binding, \cref{ssec:design-verify}) \\
 \texttt{against\_verifier\_rejects\_stale\_snapshot} & the head-bound verifier refuses an old-leaf inclusion presented under a newer signed head (currency pin) \\
 \texttt{snapshot\_is\_current\_pins\_the\_last\_leaf} & the currency check pins the last committed leaf, so a superseded snapshot is not accepted as current \\
 \texttt{verify\_many\_users\_end\_to\_end} & the chain holds across a populated directory \\
@@ -140,7 +140,7 @@ Module & Test & Property checked \\
 \texttt{auditor} & \texttt{transition\_audit\_passes\_for\_honest\_directory} & the declared delta replays to the committed root for an honest directory \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_deletion} & a deleted leaf makes the replay diverge and alarm \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_modification} & an in-place modification likewise diverges and alarms \\
-\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected: the C2/Option B pss-compromise path \\
+\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected: the kind-commitment pss-compromise path \\
 \texttt{auditor} & \texttt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert} & the same overwrite declared as an \textsf{Insert} of an already-present label is rejected (A1): closing the other delta-op variant \\
 \texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_replica} & a rejected transition leaves the auditor's replica untouched, so a single bad epoch cannot corrupt later audits \\
 \texttt{auditor} & \texttt{audit\_rejects\_unsigned\_or\_foreign\_sth} & an unsigned or foreign-key head is rejected before auditing \\
@@ -250,7 +250,7 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & a stale old-leaf inclusion under the current STH is refused (currency pin) \\
 \texttt{remote\_kt\_client} & \texttt{matches=true} after honest registration \\
 \texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites our slot \\
-\texttt{remote\_kt\_client} & C2/Option B: a present raw leaf tagged \textsc{mutable} is rejected (owner-side kind check) \\
+\texttt{remote\_kt\_client} & kind commitment: a present raw leaf tagged \textsc{mutable} is rejected (owner-side kind check) \\
 \texttt{remote\_kt\_client} & concurrent catch-ups do not produce a spurious append-only failure \\
 \texttt{remote\_kt\_client} & null (safe) when the own lookup slot is intact and the warning slot is empty \\
 \texttt{remote\_kt\_client} & returns a warning when our lookup slot was replaced \\

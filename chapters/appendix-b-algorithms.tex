@@ -123,14 +123,14 @@ build on. The $m=0$ case is accepted as the local trust-on-first-use convention.
 \clearpage
 \paragraph{The prefix tree (Algorithm~\ref{alg:prefix}).} The label-keyed authenticated dictionary
 holding the directory's current state: a path-compressed binary trie over 256-bit labels whose
-leaves commit their mutable-or-immutable kind into the hash (C2). Its lookups return compressed
+leaves commit their mutable-or-immutable kind into the hash. Its lookups return compressed
 proofs of inclusion \emph{and} of absence; first-class non-inclusion is what lets a client prove a
 warning slot is genuinely empty rather than merely unreported.
 \begin{algorithm}[H]
 \caption{Sparse Binary Merkle Prefix Tree (label-keyed)}\label{alg:prefix}
 \KwData{path-compressed binary trie over 256-bit labels; empty hash $e=\Hash(\varepsilon)$}
 \Fn{\normalfont\textsf{Insert}($\mathit{label},\mathit{value},\mathit{kind}$)}{
-  \Req $|\mathit{label}|=32$ \tcp*{$\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$, bound into the leaf (C2)}
+  \Req $|\mathit{label}|=32$ \tcp*{$\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$, bound into the leaf}
   place leaf $\Hleaf(\mathit{kind}\concat\mathit{label}\concat\mathit{value})$ at the bit-path of $\mathit{label}$\;
   recompute hashes along the insertion path only \tcp*{$O(256)$}
   \KwRet \textsf{RootHash}()\;
@@ -141,7 +141,7 @@ warning slot is genuinely empty rather than merely unreported.
   \KwRet $(\mathit{value}\text{ or }\bot,\ \pi)$\;
 }
 \Fn{\normalfont\textsf{RootFromProof}($\pi$)}{
-  $c\gets e$ \textbf{if} $\pi.\mathit{value}=\bot$ \textbf{else} $\Hleaf(\pi.\mathit{kind}\concat\pi.\mathit{label}\concat\pi.\mathit{value})$ \tcp*{kind authenticated by the root (C2)}\;
+  $c\gets e$ \textbf{if} $\pi.\mathit{value}=\bot$ \textbf{else} $\Hleaf(\pi.\mathit{kind}\concat\pi.\mathit{label}\concat\pi.\mathit{value})$ \tcp*{kind authenticated by the root}\;
   \For{$i\gets 0$ \KwTo $255$}{
     $s\gets$ next sibling from $\pi.\mathit{siblings}$ if $\mathit{bitmap}[i]$ set, else $e$\;
     \lIf{$c=e\wedge s=e$}{\textbf{continue}}
@@ -182,7 +182,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
   $i\gets \mathit{log}.\textsf{Append}(r)$ \tcp*{prefix root is a log leaf}
   $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
   freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
-  $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval}\concat \mathit{rawpolicy})$ \tcp*{policy commitment (CONIKS $P$); $\mathit{rawpolicy}$ binds the write-once/delta policy (H3)}
+  $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval}\concat \mathit{rawpolicy})$ \tcp*{policy commitment (CONIKS $P$); $\mathit{rawpolicy}$ binds the write-once/delta policy}
   $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ e\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{ts}\concat \mathit{ch})$ \tcp*{88-byte LE}
   $\mathit{sth}\gets(e,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{ts},\mathit{ch},\sigma)$\;
   $\mathit{epoch}\gets \mathit{epoch}+1$ \tcp*{advance only after signing this epoch's head}
@@ -205,7 +205,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 label layer of \cref{sec:design-dual}: from each conversation's shared secret, HKDF derives the two
 participant lookup labels and the canonically ordered shared warning label. \textsf{WriteWarning}
 publishes a MAC-authenticated alert and trusts neither an apparent success nor a write-once
-conflict, confirming publication by a verified read-back (T1); \textsf{CheckWarning} raises
+conflict, confirming publication by a verified read-back; \textsf{CheckWarning} raises
 \textsc{Alert} on any proven non-empty slot.
 \begin{algorithm}[H]
 \caption{Dual-Index Label Derivation (HKDF-SHA256, RFC 5869)}\label{alg:dualindex}
@@ -229,7 +229,7 @@ conflict, confirming publication by a verified read-back (T1); \textsf{CheckWarn
     \textbf{propagate} the error \tcp*{transport/other failure: availability, not censorship}
   }
   $\mathit{sth}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{confirm under a fresh validated head}
-  \lIf{$v=\bot$}{\textbf{alarm} \textsc{WarningCensored} \tcp*[f]{provably empty or unprovable: possible censorship (T1)}}
+  \lIf{$v=\bot$}{\textbf{alarm} \textsc{WarningCensored} \tcp*[f]{provably empty or unprovable: possible warning censorship}}
 }
 \Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth},\mathit{PRK}$)}{
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}
@@ -262,7 +262,7 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
     $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\mathit{label}$ \tcp*[f]{VRF path: the derived label equals the requested one}\;
   }
   \Req $\pi_{\mathrm{prefix}}.\mathit{value}=v$\;
-  \lIf{$\mathit{label}$ is a raw (dual-index / warning / CEA) label $\wedge\ v\ne\bot$}{\Req $\pi_{\mathrm{prefix}}.\mathit{kind}=\textsc{immutable}$ \tcp*[f]{C2 (raw path only): a present client-derived leaf is write-once}}
+  \lIf{$\mathit{label}$ is a raw (dual-index / warning / CEA) label $\wedge\ v\ne\bot$}{\Req $\pi_{\mathrm{prefix}}.\mathit{kind}=\textsc{immutable}$ \tcp*[f]{raw path only: a present client-derived leaf is write-once}}
   $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
   \Req $\textsf{VerifyInclusion}(r,\pi_{\mathrm{incl}}.\mathit{index},\pi_{\mathrm{incl}}.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pi_{\mathrm{incl}}.\mathit{path})$\;
   \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{currency: the proof must cover the last log leaf; an older leaf's inclusion also verifies (inclusion $\ne$ currency, RFC 9162)}
@@ -374,7 +374,7 @@ Each head is processed as one all-or-nothing transaction: the epoch range is rep
 \emph{candidate replica} and committed to the live replica, cursor, and baseline only if every stage
 passes, while a failed delta fetch aborts and is retried on the next poll rather than raising a fork
 alarm. After committing, \textsc{Consistent} (a valid second-vantage head agreed) is distinguished
-from \textsc{ConsistentNoVantage} (none available), so a missing cross-vantage check is never mistaken
+from \textsc{ConsistentNoVantage} (no valid second-vantage head was available), so a missing cross-vantage check is never mistaken
 for a passed one; the in-process library auditor used by the unit tests is an incremental variant,
 behaviourally equivalent on an honest log.
 

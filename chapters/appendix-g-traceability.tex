@@ -27,7 +27,7 @@ M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; \SIrange{12
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 Merkle-log exhaustive-consistency and windowed-consistency tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
-M4 & \cref{ssec:eval-catchup}: 320\,B @ $W{=}720$, ratio $\approx W$ against the synthetic current-head-anchored baseline \\
+M4 & \cref{ssec:eval-catchup}: 320\,B @ $W{=}720$, ratio $\approx W$ against the synthetic current-head-anchored sequential baseline \\
 RQ4 & the client verifier integrates into a real messaging-client codebase (Signal Desktop) as a prototype (advisory hook), at a measured local cost &
 TypeScript verifier + lifecycle hooks (\cref{sec:impl-signal}) &
 Jest wire-parity and unit suites (\cref{sec:tests-ts}); live demonstration (\cref{ssec:impl-demo}) &

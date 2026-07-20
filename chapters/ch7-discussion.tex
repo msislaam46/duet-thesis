@@ -170,15 +170,16 @@ against the previous committed root (the role the IETF KeyTrans protocol assigns
 auditors through its \textsf{AuditorUpdate} structure~\cite{ietf-keytrans-protocol}), and a
 writer-side persistence check that retains inclusion proofs and converts any later disappearance of
 a committed leaf into non-repudiable, publishable evidence of deletion. The prototype implements all
-three, the first two in the live path and the persistence check as a tested reference component not
-yet wired into the live monitor loop (\cref{alg:detect}): the server's raw-label update interface enforces the write-once policy and rejects an
-overwrite of an occupied dual-index, CEA, or warning label; each committed epoch records a declared
-update set that the auditor replays onto its own replica directory, checking the result against the
-committed root, so a deletion, which the delta format cannot express, makes the replay diverge
-and is detected; and the writer-side persistence check retains the inclusion proof and signed tree
-head of a committed warning and, on any later disappearance, assembles the inclusion proof, the
-proven non-inclusion, and the consistency proof between the two heads into a bundle that verifies
-against the server's own signatures. The one remaining deployment-path item is authenticated writes
+three. The write-once rule and transition audit are active in the live path; the persistence check is
+a tested reference component not yet wired into the live monitor loop (\cref{alg:detect}). In the live
+path, the server's raw-label update interface enforces the write-once policy and rejects an overwrite
+of an occupied dual-index, CEA, or warning label, and each committed epoch records a declared update
+set that the auditor replays onto its own replica directory, checking the result against the committed
+root, so a deletion, which the delta format cannot express, makes the replay diverge and is detected.
+The writer-side persistence check retains the inclusion proof and signed tree head of a committed
+warning and, on any later disappearance, assembles the inclusion proof, the proven non-inclusion, and
+the consistency proof between the two heads into a bundle that verifies against the server's own
+signatures. The one remaining deployment-path item is authenticated writes
 (account-layer proof that a caller owns the raw label it writes), without which the write-once
 policy still binds an honest server and the auditor still binds a malicious one, but a malicious
 \emph{client} could pre-emptively occupy an as-yet-empty peer slot. The in-process implementation and its

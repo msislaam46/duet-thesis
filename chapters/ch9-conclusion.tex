@@ -57,8 +57,9 @@ to its supporting evidence is tabulated in \cref{app:traceability}
 The result is a design that detects rather than prevents (a server can still substitute a key, but
 for a monitored, established conversation it can no longer do so silently) and that presents a deployment such as Signal with a narrow,
 well-defined addition rather than a wholesale change: a write path for warning and per-session labels
-alongside the identity directory it already maintains, at microseconds of client verification work
-per conversation check. The clearest remaining step, binding the labels to the live X3DH secret in place of the
+alongside the identity directory it already maintains. The check uses one or two label-bound lookups;
+M3 shows that one full signed-head lookup-verification invocation remains sub-millisecond, and the
+combined detector latency was not measured. The clearest remaining step, binding the labels to the live X3DH secret in place of the
 prototype's stand-in (\cref{ch:discussion}), is a necessary security-integration step whose
 correctness and operational cost remain to be evaluated. Key
 transparency has, until now, told users that they must check their keys themselves; this work shows

@@ -192,7 +192,7 @@ single-index path (\cref{tab:eval-sizes}).}
 
 The VRF-indexed lookup proof decomposes as a fixed \num{177}\,byte constant (an \num{80}\,byte
 ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{97}\,bytes of metadata: a \num{32}\,byte label, a
-\num{32}\,byte value, a \num{1}\,byte C2 leaf-kind commitment (\cref{ssec:design-detection}), and a
+\num{32}\,byte value, a \num{1}\,byte leaf-kind commitment (\cref{ssec:design-detection}), and a
 \num{32}\,byte sibling bitmap) on
 top of $32$ bytes per prefix hash, giving
 \begin{equation}\label{eq:eval-proofsize}
@@ -282,7 +282,7 @@ and would be larger on both sides of the comparison.
 
 \begin{table}[ht]
 \centering
-\caption[Offline catch-up bandwidth versus window.]{Offline catch-up, raw consistency-path hash bytes: synthetic sequential baseline ($W$
+\caption[Offline catch-up bandwidth versus window.]{Offline catch-up, raw consistency-path hash bytes: synthetic current-head-anchored sequential baseline ($W$
 current-head-anchored proofs) versus windowed, any $N$.}
 \label{tab:eval-catchup}
 \small

@@ -230,13 +230,14 @@ directory size is given in \cref{tab:bench-scale}.
 \caption{M7: distribution over $1{,}000$ random lookups per $N$.}
 \label{tab:bench-scale}
 \small
+\begin{threeparttable}
 \begin{tabular}{@{}lrr@{}}
 \toprule
 Quantity & $N=10^6$ & $N=10^7$ \\
 \midrule
 Leaf depth (median / mean / max) & 20 / 20.28 / 24 & 24 / 23.57 / 27 \\
 Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
-Server full search (median / p95, \si{\micro\second}) & 117.6 / 131.7 & 141.2 / 2404.5$^{\dagger}$ \\
+Server full search (median / p95, \si{\micro\second}) & 117.6 / 131.7 & 141.2 / 2404.5\tnote{$\dagger$} \\
 Prefix verify (median / p95, \si{\micro\second}) & 25.9 / 27.0 & 26.0 / 28.0 \\
 VRF verify (median / p95, \si{\micro\second}) & 80.0 / 92.7 & 81.5 / 107.1 \\
 \textbf{Full signed-head lookup verification (median / p95, \si{\micro\second})} & \textbf{131.9} / 147.9 & \textbf{147.1} / 179.7 \\
@@ -244,9 +245,9 @@ Build time & 149.0\,s & 1{,}535.9\,s \\
 RSS after build & 2{,}812\,MB & 20{,}786\,MB \\
 \bottomrule
 \end{tabular}
-\end{table}
-
-\noindent$^{\dagger}$The $10^7$ full-search 95th percentile (\SI{2404.5}{\micro\second}) sits an order
+\begin{tablenotes}
+\footnotesize
+\item[$\dagger$] The $10^7$ full-search 95th percentile (\SI{2404.5}{\micro\second}) sits an order
 of magnitude above its \SI{141.2}{\micro\second} median, so a small fraction of lookups are far slower
 than the typical one. The proof itself does not explain it: the verification steps that consume the
 proof (prefix, VRF) show no comparable tail. The harness records no page-fault, paging, or
@@ -255,6 +256,9 @@ A plausible candidate, given a \num{20786}\,MB working set on a \num{31.7}\,GB m
 stalls as the resident set approaches available memory; a deployment on persistent, sharded storage
 would have a different memory profile, though whether that removes the tail is untested. The median is
 the figure the chapter quotes.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
 
 % ----------------------------------------------------------------------------
 \section{Session versus Continuous Mode (M13)}\label{sec:bench-modes}

@@ -595,15 +595,14 @@ server implements this draft, ``with some modifications''~\cite{signal-kt-server
 using an elliptic-curve VRF from the family the standard recommends, an
 independent endorsement of these design choices.
 
-Since the architecture is assembled from standardized primitives, it is worth
-recording precisely which standards the later chapters build on. The Merkle log
+The later construction uses the following standardized primitives. The Merkle log
 tree and its inclusion and consistency proofs are those of RFC~6962 and
 RFC~9162~\cite{rfc6962,rfc9162}; the verifiable random function is that of
 RFC~9381~\cite{rfc9381}, and the key-derivation step used later, when a label is
 derived from a session secret, is HKDF, the HMAC-based extract-and-expand
 key-derivation function of RFC~5869~\cite{rfc5869}. Grounding each construction
 in its specification fixes the exact algorithm rather than an informal sketch of
-it. The draft is also candid about one question it leaves open: it calls for
+it. The draft leaves one question open: it calls for
 ``reasonable monitoring windows'' so that intermittently-connected mobile
 clients need not replay every missed update, but leaves the mechanism for
 achieving them unspecified~\cite{ietf-keytrans-protocol}. This open question is
@@ -919,8 +918,7 @@ scalability-and-monitoring baseline among the academic systems, yet it shares th
 no-in-band-peer-warning gap common to every system surveyed (\cref{sec:bg-open}).
 
 \subsubsection{PRISM}
-PRISM takes the most different route and is best read as a
-foil~\cite{pusch2025prism}. Its construction is a \emph{zero-knowledge rollup}: a
+PRISM takes the most different route and provides a contrasting design~\cite{pusch2025prism}. Its construction is a \emph{zero-knowledge rollup}: a
 zero-knowledge virtual machine (zkVM) operating over a Jellyfish Merkle tree
 produces a succinct, constant-size proof of each epoch's state transition and
 posts it to a third-party data-availability layer (the Celestia blockchain), so
@@ -1395,7 +1393,7 @@ is not hypothetical, consider hourly epochs with pre-keys rotating every $r = 30
 days: a client offline for a full rotation period faces $W = r \cdot 24 = 720$
 epochs, and must re-verify 720 consistency proofs in sequence for a single month
 offline: a linear, avoidable overhead that grows with the gap. \Cref{ssec:eval-catchup}
-measures the synthetic sequential baseline for this window at \num{222528} raw
+measures the synthetic current-head-anchored sequential baseline for this window at \num{222528} raw
 consistency-path hash bytes (serialized transfer was not measured), which the windowed
 proof replaces with a single proof. This is an acknowledged open problem rather than an oversight: the
 IETF draft flags ``reasonable monitoring windows'' for mobile clients as

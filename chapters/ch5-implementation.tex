@@ -223,10 +223,11 @@ but a malicious client could pre-emptively occupy an as-yet-empty peer slot (\cr
 \begin{figure}[htbp]
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
-\caption[Transition-audit state flow.]{The networked auditor (\cref{alg:auditor}), in two parts:
-(a)~head classification and (b)~transactional replay must both pass before the state updates
-atomically; a valid second-vantage head, when available, adds a third check; an unavailable one
-yields no fork verdict and does not block the commit.}
+\caption[Transition-audit state flow.]{The networked auditor first classifies the head
+(\cref{alg:auditor}) and then replays the declared transitions transactionally. Both checks must pass
+before the state updates atomically. When a valid second-vantage head is available, it provides an
+additional fork check; if it is unavailable, no G4 verdict is reached and the primary commit is not
+blocked.}
 \label{fig:impl-transition-audit}
 \end{figure}
 \FloatBarrier
@@ -535,7 +536,7 @@ equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
 windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding (A2) \\
 availability routing & monitor (TS) & an unreachable server yields amber, not red & a network partition is not an attack \\
-key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified (T1) \\
+key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified \\
 \bottomrule
 \end{tabularx}
 \end{table}

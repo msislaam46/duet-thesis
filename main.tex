@@ -146,26 +146,20 @@ proof between the last trusted and current tree heads, so a client requests and 
 rather than one for each of the $W$ missed epochs, with size logarithmic in the endpoint log sizes
 rather than linear in the epochs it missed.
 
-The empirical results are component measurements of the implemented verification chain rather than a
-head-to-head comparison with a fielded system. On a directory of up to $10^6$ labels, the
-implemented (VRF-indexed) lookup proof has a median size of \SI{817}{B}, comparable to a dense
-Merkle-log inclusion proof at the same directory size, and median full client verification stays
-below \SI{150}{\micro\second} through $10^7$ labels, growing far more slowly than $N$
-(\SIrange{128.1}{147.1}{\micro\second}). A single windowed consistency proof carries \SI{320}{B} of
-raw path hashes at a one-month window; a synthetic baseline that re-fetches a current-head-anchored
-proof on each of the $W$ occasions instead spends \SI{222528}{B}, so the single proof is smaller by a
-factor of \num{695} against that repeated-proof workload (standard RFC~9162 already serves the
-single distant-head proof directly). In a two-client demonstration the linked clients surface
-substitution warnings in band, and a separate cross-vantage auditor detects equivocation.
+These are component measurements of the verification chain, not a head-to-head comparison with a
+fielded system. On a directory of up to $10^6$ labels the (VRF-indexed) lookup proof has a median
+size of \SI{817}{B}, comparable to a dense Merkle-log inclusion proof at the same size, and median
+full client verification stays below \SI{150}{\micro\second} through $10^7$ labels, growing far more
+slowly than $N$. A single windowed consistency proof is smaller than re-fetching one proof per
+missed epoch by a factor of \num{695} at a one-month window. In a two-client demonstration the
+linked clients raise substitution warnings in band and a separate cross-vantage auditor detects
+equivocation.
 
 These results show that an in-band peer-warning channel and a single distant-head consistency proof
-can be added to a CONIKS-style messaging directory (measured to $10^7$ labels) without changing the
-asymptotic complexity of the proofs it already serves, using additional lookups of the existing proof
-shape. The integration into Signal Desktop is a prototype: it uses an advisory verification hook and
-deterministic stand-ins for the live session secret, so it demonstrates hook placement, proof
-verification, and warning propagation rather than the end-to-end security of labels bound to a live
-X3DH secret. The thesis sets out what remains between this measured prototype and a production
-deployment.
+can be added to a CONIKS-style messaging directory without changing its proof asymptotics. The Signal
+Desktop integration remains a prototype: its advisory hook and deterministic session-secret stand-ins
+demonstrate proof verification and warning propagation, not end-to-end security with live X3DH-bound
+labels. The thesis sets out what remains between this measured prototype and a production deployment.
 \end{abstract}
 
 \chapter*{Acknowledgements}

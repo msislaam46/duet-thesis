@@ -105,7 +105,7 @@ authenticates. The STH signs, under Ed25519, the 88-byte little-endian message
 where $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
 \mathit{pk}_{\mathsf{sth}} \concat \mathit{suite} \concat \mathit{version} \concat
 \mathit{epoch\_interval} \concat \mathit{raw\_label\_policy})$, the trailing byte binding the
-write-once raw-label policy (C2/H3) so the server cannot silently relax it. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
+write-once raw-label policy (the leaf-kind commitment and the policy commitment) so the server cannot silently relax it. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
 required by the inclusion and consistency verifiers. Signing the $\mathit{timestamp}$
 means STH freshness cannot be forged, and the trailing $\Hash(\mathit{config})$ is a
 CONIKS-style policy commitment (the field CONIKS calls $P$) that binds the provider's
@@ -180,10 +180,10 @@ The dual-index scheme closes Problem~1 of \cref{sec:bg-open} (the absence of
 an in-band peer-warning channel) and so achieves Goal~G1 (Key-Substitution Detection) against the substitution
 attacks A1, A3, and A5 of \cref{ch:threat} by two complementary mechanisms. An in-band warning
 channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5). The
-secret-derived dual-index lookup labels catch a network man-in-the-middle (A3): an attacker holding a
-different shared secret derives disjoint labels, so a proof-verified lookup misses; and the separate
-global VRF-anchored directory entry catches any pre-emptive occupation of the victim's expected slot,
-since such a value cannot match it.
+secret-derived dual-index labels detect a network man-in-the-middle (A3): an attacker with a
+different shared secret derives disjoint labels, so the proof-verified lookup returns non-inclusion. A
+separate comparison with the peer's global VRF-anchored directory entry detects pre-emptive occupation
+of the expected slot, because an attacker-controlled value cannot match the authenticated global key.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
 
