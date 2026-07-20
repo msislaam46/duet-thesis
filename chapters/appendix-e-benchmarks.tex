@@ -195,6 +195,8 @@ $6{,}630$ updates/s, single-thread. M9 epoch commit scales roughly linearly in $
 $10\times$ increase), reflecting the deep-clone snapshot (which now also copies each leaf's chain
 memo) discussed in \cref{ch:eval}.
 
+\FloatBarrier
+
 \medskip\noindent\emph{Auditor (M12), the local append-only cryptographic kernel: an STH signature
 check plus consistency-proof generation and verification, and a fork check against \emph{one}
 observed head. It excludes the full \texttt{audit\_epoch} transition replay, network transfer, and
