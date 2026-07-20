@@ -345,7 +345,7 @@ The point is only that indistinguishability cannot be asserted here. Either way,
 unverified server-side read of the warning slot and is not a detector-latency measurement. Over
 \num{1000} clean sessions the false-positive rate (M6) is \num{0}; this is a sanity check rather than
 independent evidence, since a spurious collision at a 256-bit HKDF-derived warning label is
-cryptographically negligible. In the deployed path, \texttt{detectMitm} (\cref{sec:impl-signal}) first
+cryptographically negligible. In the implemented reference path, \texttt{detectMitm} (\cref{sec:impl-signal}) first
 performs a proof-carrying lookup of the owner slot and verifies that it contains the client's key. If
 that check passes, it performs a second lookup and verifies a non-inclusion proof for the warning slot,
 since an unproven ``empty'' would let the server censor the warning. The clean path therefore performs
@@ -354,9 +354,11 @@ prefix-tree and log path \emph{without} the VRF component, so the full VRF-index
 ($\approx$\SI{128}{\micro\second} median locally) is only a conservative local \emph{upper} proxy for
 the verification work of one such lookup. M3 does not measure either detector request, and no
 two-request total is derived from it. The complete workflow, including the network round-trips a
-deployment adds, was not measured. This thesis therefore does not report end-to-end detection latency. Detection remains
-automatic and silent, in sharp contrast to the manual safety-number ceremony it replaces, which only
-about 14\% of users complete without guidance~\cite{vaziripour2017}.
+deployment adds, was not measured. This thesis therefore does not report end-to-end detection latency.
+Detection runs automatically and requires no manual safety-number comparison, in sharp contrast to the
+ceremony it replaces, which only about 14\% of users complete without
+guidance~\cite{vaziripour2017}. When it reports a problem, the prototype's advisory hook surfaces a
+warning, although it does not yet block session establishment.
 
 % ============================================================================
 \section{Scalability and the Mode Trade (M7--M13)}\label{sec:eval-scale}
