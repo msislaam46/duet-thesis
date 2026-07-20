@@ -173,7 +173,7 @@ a committed leaf into non-repudiable, publishable evidence of deletion. The prot
 three. The write-once rule and transition audit are active in the live path; the persistence check is
 a tested reference component not yet wired into the live monitor loop (\cref{alg:detect}). In the live
 path, the server's raw-label update interface enforces the write-once policy and rejects an overwrite
-of an occupied dual-index, CEA, or warning label, and each committed epoch records a declared update
+of an occupied dual-index, CEA, or warning label. Each committed epoch records a declared update
 set that the auditor replays onto its own replica directory, checking the result against the committed
 root, so a deletion, which the delta format cannot express, makes the replay diverge and is detected.
 The writer-side persistence check retains the inclusion proof and signed tree head of a committed

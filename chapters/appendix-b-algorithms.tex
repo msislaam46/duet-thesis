@@ -375,10 +375,9 @@ Each head is processed as one all-or-nothing transaction: the epoch range is rep
 passes, while a failed delta fetch aborts and is retried on the next poll rather than raising a fork
 alarm. After committing, \textsc{Consistent} (a valid second-vantage head agreed) is distinguished
 from \textsc{ConsistentNoVantage} (no valid second-vantage head was available), so a missing cross-vantage check is never mistaken
-for a passed one; the in-process library auditor used by the unit tests is an incremental variant,
-behaviourally equivalent on an honest log.
+for a passed one; the unit-test library auditor is an equivalent incremental variant.
 
-{\SetAlFnt{\footnotesize}%
+{\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
 \caption{Networked auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
 \KwData{trusted baseline head $\mathit{last}$ (initially $\bot$); committed $\mathit{replica}$ (a PrefixTree,
@@ -420,7 +419,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \KwRet \textsc{Pass}\;
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_b},\mathit{sth_{new}},\mathit{server}$)}{
-  \lIf{$\mathit{sth_b}=\bot\ \vee\ \neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_b})\ \vee\ \mathit{sth_b}.\mathit{epoch}+1\ne\mathit{sth_b}.\mathit{size}$}{\KwRet \textsc{InvalidHead} \tcp*[f]{no G4 verdict; does not block the primary commit}}
+  \lIf{$\mathit{sth_b}=\bot\ \vee\ \neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_b})\ \vee\ \mathit{sth_b}.\mathit{epoch}+1\ne\mathit{sth_b}.\mathit{size}$}{\KwRet \textsc{InvalidHead} \tcp*[f]{no G4; commit proceeds}}
   \uIf{$\mathit{sth_b}.\mathit{size}=\mathit{sth_{new}}.\mathit{size}$}{
     \lIf{$\mathit{sth_b}.\mathit{root}\ne\mathit{sth_{new}}.\mathit{root}$}{\KwRet \textsc{Fork}}
   }

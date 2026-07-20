@@ -105,7 +105,7 @@ authenticates. The STH signs, under Ed25519, the 88-byte little-endian message
 where $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
 \mathit{pk}_{\mathsf{sth}} \concat \mathit{suite} \concat \mathit{version} \concat
 \mathit{epoch\_interval} \concat \mathit{raw\_label\_policy})$, the trailing byte binding the
-write-once raw-label policy (the leaf-kind commitment and the policy commitment) so the server cannot silently relax it. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
+write-once raw-label policy so the server cannot silently relax it. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
 required by the inclusion and consistency verifiers. Signing the $\mathit{timestamp}$
 means STH freshness cannot be forged, and the trailing $\Hash(\mathit{config})$ is a
 CONIKS-style policy commitment (the field CONIKS calls $P$) that binds the provider's
