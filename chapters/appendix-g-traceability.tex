@@ -23,7 +23,7 @@ M5, M6 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M6 find
 RQ2 & detection does not enlarge an individual per-lookup proof; verification stays below the latency target and grows far more slowly than $N$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
 prefix-tree, VRF, and Merkle-log tests; cross-language vectors (\cref{app:tests}) &
-M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; \SI{128.1}{\micro\second} at $10^3$--$10^4$, rising to \SI{147.1}{\micro\second} at $10^7$ \\
+M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; \SIrange{128.1}{128.6}{\micro\second} at $10^3$--$10^4$, rising to \SI{147.1}{\micro\second} at $10^7$ \\
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 Merkle-log exhaustive-consistency and windowed-consistency tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &

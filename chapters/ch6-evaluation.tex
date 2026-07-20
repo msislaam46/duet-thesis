@@ -369,7 +369,8 @@ operating mode.
 
 \subsection{Scale to CONIKS Size (M7)}\label{ssec:eval-scale}
 
-To show the design holds at deployment scale, the size and verification measurements were repeated at
+To evaluate the prototype at a published large-directory reference point ($10^7$ labels, the scale
+CONIKS reports), the size and verification measurements were repeated at
 $N=10^6$ and $N=10^7$: the latter the scale at which CONIKS reports its figures.
 \Cref{tab:eval-scale} gives the distribution over \num{1000} random lookups per $N$.
 
@@ -771,18 +772,18 @@ key in an earlier epoch flags the change directly on its next fetch.}
 
 \subsection{Residual Risks and Posture}\label{ssec:eval-posture}
 
-The overall posture follows from the preceding artefacts. The marginal in-memory warning-slot read
-costs tens of microseconds of client work; end-to-end detection latency, which additionally requires
-the verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure,
-was not quantified. No false alarms were observed over
-\num{1000} clean deterministic sessions, so the warning channel raised no spurious alarms in that run. The residual
-risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the label$\leftrightarrow$user
-mapping, outside what any transparency layer removes) and three availability functions left to a
-production deployment. This is the gap the design set out to close: where the deployed WhatsApp
-AKD ships with client key-history monitoring not yet enabled and directs the user to verify the
-session \emph{manually} with the contact when an automatic check fails~\cite[pp.~5,
-10]{whatsapp2023whitepaper}, and where unprompted users rarely locate and complete such a manual
-ceremony (\cref{ssec:eval-detection}), DUET delivers the same detection in-band and without user
+The overall posture follows from the measurements above. The marginal in-memory warning-slot read (M5)
+costs on the order of a microsecond of server-side work (\SI{1.62}{\micro\second} clean,
+\SI{1.72}{\micro\second} attacked); end-to-end detection latency, which additionally requires the two
+verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure, was
+not quantified. No false alarms were observed over \num{1000} clean deterministic sessions (M6). The
+residual risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the
+label$\leftrightarrow$user mapping, outside what any transparency layer removes) and three availability
+functions left to a production deployment. These bear on the gap the design set out to close: the
+deployed WhatsApp AKD ships with client key-history monitoring not yet enabled and directs the user to
+verify the session \emph{manually} with the contact when an automatic check fails~\cite[pp.~5,
+10]{whatsapp2023whitepaper}, and unprompted users rarely locate and complete such a manual ceremony
+(\cref{ssec:eval-detection}). DUET instead provides automatic, in-band detection that needs no user
 action.
 
 % ============================================================================

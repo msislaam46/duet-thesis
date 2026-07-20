@@ -141,8 +141,8 @@ M3 VRF verify (dual-index)           & $10^4$ & 76.0  & 92.0  & 0.76 \\
 
 \medskip\noindent\emph{The marginal warning-slot lookup (M5) is the cost of the warning-slot read on top
 of a lookup the client already verifies. This is \emph{not} the detector: it is an unverified read,
-taken in clean state, whereas the detector performs two proof-carrying lookups
-(\cref{ssec:eval-detection}). The read's underlying cost is data-dependent (a compressed-leaf sibling on the
+taken in clean state, whereas the detector performs one or two proof-carrying lookups (the owner slot
+always, and the warning slot only when the owner check passes; \cref{ssec:eval-detection}). The read's underlying cost is data-dependent (a compressed-leaf sibling on the
 co-path implies a subtree-hash chain of up to \num{256} levels), but the implementation memoizes
 each leaf's chain top (\cref{sec:impl-modules}), so the sampled check reads
 ${\approx}$\SI{1.6}{\micro\second} independent of $N$, with only a cold leaf's first touch paying
@@ -185,8 +185,7 @@ M9 epoch commit (windowed)           & $10^3$ & 464.0 & 486.5 & 2.12 \\
 M9 epoch commit (windowed)           & $10^4$ & 5915.7 & 7056.6 & 67.76 \\
 M10 VRF prove (isolated)             &        & 117.4 & 122.3 & 0.90 \\
 M10 VRF verify (isolated)            &        & 78.5  & 89.9  & 0.68 \\
-M11 KT lookup-verification cost at the handshake hook (windowed baseline)    & $10^3$ & 128.1 & 144.4 & 0.73 \\
-M11 KT lookup-verification cost at the handshake hook (windowed baseline)    & $10^4$ & 128.6 & 152.0 & 0.90 \\
+M11 handshake-hook lookup verification & & \multicolumn{3}{l}{identical to M3 (\cref{ssec:eval-latency})} \\
 \bottomrule
 \end{tabular}
 \end{table}

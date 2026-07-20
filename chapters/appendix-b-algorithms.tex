@@ -98,7 +98,7 @@ implementation enforces it at the API boundary.
   \KwRet $\mathit{sn}=0\wedge r=\mathit{root}$ \tcp*{rejects short/padded paths}
 }
 \Fn{\normalfont\textsf{ConsistencyProof}($m,n$)}{
-  \Req $0\le m\le n$\;
+  \Req $0\le m\le n$ \tcp*{$m=0$ accepted as the local TOFU convention; RFC 9162 assumes $0<m<n$}
   \lIf{$m=0\vee m=n$}{\KwRet $[\,]$}
   \KwRet $\textsf{SUBPROOF}(m,D[0{:}n],\mathrm{true})$ \tcp*{\S2.1.4.1}
 }
@@ -109,7 +109,7 @@ implementation enforces it at the API boundary.
   \lIf{$m$ is a power of two}{$\mathit{proof}\gets \mathit{old\_root}:\mathit{proof}$}
   $\mathit{fn}\gets m-1$;\ \ $\mathit{sn}\gets n-1$\;
   right-shift $\mathit{fn},\mathit{sn}$ while $\mathit{fn}$ odd\;
-  $\mathit{fr}\gets\mathit{proof}[0]$;\ \ $\mathit{sr}\gets\mathit{proof}[0]$\;
+  $\mathit{fr}\gets\mathit{proof}[0]$;\ \ $\mathit{sr}\gets\mathit{proof}[0]$ \tcp*{both roots intentionally seed from the same $\mathit{proof}[0]$ (RFC 9162 \S2.1.4.2)}
   fold remaining proof entries into $(\mathit{fr},\mathit{sr})$ per \S2.1.4.2\;
   \KwRet $\mathit{fr}=\mathit{old\_root}\wedge \mathit{sr}=\mathit{new\_root}\wedge \mathit{sn}=0$\;
 }
@@ -162,14 +162,15 @@ implementation enforces it at the API boundary.
   record \textsf{Insert}$(\mathit{label},\mathit{value},\textsc{immutable})$ in the epoch's declared delta\;
 }
 \Fn{\normalfont\textsf{CommitEpoch}()}{
+  $e\gets \mathit{epoch}$ \tcp*{capture the epoch being committed}
   $r\gets \mathit{live}.\textsf{RootHash}()$\;
   $i\gets \mathit{log}.\textsf{Append}(r)$ \tcp*{prefix root is a log leaf}
   $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
   freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
-  $\mathit{epoch}\gets \mathit{epoch}+1$\;
   $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval}\concat \mathit{rawpolicy})$ \tcp*{policy commitment (CONIKS $P$); $\mathit{rawpolicy}$ binds the write-once/delta policy (H3)}
-  $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ \mathit{epoch}{-}1\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{ts}\concat \mathit{ch})$ \tcp*{88-byte LE}
-  $\mathit{sth}\gets(\mathit{epoch}{-}1,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{ts},\mathit{ch},\sigma)$\;
+  $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ e\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{ts}\concat \mathit{ch})$ \tcp*{88-byte LE}
+  $\mathit{sth}\gets(e,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{ts},\mathit{ch},\sigma)$\;
+  $\mathit{epoch}\gets \mathit{epoch}+1$ \tcp*{advance only after signing this epoch's head}
   \KwRet $\mathit{sth}$\;
 }
 \Fn{\normalfont\textsf{Search}($\mathit{label}$)}{
@@ -192,15 +193,14 @@ implementation enforces it at the API boundary.
   $\mathit{PRK}\gets \textsf{HKDF-Extract}(\text{salt}=\texttt{"duet-dual-index"},\ \sharedS)$\;
   $\lself\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"lookup"}\concat \mathit{id_{self}}\concat \mathit{id_{peer}},32)$\;
   $\lpeer\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"lookup"}\concat \mathit{id_{peer}}\concat \mathit{id_{self}},32)$\;
-  $(\mathit{lo},\mathit{hi})\gets \textsf{sort}(\mathit{id_{self}},\mathit{id_{peer}})$ \tcp*{canonical order: warning only}
-  $\lwarn\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warning"}\concat \mathit{lo}\concat \mathit{hi},32)$\;
+  $\lwarn\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warning"}\concat \min(\mathit{id_{self}},\mathit{id_{peer}})\concat \max(\mathit{id_{self}},\mathit{id_{peer}}),32)$ \tcp*{canonical order (warning only), the same $\min/\max$ used by \textsf{WriteWarning}}
   \KwRet $(\lself,\lpeer,\lwarn)$\;
 }
 \Fn{\normalfont\textsf{WriteWarning}($\mathit{server},\lwarn,\mathit{alert},\mathit{PRK}$)}{
-  \lIf{$\mathit{server}$ already holds a value at $\lwarn$}{\KwRet \tcp*[f]{slot is write-once; an existing value already alerts both monitors}}
-  $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$ \tcp*{canonical identities bind $k_{\mathrm{mac}}$ to the pair; only the two parties can compute it}
-  $\mathit{server}.\textsf{UpdateRaw}(\lwarn,\ \mathit{alert}\concat\textsf{MAC}(k_{\mathrm{mac}},\mathit{alert}))$\;
-  after the next epoch commits: $\textsf{RecordWarning}(\lwarn)$ \tcp*{retain evidence (Alg.~\ref{alg:detect})}
+  $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$ \tcp*{canonical identities bind $k_{\mathrm{mac}}$ to the pair}
+  attempt $\mathit{server}.\textsf{UpdateRaw}(\lwarn,\ \mathit{alert}\concat\textsf{MAC}(k_{\mathrm{mac}},\mathit{alert}))$; $\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{no pre-check; a write-once conflict is tolerated, not trusted}
+  $\mathit{sth}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{confirm under a fresh validated head}
+  \lIf{$v=\bot$}{\textbf{alarm} \textsc{WarningCensored} \tcp*[f]{provably empty or unprovable: possible censorship (T1)}}
 }
 \Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth},\mathit{PRK}$)}{
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}
@@ -216,7 +216,9 @@ trust boundary: every value it accepts is checked against a signed tree head bef
 \textsf{VerifiedLookup} returns a value only when the prefix proof, the log-inclusion proof, and the
 STH signature all verify and bind to the caller's pinned head, and it fails closed on any mismatch.
 \textsf{Register}, \textsf{RetrieveKey}, and \textsf{WindowedCatchUp} build on it to establish, read,
-and re-synchronize client state.
+and re-synchronize client state. In the implementation these are realized by monitor-level composition
+(the background \texttt{monitorConversation} loop) rather than as one-to-one methods; \textsf{RetrieveKey}'s
+non-null requirement, for instance, is enforced by that composed monitor rather than by a standalone call.
 
 \begin{algorithm}[H]
 \caption{Client Verification, Registration, Retrieval, Windowed Catch-Up}\label{alg:client}
@@ -225,11 +227,13 @@ and re-synchronize client state.
   $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
   \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to the caller's verified head; a signed but stale/forked head is rejected}
+  \Req $\mathit{sth'}.\mathit{config\_hash}=\textsf{H}(P)\ \wedge\ \mathit{sth'}.\mathit{epoch}+1=\mathit{sth'}.\mathit{tree\_size}$ \tcp*{policy pin ($P$ = pinned keys/suite/version/cadence/policy) and well-formed head}
   \Req $\pi_{\mathrm{prefix}}.\mathit{label}=\mathit{label}$ \tcp*{label binding (every path): the proof must speak about the requested label, so a valid proof for a different label is rejected}
   \If{$\mathit{user\_id}$ given}{
     $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\mathit{label}$ \tcp*[f]{VRF path: the derived label equals the requested one}\;
   }
   \Req $\pi_{\mathrm{prefix}}.\mathit{value}=v$\;
+  \lIf{$\mathit{label}$ is a raw (dual-index / warning / CEA) label $\wedge\ v\ne\bot$}{\Req $\pi_{\mathrm{prefix}}.\mathit{kind}=\textsc{immutable}$ \tcp*[f]{C2 (raw path only): a present client-derived leaf is write-once}}
   $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
   \Req $\textsf{VerifyInclusion}(r,\pi_{\mathrm{incl}}.\mathit{index},\pi_{\mathrm{incl}}.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pi_{\mathrm{incl}}.\mathit{path})$\;
   \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{currency: the proof must cover the last log leaf; an older leaf's inclusion also verifies (inclusion $\ne$ currency, RFC 9162)}
@@ -254,8 +258,7 @@ and re-synchronize client state.
   \uIf{$\mathit{last\_sth}=\bot$}{
     $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}); no history to check}
   }\Else{
-    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch} \lor \mathit{sth_{new}}.\mathit{size}<\mathit{last\_sth}.\mathit{size}$}{\textbf{raise} Fork}
-    \tcc{an honest append-only head never regresses in epoch or size}
+    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch} \lor \mathit{sth_{new}}.\mathit{size}<\mathit{last\_sth}.\mathit{size}$}{\textbf{raise} Fork \tcp*[f]{an honest append-only head never regresses}}
     \uIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last\_sth}.\mathit{size}$}{
       \Req $\mathit{sth_{new}}.\mathit{root}=\mathit{last\_sth}.\mathit{root}$ \tcp*{unchanged head: equal size with a differing root is same-epoch equivocation, else \textbf{raise} Fork; only the consistency proof is skipped}
     }\Else{
@@ -275,9 +278,12 @@ and re-synchronize client state.
 \paragraph{Detection and persistence (Algorithm~\ref{alg:detect}).} This is the monitoring loop that
 turns a substituted key into an alert. \textsf{DetectMitM} and \textsf{BackgroundMonitor} compare the
 retrieved key against the expected one and, on a mismatch, write the dual-index warning.
-\textsf{RecordWarning} and \textsf{PersistenceCheck} retain verified evidence, so that a later silent
-deletion of a committed warning becomes publishable proof rather than an unobservable loss. No path
-silences a genuine mismatch: the outcome is always a raised alert or retained evidence.
+\textsf{RecordWarning} and \textsf{PersistenceCheck} retain verified evidence so that a later silent
+deletion of a committed warning becomes publishable proof rather than an unobservable loss; in this
+proof-of-concept they are implemented and unit-tested as a reference component but are \emph{not} wired
+into the live background monitor, which runs the detection and (confirmed) warning-publication path
+only. No path silences a genuine mismatch: the outcome is always a raised alert or, for the tested
+persistence component, retained evidence.
 
 \begin{algorithm}[H]
 \caption{MitM Detection, Warning, and Warning Persistence}\label{alg:detect}
@@ -286,7 +292,7 @@ silences a genuine mismatch: the outcome is always a raised alert or retained ev
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
     $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"mismatch"},pk,\mathit{ts}),\mathit{PRK})$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"peer-slot-replaced"},pk,\mathit{ts}),\mathit{PRK})$\;
     \textbf{raise} SecurityAlert\;
   }
   \KwRet $pk$\;
@@ -318,7 +324,7 @@ silences a genuine mismatch: the outcome is always a raised alert or retained ev
       \textbf{raise} SecurityAlert\;
     }
   }
-  $\textsf{PersistenceCheck}(\mathit{server})$ \tcp*{written warnings must remain committed}
+  $\textsf{PersistenceCheck}(\mathit{server})$ \tcp*{reference step (tested in isolation); not wired into the PoC's live loop}
 }
 \end{algorithm}
 
@@ -326,56 +332,53 @@ silences a genuine mismatch: the outcome is always a raised alert or retained ev
 \paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor runs against the same networked
 key-transparency server the clients use, from an independent vantage point. It is not an in-process
 copy of the server's state but an external verifier that fetches signed heads and per-epoch deltas
-over the network. It maintains its own mirror of the committed directory, reconstructed by replaying
-each epoch's declared delta from epoch~0, and checks epoch~$e$'s declared root against that
-reconstruction rather than trusting server-supplied per-operation membership proofs, after the manner
-of the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each epoch is replayed onto
-a scratch clone of the mirror, and the live mirror, the audited-epoch cursor, and the baseline head are
-advanced as a single all-or-nothing transaction only if the entire head passes every stage; an
-epoch-delta fetch failure aborts the transaction and is retried on the next poll rather than latching a fork alarm
-(matching the implementation's \texttt{transition\_complete} guard). \Cref{alg:auditor} states this
-whole-head boundary as realized by the networked auditor binary, which stages the entire epoch range
-and commits the mirror, the cursor, and the baseline head together; the in-process library auditor
-used by the unit tests is an incremental variant that advances the mirror and cursor after each
-verified epoch (so only already-verified intermediate states can persist) and appends the head last,
-which is behaviourally equivalent on an honest log and never commits an unverified epoch. Because
-every leaf commits its
-mutable or immutable kind into its hash, the transition audit distinguishes the two families: a
-rotation is accepted only on a mutable (global-VRF identity) leaf and rejected on an immutable (raw
-dual-index, CEA, or warning) leaf, as is any rotation that misdeclares the kind. An insert is
-admitted only against an absent label, so an overwrite cannot masquerade as an insert, and the
-replayed root must equal the epoch's declared root, so any divergence between a declared delta and
-its committed effect alarms. This is what
-structurally rejects a post-compromise overwrite of a committed CEA fingerprint that a receiver's
-per-epoch verdict alone cannot catch (\cref{ssec:design-detection}).
+over the network. It maintains its own \emph{mirror} (an independently reconstructed copy of the committed directory,
+rebuilt by replaying each epoch's declared delta from epoch~0) and checks epoch~$e$'s declared root
+against that reconstruction rather than trusting server-supplied per-operation membership proofs, after
+the manner of the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each epoch is
+replayed onto a temporary candidate copy (the \emph{scratch} mirror), and the live mirror, the
+audited-epoch cursor, and the baseline head advance as a single all-or-nothing transaction only if the
+whole head passes every stage; an epoch-delta fetch failure aborts the transaction and is retried on
+the next poll rather than latching a fork alarm.\footnote{\Cref{alg:auditor} states this whole-head
+boundary as the networked binary realizes it, staging the entire epoch range and committing the mirror,
+the cursor, and the baseline head together. The in-process library auditor used by the unit tests is an
+incremental variant that advances the mirror and cursor after each verified epoch and appends the head
+last; it is behaviourally equivalent on an honest log and never commits an unverified epoch.} Because
+every leaf commits its mutable or immutable kind into its hash, the transition audit distinguishes the
+two families: a rotation is accepted only on a mutable (global-VRF identity) leaf and rejected on an
+immutable (raw dual-index, CEA, or warning) leaf, as is any rotation that misdeclares the kind. An
+insert is admitted only against an absent label, and the replayed root must equal the epoch's declared
+root, so any divergence between a declared delta and its committed effect alarms, structurally
+rejecting a post-compromise overwrite of a committed CEA fingerprint that a receiver's per-epoch verdict
+alone cannot catch (\cref{ssec:design-detection}).
 
-\Cref{alg:auditor} specifies the \emph{networked} auditor binary, which keeps a single trusted
-baseline head $\mathit{last}$ and, once replay succeeds, runs \textsf{DetectFork} against one current
-second-vantage head. \textsf{AuditEpoch} classifies the new head against the baseline (First,
-Regression, SameSizeForked, Grew with a consistency proof, or an Idempotent re-poll), requests a
-consistency proof only on growth, and propagates a verdict: it returns \textsc{Unavailable} when the
-primary head cannot be fetched or parsed, alarms and returns \textsc{Malformed}, \textsc{Rollback},
-\textsc{Fork}, or \textsc{TransitionFailed} on the corresponding failure, holds
-without committing on an \textsc{Incomplete} epoch-delta fetch, and otherwise commits the mirror,
-cursor, and baseline as one transaction. After committing it distinguishes \textsc{Consistent} (a valid
-second vantage was available and agreed) from \textsc{ConsistentNoVantage} (no valid second-vantage head
-was available, so the primary chain advanced but no G4 verdict was obtained), so a caller reading the
+\Cref{alg:auditor} is the \emph{networked} auditor binary: it keeps a single trusted baseline head
+$\mathit{last}$ and, once replay succeeds, runs \textsf{DetectFork} against one current second-vantage
+head to check Goal~G4 (Fork Detection). \textsf{AuditEpoch} distinguishes a first observation, a
+rollback, an equal-size fork, log growth requiring a consistency proof, and an idempotent re-poll
+before producing one of the final verdicts below; it requests a consistency proof only on growth. It
+returns \textsc{Unavailable} when the primary head cannot be fetched or parsed; alarms and returns
+\textsc{Malformed}, \textsc{Rollback}, \textsc{Fork}, or \textsc{TransitionFailed} on the corresponding
+failure; holds without committing on an \textsc{Incomplete} epoch-delta fetch; and otherwise commits the
+mirror, cursor, and baseline as one transaction. After committing it distinguishes \textsc{Consistent}
+(a valid second vantage agreed) from \textsc{ConsistentNoVantage} (no valid second-vantage head was
+available, so the primary chain advanced but no G4 verdict was reached), so a caller reading the
 returned verdict cannot mistake a missing cross-vantage check for a passed one. Each epoch delta is
-fetched and audited against the \emph{validated} head: \textsf{GetEpochDelta} is pinned to
-$\mathit{sth_{new}}.\mathit{size}$, and \textsf{AuditTransition} accepts the delta only if its inclusion
+fetched and audited against the \emph{validated} head: the fetch is pinned to
+$\mathit{sth_{new}}.\mathit{size}$, and the transition audit accepts the delta only if its inclusion
 proof proves leaf index $e$ with the declared committed root under $\mathit{sth_{new}}.\mathit{root}$ at
 that size, so a stale snapshot or a proof for a different leaf is rejected before any replay.
-\textsf{DetectFork} first requires the second-vantage head to be present, validly signed, \emph{and}
-well-formed; if it is not, it returns \textsc{InvalidHead}, an availability or transport fault that
-yields no equivocation verdict and, because $\textsc{InvalidHead}\ne\textsc{Fork}$, does not block the
-primary commit (G4 detection needs an honest second vantage, \cref{ssec:eval-auditor}). Given a valid
+\textsf{DetectFork} requires the second-vantage head to be present, validly signed, and well-formed;
+otherwise it returns \textsc{InvalidHead}, an availability or transport fault that yields no
+equivocation verdict and, because $\textsc{InvalidHead}\ne\textsc{Fork}$, does not block the primary
+commit (G4 detection needs an honest second vantage, \cref{ssec:eval-auditor}). Given a valid
 second-vantage head it returns \textsc{Fork} when the two heads share a size but differ in root, or a
-consistency proof between the two vantages is refused or fails, and \textsc{Consistent} otherwise. The
-in-process library auditor (used by the unit tests) implements only the pure head-comparison half: it
-compares an incoming second-vantage head against every recorded head and reports a fork on a same-epoch
-root or size disagreement, an equal-size different-root pair, or a later-but-smaller rollback, but it
-does \emph{not} itself fetch a between-size consistency proof; the networked binary adds exactly that
-step, fetching and verifying the consistency proof between the two vantage sizes.
+between-vantage consistency proof is refused or fails, and \textsc{Consistent}
+otherwise.\footnote{\textsc{InvalidHead} is an explicit verdict of the library auditor's
+\textsf{ForkCheck}; the networked binary represents it implicitly as the no-vantage path that yields
+\textsc{ConsistentNoVantage}. That library auditor implements the pure head-comparison half, comparing
+an incoming second-vantage head against every recorded head, and does not itself fetch the between-size
+consistency proof the networked binary adds.}
 
 \begin{algorithm}[H]
 \caption{Networked auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
