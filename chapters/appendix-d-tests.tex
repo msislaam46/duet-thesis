@@ -321,6 +321,12 @@ verifier of the Rust server's outputs (\cref{sec:impl-tests}).
 % ----------------------------------------------------------------------------
 \section{Adversarial Scenario Suite}\label{sec:tests-adversarial}
 
+The suite exercises each in-scope threat scenario of \cref{ch:threat} end to end against the real
+\texttt{duet} crate, asserting both the verdict and the epoch at which detection occurs, so it
+provides machine-checkable coverage of the threat model rather than of isolated components. The
+detection epochs it reports are the schedule of this scripted demonstration, not a protocol-wide
+latency bound.
+
 \begin{table}[H]
 \centering
 \caption{End-to-end adversarial scenarios (\cref{ch:threat}) and their verdicts.}

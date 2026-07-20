@@ -124,14 +124,7 @@ Module & Specification implemented & Conformance evidence \\
 \end{tabular}
 \end{table}
 
-The implementation comprises approximately 6{,}600 lines of Rust (the crate, its server and
-auditor binaries, and the benchmark harness) and a further 4{,}500 lines of TypeScript in the
-client of \cref{sec:impl-signal}. These counts are non-test source lines (`cloc`), and the TypeScript
-figure counts the client once: the crate ships a \texttt{signal-desktop-kt} mirror whose eight core
-verifier modules (hashing, prefix tree, Merkle log, dual index, VRF, types, and the remote
-client/server) are byte-identical to the in-tree \texttt{ts/kt} client, while the Signal Desktop hook
-wiring, the singleton entry points, and the Jest and type-check scaffolding differ between the two
-trees; it is not double-counted here. The three subsections that follow describe the
+The three subsections that follow describe the
 crate from the bottom up: its state, the cryptography over it, and the binaries that expose it.
 
 \begin{figure}[ht]
@@ -212,10 +205,11 @@ an explicit unchecked overwrite so the adversarial suite can play a malicious op
 freezes a \emph{declared update set} (the epoch's inserts and rotations, each rotation disclosing
 its prior value), which the server publishes at an \texttt{/epoch-delta} endpoint alongside the
 committed directory root. The auditor consumes exactly this disclosure (\cref{fig:impl-transition-audit}): it maintains its own
-mirror directory, replays each epoch's declared set, and checks the result against the committed root,
-so a deletion (which the delta format cannot express) or an undeclared modification makes the replay
-diverge and is caught, the role the IETF KeyTrans protocol assigns to third-party auditors through
-its \textsf{AuditorUpdate} structure~\cite{ietf-keytrans-protocol}. Independently of any auditor, the
+mirror directory and replays each epoch's declared set. It accepts the epoch only if the replayed
+root equals the committed root. A deletion (which the delta format cannot express) or an undeclared
+modification therefore makes the replay diverge and is caught, the role the IETF KeyTrans protocol
+assigns to third-party auditors through its \textsf{AuditorUpdate}
+structure~\cite{ietf-keytrans-protocol}. Independently of any auditor, the
 \texttt{monitor} module gives a warning's writer a persistence check: it retains the inclusion proof
 and signed tree head of the epoch at which the warning committed and, on any later disappearance,
 assembles the inclusion proof, the proven non-inclusion, and the consistency proof between the two
@@ -457,7 +451,7 @@ than proved. The parity regime is the subject of the next section.
 
 The Rust cryptographic core of \cref{sec:impl-modules} and the TypeScript client of
 \cref{sec:impl-signal} are two independent implementations of the same protocol, written in
-different languages and for different purposes, one to be measured, one to be deployed. This
+different languages and for different purposes, one used as the measured reference implementation and one integrated into the Signal Desktop prototype. This
 section connects them: it describes how the two are held to agreement on the protocol operations that
 the shared vectors cover, and how the combined system is then tested against the threat model.
 
@@ -630,8 +624,7 @@ itself down, resolved by bootstrapping a genesis epoch at initialization, and th
 not reproducible because attack state persisted in memory, fixed by an administrative reset that
 rebuilds the server from its seed. That last fix is also what makes the demonstration repeatable.
 
-\paragraph{Trusted Computing Base and Fail-Closed Behaviour.} This paragraph states what must
-be trusted. On the client, the trusted computing base is the verifier and the cryptographic crates it
+\paragraph{Trusted Computing Base and Fail-Closed Behaviour.} On the client, the trusted computing base is the verifier and the cryptographic crates it
 calls (\cref{ssec:impl-core-crypto}) together with the operator's two public keys, the STH signing key
 and the VRF key, pinned on first use; the server, the network, and the log are \emph{not} trusted, and
 every answer they give is re-checked against those keys. The \emph{verifier} is fail-closed: any

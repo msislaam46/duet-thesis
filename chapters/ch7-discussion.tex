@@ -149,8 +149,10 @@ re-analysis are left to future work.
 % ============================================================================
 \section{Future Work}\label{sec:disc-future}
 
-The limitations above map onto a concrete programme of future work. The items are ordered roughly from
-those that turn the prototype into a deployment to those that broaden the design's reach.
+The limitations above map onto a concrete programme of future work, grouped into completing the
+protocol and security argument, then deployment and scale, then evaluation, operations, and usability.
+
+\subsection{Completing the Protocol and Security Argument}
 
 \paragraph{Production Shared-Secret Binding.} The single change that most advances the work is
 extracting the genuine X3DH/PQXDH shared secret from libsignal at the pre-key-bundle hook and binding
@@ -160,13 +162,6 @@ work is to capture it at that hook and hand it to the label derivation; everythi
 unchanged. This is what turns the labels from ``stable per account'' into ``unguessable by the server,
 per session,'' and it is the prerequisite for the active-network-MitM detection of \cref{ch:threat} to
 hold against a real adversary. It is the principal deployment-path item.
-
-\paragraph{An $O(\log N)$ Epoch Commit.} The commit cost measured in \cref{ch:eval} is an artefact of
-a single-process design that deep-clones the committed tree so concurrent lookups see a stable view.
-Replacing the tree's owned children with reference-counted, copy-on-write nodes makes each epoch an
-immutable version that shares all untouched subtrees with its predecessor and allocates only along the
-$O(\log N)$ root-to-leaf path, matching how production key-transparency systems version epochs. It is a
-self-contained server-side change, orthogonal to the verification-side contribution.
 
 \paragraph{Authenticated Ownership of Raw-Label Writes.} \Cref{ch:design} specifies three safeguards that together guarantee a committed warning or
 CEA fingerprint cannot be silently removed or replaced: a write-once policy on dual-index and CEA
@@ -209,6 +204,15 @@ distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cit
 since retired in favour of enclave-based recovery, so the engineering pattern is proven in
 Signal's own lineage; adapting it to the label derivation is the open work.
 
+\subsection{Deployment and Scale}
+
+\paragraph{An $O(\log N)$ Epoch Commit.} The commit cost measured in \cref{ch:eval} is an artefact of
+a single-process design that deep-clones the committed tree so concurrent lookups see a stable view.
+Replacing the tree's owned children with reference-counted, copy-on-write nodes makes each epoch an
+immutable version that shares all untouched subtrees with its predecessor and allocates only along the
+$O(\log N)$ root-to-leaf path, matching how production key-transparency systems version epochs. It is a
+self-contained server-side change, orthogonal to the verification-side contribution.
+
 \paragraph{Post-Quantum, Multi-Device, and Deployment.} Because the labels are hash-derived, a
 post-quantum shared secret (PQXDH~\cite{pqxdh}) can feed the derivation unchanged; the open piece is a
 post-quantum VRF, for which only candidates exist. Multi-device support would follow the keychain
@@ -218,6 +222,8 @@ flag rather than running a parallel log, which requires only a write API for the
 per-session labels, and the fork-detection vantage should be supplied by a real auditor gossip
 ecosystem rather than the demo stand-in, which raises its own open questions of federation
 across providers and of incentives for independent auditors to participate honestly.
+
+\subsection{Evaluation, Operations, and Usability}
 
 \paragraph{Human-Centred Warning Design.} The evaluation shows that the warning fires; it does not
 show that users act on it. A usability study of the warning surfaces (how users interpret the

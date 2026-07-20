@@ -30,9 +30,9 @@ falsified.
 
 \paragraph{Thesis Statement.} The central claim this dissertation defends is that automatic, in-band
 detection of key substitution can be added to a deployed messaging key directory at essentially the
-asymptotic cost the directory already pays without a manual user ceremony, without enlarging the
-lookup proof, and while replacing one proof per missed epoch with a single proof whose size grows
-logarithmically in the endpoint log sizes.
+asymptotic cost the directory already pays, without a manual user ceremony. It does so without
+enlarging the lookup proof, and while replacing one proof per missed epoch with a single proof whose
+size grows logarithmically in the endpoint log sizes.
 
 \paragraph{Research Questions.} The work is organized around four research questions, each answered by
 a specific later chapter:
@@ -84,15 +84,14 @@ protocol operations are checked byte-for-byte against cross-language test vector
 and a cross-vantage auditor) and an embedded TypeScript verifier integrated into a fork of the real
 Signal Desktop client (\cref{ch:impl}).
 
-\paragraph{Empirical.} A benchmark campaign (metrics M1--M13) establishing that the implemented VRF-indexed lookup
-proof is at rough size parity with CONIKS, with the detection channel CONIKS lacks obtained through
-additional same-shape lookups rather than a larger proof, that median full client
-verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than
-$N$ (\SIrange{128.1}{147.1}{\micro\second}), and that a
-month-long offline catch-up costs a few hundred bytes against the hundreds of kilobytes naïve
-monitoring would spend; together with a systematic security evaluation using the STRIDE
-threat-classification framework and the MITRE ATT\&CK knowledge base for the resulting system
-(\cref{ch:eval}).
+\paragraph{Empirical.} A benchmark campaign (metrics M1--M13) with four principal findings. The
+implemented VRF-indexed lookup proof is at rough size parity with CONIKS, with the detection channel
+CONIKS lacks obtained through additional same-shape lookups rather than a larger proof. Median full
+client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more
+slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}). A month-long offline catch-up costs a few
+hundred bytes against the hundreds of kilobytes na\"ive monitoring would spend. A systematic security
+evaluation using the STRIDE threat-classification framework and the MITRE ATT\&CK knowledge base
+covers the resulting system (\cref{ch:eval}).
 
 \section{Thesis Roadmap}\label{sec:intro-roadmap}
 
