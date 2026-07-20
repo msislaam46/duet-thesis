@@ -99,7 +99,7 @@ Key Verification (AKV), a key-transparency-based mechanism discussed in
 important because it illustrates the original authentication model on which much
 of the literature was based.
 
-The decisive observation, which \cref{ssec:bg-gap} develops, is one of
+The gap that \cref{ssec:bg-gap} develops is one of
 \emph{coverage}. The Safety Number is a function of the identity keys
 $\pkid{A}$ and $\pkid{B}$ and the parties' account identifiers only, and
 therefore authenticates the long-term
@@ -139,7 +139,7 @@ Ephemeral key pair & $\ek{}$ & Session-specific \\
 verification mechanism. As shown, only the long-term identity keys are
 authenticated by the Safety Number itself. The signed pre-key is bound to the
 identity key by its signature, and the one-time pre-keys remain outside any
-authentication. The crucial point for the remainder of the chapter is that none
+authentication. What matters for the remainder of the chapter is that none
 of these mechanisms authenticates the evolving, per-session state, which is
 exactly what the constructions surveyed later seek to strengthen.
 
@@ -531,7 +531,7 @@ able to compute or predict any other label~\cite{rfc9381}. The mapping must be
 deterministic, ``or else the identity provider could insert multiple bindings
 for a user at different locations''~\cite[p.~5]{melara2015coniks}.
 
-It is easy to overstate what the VRF buys, and precision here matters for the
+The VRF's role is narrower than it might seem, and precision here matters for the
 threat model that follows. The VRF hides the set of labels from outsiders, which
 gives directory privacy, and binds each label immutably to its identity, which
 gives label integrity, but it does not conceal a queried name from the operator,
@@ -1045,7 +1045,7 @@ indicator of the direction in which standardized key-transparency deployments ar
 heading.
 
 \subsubsection{Proton Mail Key Transparency}
-Proton Mail's ProtonKT is notable for being both deployed and formally analyzed,
+Proton Mail's ProtonKT is notable for being both deployed and formally analysed,
 its design documented in G\"obel's MSc thesis~\cite{goebel2023proton} and a
 Transparency-Summit presentation~\cite{proton2023ktdeck}. It is a VKD whose labels
 are email addresses and whose values are \emph{Signed Key Lists} (SKLs):

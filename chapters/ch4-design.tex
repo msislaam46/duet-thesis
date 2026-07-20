@@ -229,7 +229,7 @@ The derivation gives the scheme three properties on which detection rests.
 \paragraph{Symmetry.} Under the canonical ordering, $A.\ell_{\mathsf{self}} =
 B.\ell_{\mathsf{peer}}$, $A.\ell_{\mathsf{peer}} = B.\ell_{\mathsf{self}}$, and
 $A.\ell_{\mathsf{warn}} = B.\ell_{\mathsf{warn}}$, so the two parties agree on which slot
-each key lives in and, crucially, on the one warning slot they both watch.
+each key lives in and, above all, on the one warning slot they both watch.
 
 \paragraph{Unlinkability.} The server does not hold $\sharedS$, so the HKDF outputs are
 pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
@@ -334,7 +334,7 @@ fails to replay.
 inclusion proof and signed tree head of the epoch at which its warning committed, and its background
 monitor re-verifies the warning's inclusion on every subsequent check. If the leaf later disappears,
 the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
-$\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three artefacts
+$\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
 constitute non-repudiable, publishable evidence that the server deleted a committed leaf, since all
 three verify against heads the server itself signed.
 \end{enumerate}

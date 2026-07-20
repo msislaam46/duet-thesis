@@ -63,7 +63,7 @@ code places first.
 That same importance imposes a duty of honesty about what the work does and does not achieve,
 because a security tool trusted beyond its guarantees is worse than none. The thesis is explicit
 about its limitations: the prototype carries two proof-of-concept stand-ins for live protocol state
-(\cref{sec:impl-strategy}), it is a single-machine artefact rather than a distributed deployment,
+(\cref{sec:impl-strategy}), it is a single-machine prototype rather than a distributed deployment,
 and the boundary case of key extraction is out of scope (\cref{ch:threat}). The user-facing design
 embodies the same caution: an unreachable server raises a calm, amber notice rather than the red
 alarm reserved for a detected attack (\cref{ssec:impl-verifier}), precisely so that the system does
@@ -71,7 +71,7 @@ not ``cry wolf'' and erode the trust its warnings depend on. The design is open 
 specification-grounded rather than security-through-obscurity, and its correctness is evidenced by
 reproducible tests against published vectors (\cref{sec:impl-tests}) rather than asserted.
 
-A dual-use dimension is unavoidable: robust messaging security protects everyone, including those
+A dual-use dimension is unavoidable: strong messaging security protects everyone, including those
 who would misuse it. The settled position in the security community, which this work adopts, is
 that defensive integrity infrastructure of this kind is overwhelmingly to the public good, and that
 weakening it to disadvantage bad actors would disadvantage the far larger population of ordinary
@@ -100,7 +100,7 @@ users (\cref{ssec:impl-demo}).
 \section{Professional Issues and Codes of Conduct}\label{sec:lsepi-prof}
 
 The work was carried out in line with the BCS Code of Conduct~\cite{bcs-code} and the IET Rules of
-Conduct~\cite{iet-conduct}, and it is worth setting out concretely how.
+Conduct~\cite{iet-conduct}; the following sets out concretely how.
 
 The BCS code is organized under four principles. \emph{Public interest} (due regard for
 security, privacy, and wellbeing) is the project's subject matter, addressed above.

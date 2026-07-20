@@ -45,7 +45,7 @@ warning-MAC, CEA, signed-tree-head, ECVRF, and Merkle test vectors (\cref{sec:im
 deliberately different external wire formats are excluded.
 
 The scope and limitations of each layer are explicitly bounded. The Rust crate is an in-memory,
-single-machine artefact; it does not model a distributed or database-backed deployment, and the
+single-machine prototype; it does not model a distributed or database-backed deployment, and the
 consequences of that for the measurements are stated in \cref{ch:eval}. The Signal Desktop
 integration demonstrates feasibility but carries two proof-of-concept stand-ins, both of which are
 the in-protocol hooks left to future work in \cref{ch:discussion}: the per-conversation shared
@@ -184,8 +184,8 @@ vectors (\cref{sec:impl-tests}). The implementation preserves the asymptotic com
 in the design (\cref{ch:design}): prefix-tree lookups, log inclusion and consistency proofs, and
 their client-side verification remain logarithmic in the number of entries, while label derivation
 and signature verification remain constant in directory size, the behaviour the evaluation of
-\cref{ch:eval} measures directly. Computing labels and signing roots is one thing; answering clients
-over the network is another, and it is the subject of the last subsection of the core.
+\cref{ch:eval} measures directly. Computing labels and signing roots is separate from answering clients
+over the network, which is the subject of the last subsection of the core.
 
 \subsection{The HTTP Server and Auditor Binary}\label{ssec:impl-core-server}
 
@@ -271,7 +271,7 @@ begins from fresh server state, an administrative reset rebuilds the directory f
 no residual state from a previous run can leak into a measurement.
 
 Together the server, auditor, and benchmark harness are the whole of the Rust side. The client that
-consumes their proofs (and that, crucially, must reproduce their cryptography exactly) is the
+consumes their proofs (and that must reproduce their cryptography exactly) is the
 subject of the next section.
 
 % ============================================================================
@@ -338,7 +338,7 @@ listed in \cref{app:apiref}.
 
 \Cref{fig:impl-verify} traces the exchange that the peer-key-retrieval hook performs. The client
 requests the peer's key at its label, and the server replies with the value together with the
-three artefacts that bind it: the prefix proof, the log-inclusion proof, and the signed tree
+three proofs that bind it: the prefix proof, the log-inclusion proof, and the signed tree
 head. The client verifies all of these locally, it recomputes the prefix root from the
 returned proof, checks that this root is included in the log, and validates the tree-head
 signature, adding the VRF binding of the label on the global-lookup path. It then issues a second
