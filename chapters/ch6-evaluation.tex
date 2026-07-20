@@ -341,24 +341,20 @@ made between them. The run does not support one. The clean branch reads
 two Criterion intervals do not overlap. That separation is not offered as a leak either: a
 side-channel claim in either direction needs a dedicated adversarial and statistical analysis that
 this benchmark, which was built to size a cost rather than to test a hypothesis, does not attempt.
-The point is only that indistinguishability cannot be asserted here. Either way, this is the
-\emph{marginal} cost of the warning-slot read on top
-of a lookup the client already verifies; it is an unverified read, so the security-bearing detection
-cost is that of the full verified chain the client runs regardless: the \SI{26}{\micro\second}
-prefix verify and the remainder of the \SI{128}{\micro\second} chain of \cref{ssec:eval-latency}. Over \num{1000} clean
-sessions the false-positive rate (M6) is \num{0}; this is a sanity check rather than independent
-evidence, since a spurious collision at a 256-bit HKDF-derived warning label is cryptographically
-negligible. M5 must therefore not be interpreted as detector latency. The reference detector
-(\texttt{detectMitm}, \cref{sec:impl-signal}) first performs a proof-carrying lookup of the owner slot
-and verifies that it contains the client's key. If that check passes, it performs a second lookup and
-verifies a non-inclusion proof for the warning slot, since an unproven ``empty'' would let the server
-censor the warning. The clean path therefore performs both lookups. M5 measures neither. It times the marginal, unverified read of the warning slot, in clean state. Each detector lookup is a
-raw-label lookup that verifies a prefix-tree and log path \emph{without} the VRF component, so the full
-VRF-indexed verification M3 times ($\approx$\SI{128}{\micro\second} median locally) is only a
-conservative local \emph{upper} proxy for the verification work of one such lookup, not a measurement
-of either detector request; no two-request total is derived from it here, because the workflow those
-requests belong to (including the network round-trips a deployment adds) was not measured, and
-end-to-end detection latency is therefore not a figure this thesis reports. Detection remains
+The point is only that indistinguishability cannot be asserted here. Either way, M5 measures only an
+unverified server-side read of the warning slot and is not a detector-latency measurement. Over
+\num{1000} clean sessions the false-positive rate (M6) is \num{0}; this is a sanity check rather than
+independent evidence, since a spurious collision at a 256-bit HKDF-derived warning label is
+cryptographically negligible. In the deployed path, \texttt{detectMitm} (\cref{sec:impl-signal}) first
+performs a proof-carrying lookup of the owner slot and verifies that it contains the client's key. If
+that check passes, it performs a second lookup and verifies a non-inclusion proof for the warning slot,
+since an unproven ``empty'' would let the server censor the warning. The clean path therefore performs
+both lookups, and M5 times neither. Each detector lookup is a raw-label lookup that verifies a
+prefix-tree and log path \emph{without} the VRF component, so the full VRF-indexed verification M3 times
+($\approx$\SI{128}{\micro\second} median locally) is only a conservative local \emph{upper} proxy for
+the verification work of one such lookup. M3 does not measure either detector request, and no
+two-request total is derived from it. The complete workflow, including the network round-trips a
+deployment adds, was not measured. This thesis therefore does not report end-to-end detection latency. Detection remains
 automatic and silent, in sharp contrast to the manual safety-number ceremony it replaces, which only
 about 14\% of users complete without guidance~\cite{vaziripour2017}.
 
