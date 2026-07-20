@@ -299,15 +299,15 @@ Both operations take effect at the next committed epoch (\cref{def:epoch}). Spec
 \begin{definition}[Check-warning and the verification verdict]\label{def:dualindex-check}
 \intuition{A client accepts a peer key only if the peer's lookup slot verifies against a signed head
 \emph{and} the shared warning slot is provably empty.}
-$\mathsf{CheckWarning}(\lblwarn,\STH_t)$ returns \textsc{raised} if an inclusion proof binds a
-non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{clear} if a non-inclusion proof
+$\mathsf{CheckWarning}(\lblwarn,\STH_t)$ returns \textsc{Alert} if an inclusion proof binds a
+non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{Safe} if a non-inclusion proof
 (\cref{def:noninclusion}) establishes the slot is empty; a response with neither valid proof is
-rejected. The \textsc{raised} verdict does not depend on the payload MAC of
+rejected. The \textsc{Alert} verdict does not depend on the payload MAC of
 \cref{def:dualindex-write}: a value whose MAC verifies is an authentic peer warning, while
 unauthenticated data at a slot only the two parties can derive is itself evidence of misbehaviour,
 so either alerts (\cref{alg:dualindex}). A peer key is accepted only when the peer-lookup proof
 verifies through the chain of \cref{ssec:design-verify} and $\mathsf{CheckWarning}$ returns
-\textsc{clear}. Specified in \cref{ssec:design-verify}.
+\textsc{Safe}. Specified in \cref{ssec:design-verify}.
 \end{definition}
 
 \begin{definition}[Deletion evidence]\label{def:deletion-evidence}
@@ -330,7 +330,7 @@ Let $\Adv$ be a probabilistic polynomial-time adversary controlling the server a
 the model of \cref{ch:threat}. In the experiment $\Expt{dual\text{-}det}{\Adv}$, $\Adv$ interacts with
 an honest client and peer and wins if it causes the client to accept a peer key
 $\mathit{pk}'\neq\mathit{pk}_{\B}$ under a signed head $\STH_t$ for which $\mathsf{CheckWarning}$
-returns \textsc{clear}. The scheme achieves key-substitution detection Goal~G1 (Key-Substitution Detection)
+returns \textsc{Safe}. The scheme achieves key-substitution detection Goal~G1 (Key-Substitution Detection)
 if $\advantage{dual\text{-}det}{\Adv}=\Pr[\Expt{dual\text{-}det}{\Adv}=1]$ is negligible in
 $\secpar$. For the raw dual-index path the argument rests on the labels being unpredictable to the
 adversary: it relies on HKDF (\cref{def:hkdf}) behaving as a PRF keyed by an unknown, sufficiently

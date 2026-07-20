@@ -17,7 +17,7 @@ strongest supporting evidence.
 RQ & Design claim & Mechanism & Test / scenario & Benchmark & Evidence \\
 \midrule
 RQ1 & substitution is detected, in band, by both parties &
-dual-index warning scheme for A1/A3 (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
+dual-index warning scheme for A1, VRF-anchored label divergence for A3 (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
 scenarios A1--A5 (\cref{tab:tests-adversarial}); dual-index derivation tests (\cref{tab:tests-rust-prim}) &
 M5, M6 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M6 finds no false alarms in the clean deterministic exercise (M5 is a marginal warning-slot read, not detector latency) \\
 RQ2 & detection does not enlarge an individual per-lookup proof; verification stays below the latency target and grows far more slowly than $N$ &

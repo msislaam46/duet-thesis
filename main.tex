@@ -139,7 +139,8 @@ Transparency protocol and is demonstrated through an implementation in Signal De
 rests on two underlying mechanisms. First, the
 \emph{dual-index warning scheme} derives, from each conversation's shared secret, a pair of
 participant-specific lookup labels together with a shared warning label, enabling automatic,
-in-band detection of key substitution by both participants without additional user interaction.
+in-band detection of key substitution, in an honestly established and subsequently monitored
+conversation, by both participants without additional user interaction.
 Second, \emph{windowed consistency proofs} replace per-epoch catch-up with a single consistency
 proof between the last trusted and current tree heads, so a client requests and verifies one proof
 rather than one for each of the $W$ missed epochs, with size logarithmic in the endpoint log sizes

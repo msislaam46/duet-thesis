@@ -232,7 +232,7 @@ Operation & $N=10^3$ & $N=10^4$ & Scaling \\
 Server full search (gen, incl.\ VRF prove) & \SI{119.5}{\micro\second} & \SI{119.7}{\micro\second} & VRF-dominated, independent of $N$ \\
 Prefix-root verify (client) & \SI{25.9}{\micro\second} & \SI{25.9}{\micro\second} & independent of $N$ \\
 VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} & constant-time \\
-\textbf{Full signed-head lookup verification (windowed baseline)} & \textbf{\SI{128.1}{\micro\second}} & \textbf{\SI{128.6}{\micro\second}} & \textbf{flat in $N$} \\
+\textbf{Full signed-head lookup verification (windowed baseline)} & \textbf{\SI{128.1}{\micro\second}} & \textbf{\SI{128.6}{\micro\second}} & \textbf{$\approx$flat over $10^3$--$10^4$} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -252,9 +252,9 @@ compressed leaf's \num{256}-level hash chain. Memoizing that chain top removes t
 component, leaving generation dominated by the constant-time VRF prove: it reads \SI{119.5}{\micro\second}
 at $N=10^3$ and \SI{119.7}{\micro\second} at $N=10^4$, while the scale run's search median reads
 \SI{117.6}{\micro\second} at $N=10^6$ and \SI{141.2}{\micro\second} at $N=10^7$
-(\cref{ssec:eval-scale}): flat through $10^6$, then rising at $10^7$, the same shape verification
-shows and with the same two candidates behind it, the wider proof and the change of measurement
-context between the harnesses.
+(\cref{ssec:eval-scale}): flat through $10^6$, then rising at $10^7$. Verification shows the same
+shape. Two factors sit behind the rise, the wider proof at larger $N$ and the change of measurement
+context between the moderate-scale and scale-up harnesses.
 
 \subsection{Offline Catch-Up Bandwidth (M4)}\label{ssec:eval-catchup}
 
@@ -429,7 +429,7 @@ deployment would move to the persistent, sharded storage this prototype delibera
 Server-side maintenance costs decide how large a deployment one machine can sustain.
 \Cref{tab:eval-server} collects them. The median latencies correspond to estimated single-thread rates of about \num{8360} lookups and
 \num{6630} updates per second at $N=10^4$. Key rotation (overwriting an existing binding) costs
-\SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$: flat in $N$ for the same reason proof
+\SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$: approximately unchanged over the measured range, for the same reason proof
 generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
 the unchanged user identifier, which a production server would cache, leaving only tens of
 microseconds of tree work. The verifiable random function, measured in isolation, is constant-time

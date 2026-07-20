@@ -176,9 +176,13 @@ benchmarked in \cref{ch:eval} is the complete six-step chain.
 % ============================================================================
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}
 
-The dual-index warning scheme closes Problem~1 of \cref{sec:bg-open} (the absence of
-an in-band peer-warning channel) and so realizes Goal~G1 (Key-Substitution Detection) against the substitution
-attacks A1, A3, and A5 of \cref{ch:threat}.
+The dual-index scheme closes Problem~1 of \cref{sec:bg-open} (the absence of
+an in-band peer-warning channel) and so achieves Goal~G1 (Key-Substitution Detection) against the substitution
+attacks A1, A3, and A5 of \cref{ch:threat} by two complementary mechanisms. An in-band warning
+channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5). The
+VRF-anchored lookup labels themselves catch a network man-in-the-middle (A3): an attacker holding a
+different shared secret derives disjoint labels, so a proof-verified lookup misses, and any value
+placed at the victim's expected slot cannot match the peer's VRF-anchored global entry.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
 
@@ -545,7 +549,7 @@ vectors verify byte-for-byte equivalence of the Rust and TypeScript CEA construc
 \section{Windowed Consistency Proofs}\label{sec:design-windowed}
 
 The windowed consistency proof closes Problem~2 of \cref{sec:bg-open}, the linear cost
-of offline catch-up, and so realizes Goal~G2 (Consistency Across Offline Windows).
+of offline catch-up, and so achieves Goal~G2 (Consistency Across Offline Windows).
 
 \subsection{The Catch-Up Problem and the Bound}\label{ssec:design-catchup}
 
@@ -623,8 +627,10 @@ in this sense mutually dependent rather than independent optimizations.
 
 A concrete deployment shows the window is not hypothetical. Take $N = 10^7$ users, each
 with about $c = 5$ active conversations, and signed pre-keys rotating every $r = 30$ days.
-Writing one entry per conversation gives on the order of 50~million prefix-tree labels;
-amortized over the 30-day rotation period, this is about 1.67~million directory updates per
+With two participant lookup labels per conversation, the $N \cdot c \approx 50$~million figure counts
+participant--conversation lookup entries (about 25~million conversations, each with two lookup slots);
+each conversation also allocates one shared warning label, normally unwritten. Amortized over the
+illustrative 30-day rotation period, the lookup entries are about 1.67~million directory updates per
 day, or roughly $69{,}400$ updates folded into each hourly epoch commit (the log itself
 gains one leaf per epoch regardless of update volume; \cref{ssec:design-epoch}). A
 client offline for a full rotation period faces a worst-case window of $W = r \cdot 24 =
@@ -680,7 +686,7 @@ deferred-verification procedure. A client verifies each epoch as it arrives. The
 of \cref{sec:design-windowed} instead adds exactly the deferred,
 batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is
 honest and provides no out-of-band cross-checking of tree heads; the cross-vantage auditor
-of the threat model, which realizes Goal~G4 (Fork Detection) against attack A4, adds equivocation detection on top of the
+of the threat model, which achieves Goal~G4 (Fork Detection) against attack A4, adds equivocation detection on top of the
 instantiated log. Closing these three gaps is what turns ACKA's abstract framework into a
 deployable system.
 

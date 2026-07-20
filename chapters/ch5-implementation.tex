@@ -229,6 +229,7 @@ second-vantage head additionally gates it when available; an unavailable one yie
 and does not block the commit.}
 \label{fig:impl-transition-audit}
 \end{figure}
+\FloatBarrier
 
 The performance profile of the core follows from these choices. State is held entirely in memory, so
 no disk or database access sits on the lookup path; prefix proofs are bitmap-compressed over a
@@ -320,7 +321,7 @@ is actually invoked, is the subject of the next subsection.
 
 The client attaches to three lifecycle points of the Signal client: the key-upload path, the
 peer-key-retrieval path, and session establishment. The
-peer-key-retrieval hook is the security-critical one, it runs the full verification chain
+peer-key-retrieval hook is the security-critical one: it runs the full verification chain
 (\cref{ssec:design-verify}) on a peer's key before that key is accepted. On the Rust side, a
 hook in libsignal's pre-key-bundle processing marks the point at which the live X3DH secret is
 available: the place where the production binding of the real shared secret would attach, and
@@ -333,7 +334,7 @@ listed in \cref{app:apiref}.
 \Cref{fig:impl-verify} traces the exchange that the peer-key-retrieval hook performs. The client
 requests the peer's key at its label, and the server replies with the value together with the
 three proofs that bind it: the prefix proof, the log-inclusion proof, and the signed tree
-head. The client verifies all of these locally, it recomputes the prefix root from the
+head. The client verifies all of these locally: it recomputes the prefix root from the
 returned proof, checks that this root is included in the log, and validates the tree-head
 signature, adding the VRF binding of the label on the global-lookup path. It then issues a second
 lookup for the shared warning slot, whose proven inclusion or non-inclusion is what separates a

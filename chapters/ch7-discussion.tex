@@ -107,7 +107,7 @@ commit uses an $O(N)$ deep-clone snapshot with a transient memory spike, measure
 integration carries two proof-of-concept stand-ins, both flagged in \cref{ch:impl}: the
 per-conversation shared secret is a deterministic stand-in rather than the live X3DH secret, and
 continuous mode is driven by a seeded simulated ratchet rather than the client's live one. That
-simulation, specifically, folds the raw ratchet Diffie--Hellman output as its epoch secret $I_t$,
+simulation, specifically, folds the simulated ratchet's raw Diffie--Hellman output as its epoch secret $I_t$,
 where ACKA's Signal mapping (their Table~2) specifies $I_t = ck$, the derived chain key; so DUET
 implements the ACKA CEA state transition but simulates that Signal-specific epoch-secret mapping, and
 a faithful instantiation bridges the live Double-Ratchet chain key $ck$ from libsignal. Neither
