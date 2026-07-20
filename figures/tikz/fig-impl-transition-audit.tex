@@ -28,7 +28,7 @@
   \draw[->] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
   \node[proc,right=12mm of a3,text width=3.7cm] (a3p) {verify RFC~9162 consistency proof};
   \draw[->] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
-  \node[bad,below=5mm of a3p] (t3) {invalid: ALARM (latch), no replay};
+  \node[bad,below=5mm of a3p] (t3) {invalid: ALARM (persists), no replay};
   \draw[->] (a3p) -- node[right,font=\tiny]{invalid} (t3);
   \node[nop,below=4mm of t3] (t4) {idempotent: no state change};
   \draw[->] (a4.east) |- node[below,font=\tiny,pos=0.85]{yes} (t4.west);

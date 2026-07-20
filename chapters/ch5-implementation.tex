@@ -62,7 +62,7 @@ bridged in. What the prototype validates end-to-end is the construction, wire fo
 logic; those secrecy-dependent properties are argued against the design, not demonstrated by the
 stand-in. As a further prototype boundary, the demo server treats mutex poisoning and VRF
 encode-to-curve exhaustion (probability ${\approx}\,2^{-256}$ per attempt, over at most 256 attempts)
-as fatal, aborting rather than degrading gracefully; a production service would surface these as
+as fatal, aborting rather than degrading gracefully; a production service would report these as
 recoverable errors.
 
 This separation is deliberate. Keeping the cryptographic core independent of the Signal Desktop
@@ -96,7 +96,7 @@ the HTTP API is detailed in \cref{app:apiref}.}
 This section describes the Rust reference implementation: the standalone \texttt{kt} crate, which
 holds the transparency log and every novel construction of the design, together with the binaries
 built on it. Nothing here depends on Signal Desktop, so the crate can be read, and was measured, in
-isolation. It is organized as a small set of modules, each realizing one component of the design and
+isolation. It is organized as a small set of modules, each implementing one component of the design and
 each conforming to a named specification. \Cref{tab:impl-modules} lists those modules with the
 specification each implements and the evidence of conformance, and \cref{fig:impl-modules} shows how
 they fit together at run time.
@@ -349,7 +349,7 @@ establishment (\cref{ssec:impl-demo}).
 \caption[Per-lookup client--server verification exchange.]{The client--server exchange on each peer-key retrieval: the server returns the value with its
 prefix, log-inclusion, and signed-tree-head proofs, all verified locally, and the warning slot's
 proven (non-)inclusion then decides between a clean verdict and a warning (any failed check yields
-a rejecting verdict, which the advisory hook reports but does not use to block the session). This is the runtime realization of the verification chain of \cref{ssec:design-verify}.}
+a rejecting verdict, which the advisory hook reports but does not use to block the session). This is the runtime implementation of the verification chain of \cref{ssec:design-verify}.}
 \label{fig:impl-verify}
 \end{figure}
 
@@ -457,7 +457,7 @@ the shared vectors cover, and how the combined system is then tested against the
 The two are pinned by a single cross-language contract. A fixed set of test vectors fixes the HKDF
 dual-index derivation and the CEA construction byte-for-byte across the Rust and TypeScript
 implementations, and the same discipline keeps their Ed25519 signed-tree-head and Merkle
-computations in step, so any divergence on a covered operation-and-input vector surfaces as a vector
+computations in step, so any divergence on a covered operation-and-input vector manifests as a vector
 failure rather than passing silently; another input to the same operation can still diverge, so the
 remaining behaviour is supported, not proved, by language-specific unit and
 integration tests. This contract is the basis for treating the TypeScript client as a faithful
@@ -571,7 +571,7 @@ in the next section.
 \FloatBarrier
 \section{System-Wide Engineering Challenges}\label{sec:impl-challenges}
 
-Building the system end to end surfaced obstacles at every layer. This section collects the most
+Building the system end to end revealed obstacles at every layer. This section collects the most
 instructive, each with the resolution adopted, grouped by where they arose: the protocol the two
 implementations must agree on, the concurrency of a live multi-client deployment, the Electron
 client integration, and the server's robustness under load.
@@ -634,7 +634,7 @@ missing log inclusion, a proof whose label does not match the one queried, or a 
 does not hold) yields a \emph{reject} verdict rather than falling through to acceptance. One
 integration caveat must be stated plainly, because it is the boundary between what the verifier
 guarantees and what the prototype currently enforces: in the present Signal Desktop prekey-bundle
-hook (\cref{ssec:impl-hooks}) that reject verdict is surfaced \emph{advisorily}: the user is shown
+hook (\cref{ssec:impl-hooks}) that reject verdict is presented \emph{advisorily}: the user is shown
 the red warning, but the hook does not yet abort session establishment. Turning the hook fail-closed
 (refusing the session on a red verdict rather than only warning) is a deployment policy decision
 left to future work (\cref{ch:discussion}); the guarantee proven here is that the verifier never

@@ -367,23 +367,18 @@ persistence component, retained evidence.
 
 \clearpage
 \paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor is an external verifier at an
-independent vantage point: it fetches signed heads and per-epoch deltas over the network and checks
-each declared root against its own \emph{replica}, an independently reconstructed copy of the
-committed directory replayed from epoch~0, after the manner of the IETF KeyTrans
-\textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}. Each head is processed as one all-or-nothing
-transaction: the epoch range is replayed onto a \emph{candidate replica}, and the live replica,
-the audited-epoch cursor, and the trusted baseline advance together only if every stage
-passes;\footnote{\Cref{alg:auditor} states this whole-head
-boundary as the networked binary realizes it, staging the entire epoch range and committing the replica,
-the cursor, and the baseline head together. The in-process library auditor used by the unit tests is an
-incremental variant that advances the replica and cursor after each verified epoch and appends the head
-last; it is behaviourally equivalent on an honest log and never commits an unverified epoch.} a failed
-delta fetch aborts and is retried on the next poll rather than raising a fork alarm. Because every leaf
-commits its kind, the replay is kind-aware: rotations are admitted only on mutable leaves, inserts
-only at absent labels. After committing, \textsc{Consistent} (a valid second-vantage head agreed) is
-distinguished from \textsc{ConsistentNoVantage} (no second vantage was available), so a missing
-cross-vantage check can never be mistaken for a passed one.
+independent vantage point: it fetches signed heads and per-epoch deltas and checks each declared root
+against its own \emph{replica}, an independently reconstructed copy of the committed directory
+replayed from epoch~0 (after the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}).
+Each head is processed as one all-or-nothing transaction: the epoch range is replayed onto a
+\emph{candidate replica} and committed to the live replica, cursor, and baseline only if every stage
+passes, while a failed delta fetch aborts and is retried on the next poll rather than raising a fork
+alarm. After committing, \textsc{Consistent} (a valid second-vantage head agreed) is distinguished
+from \textsc{ConsistentNoVantage} (none available), so a missing cross-vantage check is never mistaken
+for a passed one; the in-process library auditor used by the unit tests is an incremental variant,
+behaviourally equivalent on an honest log.
 
+{\SetAlFnt{\footnotesize}%
 \begin{algorithm}[H]
 \caption{Networked auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
 \KwData{trusted baseline head $\mathit{last}$ (initially $\bot$); committed $\mathit{replica}$ (a PrefixTree,
@@ -436,7 +431,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   }
   \KwRet \textsc{Consistent}\;
 }
-\end{algorithm}
+\end{algorithm}}
 
 \clearpage
 \paragraph{Continuous mode (Algorithm~\ref{alg:cea}).} CEA authenticates the Double Ratchet epoch by

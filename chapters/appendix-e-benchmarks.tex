@@ -193,10 +193,7 @@ M11 handshake-hook lookup verification & & \multicolumn{3}{l}{identical to M3 (\
 M8 latency-derived rates follow as $10^6 / \text{median}_{\mu s}$: approximately $8{,}360$ lookups/s and
 $6{,}630$ updates/s, single-thread. M9 epoch commit scales roughly linearly in $N$ ($\approx$$13\times$ for a
 $10\times$ increase), reflecting the deep-clone snapshot (which now also copies each leaf's chain
-memo) discussed in \cref{ch:eval}. \emph{M11 is,
-by construction, the same operation as M3, the full signed-head lookup verification} (the KT lookup-verification cost added at the handshake hook
-\emph{is} one full signed-head lookup verification), so its rows equal the M3 rows exactly; they are
-listed separately only because the chapter frames the same measurement two ways.
+memo) discussed in \cref{ch:eval}.
 
 \medskip\noindent\emph{Auditor (M12), the local append-only cryptographic kernel: an STH signature
 check plus consistency-proof generation and verification, and a fork check against \emph{one}

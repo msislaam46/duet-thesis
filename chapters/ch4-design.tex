@@ -180,9 +180,10 @@ The dual-index scheme closes Problem~1 of \cref{sec:bg-open} (the absence of
 an in-band peer-warning channel) and so achieves Goal~G1 (Key-Substitution Detection) against the substitution
 attacks A1, A3, and A5 of \cref{ch:threat} by two complementary mechanisms. An in-band warning
 channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5). The
-VRF-anchored lookup labels themselves catch a network man-in-the-middle (A3): an attacker holding a
-different shared secret derives disjoint labels, so a proof-verified lookup misses, and any value
-placed at the victim's expected slot cannot match the peer's VRF-anchored global entry.
+secret-derived dual-index lookup labels catch a network man-in-the-middle (A3): an attacker holding a
+different shared secret derives disjoint labels, so a proof-verified lookup misses; and the separate
+global VRF-anchored directory entry catches any pre-emptive occupation of the victim's expected slot,
+since such a value cannot match it.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
 
