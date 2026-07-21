@@ -3,7 +3,7 @@
 This chapter describes how the design of \cref{ch:design} was implemented in software. It first
 sets out the architecture and the language boundary between the two layers the system is built
 from (\cref{sec:impl-strategy}). It then describes the cryptographic core, the standalone Rust
-\texttt{kt} crate that holds the transparency log and all server-side components of the prototype
+\texttt{duet} crate that holds the transparency log and all server-side components of the prototype
 (\cref{sec:impl-modules}), followed by the client integration into Signal Desktop, written in
 TypeScript (\cref{sec:impl-signal}). It then describes the cross-implementation testing and parity
 that bridge the two independent implementations (\cref{sec:impl-tests}), the system-wide
@@ -14,7 +14,7 @@ resulting system is deferred to \cref{ch:eval}.
 % ============================================================================
 \section{Architecture and Language Boundary}\label{sec:impl-strategy}
 
-In this section we explain why the system is divided into two implementations and where the
+This section explains why the system is divided into two implementations and where the
 boundary between them lies. This matters because the cryptographic core and the messaging-client
 integration have very different requirements, and keeping them strictly apart is what lets each
 be built, measured, and reasoned about on its own without the reader having to track which
@@ -22,7 +22,7 @@ environment is in view.
 
 The cryptographic operations and the transparency log are isolated in a standalone Rust crate,
 while the client-side verification and the user-interface hooks are integrated directly into
-Signal Desktop's TypeScript codebase. The first layer is the \texttt{kt} crate. It is the reference implementation of the design, and it
+Signal Desktop's TypeScript codebase. The first layer is the \texttt{duet} crate. It is the reference implementation of the design, and it
 is the implementation on which all measurements reported in \cref{ch:eval} are performed. Rust was
 chosen for the measurement core because it is the language of the comparable production systems
 (Parakeet and Meta's \texttt{akd} library are both Rust~\cite{malvai2023parakeet,facebook-akd})
@@ -93,7 +93,7 @@ the HTTP API is detailed in \cref{app:apiref}.}
 % ============================================================================
 \section{The Rust Cryptographic Core}\label{sec:impl-modules}
 
-This section describes the Rust reference implementation: the standalone \texttt{kt} crate, which
+This section describes the Rust reference implementation: the standalone \texttt{duet} crate, which
 holds the transparency log and every novel construction of the design, together with the binaries
 built on it. Nothing here depends on Signal Desktop, so the crate can be read, and was measured, in
 isolation. It is organized as a small set of modules, each implementing one component of the design and
@@ -103,7 +103,7 @@ they fit together at run time.
 
 \begin{table}[ht]
 \centering
-\caption{The \texttt{kt} crate's modules and their specification grounding.}
+\caption{The \texttt{duet} crate's modules and their specification grounding.}
 \label{tab:impl-modules}
 \footnotesize
 \begin{tabular}{@{}p{3.0cm}p{5.0cm}p{4.4cm}@{}}
@@ -198,8 +198,8 @@ catalogue in \cref{app:tests}
 (\cref{tab:tests-rust-prim,tab:tests-rust-server,tab:tests-rust-system,tab:tests-jest-wire,tab:tests-jest-unit,tab:tests-adversarial}).
 
 The directory-immutability safeguards of \cref{ssec:design-detection} are implemented across these
-components rather than left to deployment. The write-once policy lives in the server's raw-label
-update path: a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
+components rather than left to deployment. The server enforces the write-once policy in its raw-label
+update path. Thus, a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
 \texttt{/update-raw} endpoint answers \texttt{409 Conflict}), while the privileged interface exposes
 an explicit unchecked overwrite so the adversarial suite can play a malicious operator. Every commit
 freezes a \emph{declared update set} (the epoch's inserts and rotations, each rotation disclosing
@@ -243,7 +243,7 @@ is the epoch commit, which snapshots the tree by a deep clone; \cref{ch:eval} qu
 
 \subsection{Benchmark Infrastructure}\label{ssec:impl-bench}
 
-Because the evaluation of \cref{ch:eval} rests on the numbers this harness produces, its methodology
+Since the evaluation of \cref{ch:eval} rests on the numbers this harness produces, its methodology
 belongs here, with the results themselves deferred. Measurements are taken two ways. Criterion drives
 the statistical benchmarks, warming up for a fixed interval and then collecting a configured number
 of samples over a fixed measurement window (its sampling is parameterized, not stopped on any

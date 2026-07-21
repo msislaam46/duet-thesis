@@ -150,7 +150,7 @@ signature, since a validly signed but stale or forked head is precisely what the
 adversary of attack A4 would supply. Step~4 checks that the proof binds to the returned value.
 Steps~5 and~6 are the two layers of the combined tree: the prefix proof (step~5) shows
 the entry is at its label in the dictionary, and the log-inclusion proof (step~6) shows that
-dictionary state is the one the signed head commits to. Because each commit appends the
+dictionary state is the one the signed head commits to. Since each commit appends the
 new directory root as the log's \emph{last} leaf, step~6 additionally pins the inclusion to
 that latest leaf ($\mathit{leaf\_index} = \mathit{tree\_size} - 1$ at exactly the signed
 size): a genuine inclusion proof for an \emph{earlier} leaf still verifies against the
@@ -214,9 +214,9 @@ parties' keys coexist in the directory, and the shared warning slot sits alongsi
 \centering
 \input{figures/tikz/fig-design-dualindex}
 \caption[The dual-index scheme's three derived slots.]{The dual-index scheme: the two lookup slots (one per participant) and the shared
-warning slot are all derived by HKDF from the conversation's shared secret $\sharedS$. Because
+warning slot are all derived by HKDF from the conversation's shared secret $\sharedS$. Since
 both parties hold the same $\sharedS$, they derive the identical warning label $\ell_{\mathsf{warn}}$,
-so a warning written by either party surfaces in a slot both sides read; a party holding a different secret
+so a warning written by either party appears in a slot both sides read; a party holding a different secret
 $\sharedS'$ derives a disjoint set of labels and cannot reach these slots.}
 \label{fig:design-dualindex}
 \end{figure}
@@ -497,7 +497,7 @@ receiver's state untouched, so the check can be retried without desynchronizing 
 
 One representational point requires an explicit statement. ACKA's log stores a \emph{vector} of
 fingerprints per label, and its receiver rejects unless exactly one fingerprint is present; the alarm
-condition is two fingerprints at one label. Our directory stores exactly one value per label, so that
+condition is two fingerprints at one label. DUET's directory stores exactly one value per label, so that
 alarm condition maps onto two mechanisms instead: the honest sender's pre-post check fails against an
 occupied label (the case in which the adversary posted first), and the transition audit
 (\cref{ssec:design-detection}), which rejects the converse case, in which an adversary
@@ -607,8 +607,8 @@ a false binding at some epoch inside the window and revert it before the client 
 that verifies only the consistency of the two endpoint heads and the current value at its own label
 would miss such a transient substitution, which is why CONIKS concludes that inspecting only the
 latest signed root is unsound (\cref{ssec:bg-vkd-academic}). That objection applies verbatim to any
-windowed check, including this one, and we therefore state explicitly why it does not defeat this
-design. A transient in-window substitution is profitable to the adversary only if it is
+windowed check, including this one; the reason it does not defeat this design is therefore stated
+explicitly. A transient in-window substitution is profitable to the adversary only if it is
 \emph{used}: a peer who initiates or continues the conversation during the window performs
 pinned-key lookups at the dual-index slots (\cref{ssec:design-detection}) and, on a mismatch, writes
 to the shared warning slot. Under the write-once policy, transition audit, and persistence check of
@@ -680,8 +680,8 @@ $\Logsec$ & abstract append-only secure log (consistency + exclusion) & KT verif
 \end{table}
 
 Three deliberate departures from the paper are stated plainly, because each corresponds to one of
-the ACKA limitations identified in \cref{sec:bg-acka}, and instantiating $\Logsec$ lets
-us address it. First, where $\CEA$ authenticates fingerprints, the session-mode scheme
+the ACKA limitations identified in \cref{sec:bg-acka}, and instantiating $\Logsec$
+addresses it. First, where $\CEA$ authenticates fingerprints, the session-mode scheme
 additionally derives \emph{labels} from the shared secret, adding the in-band
 peer-warning channel ACKA lacks. Second, ACKA's combined $\mathsf{CKALOG}$ construction provides no
 deferred-verification procedure. A client verifies each epoch as it arrives. The windowed policy
@@ -737,9 +737,9 @@ labels. This is the structure used by CONIKS and the IETF Key Transparency desig
 identifier rather than a bare hash. A bare hash would let any observer enumerate the
 directory by guessing identifiers. The VRF instead makes labels pseudorandom to outsiders
 yet publicly verifiable, so a client can confirm the operator computed the correct label
-without being able to compute or predict any other (\cref{ssec:design-structures}). We use
-ECVRF-EDWARDS25519-SHA512-TAI (RFC~9381) to match Signal's deployed keytrans VRF, so the
-primitive cost is one the platform already pays.
+without being able to compute or predict any other (\cref{ssec:design-structures}). The design
+selects ECVRF-EDWARDS25519-SHA512-TAI (RFC~9381) since it matches Signal's deployed keytrans VRF.
+Thus, the primitive cost is one the platform already pays.
 
 \paragraph{Combined Prefix-Plus-Log Stack.} Authentication uses two trees, a prefix
 tree for the current directory and an append-only log of its committed roots, rather

@@ -1,19 +1,19 @@
 \chapter{Background and Related Work}\label{ch:background}
 
-In this chapter we introduce the building blocks that the remainder of the
-thesis assembles and place this work in the context of existing research. We
-begin with the Signal protocol stack and the precise sense in which it leaves
-public keys unverified (\cref{sec:bg-signal}). We then introduce transparency
+This chapter introduces the building blocks that the remainder of the
+thesis assembles and places this work in the context of existing research. It
+begins with the Signal protocol stack and the precise sense in which it leaves
+public keys unverified (\cref{sec:bg-signal}). It then introduces transparency
 logs, the mechanism used by the key-transparency literature to make a key server
 accountable (\cref{sec:bg-logs}), before examining the verifiable key directory
 (VKD) abstraction and the academic and deployed systems against which this work
-is compared (\cref{sec:bg-vkd}). We then turn to the Authenticated Continuous
+is compared (\cref{sec:bg-vkd}). Next comes the Authenticated Continuous
 Key Agreement (ACKA) framework, which addresses a complementary threat model
 concerned with maintaining authentication guarantees throughout long-lived
-asynchronous communication (\cref{sec:bg-acka}). Finally, we synthesize the
-findings of the literature (\cref{sec:bg-compare}), identify the open problems
+asynchronous communication (\cref{sec:bg-acka}). Finally, the chapter synthesizes the
+findings of the literature (\cref{sec:bg-compare}), identifies the open problems
 that remain for key transparency in asynchronous messaging
-(\cref{sec:bg-open}), and position the contributions of this thesis against
+(\cref{sec:bg-open}), and positions the contributions of this thesis against
 those gaps (\cref{sec:bg-contrib}).
 
 The two questions that motivate this chapter are simple to state but difficult
@@ -31,8 +31,8 @@ analyses of secure messaging systems.
 % ============================================================================
 \section{The Signal Protocol Stack}\label{sec:bg-signal}
 
-In this section we introduce the cryptographic protocol that secures the
-conversations this thesis is concerned with, and we isolate the exact weakness
+This section introduces the cryptographic protocol that secures the
+conversations this thesis is concerned with, and isolates the exact weakness
 it leaves open.
 
 In end-to-end encrypted (E2EE) messaging, each user holds a secret key that
@@ -167,14 +167,14 @@ Neither key is authenticated \emph{per session}.
 \end{table}
 
 The key material described above is consumed directly by Signal's
-session-establishment protocol. We therefore examine how the X3DH
+session-establishment protocol. The next step, therefore, is to examine how the X3DH
 protocol combines these keys to derive the initial shared secret from which all
 subsequent communication keys are generated.
 
 \subsection{The Extended Triple Diffie--Hellman (X3DH) Protocol}\label{ssec:bg-x3dh}
 
-Having introduced the public key material that Signal users publish, we can now
-examine how that material is used during session establishment. The Extended
+Having introduced the public key material that Signal users publish, the section now
+turns to how that material is used during session establishment. The Extended
 Triple Diffie--Hellman (X3DH) protocol allows Alice to derive a shared secret
 (denoted by $\sharedS$) with Bob even when Bob is offline, by combining Alice's
 keys with the identity, signed pre-key, and one-time pre-key material published
@@ -252,8 +252,8 @@ adversary (a ``harvest-now, decrypt-later'' attacker)~\cite{pqxdh}.
 In Signal, the shared secret $\sharedS$ is not used directly to encrypt
 application data. Instead, it serves as the starting point for the Double
 Ratchet protocol, which continuously evolves cryptographic state throughout the
-lifetime of the conversation. We next examine how Signal transforms this initial
-shared secret into per-message encryption keys.
+lifetime of the conversation. How Signal transforms this initial
+shared secret into per-message encryption keys comes next.
 
 \subsection{The Double Ratchet Protocol}\label{ssec:bg-ratchet}
 
@@ -270,8 +270,8 @@ post-compromise security, meaning that the session can heal after a compromise
 once the attacker stops interfering, because a fresh Diffie--Hellman ratchet
 step re-randomizes the state. Post-compromise security, however, is guaranteed
 only against an adversary who becomes passive after the compromise. It offers no
-guarantee against one who remains active. We return to this active-adversary
-setting in \cref{sec:bg-acka}. \Cref{fig:bg-ratchet} shows how the Diffie--Hellman
+guarantee against one who remains active. This active-adversary
+setting returns in \cref{sec:bg-acka}. \Cref{fig:bg-ratchet} shows how the Diffie--Hellman
 ratchet and the symmetric-key chains interact.
 
 \begin{figure}[H]
@@ -289,7 +289,7 @@ Although the Double Ratchet algorithm continuously refreshes encryption keys, it
 does not continuously re-authenticate the public keys from which the session
 originated. The security guarantees it provides therefore assume that the key
 material used during session establishment was authentic in the first place.
-This returns us to the question left open in \cref{ssec:bg-keymat}: how do users
+This returns to the question left open in \cref{ssec:bg-keymat}: how do users
 know that the public keys supplied by the server were genuine? Signal's answer
 is the Safety Number mechanism, whose limitations motivate the remainder of this
 chapter.
@@ -404,8 +404,8 @@ collision-resistant hash function. Hash functions enable commitments: compact
 values that bind a publisher to a larger body of data. Merkle trees then
 organize many such commitments into a structure that supports efficient
 verification. Transparency logs, in turn, use Merkle trees to make server
-behaviour publicly auditable. Because each layer depends on the one beneath it,
-we begin with the notion of a commitment.
+behaviour publicly auditable. Since each layer depends on the one beneath it,
+the notion of a commitment comes first.
 
 A commitment is a short fingerprint of a body of data: small enough to publish
 or repeat widely, yet so tightly bound to the data that altering any part of it
@@ -606,7 +606,7 @@ it. The draft leaves one question open: it calls for
 ``reasonable monitoring windows'' so that intermittently-connected mobile
 clients need not replay every missed update, but leaves the mechanism for
 achieving them unspecified~\cite{ietf-keytrans-protocol}. This open question is
-the efficiency problem we return to in later chapters.
+the efficiency problem this thesis returns to in later chapters.
 
 The signed tree head deserves one further note, because it is where this work
 hardens the standard design. The server signs each head with Ed25519 over the
@@ -638,15 +638,15 @@ verifiable key directory constructions surveyed in \cref{sec:bg-vkd}.
 % ============================================================================
 \section{Verifiable Key Directories for Key Transparency}\label{sec:bg-vkd}
 
-In this section we turn from transparency logs themselves to the systems built
-upon them. Specifically, we examine the literature that uses the
+This section turns from transparency logs themselves to the systems built
+upon them. Specifically, it examines the literature that uses the
 transparency-log mechanism of \cref{sec:bg-logs} to construct verifiable key
 directories for key transparency. This literature is both the context in which
 the present thesis is situated and the benchmark against which its contributions
 are assessed. The limitations that repeatedly appear across these systems, and
-which we survey critically throughout this section, directly motivate the
-designs introduced in \cref{sec:bg-contrib}. We begin by defining the verifiable
-key directory abstraction (\cref{ssec:bg-vkd-abstraction}), then review its
+which this section surveys critically, directly motivate the
+designs introduced in \cref{sec:bg-contrib}. The survey begins by defining the verifiable
+key directory abstraction (\cref{ssec:bg-vkd-abstraction}), then reviews its
 cryptographic foundations (\cref{ssec:bg-vkd-blocks}), the principal academic
 constructions (\cref{ssec:bg-vkd-academic}), and finally the systems that have
 been deployed in practice (\cref{ssec:bg-vkd-deployed}).
@@ -995,8 +995,8 @@ systems, and examining those deployments matters for two reasons: they show whic
 design choices have proven practical at scale, and they reveal which limitations
 remained after deployment, the operational and user-facing constraints against
 which this work is ultimately judged. The deployed ecosystem is dominated by
-large messaging providers. We treat the three best-documented systems (WhatsApp,
-Signal, and Proton Mail) in turn, and then note Google, Apple, and Keybase more
+large messaging providers. The three best-documented systems (WhatsApp,
+Signal, and Proton Mail) are treated in turn, and then Google, Apple, and Keybase more
 briefly.
 
 \subsubsection{WhatsApp Key Transparency (AKD)}
@@ -1102,19 +1102,19 @@ that the remainder of the chapter takes up.
 % ============================================================================
 \section{The ACKA (Authenticated Continuous Key Agreement) Framework}\label{sec:bg-acka}
 
-In this section we introduce the ACKA framework of Dowling and
+This section introduces the ACKA framework of Dowling and
 Hale~\cite{dowling2023acka}, the culmination of a line of work arguing that
 authentication must itself be ratcheted alongside the key
-agreement~\cite{dowling2020nocompromise}, and make precise how this work bridges it to key
+agreement~\cite{dowling2020nocompromise}, and makes precise how this work bridges it to key
 transparency. This matters because ACKA is not another verifiable key directory
 to be slotted into the comparison of \cref{sec:bg-vkd}: it works in a
 \emph{different model}, against a \emph{different adversary}, and it contributes
 the continuous-authentication component that a complete solution needs while
 leaving abstract exactly the component, a secure log, that key transparency
-supplies. We first define its primitives, taking care to define a continuous key
-agreement before using it; then we set out its adversary model and how it differs
+supplies. The section first defines its primitives, taking care to define a continuous key
+agreement before using it; then it sets out its adversary model and how it differs
 from the malicious-server adversary that the verifiable key directories of
-\cref{sec:bg-vkd} are built to resist, and then we state the reconciliation, which turns
+\cref{sec:bg-vkd} are built to resist; and finally it states the reconciliation, which turns
 on a question ACKA itself poses.
 
 Before ACKA can be stated, the object it authenticates must be named. A
@@ -1210,7 +1210,7 @@ that detects a forgery, and there is no out-of-band channel to warn the
 peer~\cite[p.~21]{dowling2023acka}; verification must be performed sequentially
 every epoch, with no mechanism for deferred or windowed catch-up; and the
 consistency mechanism, though defined, is left unused for third-party auditing.
-This last point is our own observation rather than a claim of the paper's: ACKA's
+This last point is an observation of this thesis rather than a claim of the paper's: ACKA's
 detection argument relies only on the log's append-only (exclude) property, and
 the paper itself never discusses third-party auditing.
 
@@ -1221,12 +1221,12 @@ security picture is what motivates the synthesis this thesis proposes.
 % ============================================================================
 \section{Comparative Analysis of Existing Systems}\label{sec:bg-compare}
 
-In this section we draw the surveyed systems of \cref{sec:bg-vkd} together and
-identify the common design patterns and remaining gaps that emerge across the
+This section draws the surveyed systems of \cref{sec:bg-vkd} together and
+identifies the common design patterns and remaining gaps that emerge across the
 literature. The
-purpose is not to rank the systems but to surface the capabilities that remain
+purpose is not to rank the systems but to bring out the capabilities that remain
 unsupported across them. Those recurring gaps motivate the open problems of
-\cref{sec:bg-open}. We give the comparison as a table and then state five
+\cref{sec:bg-open}. The comparison is given as a table, followed by five
 cross-cutting findings, keeping the section descriptive, with references to the
 proposed scheme kept to forward references; its full treatment is deferred to
 \cref{sec:bg-contrib} and \cref{ch:design}.
@@ -1363,7 +1363,7 @@ communicating parties in time to influence the security of a conversation.
 
 The comparison of \cref{sec:bg-compare} and the ACKA limitations of
 \cref{sec:bg-acka} leave three problems open for the asynchronous-messaging
-setting. We state each precisely and ground it in the systems that exhibit it,
+setting. Each is stated precisely and grounded in the systems that exhibit it,
 since a problem stated precisely is one whose proposed solution
 (\cref{sec:bg-contrib}) can be evaluated rather than merely claimed.
 
@@ -1458,7 +1458,7 @@ as the server's only remaining suppression strategy. This is the in-band peer-wa
 literature lacks. The closest related work is KTACA (Yadav et al.), which achieves
 client-side detection but relies on anonymous
 lookups~\cite{yadav2020poster,yadav2022fakekey}, a cost Parakeet explicitly objects
-to~\cite[p.~14]{malvai2023parakeet} and which our unlinkable derived labels avoid.
+to~\cite[p.~14]{malvai2023parakeet} and which DUET's unlinkable derived labels avoid.
 
 \paragraph{Mechanism 2 (Cryptographic): Windowed Consistency Proofs.} These address Problem 2,
 reducing the offline catch-up from $W$ sequential consistency proofs (one per missed
@@ -1476,7 +1476,7 @@ Mechanisms~1 through~3 are the transparency-log half of the work.
 
 \paragraph{Mechanism 4 (Conceptual): ACKA Instantiation (Continuous Mode).} ACKA itself gives a modular
 construction and a specific Signal add-on but leaves its logging component (Logsec) an
-\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}. To our knowledge, this is the first
+\emph{abstract} primitive~\cite[p.~10]{dowling2023acka}. To the author's knowledge, this is the first
 instantiation of that component over a concrete, \emph{malicious-server-resistant}
 key-transparency log: a per-ratchet-epoch fingerprint and label chain that authenticates the
 Double Ratchet epoch by epoch. This claim rests on a survey of the published key-transparency
@@ -1497,17 +1497,17 @@ primitive with a security definition (Logsec), leaving the concrete malicious-se
 realization open, whereas the academic VKD literature builds exactly such a directory but
 authenticates only a session or identity binding. They differ in granularity (per-epoch versus
 per-session) and, more to the point, in what each makes concrete: ACKA specifies what the log must
-guarantee, key transparency shows how to build it. We reconcile them by instantiating ACKA's abstract
+guarantee, key transparency shows how to build it. This thesis reconciles them by instantiating ACKA's abstract
 logging component with a concrete key-transparency log that need not be trusted, realizing both as
-operating modes and measuring the trade between them. To our knowledge, no system in the surveyed
+operating modes and measuring the trade between them. To the author's knowledge, no system in the surveyed
 corpus (\cref{sec:bg-compare}) combines per-ratchet continuous entity authentication with a publicly
-auditable, untrusted-server key directory in one implemented design. Throughout, we state the coverage trade honestly: we log identity keys
+auditable, untrusted-server key directory in one implemented design. Throughout, the coverage trade is stated plainly: DUET logs identity keys
 and per-session labels, not the per-user version chains of SEEMless, Parakeet and OPTIKS
 or the multi-device keychains of ELEKTRA, different coverage, leaner proofs, and
 automatic in-band detection.
 
 \paragraph{Mechanism 6 (Systems, Empirical): Implementation and Evaluation.} This is the engineering
-core of the thesis and a contribution in its own right. The core is a Rust \texttt{kt}
+core of the thesis and a contribution in its own right. The core is a Rust \texttt{duet}
 crate whose library modules total roughly \num{3600} lines (the full Rust implementation, with the
 server, auditor, and benchmark binaries, is about \num{6600}; see \cref{ch:impl}), implementing the
 sparse-Merkle-tree directory, the RFC~9162

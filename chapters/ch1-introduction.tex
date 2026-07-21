@@ -9,7 +9,7 @@ contributions developed in the remainder of the thesis.
 
 End-to-end encryption protects a message in transit, but its guarantee is only as strong as the public keys the two parties believe they are using. In asynchronous messaging systems such as Signal, clients normally obtain this key material from provider-operated infrastructure, and trust that what they receive is genuine. That trust is a weak point. If that infrastructure substitutes an attacker's key for the recipient's, the protocol may establish an encrypted channel to the attacker rather than to the intended recipient. This is a key-substitution, or ``fake-key,'' attack, and it is invisible to the cryptography itself.
 
-The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. It works in principle but fails in practice because it depends on a human ritual that people rarely perform. In one study, only about 14\% of attempts at the ceremony succeeded, and just two of twelve pairs completed the comparison in any of the apps tested~\cite{vaziripour2017}; even a successful comparison is a one-off check that says nothing about whether a key changes later. \emph{Key
+The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. In principle it works. In practice, however, it fails, since it depends on a manual ceremony that people rarely perform. In one study, only about 14\% of attempts at the ceremony succeeded, and just two of twelve pairs completed the comparison in any of the apps tested~\cite{vaziripour2017}; even a successful comparison is a one-off check that says nothing about whether a key changes later. \emph{Key
 transparency} (publishing the directory as a verifiable, append-only log so that clients can check their keys against a public, consistent record) is the response the field has converged on, and production systems, such as Signal's Automatic Key Verification, have started deploying it~\cite{signal-akv}.
 
 However, deployed key transparency architectures still leave two critical gaps. \emph{First}, detection is reduced entirely to \emph{self-monitoring}. While a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner; there is no automatic, in-band channel to warn the communicating \emph{peer} that the key they are about to trust is compromised. \emph{Second}, returning clients face an offline monitoring cost that grows linearly with the number of missed epochs.
@@ -81,7 +81,7 @@ rather than linear in the epochs missed (\cref{sec:design-windowed}, \cref{lem:w
 construction and its measured trade-off, not a new object.
 
 \paragraph{Systems.} A complete implementation in two independently implemented layers whose shared
-protocol operations are checked byte-for-byte against cross-language test vectors: a standalone Rust reference implementation (the \texttt{kt} crate, an HTTP directory server,
+protocol operations are checked byte-for-byte against cross-language test vectors: a standalone Rust reference implementation (the \texttt{duet} crate, an HTTP directory server,
 and a cross-vantage auditor) and an embedded TypeScript verifier integrated into a fork of the real
 Signal Desktop client (\cref{ch:impl}).
 
@@ -90,7 +90,7 @@ implemented VRF-indexed lookup proof is at rough size parity with CONIKS, with t
 CONIKS lacks obtained through additional same-shape lookups rather than a larger proof. Median full
 client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more
 slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}). A month-long offline catch-up costs a few
-hundred bytes against the hundreds of kilobytes na\"ive monitoring would spend. A systematic security
+hundred bytes against the hundreds of kilobytes that per-epoch re-fetching would spend. A systematic security
 evaluation using the STRIDE threat-classification framework and the MITRE ATT\&CK knowledge base
 covers the resulting system (\cref{ch:eval}).
 
