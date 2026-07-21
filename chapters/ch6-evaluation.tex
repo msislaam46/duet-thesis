@@ -6,11 +6,11 @@ reports the microbenchmarks for proof size, verification latency, catch-up bandw
 (\cref{sec:eval-micro}), examines behaviour at scale together with the session-versus-continuous
 mode trade (\cref{sec:eval-scale}), places the results beside prior key-transparency systems
 (\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
-taxonomy (\cref{sec:eval-security}). The principal findings are that the implemented VRF-indexed lookup proof is
-at rough size parity with CONIKS, and separately that detection is obtained through additional lookups
-of the same shape rather than any enlargement of that proof, that offline catch-up needs one proof
+taxonomy (\cref{sec:eval-security}). The principal findings are four. The implemented VRF-indexed lookup proof is
+at rough size parity with CONIKS. Detection is obtained through additional lookups
+of the same shape rather than any enlargement of that proof. Offline catch-up needs one proof
 rather than $W$ (\num{695}-fold fewer raw path-hash bytes at a one-month window against this
-chapter's synthetic baseline), and that median full client verification stays below
+chapter's synthetic baseline). And median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
 
 % ============================================================================
@@ -40,7 +40,7 @@ substitution), plus one directory write per ratchet epoch in continuous mode. Th
 latency of these lookups is \emph{not} measured here: M5 measures only one \emph{unverified}
 server-side warning-slot read, a lower bound on the verification-free read component of a single lookup
 rather than the full detection cost, and M13 measures the continuous-mode write trade. \emph{Does client
-verification remain inexpensive as the directory grows?} Falsified if the full-chain verify grew in
+verification remain inexpensive as the directory grows?} Falsified if full client verification grew in
 proportion to $N$, or exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}).
 \emph{Can an offline client re-synchronize in a single proof, rather than one per missed epoch?}
 Falsified if the windowed client still had to fetch a proof per epoch, or if that single proof's size
@@ -53,7 +53,7 @@ them in prose, \cref{tab:eval-map} is the measurement map for the whole chapter:
 metric measures, the baseline it is read against, and where it is reported. The reader can consult it
 once and refer back, instead of holding thirteen definitions in mind. The metrics are numbered in the
 order this chapter presents them (size, then latency, then bandwidth, then detection, then scale,
-maintenance, and modes) which is the order the questions above are answered, not the order of the
+maintenance, and modes), which is the order in which the questions above are answered, not the order of the
 benchmark harness that produces them.\footnote{The Rust harness (\cref{app:benchmarks}) emits the
 same metric numbering, so each metric family reported here can be traced directly to the harness
 group of the same name.}
@@ -70,7 +70,7 @@ Metric & What it measures & Baseline(s) & Reported in \\
 M1  & Lookup proof size vs.\ $N$              & single- vs VRF-indexed     & \cref{ssec:eval-sizes} \\
 M2  & Proof generation latency (server)        & VRF-indexed                & \cref{ssec:eval-latency} \\
 M3  & Full signed-head lookup verification latency & VRF-indexed, windowed      & \cref{ssec:eval-latency} \\
-M4  & Offline catch-up bandwidth vs.\ $W$      & na\"ive vs windowed         & \cref{ssec:eval-catchup} \\
+M4  & Offline catch-up bandwidth vs.\ $W$      & synthetic vs windowed & \cref{ssec:eval-catchup} \\
 M5  & Marginal warning-slot lookup cost        & raw warning (unverified)   & \cref{ssec:eval-detection} \\
 M6  & Clean-session false-positive rate        & None                       & \cref{ssec:eval-detection} \\
 M7  & Size + verify at scale ($10^6,10^7$)    & VRF-indexed, windowed      & \cref{ssec:eval-scale} \\
@@ -90,7 +90,7 @@ setup with no key transparency: a single hash, the cost a deployment pays anyway
 \emph{single-index} path (log-inclusion only), the \emph{dual-index} path (the prefix-tree lookup that
 carries the warning slot), and the \emph{windowed} full scheme (dual-index plus windowed consistency
 proofs). These are benchmark configurations rather than a full mechanism-level ablation: the no-KT
-floor isolates the cost of key transparency at all, single-index is a plain log inclusion, dual-index
+floor isolates the baseline cost of running key transparency at all, single-index is a plain log inclusion, dual-index
 is the prefix-tree lookup, and windowed adds windowed consistency. In the size, latency, and rotation
 families the dual-index configuration is measured through the \emph{VRF-indexed}
 \texttt{search\_by\_user\_id} lookup the client actually runs (recorded under the harness's historical
@@ -103,8 +103,8 @@ bound each cost rather than attributing a clean mechanism-level contribution.
 
 Timings are collected two ways. Criterion provides the confidence intervals and regression plots;
 in parallel, a manual harness of \num{2000} timed iterations per operation records the median, the
-95th percentile, and a 95\% confidence half-width to \texttt{results/rust\_benchmark\_timings.csv},
-and it is the manual-harness medians that are quoted here, the harness producing uniformly formatted
+95th percentile, and a 95\% confidence half-width to \texttt{results/rust\_benchmark\_timings.csv}.
+The manual-harness medians are quoted here. The harness produces uniformly formatted
 rows across every metric family. Two properties of those rows bound how they may be read. The median
 and 95th percentile are descriptive sample statistics, carrying no interval. The $\pm$ column is a
 \num{95}\,\% confidence half-width \emph{of the mean} under a normal approximation
@@ -192,7 +192,7 @@ single-index path (\cref{tab:eval-sizes}).}
 
 The VRF-indexed lookup proof decomposes as a fixed \num{177}\,byte constant (an \num{80}\,byte
 ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{97}\,bytes of metadata: a \num{32}\,byte label, a
-\num{32}\,byte value, a \num{1}\,byte C2 leaf-kind commitment (\cref{ssec:design-detection}), and a
+\num{32}\,byte value, a \num{1}\,byte leaf-kind commitment (\cref{ssec:design-detection}), and a
 \num{32}\,byte sibling bitmap) on
 top of $32$ bytes per prefix hash, giving
 \begin{equation}\label{eq:eval-proofsize}
@@ -218,7 +218,7 @@ check is a second lookup of the same shape, not a larger proof).
 
 A proof that is small is of little use if it is slow to check on the client. \Cref{tab:eval-latency}
 reports the server-side generation cost and the client-side verification cost, broken into the
-prefix-root recompute, the VRF verify, and the full six-step chain of \cref{ssec:design-verify}.
+prefix-root recompute, the VRF verify, and full client verification (\cref{ssec:design-verify}).
 
 \begin{table}[ht]
 \centering
@@ -229,32 +229,32 @@ prefix-root recompute, the VRF verify, and the full six-step chain of \cref{ssec
 \toprule
 Operation & $N=10^3$ & $N=10^4$ & Scaling \\
 \midrule
-Server full search (gen, incl.\ VRF prove) & \SI{119.5}{\micro\second} & \SI{119.7}{\micro\second} & VRF-dominated, independent of $N$ \\
-Prefix-root verify (client) & \SI{25.9}{\micro\second} & \SI{25.9}{\micro\second} & independent of $N$ \\
+Server full search (gen, incl.\ VRF prove) & \SI{119.5}{\micro\second} & \SI{119.7}{\micro\second} & VRF-dominated, $\approx$flat over $10^3$--$10^4$ \\
+Prefix-root verify (client) & \SI{25.9}{\micro\second} & \SI{25.9}{\micro\second} & grows only with proof depth ($\sim\lg N$) \\
 VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} & constant-time \\
-\textbf{Full signed-head lookup verification (windowed baseline)} & \textbf{\SI{128.1}{\micro\second}} & \textbf{\SI{128.6}{\micro\second}} & \textbf{flat in $N$} \\
+\textbf{Full signed-head lookup verification (windowed baseline)} & \textbf{\SI{128.1}{\micro\second}} & \textbf{\SI{128.6}{\micro\second}} & \textbf{$\approx$flat over $10^3$--$10^4$} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The most important result is the last row, M3: the full signed-head lookup verification path, referred to more generally as full client verification (VRF label binding, value binding, prefix
 root recompute, log inclusion, and the Ed25519 signed-tree-head signature) costs about
-\SI{128}{\micro\second} and does not grow with the directory, because its two cost centres, the
-prefix recompute (\SI{25.9}{\micro\second}) and the VRF verify (\SI{76.0}{\micro\second}), are both
-$N$-independent: the first is a fixed \num{256}-level bitmap walk and the second is a constant-time
-elliptic-curve operation. The system therefore meets its sub-millisecond client-verify target with
+\SI{128}{\micro\second} over the measured $10^3$--$10^4$ range and grows only weakly with the
+directory (\cref{ssec:eval-scale}): its dominant cost centre, the VRF verify (\SI{76.0}{\micro\second}),
+is a constant-time elliptic-curve operation, and the prefix recompute (\SI{25.9}{\micro\second}) grows
+only with proof depth ($\sim\lg N$). The system therefore meets its sub-millisecond client-verify target with
 roughly sevenfold headroom, and does so while including the VRF verification that comparable systems
-exclude from their reported figures. The server-side full search is likewise flat rather than
-growing, and this is a direct consequence of the compressed-leaf chain memo (\cref{sec:impl-modules}).
+exclude from their reported figures. The server-side full search is likewise near-flat over this
+range, and this is a direct consequence of the compressed-leaf chain memo (\cref{sec:impl-modules}).
 Before that optimization, proof generation grew with directory depth (from \SI{107}{\micro\second} to
 \SI{159}{\micro\second} across $N=10^3$--$10^4$) because each non-inclusion co-path recomputed a
 compressed leaf's \num{256}-level hash chain. Memoizing that chain top removes the $N$-dependent
 component, leaving generation dominated by the constant-time VRF prove: it reads \SI{119.5}{\micro\second}
 at $N=10^3$ and \SI{119.7}{\micro\second} at $N=10^4$, while the scale run's search median reads
 \SI{117.6}{\micro\second} at $N=10^6$ and \SI{141.2}{\micro\second} at $N=10^7$
-(\cref{ssec:eval-scale}): flat through $10^6$, then rising at $10^7$, the same shape verification
-shows and with the same two candidates behind it, the wider proof and the change of measurement
-context between the harnesses.
+(\cref{ssec:eval-scale}): flat through $10^6$, then rising at $10^7$. Verification shows the same
+shape. Two factors sit behind the rise, the wider proof at larger $N$ and the change of measurement
+context between the moderate-scale and scale-up harnesses.
 
 \subsection{Offline Catch-Up Bandwidth (M4)}\label{ssec:eval-catchup}
 
@@ -282,7 +282,7 @@ and would be larger on both sides of the comparison.
 
 \begin{table}[ht]
 \centering
-\caption[Offline catch-up bandwidth versus window.]{Offline catch-up, raw consistency-path hash bytes: synthetic sequential baseline ($W$
+\caption[Offline catch-up bandwidth versus window.]{Offline catch-up, raw consistency-path hash bytes: synthetic current-head-anchored sequential baseline ($W$
 current-head-anchored proofs) versus windowed, any $N$.}
 \label{tab:eval-catchup}
 \small
@@ -406,7 +406,7 @@ is a conjecture the data here does not test. The median is the figure quoted in 
 \end{threeparttable}
 \end{table}
 
-The measured constancy of prefix verification across five orders of magnitude ($10^2$ to $10^7$),
+The measured constancy of prefix verification from $10^3$ to $10^7$,
 \SI{25.9}{\micro\second} at $10^3$ and \SI{26.0}{\micro\second} at $10^7$, is strong empirical
 evidence that the tree walk is bounded by the fixed \num{256}-level height rather than by $N$. Full client
 verification is not quite as flat: its median reads \SI{131.9}{\micro\second} at $10^6$ and
@@ -429,7 +429,7 @@ deployment would move to the persistent, sharded storage this prototype delibera
 Server-side maintenance costs decide how large a deployment one machine can sustain.
 \Cref{tab:eval-server} collects them. The median latencies correspond to estimated single-thread rates of about \num{8360} lookups and
 \num{6630} updates per second at $N=10^4$. Key rotation (overwriting an existing binding) costs
-\SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$: flat in $N$ for the same reason proof
+\SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$: approximately unchanged over the measured range, for the same reason proof
 generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
 the unchanged user identifier, which a production server would cache, leaving only tens of
 microseconds of tree work. The verifiable random function, measured in isolation, is constant-time
@@ -460,8 +460,8 @@ Epoch commit & \SI{464.0}{\micro\second} & \SI{5.92}{\milli\second} \\
 
 The one cost that does grow with $N$ is the epoch commit (\SI{464.0}{\micro\second} at $10^3$ rising to
 \SI{5.92}{\milli\second} at $10^4$, a $\approx$$13\times$ increase for a $10\times$ growth, i.e.\ roughly
-$O(N)$). This is the deep-clone snapshot the current server takes on every commit: now also copying
-each leaf's chain memo, which is the deliberate space-for-time trade that makes reads flat
+$O(N)$). This is caused by the deep-clone snapshot the current server takes on every commit. The snapshot also
+copies each leaf's chain memo, the deliberate space-for-time trade that keeps reads flat
 (\cref{sec:impl-modules}); a copy-on-write
 tree would reduce it to $O(\lg N)$, and this is noted as future work in \cref{ch:discussion}.
 
@@ -480,7 +480,7 @@ does \emph{not} include the networked, proof-carrying exchange a deployed audito
 each epoch's disclosed update set together with the committed-root log-inclusion proof
 (\cref{sec:design-acka}) and verifying that proof against the signed head, whose transfer and
 verification cost is not captured here, nor the full \texttt{audit\_epoch} transition replay, which
-re-applies every disclosed update into a scratch mirror rather than checking a signature and a
+re-applies every disclosed update into a candidate replica rather than checking a signature and a
 consistency proof. The fork figure needs a further caveat, and it is not a constant. The
 implementation's \texttt{detect\_fork} compares the presented head against \emph{every} head it has
 observed (a linear scan of the observed vector), so its cost grows with the number of accumulated
@@ -510,7 +510,7 @@ does not change the conclusion that granularity costs write rate, not verificati
 dual-index and CEA paths use client-derived rather than VRF-derived labels
 (\cref{ssec:design-verify}), and neither includes the signed-tree-head signature verification that
 the full specified check of \cref{app:algorithms} performs; \cref{ssec:eval-latency} shows that the
-complete six-step chain, including that signature, costs $\approx$\SI{128}{\micro\second}. The cost
+full client verification, including that signature, costs $\approx$\SI{128}{\micro\second}. The cost
 of the granularity is instead the number of directory writes. \Cref{tab:eval-modes} reports the write
 counts over a conversation of $E$ hourly epochs, with a signed-pre-key rotation every 30 days
 ($R=720$).
@@ -636,7 +636,7 @@ check, since it \emph{includes} the VRF verification that CONIKS's figures omit,
 signature verification that both totals include. Because the two measurements come from different
 hardware (CONIKS's 2015 2\,GHz laptop CPU against our 2022 mobile CPU; see the comparability note),
 the $3.8\times$ factor is indicative only; the claim that stands on our hardware alone is the
-sub-\SI{150}{\micro\second} median cost of the full six-step chain across the whole measured range.
+sub-\SI{150}{\micro\second} median cost of full client verification across the whole measured range.
 
 \begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different hardware (a 2015
 Xeon through to 2023 cloud instances), different scales ($10^6$ versus $2^{32}$), and database-backed
@@ -779,9 +779,9 @@ key in an earlier epoch flags the change directly on its next fetch.}
 \end{figure}
 
 \FloatBarrier
-\subsection{Residual Risks and Posture}\label{ssec:eval-posture}
+\subsection{Residual Risks and Security Position}\label{ssec:eval-posture}
 
-The overall posture follows from the measurements above. The marginal in-memory warning-slot read (M5)
+The overall security position follows from the measurements above. The marginal in-memory warning-slot read (M5)
 costs on the order of a microsecond of server-side work (\SI{1.62}{\micro\second} clean,
 \SI{1.72}{\micro\second} attacked); end-to-end detection latency, which additionally requires the one
 or two verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure, was
@@ -809,14 +809,14 @@ $\approx$\SI{128}{\micro\second} at $N\le10^4$ and \SI{147.1}{\micro\second} at 
 and a lookup proof is \num{817}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}): at rough size
 parity with CONIKS and, on the prefix-proof sibling representation alone, roughly $9\times$ smaller
 than Signal's fixed \num{256}-sibling copath (\cref{sec:eval-compare}). A client offline for a month catches up in a single \num{320}\,byte proof
-rather than the approximately \num{222}\,kB that one-proof-per-epoch verification costs over the same
+rather than the approximately \num{222}\,kB that the synthetic one-proof-per-epoch baseline costs over the same
 window (\cref{ssec:eval-catchup}); for comparison, CONIKS's published per-epoch monitoring costs
 imply approximately \num{530}\,kB for the same month (\cref{sec:eval-compare}). This matters most for
-the intermittently connected mobile clients a messenger must serve. The per-conversation overhead a
-deployment pays is therefore microseconds of client work and a few hundred bytes of bandwidth, in
-exchange for automatic in-band detection that replaces a manual ceremony which, as
-\cref{ssec:eval-detection} discusses, most unprompted users never reliably locate and
-complete.
+the intermittently connected mobile clients a messenger must serve. The measured components are sub-millisecond local
+verification and sub-kilobyte per-lookup proofs; a detector check performs one or two such lookups,
+though their combined bandwidth and end-to-end latency were not measured. In exchange, the design is
+intended to replace a manual ceremony which, as \cref{ssec:eval-detection} discusses, most unprompted
+users never reliably locate and complete.
 
 On the server, the picture is more qualified, and the qualifications are exactly what a production
 deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one

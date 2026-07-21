@@ -37,7 +37,7 @@ This is the ``combined tree'' design of the IETF Key Transparency working group
 append-only log records every committed state of that dictionary, and the head of the
 log is published as a signed commitment. Lookups are served against the \emph{last
 committed epoch}, never the live tree:
-only a committed prefix root has been folded into the log, so only a committed root
+only a committed prefix root has been appended to the log, so only a committed root
 can be tied, through one chain of proofs, back to a signed head.
 
 \begin{figure}[t]
@@ -105,7 +105,7 @@ authenticates. The STH signs, under Ed25519, the 88-byte little-endian message
 where $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
 \mathit{pk}_{\mathsf{sth}} \concat \mathit{suite} \concat \mathit{version} \concat
 \mathit{epoch\_interval} \concat \mathit{raw\_label\_policy})$, the trailing byte binding the
-write-once raw-label policy (C2/H3) so the server cannot silently relax it. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
+write-once raw-label policy so the server cannot silently relax it. Each field of \cref{eq:design-sth} is necessary for a different aspect of the verification procedure. The $\mathit{tree\_size}$ is
 required by the inclusion and consistency verifiers. Signing the $\mathit{timestamp}$
 means STH freshness cannot be forged, and the trailing $\Hash(\mathit{config})$ is a
 CONIKS-style policy commitment (the field CONIKS calls $P$) that binds the provider's
@@ -176,9 +176,14 @@ benchmarked in \cref{ch:eval} is the complete six-step chain.
 % ============================================================================
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}
 
-The dual-index warning scheme closes Problem~1 of \cref{sec:bg-open} (the absence of
-an in-band peer-warning channel) and so realizes Goal~G1 (Key-Substitution Detection) against the substitution
-attacks A1, A3, and A5 of \cref{ch:threat}.
+The dual-index scheme closes Problem~1 of \cref{sec:bg-open} (the absence of
+an in-band peer-warning channel) and so achieves Goal~G1 (Key-Substitution Detection) against the substitution
+attacks A1, A3, and A5 of \cref{ch:threat} through complementary mechanisms. An in-band warning
+channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5). The
+secret-derived dual-index labels detect a network man-in-the-middle (A3): an attacker with a
+different shared secret derives disjoint labels, so the proof-verified lookup returns non-inclusion. A
+separate comparison with the peer's global VRF-anchored directory entry detects pre-emptive occupation
+of the expected slot, because an attacker-controlled value cannot match the authenticated global key.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
 
@@ -250,9 +255,10 @@ shared secret $\sharedS$ the server never learns. This is the threat it targets:
 \emph{not} claim to catch a man-in-the-middle interposed \emph{during} first contact. If the
 adversary sits in the handshake itself, Alice and Bob complete \emph{separate} handshakes with the
 adversary and never share a single $\sharedS$, so no common rendezvous label exists; that case is the
-trust-on-first-use boundary (\cref{sec:threat-fair}), and it is caught, if at all, by the global
-VRF-slot check against the log (attack A3), which needs no shared secret, not by the warning
-channel. The novelty claimed here is precisely the post-establishment peer warning, which
+trust-on-first-use boundary (\cref{sec:threat-fair}). The warning channel itself cannot operate
+there, but two label-layer signals remain: the divergent secret-derived labels make the
+proof-verified lookup miss, and the global VRF-anchored entry exposes an attacker who pre-emptively
+occupies the expected slot (attack A3). Neither requires a shared secret with the attacker. The novelty claimed here is precisely the post-establishment peer warning, which
 self-monitoring key transparency does not surface to the other party.
 
 \paragraph{Tripwire.} Within that scope, a substituted key implies a different shared secret $\sharedS$,
@@ -353,7 +359,7 @@ check by the writer retaining a committed warning's inclusion proof and assembli
 on any later disappearance (\cref{ch:impl}). The one element left to deployment is
 authenticated writes (account-layer proof of raw-label ownership), without which the write-once
 policy still binds an honest server and the transition audit still binds a malicious one, but a
-malicious client could squat an as-yet-empty peer slot (\cref{ch:discussion}).
+malicious client could pre-emptively occupy an as-yet-empty peer slot (\cref{ch:discussion}).
 
 Detection is bidirectional, which matters for the offline case. The victim's own-key
 self-check publishes the warning when the victim notices the wrong key under its own
@@ -450,8 +456,8 @@ at the cost of one log write per pre-key rotation.
 Alongside it, the system implements a \emph{continuous mode} that binds authentication to
 the \emph{entire} continuous key agreement, following ACKA's example CEA construction
 (\cref{sec:bg-acka}). Each ratchet epoch carries a \emph{public} ratchet key $T_t$ and a \emph{secret} epoch key
-$I_t$ (a secret epoch key: ACKA's Signal mapping sets $I_t = ck$, Signal's chain key, itself a KDF
-of the ratchet Diffie--Hellman output, whereas this PoC folds the raw DH output as a stand-in for
+$I_t$ (ACKA's Signal mapping sets $I_t = ck$, Signal's chain key, itself a KDF
+of the ratchet Diffie--Hellman output, whereas this PoC mixes in the raw DH output as a stand-in for
 $ck$, see \cref{ch:discussion}). At epoch $t$ the party
 computes, from the current chain state $k_t$ (with $k_0$ the state established by Setup), an evolving
 label and a fingerprint that authenticates $T_t$, and only then folds the secret $I_t$ into the
@@ -474,7 +480,7 @@ key $T_t$ and lets a substituted key be detected at the shared label.
 The ordering of operations within an epoch follows ACKA's composed construction
 (their Figure~8) in three respects, each of which matters for correctness. First, the label and
 fingerprint are computed over the \emph{current} (pre-update) state and the \emph{public} key, and
-only then is the \emph{secret} $I_t$ folded into the chain; folding the secret epoch key rather than
+only then is the \emph{secret} $I_t$ mixed into the chain; mixing the secret epoch key rather than
 the public ratchet key keeps the chain unpredictable to an adversary that has compromised the
 pre-shared state: the property the unlinkability and forgery-resistance arguments need. The secret
 is domain-separated before folding ($\KDF(I_t, \text{\texttt{"CEA"}})$, ACKA Figure~8): in a faithful
@@ -498,7 +504,7 @@ occupied label (the case in which the adversary posted first), and the transitio
 \emph{overwrites} the honest fingerprint after it committed: because each leaf commits its
 mutable/immutable kind into its hash, an immutable-label rotation is structurally rejected. This is
 exactly the pre-shared-state overwrite argued in full above, the case the receiver's per-epoch
-verdict alone cannot catch and that detection instead rests on the auditor to reject. Entry
+verdict alone cannot catch, so detection instead rests on the auditor's rejection. Entry
 immutability is thus not an implementation detail but the property that lets ACKA's security argument
 carry over to this instantiation, and, with the committed leaf kind, it is enforced auditably rather
 than assumed.
@@ -545,7 +551,7 @@ vectors verify byte-for-byte equivalence of the Rust and TypeScript CEA construc
 \section{Windowed Consistency Proofs}\label{sec:design-windowed}
 
 The windowed consistency proof closes Problem~2 of \cref{sec:bg-open}, the linear cost
-of offline catch-up, and so realizes Goal~G2 (Consistency Across Offline Windows).
+of offline catch-up, and so achieves Goal~G2 (Consistency Across Offline Windows).
 
 \subsection{The Catch-Up Problem and the Bound}\label{ssec:design-catchup}
 
@@ -623,8 +629,10 @@ in this sense mutually dependent rather than independent optimizations.
 
 A concrete deployment shows the window is not hypothetical. Take $N = 10^7$ users, each
 with about $c = 5$ active conversations, and signed pre-keys rotating every $r = 30$ days.
-Writing one entry per conversation gives on the order of 50~million prefix-tree labels;
-amortized over the 30-day rotation period, this is about 1.67~million directory updates per
+With two participant lookup labels per conversation, the $N \cdot c \approx 50$~million figure counts
+participant--conversation lookup entries (about 25~million conversations, each with two lookup slots);
+each conversation also allocates one shared warning label, normally unwritten. Amortized over the
+illustrative 30-day rotation period, the lookup entries are about 1.67~million directory updates per
 day, or roughly $69{,}400$ updates folded into each hourly epoch commit (the log itself
 gains one leaf per epoch regardless of update volume; \cref{ssec:design-epoch}). A
 client offline for a full rotation period faces a worst-case window of $W = r \cdot 24 =
@@ -680,7 +688,7 @@ deferred-verification procedure. A client verifies each epoch as it arrives. The
 of \cref{sec:design-windowed} instead adds exactly the deferred,
 batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is
 honest and provides no out-of-band cross-checking of tree heads; the cross-vantage auditor
-of the threat model, which realizes Goal~G4 (Fork Detection) against attack A4, adds equivocation detection on top of the
+of the threat model, which achieves Goal~G4 (Fork Detection) against attack A4, adds equivocation detection on top of the
 instantiated log. Closing these three gaps is what turns ACKA's abstract framework into a
 deployable system.
 

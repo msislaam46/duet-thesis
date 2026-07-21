@@ -73,7 +73,7 @@ verification mechanism known as the Safety Number, it does not, on its own,
 guarantee that the keys supplied by the server are authentic. Understanding
 precisely where this assumption enters the protocol stack is therefore necessary
 before examining the key transparency mechanisms introduced later in this
-chapter. Signal therefore serves as both a case study and the deployment context
+chapter. Signal therefore is both a case study and the deployment context
 through which this thesis examines the broader problem of public-key
 verification in secure messaging.
 
@@ -167,7 +167,7 @@ Neither key is authenticated \emph{per session}.
 \end{table}
 
 The key material described above is consumed directly by Signal's
-session-establishment protocol. We therefore further examine how the X3DH
+session-establishment protocol. We therefore examine how the X3DH
 protocol combines these keys to derive the initial shared secret from which all
 subsequent communication keys are generated.
 
@@ -322,7 +322,7 @@ verifies a user's own view of a binding rather than providing a mechanism
 through which one user can actively warn another that a key substitution has been
 detected.
 
-Despite these mechanisms, the authentication problem remains incomplete. The
+Despite these mechanisms, authentication remains incomplete. The
 remaining gap has two dimensions: a structural gap arising from the protocol's
 authentication model and a human gap arising from the usability of verification
 ceremonies.
@@ -351,7 +351,7 @@ perform it correctly. In a paired-participant usability study of the
 authentication ceremony across WhatsApp, Viber and Facebook Messenger, only two
 of twelve pairs located and completed the ceremony when simply
 asked to make sure no one else could read their messages, an overall success
-rate of 14\% across all pairs and applications~\cite[p.~30]{vaziripour2017}.
+rate of 14\% across all pairs and applications (pair--application trials)~\cite[p.~30]{vaziripour2017}.
 Brief, app-generic instructions about the need to compare keys raised the
 overall success rate to 79\%, as high as 96\% for Viber~\cite[p.~29]{vaziripour2017},
 but even when prompted the ceremony was slow: 3.2 minutes to find and a further
@@ -595,15 +595,14 @@ server implements this draft, ``with some modifications''~\cite{signal-kt-server
 using an elliptic-curve VRF from the family the standard recommends, an
 independent endorsement of these design choices.
 
-Since the architecture is assembled from standardized primitives, it is worth
-recording precisely which standards the later chapters build on. The Merkle log
+The later construction uses the following standardized primitives. The Merkle log
 tree and its inclusion and consistency proofs are those of RFC~6962 and
 RFC~9162~\cite{rfc6962,rfc9162}; the verifiable random function is that of
 RFC~9381~\cite{rfc9381}, and the key-derivation step used later, when a label is
 derived from a session secret, is HKDF, the HMAC-based extract-and-expand
 key-derivation function of RFC~5869~\cite{rfc5869}. Grounding each construction
 in its specification fixes the exact algorithm rather than an informal sketch of
-it. The draft is also candid about one question it leaves open: it calls for
+it. The draft leaves one question open: it calls for
 ``reasonable monitoring windows'' so that intermittently-connected mobile
 clients need not replay every missed update, but leaves the mechanism for
 achieving them unspecified~\cite{ietf-keytrans-protocol}. This open question is
@@ -679,7 +678,7 @@ function~\cite[p.~4]{chase2019seemless}. ELEKTRA later generalized the
 abstraction to the multi-device setting as a \emph{multi-device verifiable key
 directory} (MVKD), extending the model to device-key histories while retaining
 analogous notions of completeness, soundness, and privacy, and formalizing for
-the first time the multi-device key-chains Keybase had run in production since
+the first time the multi-device keychains Keybase had run in production since
 2014~\cite[p.~1, p.~4]{len2023elektra}.
 
 The abstraction intentionally leaves the implementation unspecified: different
@@ -919,8 +918,7 @@ scalability-and-monitoring baseline among the academic systems, yet it shares th
 no-in-band-peer-warning gap common to every system surveyed (\cref{sec:bg-open}).
 
 \subsubsection{PRISM}
-PRISM takes the most different route and is best read as a
-foil~\cite{pusch2025prism}. Its construction is a \emph{zero-knowledge rollup}: a
+PRISM takes the most divergent approach and provides a contrasting design~\cite{pusch2025prism}. Its construction is a \emph{zero-knowledge rollup}: a
 zero-knowledge virtual machine (zkVM) operating over a Jellyfish Merkle tree
 produces a succinct, constant-size proof of each epoch's state transition and
 posts it to a third-party data-availability layer (the Celestia blockchain), so
@@ -1040,7 +1038,7 @@ username hash. Its wire format pads every prefix proof to the full 256-sibling
 copath with stand-in hashes, giving a fixed-size 8{,}192-byte proof regardless of
 directory occupancy. As with the other deployed systems reviewed here, detection
 ultimately relies on self-monitoring rather than any peer-warning mechanism.
-Tracking the IETF draft as it does, Signal's deployment also serves as a useful
+Tracking the IETF draft as it does, Signal's deployment also is a useful
 indicator of the direction in which standardized key-transparency deployments are
 heading.
 
@@ -1091,8 +1089,8 @@ live deployment~\cite{google-kt}. Apple Contact Key Verification (iMessage) is a
 CONIKS-style design that keeps verification state
 device-local~\cite[p.~4355]{optiks2024}\cite{apple-ckv}. Keybase, in production
 since 2014, is the deployed multi-device-keychain ancestor, but it targets no
-user key privacy, the privacy mechanism is precisely what ELEKTRA later
-added~\cite[p.~2]{len2023elektra}.
+user-key privacy. ELEKTRA later added precisely that privacy
+mechanism~\cite[p.~2]{len2023elektra}.
 
 Despite substantial differences in architecture, consistency mechanisms, and
 deployment environments, the deployed systems converge on a common operational
@@ -1330,7 +1328,7 @@ the common case~\cite[p.~4356]{optiks2024}.
 
 \paragraph{Finding 3 (Key Coverage).} VKDs differ not only in their consistency
 mechanisms but in the cryptographic material they authenticate: identity keys
-only (CONIKS, SEEMless, Signal), multi-device key-chains (ELEKTRA,
+only (CONIKS, SEEMless, Signal), multi-device keychains (ELEKTRA,
 Keybase)~\cite[p.~1]{len2023elektra}, and email key lists
 (Proton)~\cite[p.~33]{goebel2023proton}; \cref{ch:design} extends this comparison
 with per-session authenticated labels.
@@ -1381,9 +1379,7 @@ unsuppressible warning fires only on an account reset, not on a key
 substitution~\cite[p.~2]{len2023elektra}, and WhatsApp's deployed client does not
 even enable self-monitoring, falling back to the manual ceremony on a failed
 check~\cite[pp.~5, 10]{whatsapp2023whitepaper}. No existing VKD provides a
-peer-to-peer warning channel, a gap PRISM states in general terms, that ``all
-existing KT systems assume that someone else will
-check''~\cite[p.~6]{pusch2025prism}.
+peer-to-peer warning channel, a gap PRISM states in general terms~\cite[p.~6]{pusch2025prism}.
 
 \paragraph{Problem 2 (Linear Offline Catch-Up).} A mobile,
 intermittently-connected client faces an efficiency gap that the per-epoch
@@ -1397,7 +1393,7 @@ is not hypothetical, consider hourly epochs with pre-keys rotating every $r = 30
 days: a client offline for a full rotation period faces $W = r \cdot 24 = 720$
 epochs, and must re-verify 720 consistency proofs in sequence for a single month
 offline: a linear, avoidable overhead that grows with the gap. \Cref{ssec:eval-catchup}
-measures the synthetic sequential baseline for this window at \num{222528} raw
+measures the synthetic current-head-anchored sequential baseline for this window at \num{222528} raw
 consistency-path hash bytes (serialized transfer was not measured), which the windowed
 proof replaces with a single proof. This is an acknowledged open problem rather than an oversight: the
 IETF draft flags ``reasonable monitoring windows'' for mobile clients as
@@ -1507,7 +1503,7 @@ operating modes and measuring the trade between them. To our knowledge, no syste
 corpus (\cref{sec:bg-compare}) combines per-ratchet continuous entity authentication with a publicly
 auditable, untrusted-server key directory in one implemented design. Throughout, we state the coverage trade honestly: we log identity keys
 and per-session labels, not the per-user version chains of SEEMless, Parakeet and OPTIKS
-or the multi-device key-chains of ELEKTRA, different coverage, leaner proofs, and
+or the multi-device keychains of ELEKTRA, different coverage, leaner proofs, and
 automatic in-band detection.
 
 \paragraph{Mechanism 6 (Systems, Empirical): Implementation and Evaluation.} This is the engineering

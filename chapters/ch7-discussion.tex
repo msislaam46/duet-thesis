@@ -38,7 +38,7 @@ silently: refusing to serve it is a total, observable write outage (proven non-i
 censorship into a visible denial of service), and removing it in a later epoch is a deletion the
 declared update set cannot express, so the transition audit catches the divergent replay and the
 writer's persistence check converts the disappearance into publishable evidence
-(\cref{ssec:design-detection}). And under an active network man-in-the-middle, the two parties derive their
+(\cref{ssec:design-detection}). Under an active network man-in-the-middle, the two parties derive their
 labels from divergent shared secrets; the attacker, lacking the true secret, cannot predict the
 victim's expected warning label and so faces an empty slot it cannot fill with a valid inclusion
 proof. Detection is therefore a property of where the keys must live, not of the server's good
@@ -61,8 +61,8 @@ contribution is the shared-warning-slot mechanism and its cost, not a re-derivat
 \paragraph{Deployment Trade-Offs, and Where Not to Use the Design.} The design provides detection
 rather than prevention. A server can still
 substitute a key; what changes is that the substitution can no longer be silent. That framing
-inherits the trust-on-first-use caveat of the underlying protocol, the very first key a party
-learns is taken on faith, and it deliberately leaves several things out of scope: it does not
+inherits the trust-on-first-use caveat of the underlying protocol: the very first key a party
+learns is taken on faith. It also deliberately leaves several things out of scope: it does not
 provide endpoint security, it does not hide the directory's contents from the operator, and it
 addresses pairwise conversations rather than groups. What it offers a deployment such as Signal is a
 narrow, well-defined addition: a write path for warning and per-session labels alongside the existing
@@ -107,14 +107,14 @@ commit uses an $O(N)$ deep-clone snapshot with a transient memory spike, measure
 integration carries two proof-of-concept stand-ins, both flagged in \cref{ch:impl}: the
 per-conversation shared secret is a deterministic stand-in rather than the live X3DH secret, and
 continuous mode is driven by a seeded simulated ratchet rather than the client's live one. That
-simulation, specifically, folds the raw ratchet Diffie--Hellman output as its epoch secret $I_t$,
+simulation, specifically, mixes in the simulated ratchet's raw Diffie--Hellman output as its epoch secret $I_t$,
 where ACKA's Signal mapping (their Table~2) specifies $I_t = ck$, the derived chain key; so DUET
 implements the ACKA CEA state transition but simulates that Signal-specific epoch-secret mapping, and
-a faithful instantiation bridges the live Double-Ratchet chain key $ck$ from libsignal. Neither
+a faithful instantiation would instead obtain the live Double-Ratchet chain key $ck$ from libsignal. Neither
 changes the construction being exercised, but both must be replaced before the unlinkability and
 active-MitM guarantees hold against a real adversary rather than a simulated one. Finally, the
 networked client ties every search-time signed tree head into one append-only chain: the head is
-signature-verified per lookup and its root is folded, via the same windowed consistency proof used
+signature-verified per lookup and its root extends the verified chain, via the same windowed consistency proof used
 for offline catch-up, into the client's pinned baseline, so a validly-signed but \emph{forked} head
 served only in a search response (and thus invisible to an auditor polling the public head alone) is
 rejected the instant it fails to chain. The residual here is not a client-side gap but the fundamental
@@ -143,7 +143,7 @@ a Signal/PQXDH handshake benchmark, and M12 is the auditor's local computation, 
 proof-carrying audit. Third, the DUET test suite is not wired into Signal Desktop's main continuous
 integration and the live wire-parity check skips silently when no Rust server is reachable, and only
 aggregate benchmark statistics, not raw Criterion samples, are committed. A two-leg adversarial
-harness, a genuine handshake benchmark, a required CI gate, and archived raw samples for independent
+harness, a genuine handshake benchmark, a required continuous-integration check, and archived raw samples for independent
 re-analysis are left to future work.
 
 % ============================================================================
@@ -170,18 +170,19 @@ against the previous committed root (the role the IETF KeyTrans protocol assigns
 auditors through its \textsf{AuditorUpdate} structure~\cite{ietf-keytrans-protocol}), and a
 writer-side persistence check that retains inclusion proofs and converts any later disappearance of
 a committed leaf into non-repudiable, publishable evidence of deletion. The prototype implements all
-three, the first two in the live path and the persistence check as a tested reference component not
-yet wired into the live monitor loop (\cref{alg:detect}): the server's raw-label update interface enforces the write-once policy and rejects an
-overwrite of an occupied dual-index, CEA, or warning label; each committed epoch records a declared
-update set that the auditor replays onto its own mirror directory, checking the result against the
-committed root, so a deletion, which the delta format cannot express, makes the replay diverge
-and is detected; and the writer-side persistence check retains the inclusion proof and signed tree
-head of a committed warning and, on any later disappearance, assembles the inclusion proof, the
-proven non-inclusion, and the consistency proof between the two heads into a bundle that verifies
-against the server's own signatures. The one remaining deployment-path item is authenticated writes
+three. The write-once rule and transition audit are active in the live path; the persistence check is
+a tested reference component not yet wired into the live monitor loop (\cref{alg:detect}). In the live
+path, the server's raw-label update interface enforces the write-once policy and rejects an overwrite
+of an occupied dual-index, CEA, or warning label. Each committed epoch records a declared update
+set that the auditor replays onto its own replica directory, checking the result against the committed
+root, so a deletion, which the delta format cannot express, makes the replay diverge and is detected.
+The writer-side persistence check retains the inclusion proof and signed tree head of a committed
+warning and, on any later disappearance, assembles the inclusion proof, the proven non-inclusion, and
+the consistency proof between the two heads into a bundle that verifies against the server's own
+signatures. The one remaining deployment-path item is authenticated writes
 (account-layer proof that a caller owns the raw label it writes), without which the write-once
 policy still binds an honest server and the auditor still binds a malicious one, but a malicious
-\emph{client} could squat an as-yet-empty peer slot. The in-process implementation and its
+\emph{client} could pre-emptively occupy an as-yet-empty peer slot. The in-process implementation and its
 adversarial tests are described in \cref{ch:impl}; the argument that these safeguards bind
 a fully malicious operator is exactly the suppression argument of \cref{ch:design}.
 
@@ -216,8 +217,9 @@ self-contained server-side change, orthogonal to the verification-side contribut
 
 \paragraph{Post-Quantum, Multi-Device, and Deployment.} Because the labels are hash-derived, a
 post-quantum shared secret (PQXDH~\cite{pqxdh}) can feed the derivation unchanged; the open piece is a
-post-quantum VRF, for which only candidates exist. Multi-device support would follow the keychain
-cross-signing of ELEKTRA~\cite{len2023elektra}. On the deployment path, the cleanest route is to
+post-quantum VRF: research constructions exist, but no standardized, deployment-ready scheme.
+ELEKTRA-style keychain cross-signing~\cite{len2023elektra} could supply one component of multi-device
+support; device-scoped labels, warning propagation, and reset handling would also be required. On the deployment path, the cleanest route is to
 integrate with Signal's existing key-transparency service~\cite{signal-kt-server} behind a feature
 flag rather than running a parallel log, which requires only a write API for the warning and
 per-session labels, and the fork-detection vantage should be supplied by a real auditor gossip

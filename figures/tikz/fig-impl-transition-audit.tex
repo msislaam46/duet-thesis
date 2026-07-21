@@ -28,7 +28,7 @@
   \draw[->] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
   \node[proc,right=12mm of a3,text width=3.7cm] (a3p) {verify RFC~9162 consistency proof};
   \draw[->] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
-  \node[bad,below=5mm of a3p] (t3) {invalid: ALARM (latch), no replay};
+  \node[bad,below=5mm of a3p] (t3) {invalid: ALARM (persists), no replay};
   \draw[->] (a3p) -- node[right,font=\tiny]{invalid} (t3);
   \node[nop,below=4mm of t3] (t4) {idempotent: no state change};
   \draw[->] (a4.east) |- node[below,font=\tiny,pos=0.85]{yes} (t4.west);
@@ -53,17 +53,17 @@
   rtr/.style={term,draw=orange!80!black,fill=orange!4},
   good/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm,draw=green!50!black,fill=green!5}]
 
-  \node[proc] (b0) {\textbf{(b) transactional replay} (entered from (a))\\clone the committed mirror into scratch; $\mathit{cursor}\gets\mathit{audited\_epochs}$};
-  \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$ (cursor\,$\to$\,current, incl.\ $e{=}0$): fetch delta$_e$; replay each Insert / Rotate (reject a duplicate insert (A1) or an immutable rotation (C2)); require scratch root $=$ declared root$_e$};
+  \node[proc] (b0) {\textbf{(b) transactional replay}\\(entered from (a))\\clone the committed replica into a candidate; $\mathit{cursor}\gets\mathit{audited\_epochs}$};
+  \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$ (cursor\,$\to$\,current, incl.\ $e{=}0$): fetch delta$_e$; replay each Insert / Rotate (reject a duplicate insert (A1) or an immutable rotation); require candidate root $=$ declared root$_e$};
   \node[cv,below=of b1] (bcv) {\textbf{cross-vantage:} valid second-vantage head available?};
   \node[cv,below=6mm of bcv] (bcmp) {diverges from the primary head? (same-epoch different root, or a failed between-vantage consistency proof)};
-  \node[good,below=6mm of bcmp] (b2) {commit mirror, cursor, \emph{and} baseline atomically};
+  \node[good,below=6mm of bcmp] (b2) {commit replica, cursor, \emph{and} baseline atomically};
   \draw[->] (b0) -- (b1);
   \draw[->] (b1) -- (bcv);
   \draw[->] (bcv) -- node[left,font=\tiny]{yes} (bcmp);
   \draw[->] (bcmp) -- node[left,font=\tiny]{no: agree} (b2);
-  \node[bad,right=12mm of b1] (r2) {root mismatch / A1 / C2: ALARM (audit failed)};
-  \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard scratch, retry (not a fork)};
+  \node[bad,right=12mm of b1] (r2) {root mismatch / duplicate insert (A1) / immutable rotation: ALARM (audit failed)};
+  \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard candidate, retry (not a fork)};
   \draw[->] (b1.east) -- node[above,font=\tiny]{replay fail} (r2.west);
   \draw[->] (b1.north east) -- node[above,font=\tiny,pos=0.55]{fetch fail} (r1.west);
   \node[bad,right=12mm of bcmp] (r3) {vantages diverge: ALARM (equivocation / fork)};

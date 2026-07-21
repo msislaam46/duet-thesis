@@ -1,7 +1,7 @@
 \chapter{Formal Definitions}\label{app:definitions}
 
 This appendix collects the formal definitions on which the design (\cref{ch:design}) and its
-analysis rest. Each is stated in the notation of the Notation table, and each records where it is
+analysis rest. Each is stated in the thesis's standard notation, and each records where it is
 used in the thesis. Definitions of standard primitives are given as they appear in the specifications
 they are drawn from and are cited accordingly; the dual-index scheme of \cref{sec:def-dualindex} is
 the one construction original to this work.
@@ -155,8 +155,8 @@ probabilistic polynomial-time adversary wins the experiment $\Expt{vrf\text{-}pr
 RFC~9381~\cite{rfc9381} with advantage non-negligible in $\secpar$: the adversary, given
 $\mathit{pk}$ and a $\VRFeval$ oracle, must distinguish the true output $\beta^\star=\VRFeval(\mathit{sk},\alpha^\star)$
 on a fresh challenge $\alpha^\star$ from a uniform string. Uniqueness underlies label integrity
-in the verification chain Goal~G1 (Key-Substitution Detection); pseudorandomness underlies
-directory privacy Goal~G3 (Directory Privacy).
+in the verification chain (Goal~G1); pseudorandomness underlies
+directory privacy (Goal~G3).
 \end{definition}
 
 % ============================================================================
@@ -193,7 +193,7 @@ applying a \textsf{Rotate} it verifies that the label is present, is \textsc{mut
 declared previous value. It accepts exactly when the resulting root equals $\prefroot{t}$. An
 undeclared modification or deletion causes the replayed root to differ, and an attempted rotation of
 an \textsc{immutable} dual-index, CEA, or warning label is rejected directly. Specified in
-\cref{ssec:design-detection}; realized by \textsf{AuditTransition} (\cref{alg:auditor}).
+\cref{ssec:design-detection}; implemented by \textsf{AuditTransition} (\cref{alg:auditor}).
 \end{definition}
 
 \begin{definition}[Windowed consistency proof]\label{def:windowed}
@@ -299,15 +299,15 @@ Both operations take effect at the next committed epoch (\cref{def:epoch}). Spec
 \begin{definition}[Check-warning and the verification verdict]\label{def:dualindex-check}
 \intuition{A client accepts a peer key only if the peer's lookup slot verifies against a signed head
 \emph{and} the shared warning slot is provably empty.}
-$\mathsf{CheckWarning}(\lblwarn,\STH_t)$ returns \textsc{raised} if an inclusion proof binds a
-non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{clear} if a non-inclusion proof
+$\mathsf{CheckWarning}(\lblwarn,\STH_t)$ returns \textsc{Alert} if an inclusion proof binds a
+non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{Safe} if a non-inclusion proof
 (\cref{def:noninclusion}) establishes the slot is empty; a response with neither valid proof is
-rejected. The \textsc{raised} verdict does not depend on the payload MAC of
+rejected. The \textsc{Alert} verdict does not depend on the payload MAC of
 \cref{def:dualindex-write}: a value whose MAC verifies is an authentic peer warning, while
 unauthenticated data at a slot only the two parties can derive is itself evidence of misbehaviour,
 so either alerts (\cref{alg:dualindex}). A peer key is accepted only when the peer-lookup proof
 verifies through the chain of \cref{ssec:design-verify} and $\mathsf{CheckWarning}$ returns
-\textsc{clear}. Specified in \cref{ssec:design-verify}.
+\textsc{Safe}. Specified in \cref{ssec:design-verify}.
 \end{definition}
 
 \begin{definition}[Deletion evidence]\label{def:deletion-evidence}
@@ -319,7 +319,7 @@ yields proven non-inclusion at $\lblwarn$, the bundle consisting of the retained
 under $\STH_w$, the non-inclusion proof under $\STH_t$, and the consistency proof
 $\pcons(\STH_w.\mathit{size},\STH_t.\mathit{size})$ verifies entirely against the operator's own
 signatures and constitutes non-repudiable, publishable proof that a committed leaf was removed.
-Specified in \cref{ssec:design-detection}; realized by \textsf{PersistenceCheck}
+Specified in \cref{ssec:design-detection}; implemented by \textsf{PersistenceCheck}
 (\cref{alg:detect}).
 \end{definition}
 
@@ -330,7 +330,7 @@ Let $\Adv$ be a probabilistic polynomial-time adversary controlling the server a
 the model of \cref{ch:threat}. In the experiment $\Expt{dual\text{-}det}{\Adv}$, $\Adv$ interacts with
 an honest client and peer and wins if it causes the client to accept a peer key
 $\mathit{pk}'\neq\mathit{pk}_{\B}$ under a signed head $\STH_t$ for which $\mathsf{CheckWarning}$
-returns \textsc{clear}. The scheme achieves key-substitution detection Goal~G1 (Key-Substitution Detection)
+returns \textsc{Safe}. The scheme achieves Goal~G1 (Key-Substitution Detection)
 if $\advantage{dual\text{-}det}{\Adv}=\Pr[\Expt{dual\text{-}det}{\Adv}=1]$ is negligible in
 $\secpar$. For the raw dual-index path the argument rests on the labels being unpredictable to the
 adversary: it relies on HKDF (\cref{def:hkdf}) behaving as a PRF keyed by an unknown, sufficiently

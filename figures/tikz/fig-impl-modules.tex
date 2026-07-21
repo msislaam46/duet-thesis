@@ -2,7 +2,7 @@
 % The server core (KTServer) depends only on the prefix tree, Merkle log, VRF and
 % Ed25519 signing over SHA-256. Dual-index derivation and CEA/monitoring are
 % client/reference components that CALL the server API; the auditor is a separate
-% process that consumes server data and keeps its own mirror.
+% process that consumes server data and keeps its own replica.
 % Label: \label{fig:impl-modules}
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
@@ -36,7 +36,7 @@
   \draw[->,dashed] (cg.west) -- node[above,font=\scriptsize,pos=0.55]{call the API} (api.east);
 
   % ---- independent auditor ----
-  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.7,6.0) {\textbf{Auditor} (own mirror)\\independent process};
+  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.7,6.0) {\textbf{Auditor} (own replica)\\independent process};
   \draw[<->,dashed] (aud.west) -- node[above,align=center,font=\scriptsize,pos=0.55]{poll STH +\\consistency} (api.north east);
 \end{tikzpicture}%
 }
