@@ -6,17 +6,17 @@ reports the microbenchmarks for proof size, verification latency, catch-up bandw
 (\cref{sec:eval-micro}), examines behaviour at scale together with the session-versus-continuous
 mode trade (\cref{sec:eval-scale}), places the results beside prior key-transparency systems
 (\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
-taxonomy (\cref{sec:eval-security}). The principal findings are four. The implemented VRF-indexed lookup proof is
-at rough size parity with CONIKS. Detection is obtained through additional lookups
-of the same shape rather than any enlargement of that proof. Offline catch-up needs one proof
+taxonomy (\cref{sec:eval-security}). The principal findings are four. First, the implemented VRF-indexed lookup proof is
+at rough size parity with CONIKS. Second, detection is obtained through additional lookups
+of the same shape rather than any enlargement of that proof. Third, offline catch-up needs one proof
 rather than $W$ (\num{695}-fold fewer raw path-hash bytes at a one-month window against this
-chapter's synthetic baseline). And median full client verification stays below
+chapter's synthetic baseline). Fourth and finally, median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
 
 % ============================================================================
 \section{Methodology}\label{sec:eval-method}
 
-In this section we describe what was measured, against which baselines, and on what apparatus, so
+This section sets out what was measured, against which baselines, and on what apparatus, so
 that every number that follows can be read against a fixed reference. This matters because the
 value of a transparency system is not any single cost but the trade between proof size, verification
 time, and the bandwidth a client must spend to stay synchronized.
@@ -142,7 +142,7 @@ storage models and are treated as order-of-magnitude only.
 % ============================================================================
 \section{Microbenchmarks (M1--M6)}\label{sec:eval-micro}
 
-In this section we report the core per-lookup costs on a directory of up to $10^6$ labels: how large
+This section reports the core per-lookup costs on a directory of up to $10^6$ labels: how large
 a proof is, how long it takes to produce and to check, how much bandwidth an offline client must
 spend to catch up, and how quickly and reliably an attack is detected.
 
@@ -207,8 +207,8 @@ left: $\mathrm{popcount}(E-1)$, at most $\lceil\lg E\rceil$ and often smaller (o
 not three). The $O(\lg N + \lg E)$ scaling of \cref{eq:eval-proofsize} is plotted in
 \cref{fig:eval-sizes-plot}. The $10^6$ row reads \num{913}\,bytes because the single seeded leaf's
 path carries $h=\num{23}$ non-empty siblings; the distribution median over \num{1000} random lookups
-at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). We
-therefore report the distribution median in the remainder of this chapter, since it reflects the
+at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). The distribution median is
+therefore reported in the remainder of this chapter, since it reflects the
 proof size a typical lookup incurs rather than the depth of one particular seeded leaf. The
 ECVRF proof and the warning slot add nothing beyond this
 formula: \emph{the dual-index detection mechanism does not enlarge the per-lookup proof} (a warning
@@ -321,7 +321,7 @@ an open extension.
 
 \subsection{Warning-Slot Lookup Cost and False Positives (M5, M6)}\label{ssec:eval-detection}
 
-Finally, we measure the warning-slot read that carries detection, and how
+Finally, the evaluation measures the warning-slot read that carries detection, and how
 often a clean session is wrongly flagged. The check comprises the dual-index label
 derivation (pure HKDF, one extract and three expands, independent of directory size) and an
 unverified read of the warning slot. The read's underlying cost is \emph{data-dependent}: the
@@ -363,9 +363,9 @@ warning, although it does not yet block session establishment.
 % ============================================================================
 \section{Scalability and the Mode Trade (M7--M13)}\label{sec:eval-scale}
 
-Having established per-lookup costs at moderate size, we now push the directory to production scale,
-measure server-side operation rates and maintenance costs, and quantify the price of the continuous
-operating mode.
+Having established per-lookup costs at moderate size, the evaluation now pushes the directory to
+production scale, measures server-side operation rates and maintenance costs, and quantifies the
+price of the continuous operating mode.
 
 \subsection{Scale to CONIKS Size (M7)}\label{ssec:eval-scale}
 
@@ -550,7 +550,7 @@ neither path gains an artificial edge from skipping the label-binding check.
 % ============================================================================
 \section{Comparison with Prior Systems}\label{sec:eval-compare}
 
-In this section we place the measured results beside the key-transparency systems surveyed in
+This section places the measured results beside the key-transparency systems surveyed in
 \cref{ch:background}. \Cref{tab:eval-compare} gives the comparison on the dimensions most relevant
 to assessing a messaging deployment; the published figures are drawn from each system's paper or
 repository and, per the comparability note below, are order-of-magnitude.
@@ -575,12 +575,12 @@ Directory privacy (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF)
 \end{tabular}
 \end{table}
 
-Four claims follow from the comparison; for each cross-system figure we state explicitly whether it
-is published or derived, and from what.
+Four claims follow from the comparison; for each cross-system figure, the text states explicitly
+whether it is published or derived, and from what.
 
 First, the implemented (VRF-indexed) lookup proof is at rough size parity with CONIKS at matched
 directory size, the like-for-like comparison since CONIKS lookups are likewise VRF-indexed; the raw
-dual-index lookup used elsewhere in DUET carries no VRF proof and is correspondingly smaller. Our
+dual-index lookup used elsewhere in DUET carries no VRF proof and is correspondingly smaller. The
 measured \num{817}-byte median at $N = 10^6$ (max \num{945}) is the prefix-proof payload plus the
 \num{80}-byte ECVRF proof, measured under a single-epoch log. It excludes the signed tree head, the
 JSON serialization framing, and the epoch-log inclusion path, which is empty at one epoch and grows
@@ -589,13 +589,13 @@ $N = 2^{32}$; instantiating CONIKS's own per-lookup accounting (one \num{32}-byt
 plus one, a \num{96}-byte VRF proof, and its \num{64}-byte signed-tree-root
 signature~\cite[\S5.3, Table~1]{melara2015coniks}) at $N = 10^6$ gives $32 \cdot 21 + 96 + 64 =
 832$\,bytes, or \num{768}\,bytes with the signature excluded; the paper itself states no number at
-$10^6$. On the same convention as our measurement, proof and VRF without a signature, DUET's
+$10^6$. On the same convention as this chapter's measurement, proof and VRF without a signature, DUET's
 \num{817}\,bytes sits within \num{7}\% of CONIKS's \num{768}\,bytes: rough parity, with DUET
 marginally larger on the raw proof. This VRF-indexed identity lookup does not itself carry the
 dual-index warning mechanism; detection is supplied separately through additional raw-label lookups
 that reuse the same prefix-tree and log-proof structure without the VRF component (\cref{sec:design-dual}),
-none of which enlarges an individual proof. We do not claim a
-wire-format advantage here: a full DUET lookup response also returns the signed tree head \emph{per
+none of which enlarges an individual proof. No
+wire-format advantage is claimed here: a full DUET lookup response also returns the signed tree head \emph{per
 lookup} (\cref{sec:impl-signal}), which this proof-body comparison excludes on both sides.
 
 Second, restricted to the prefix-proof sibling representation, DUET's bitmap-compressed proof carries
@@ -607,9 +607,9 @@ Signal's key-transparency server pads every prefix proof to the full \num{256}-s
 exactly \num{256} siblings of \num{32}\,bytes each~\cite{signal-kt-server}; DUET's prefix proof
 instead ships only the non-empty siblings plus a \num{32}-byte bitmap. Taking DUET's \emph{whole}
 lookup proof (prefix payload plus the \num{80}-byte VRF proof) as a conservative upper bound on its
-prefix component gives $8192/945 = 8.7\times$ at our $10^7$ median and $8192/817 = 10.0\times$ at
+prefix component gives $8192/945 = 8.7\times$ at the $10^7$ median and $8192/817 = 10.0\times$ at
 $10^6$, so the prefix-only advantage is at least this large. The padding is a deliberate trade of
-bandwidth for the hiding of tree density, which our bitmap instead reveals, so the comparison is
+bandwidth for the hiding of tree density, which DUET's bitmap instead reveals, so the comparison is
 $\sim$$9\times$ sibling-hash bytes in exchange for $\sim\lceil\lg N\rceil$ bits of density metadata;
 it does not net against the signed tree head, which a full DUET response carries per lookup
 (\cref{sec:impl-signal}) and which Signal's \num{8192}-byte copath figure excludes on both sides.
@@ -628,25 +628,25 @@ plausible churn it remains over three orders of magnitude larger than the window
 Fourth, full client verification stays below \SI{150}{\micro\second} through $10^7$ labels. CONIKS
 reports \SI{159}{\micro\second} to verify the authentication path at $N = 10^7$ and approximately
 \SI{400}{\micro\second} to verify the signed-tree-root signature, and reports no VRF-verification
-time~\cite[\S5.3]{melara2015coniks}; the total of \SI{559}{\micro\second} is our sum of their two
-published figures. The comparison must be taken at matched scale, so it is our $10^7$ median of
-\SI{147.1}{\micro\second} that belongs beside it, not the $\approx$\SI{128}{\micro\second} we measure
-at $N \le 10^4$: our figure is therefore about $3.8\times$ lower while covering a strictly larger
+time~\cite[\S5.3]{melara2015coniks}; the total of \SI{559}{\micro\second} is the sum, computed here,
+of their two published figures. The comparison must be taken at matched scale, so it is the $10^7$
+median of \SI{147.1}{\micro\second} that belongs beside it, not the $\approx$\SI{128}{\micro\second}
+measured at $N \le 10^4$: the DUET figure is therefore about $3.8\times$ lower while covering a strictly larger
 check, since it \emph{includes} the VRF verification that CONIKS's figures omit, in addition to the
 signature verification that both totals include. Because the two measurements come from different
-hardware (CONIKS's 2015 2\,GHz laptop CPU against our 2022 mobile CPU; see the comparability note),
-the $3.8\times$ factor is indicative only; the claim that stands on our hardware alone is the
+hardware (CONIKS's 2015 2\,GHz laptop CPU against the 2022 mobile CPU used here; see the comparability note),
+the $3.8\times$ factor is indicative only; the claim that stands on this hardware alone is the
 sub-\SI{150}{\micro\second} median cost of full client verification across the whole measured range.
 
 \begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different hardware (a 2015
 Xeon through to 2023 cloud instances), different scales ($10^6$ versus $2^{32}$), and database-backed
-versus in-memory implementations. All cross-system figures are order-of-magnitude; our own benchmarks
-are single-machine and in-memory (\cref{sec:eval-method}).\end{quote}
+versus in-memory implementations. All cross-system figures are order-of-magnitude; the benchmarks of
+this thesis are single-machine and in-memory (\cref{sec:eval-method}).\end{quote}
 
 % ============================================================================
 \section{Security Evaluation}\label{sec:eval-security}
 
-Finally, we evaluate the system against the attack taxonomy of \cref{ch:threat}. The adversarial
+Finally, the evaluation turns to the attack taxonomy of \cref{ch:threat}. The adversarial
 scenario suite of \cref{sec:impl-tests} drives each attack end to end and asserts both the verdict and
 the epoch of detection; the results are tabulated in \cref{tab:impl-t5b}. The automated Rust suite
 covers all eight scenarios: the A0 baseline, the two substitution variants A1a (global VRF slot)
