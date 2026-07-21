@@ -219,7 +219,7 @@ self-contained server-side change, orthogonal to the verification-side contribut
 post-quantum shared secret (PQXDH~\cite{pqxdh}) can feed the derivation unchanged; the open piece is a
 post-quantum VRF: research constructions exist, but no standardized, deployment-ready scheme.
 ELEKTRA-style keychain cross-signing~\cite{len2023elektra} could supply one component of multi-device
-support; device-scoped labels, warning propagation, and reset handling would also be required. On the deployment path, the cleanest route is to
+support; device-scoped labels, warning propagation, and reset handling would also be required. On the deployment path, the most direct route is to
 integrate with Signal's existing key-transparency service~\cite{signal-kt-server} behind a feature
 flag rather than running a parallel log, which requires only a write API for the warning and
 per-session labels, and the fork-detection vantage should be supplied by a real auditor gossip
