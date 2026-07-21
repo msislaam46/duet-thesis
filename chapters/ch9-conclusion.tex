@@ -54,14 +54,12 @@ supported for the measured prototype properties listed above, subject to the lim
 to its supporting evidence is tabulated in \cref{app:traceability}
 (\cref{tab:trace-rq,tab:trace-contrib}).
 
-The result is a design that detects rather than prevents (a server can still substitute a key, but
-for a monitored, established conversation it can no longer do so silently) and that presents a deployment such as Signal with a narrow,
-well-defined addition rather than a wholesale change: a write path for warning and per-session labels
-alongside the identity directory it already maintains. The check uses one or two label-bound lookups;
-M3 shows that one full signed-head lookup-verification invocation remains sub-millisecond, and the
-combined detector latency was not measured. The clearest remaining step, binding the labels to the live X3DH secret in place of the
-prototype's stand-in (\cref{ch:discussion}), is a necessary security-integration task whose
-correctness and operational cost remain to be evaluated. Key
-transparency has, until now, told users that they must check their keys themselves; this work shows
-that, by reusing the directory's existing proof form while incurring additional lookups and
-deployment work, the client can perform those checks automatically.
+The result is a design that detects rather than prevents: for an honestly established, monitored
+conversation, a server can still substitute a key but can no longer do so silently. To a
+deployment such as Signal it presents a narrow, well-defined addition rather than a wholesale
+change: a write path for warning and per-session labels alongside the identity directory it
+already maintains. Each check uses one or two label-bound lookups of the directory's existing
+proof form, with M3 a conservative sub-millisecond upper proxy for the local verification work of
+one such lookup; binding the labels to the live X3DH secret is the scoped next integration step
+(\cref{ch:discussion}). Key transparency has, until now, told users that they must check their
+keys themselves; this work shows that the client can perform those checks automatically.
