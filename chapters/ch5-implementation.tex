@@ -455,7 +455,7 @@ different languages and for different purposes, one used as the measured referen
 section connects them: it describes how the two are held to agreement on the protocol operations that
 the shared vectors cover, and how the combined system is then tested against the threat model.
 
-The two are pinned by a single cross-language contract. A fixed set of test vectors fixes the HKDF
+The two are pinned by a single cross-language contract. A fixed set of test vectors pins the HKDF
 dual-index derivation and the CEA construction byte-for-byte across the Rust and TypeScript
 implementations, and the same discipline keeps their Ed25519 signed-tree-head and Merkle
 computations in step, so any divergence on a covered operation-and-input vector manifests as a vector
@@ -618,13 +618,13 @@ the user interface: the background monitor emitted on the client's typed event b
 and banner listen for a DOM custom event. The fix was to dispatch both, mapping the verdict onto the
 custom event the badge and banner already listened for.
 
-\paragraph{Deployment: Operational Robustness.} Several issues appeared only in a live deployment: a
-server that generated a fresh signing key on each launch invalidated every cached public key, fixed
-by deriving the server's keys deterministically from a seed; a panic on a freshly emptied log
-poisoned the shared mutex, after which the server rejected every subsequent request and brought
-itself down, resolved by bootstrapping a genesis epoch at initialization, and the demonstration was
-not reproducible because attack state persisted in memory, fixed by an administrative reset that
-rebuilds the server from its seed. That last fix is also what makes the demonstration repeatable.
+\paragraph{Deployment: Operational Robustness.} Several issues appeared only in a live deployment. A
+server that generated a fresh signing key on each launch invalidated every cached public key; this
+was fixed by deriving the server's keys deterministically from a seed. A panic on a freshly emptied
+log poisoned the shared mutex, after which the server rejected every subsequent request and brought
+itself down; this was resolved by bootstrapping a genesis epoch at initialization. Finally, the
+demonstration was not reproducible because attack state persisted in memory; an administrative reset
+that rebuilds the server from its seed fixed that, and is also what makes the demonstration repeatable.
 
 \paragraph{Trusted Computing Base and Fail-Closed Behaviour.} On the client, the trusted computing base is the verifier and the cryptographic crates it
 calls (\cref{ssec:impl-core-crypto}) together with the operator's two public keys, the STH signing key
