@@ -148,7 +148,7 @@ rather than linear in the epochs it missed.
 
 The evaluation reports component measurements of the verification chain, not a head-to-head comparison with a
 fielded system. On a directory of up to $10^6$ labels the (VRF-indexed) lookup proof has a median
-size of \SI{817}{B}, comparable to a dense Merkle-log inclusion proof at the same size, and median
+size of \SI{817}{B}, comparable to a dense Merkle-log inclusion proof at the same directory scale, and median
 full client verification stays below \SI{150}{\micro\second} through $10^7$ labels, growing far more
 slowly than $N$. A single windowed consistency proof is smaller than re-fetching one proof per
 missed epoch by a factor of \num{695} at a one-month window. In a two-client demonstration the

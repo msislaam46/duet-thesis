@@ -6,11 +6,11 @@ reports the microbenchmarks for proof size, verification latency, catch-up bandw
 (\cref{sec:eval-micro}), examines behaviour at scale together with the session-versus-continuous
 mode trade (\cref{sec:eval-scale}), places the results beside prior key-transparency systems
 (\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
-taxonomy (\cref{sec:eval-security}). The principal findings are that the implemented VRF-indexed lookup proof is
-at rough size parity with CONIKS, and separately that detection is obtained through additional lookups
-of the same shape rather than any enlargement of that proof, that offline catch-up needs one proof
+taxonomy (\cref{sec:eval-security}). The principal findings are four. The implemented VRF-indexed lookup proof is
+at rough size parity with CONIKS. Detection is obtained through additional lookups
+of the same shape rather than any enlargement of that proof. Offline catch-up needs one proof
 rather than $W$ (\num{695}-fold fewer raw path-hash bytes at a one-month window against this
-chapter's synthetic baseline), and that median full client verification stays below
+chapter's synthetic baseline). And median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
 
 % ============================================================================
@@ -53,7 +53,7 @@ them in prose, \cref{tab:eval-map} is the measurement map for the whole chapter:
 metric measures, the baseline it is read against, and where it is reported. The reader can consult it
 once and refer back, instead of holding thirteen definitions in mind. The metrics are numbered in the
 order this chapter presents them (size, then latency, then bandwidth, then detection, then scale,
-maintenance, and modes) which is the order the questions above are answered, not the order of the
+maintenance, and modes), which is the order in which the questions above are answered, not the order of the
 benchmark harness that produces them.\footnote{The Rust harness (\cref{app:benchmarks}) emits the
 same metric numbering, so each metric family reported here can be traced directly to the harness
 group of the same name.}
@@ -70,7 +70,7 @@ Metric & What it measures & Baseline(s) & Reported in \\
 M1  & Lookup proof size vs.\ $N$              & single- vs VRF-indexed     & \cref{ssec:eval-sizes} \\
 M2  & Proof generation latency (server)        & VRF-indexed                & \cref{ssec:eval-latency} \\
 M3  & Full signed-head lookup verification latency & VRF-indexed, windowed      & \cref{ssec:eval-latency} \\
-M4  & Offline catch-up bandwidth vs.\ $W$      & na\"ive vs windowed         & \cref{ssec:eval-catchup} \\
+M4  & Offline catch-up bandwidth vs.\ $W$      & synthetic sequential vs windowed & \cref{ssec:eval-catchup} \\
 M5  & Marginal warning-slot lookup cost        & raw warning (unverified)   & \cref{ssec:eval-detection} \\
 M6  & Clean-session false-positive rate        & None                       & \cref{ssec:eval-detection} \\
 M7  & Size + verify at scale ($10^6,10^7$)    & VRF-indexed, windowed      & \cref{ssec:eval-scale} \\
@@ -90,7 +90,7 @@ setup with no key transparency: a single hash, the cost a deployment pays anyway
 \emph{single-index} path (log-inclusion only), the \emph{dual-index} path (the prefix-tree lookup that
 carries the warning slot), and the \emph{windowed} full scheme (dual-index plus windowed consistency
 proofs). These are benchmark configurations rather than a full mechanism-level ablation: the no-KT
-floor isolates the cost of key transparency at all, single-index is a plain log inclusion, dual-index
+floor isolates the baseline cost of running key transparency at all, single-index is a plain log inclusion, dual-index
 is the prefix-tree lookup, and windowed adds windowed consistency. In the size, latency, and rotation
 families the dual-index configuration is measured through the \emph{VRF-indexed}
 \texttt{search\_by\_user\_id} lookup the client actually runs (recorded under the harness's historical
@@ -103,8 +103,8 @@ bound each cost rather than attributing a clean mechanism-level contribution.
 
 Timings are collected two ways. Criterion provides the confidence intervals and regression plots;
 in parallel, a manual harness of \num{2000} timed iterations per operation records the median, the
-95th percentile, and a 95\% confidence half-width to \texttt{results/rust\_benchmark\_timings.csv},
-and it is the manual-harness medians that are quoted here, the harness producing uniformly formatted
+95th percentile, and a 95\% confidence half-width to \texttt{results/rust\_benchmark\_timings.csv}.
+The manual-harness medians are quoted here. The harness produces uniformly formatted
 rows across every metric family. Two properties of those rows bound how they may be read. The median
 and 95th percentile are descriptive sample statistics, carrying no interval. The $\pm$ column is a
 \num{95}\,\% confidence half-width \emph{of the mean} under a normal approximation
@@ -406,7 +406,7 @@ is a conjecture the data here does not test. The median is the figure quoted in 
 \end{threeparttable}
 \end{table}
 
-The measured constancy of prefix verification across five orders of magnitude ($10^2$ to $10^7$),
+The measured constancy of prefix verification from $10^3$ to $10^7$,
 \SI{25.9}{\micro\second} at $10^3$ and \SI{26.0}{\micro\second} at $10^7$, is strong empirical
 evidence that the tree walk is bounded by the fixed \num{256}-level height rather than by $N$. Full client
 verification is not quite as flat: its median reads \SI{131.9}{\micro\second} at $10^6$ and
@@ -460,8 +460,8 @@ Epoch commit & \SI{464.0}{\micro\second} & \SI{5.92}{\milli\second} \\
 
 The one cost that does grow with $N$ is the epoch commit (\SI{464.0}{\micro\second} at $10^3$ rising to
 \SI{5.92}{\milli\second} at $10^4$, a $\approx$$13\times$ increase for a $10\times$ growth, i.e.\ roughly
-$O(N)$). This is the deep-clone snapshot the current server takes on every commit: now also copying
-each leaf's chain memo, which is the deliberate space-for-time trade that makes reads flat
+$O(N)$). This is caused by the deep-clone snapshot the current server takes on every commit. The snapshot also
+copies each leaf's chain memo, the deliberate space-for-time trade that keeps reads flat
 (\cref{sec:impl-modules}); a copy-on-write
 tree would reduce it to $O(\lg N)$, and this is noted as future work in \cref{ch:discussion}.
 
@@ -809,14 +809,14 @@ $\approx$\SI{128}{\micro\second} at $N\le10^4$ and \SI{147.1}{\micro\second} at 
 and a lookup proof is \num{817}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}): at rough size
 parity with CONIKS and, on the prefix-proof sibling representation alone, roughly $9\times$ smaller
 than Signal's fixed \num{256}-sibling copath (\cref{sec:eval-compare}). A client offline for a month catches up in a single \num{320}\,byte proof
-rather than the approximately \num{222}\,kB that one-proof-per-epoch verification costs over the same
+rather than the approximately \num{222}\,kB that the synthetic one-proof-per-epoch baseline costs over the same
 window (\cref{ssec:eval-catchup}); for comparison, CONIKS's published per-epoch monitoring costs
 imply approximately \num{530}\,kB for the same month (\cref{sec:eval-compare}). This matters most for
-the intermittently connected mobile clients a messenger must serve. The per-conversation overhead a
-deployment pays is therefore microseconds of client work and a few hundred bytes of bandwidth, in
-exchange for automatic in-band detection that replaces a manual ceremony which, as
-\cref{ssec:eval-detection} discusses, most unprompted users never reliably locate and
-complete.
+the intermittently connected mobile clients a messenger must serve. The measured components are sub-millisecond local
+verification and sub-kilobyte per-lookup proofs; a detector check performs one or two such lookups,
+though their combined bandwidth and end-to-end latency were not measured. In exchange, the design is
+intended to replace a manual ceremony which, as \cref{ssec:eval-detection} discusses, most unprompted
+users never reliably locate and complete.
 
 On the server, the picture is more qualified, and the qualifications are exactly what a production
 deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one

@@ -38,7 +38,7 @@ silently: refusing to serve it is a total, observable write outage (proven non-i
 censorship into a visible denial of service), and removing it in a later epoch is a deletion the
 declared update set cannot express, so the transition audit catches the divergent replay and the
 writer's persistence check converts the disappearance into publishable evidence
-(\cref{ssec:design-detection}). And under an active network man-in-the-middle, the two parties derive their
+(\cref{ssec:design-detection}). Under an active network man-in-the-middle, the two parties derive their
 labels from divergent shared secrets; the attacker, lacking the true secret, cannot predict the
 victim's expected warning label and so faces an empty slot it cannot fill with a valid inclusion
 proof. Detection is therefore a property of where the keys must live, not of the server's good
@@ -61,8 +61,8 @@ contribution is the shared-warning-slot mechanism and its cost, not a re-derivat
 \paragraph{Deployment Trade-Offs, and Where Not to Use the Design.} The design provides detection
 rather than prevention. A server can still
 substitute a key; what changes is that the substitution can no longer be silent. That framing
-inherits the trust-on-first-use caveat of the underlying protocol, the very first key a party
-learns is taken on faith, and it deliberately leaves several things out of scope: it does not
+inherits the trust-on-first-use caveat of the underlying protocol: the very first key a party
+learns is taken on faith. It also deliberately leaves several things out of scope: it does not
 provide endpoint security, it does not hide the directory's contents from the operator, and it
 addresses pairwise conversations rather than groups. What it offers a deployment such as Signal is a
 narrow, well-defined addition: a write path for warning and per-session labels alongside the existing
@@ -110,7 +110,7 @@ continuous mode is driven by a seeded simulated ratchet rather than the client's
 simulation, specifically, mixes in the simulated ratchet's raw Diffie--Hellman output as its epoch secret $I_t$,
 where ACKA's Signal mapping (their Table~2) specifies $I_t = ck$, the derived chain key; so DUET
 implements the ACKA CEA state transition but simulates that Signal-specific epoch-secret mapping, and
-a faithful instantiation bridges the live Double-Ratchet chain key $ck$ from libsignal. Neither
+a faithful instantiation would instead obtain the live Double-Ratchet chain key $ck$ from libsignal. Neither
 changes the construction being exercised, but both must be replaced before the unlinkability and
 active-MitM guarantees hold against a real adversary rather than a simulated one. Finally, the
 networked client ties every search-time signed tree head into one append-only chain: the head is
@@ -217,8 +217,9 @@ self-contained server-side change, orthogonal to the verification-side contribut
 
 \paragraph{Post-Quantum, Multi-Device, and Deployment.} Because the labels are hash-derived, a
 post-quantum shared secret (PQXDH~\cite{pqxdh}) can feed the derivation unchanged; the open piece is a
-post-quantum VRF, for which only candidates exist. Multi-device support would follow the keychain
-cross-signing of ELEKTRA~\cite{len2023elektra}. On the deployment path, the cleanest route is to
+post-quantum VRF: research constructions exist, but no standardized, deployment-ready scheme.
+ELEKTRA-style keychain cross-signing~\cite{len2023elektra} could supply one component of multi-device
+support; device-scoped labels, warning propagation, and reset handling would also be required. On the deployment path, the cleanest route is to
 integrate with Signal's existing key-transparency service~\cite{signal-kt-server} behind a feature
 flag rather than running a parallel log, which requires only a write API for the warning and
 per-session labels, and the fork-detection vantage should be supplied by a real auditor gossip

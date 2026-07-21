@@ -186,8 +186,8 @@ signal in itself, since a server cannot serve a clean directory while selectivel
 dropping only the writes that would incriminate it without that selectivity being
 observable. A2 also covers the stronger, delayed form of censorship: a server that
 first commits the warning and then removes it in a later epoch. Such a deletion is
-inexpressible in the epoch's declared update set, so it diverges the auditor's
-transition replay, and the warning's writer retains the proofs that turn the
+inexpressible in the epoch's declared update set, so it causes the auditor's
+transition replay to diverge, and the warning's writer retains the proofs that turn the
 disappearance into publishable evidence (\cref{ch:design}). For an \emph{offline} client relying on
 windowed catch-up, detection is therefore conditional: the endpoint proof establishes append-only
 consistency, but it flags an in-window substitution only if the warning committed and survived to the
@@ -219,7 +219,7 @@ derives the wrong secret and lands at a different directory index. The defence
 anchors a rotation to identity rather than to the session: on a rotation the peer
 re-fetches the current key from the global VRF directory by user identity and compares
 it against the key it already trusts, so a substituted rotation surfaces as a changed
-identity key rather than being accepted silently, and the dual-index warning serves as
+identity key rather than being accepted silently, and the dual-index warning is
 the in-band backstop. (Binding successive rotations into a cross-signed per-user key
 chain, as CONIKS's strict key-change policy and ELEKTRA do, would strengthen this further and is noted as future
 work in \cref{ch:discussion}; the prototype's client relies on the identity re-fetch and the
@@ -382,7 +382,7 @@ The following are explicitly out of scope.
   keys.
   \item \textbf{Query privacy from the operator.} The server learns which
   identities it is asked to resolve, which is a separate privacy property from the
-  directory privacy of Goal~G3 (Directory Privacy) (\cref{sec:threat-goals}); no deployed key-transparency
+  directory privacy of Goal~G3 (\cref{sec:threat-goals}); no deployed key-transparency
   system hides the queried identity from the operator, and a distributed-OPRF extension
   is noted as future work (\cref{ch:discussion}).
   \item \textbf{Group messaging.} The design is pairwise; extending warning

@@ -263,8 +263,8 @@ and the Electron client deliberately excluded: their overhead is not the quantit
 characterized, and separating them keeps the measurement of the design faithful. Memory is captured
 separately as the resident set size after building the tree, via the \texttt{sysinfo} crate, and the
 $10^7$-label runs used for comparison with CONIKS report distributions over a thousand random lookups per size. Each experiment
-begins from fresh server state, an administrative reset rebuilds the directory from its seed, so
-no residual state from a previous run can leak into a measurement.
+begins from fresh server state; an administrative reset rebuilds the directory from its seed. No
+residual state from a previous run can leak into a measurement.
 
 Together the server, auditor, and benchmark harness are the whole of the Rust side. The client that
 consumes their proofs (and that must reproduce their cryptography exactly) is the
@@ -315,8 +315,8 @@ One behaviour of the verifier is worth drawing out, because it governs what the 
 client distinguishes unavailability from attack. A server that is merely unreachable must not be
 mistaken for an attacker, so an unreachable server raises a calm, amber unavailability notice and
 never the red man-in-the-middle alarm, which is reserved for a server that responds and is caught
-misbehaving. Where these checks attach to the messaging client, the points at which the verifier
-is actually invoked, is the subject of the next subsection.
+misbehaving. The next subsection identifies where these checks attach to the messaging client, and
+therefore where the verifier is invoked.
 
 \subsection{Hooking the Signal Lifecycle}\label{ssec:impl-hooks}
 

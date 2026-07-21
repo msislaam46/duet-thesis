@@ -73,7 +73,7 @@ verification mechanism known as the Safety Number, it does not, on its own,
 guarantee that the keys supplied by the server are authentic. Understanding
 precisely where this assumption enters the protocol stack is therefore necessary
 before examining the key transparency mechanisms introduced later in this
-chapter. Signal therefore serves as both a case study and the deployment context
+chapter. Signal therefore is both a case study and the deployment context
 through which this thesis examines the broader problem of public-key
 verification in secure messaging.
 
@@ -167,7 +167,7 @@ Neither key is authenticated \emph{per session}.
 \end{table}
 
 The key material described above is consumed directly by Signal's
-session-establishment protocol. We therefore further examine how the X3DH
+session-establishment protocol. We therefore examine how the X3DH
 protocol combines these keys to derive the initial shared secret from which all
 subsequent communication keys are generated.
 
@@ -322,7 +322,7 @@ verifies a user's own view of a binding rather than providing a mechanism
 through which one user can actively warn another that a key substitution has been
 detected.
 
-Despite these mechanisms, the authentication problem remains incomplete. The
+Despite these mechanisms, authentication remains incomplete. The
 remaining gap has two dimensions: a structural gap arising from the protocol's
 authentication model and a human gap arising from the usability of verification
 ceremonies.
@@ -351,7 +351,7 @@ perform it correctly. In a paired-participant usability study of the
 authentication ceremony across WhatsApp, Viber and Facebook Messenger, only two
 of twelve pairs located and completed the ceremony when simply
 asked to make sure no one else could read their messages, an overall success
-rate of 14\% across all pairs and applications~\cite[p.~30]{vaziripour2017}.
+rate of 14\% across all pairs and applications (pair--application trials)~\cite[p.~30]{vaziripour2017}.
 Brief, app-generic instructions about the need to compare keys raised the
 overall success rate to 79\%, as high as 96\% for Viber~\cite[p.~29]{vaziripour2017},
 but even when prompted the ceremony was slow: 3.2 minutes to find and a further
@@ -918,7 +918,7 @@ scalability-and-monitoring baseline among the academic systems, yet it shares th
 no-in-band-peer-warning gap common to every system surveyed (\cref{sec:bg-open}).
 
 \subsubsection{PRISM}
-PRISM takes the most different route and provides a contrasting design~\cite{pusch2025prism}. Its construction is a \emph{zero-knowledge rollup}: a
+PRISM takes the most divergent approach and provides a contrasting design~\cite{pusch2025prism}. Its construction is a \emph{zero-knowledge rollup}: a
 zero-knowledge virtual machine (zkVM) operating over a Jellyfish Merkle tree
 produces a succinct, constant-size proof of each epoch's state transition and
 posts it to a third-party data-availability layer (the Celestia blockchain), so
@@ -1038,7 +1038,7 @@ username hash. Its wire format pads every prefix proof to the full 256-sibling
 copath with stand-in hashes, giving a fixed-size 8{,}192-byte proof regardless of
 directory occupancy. As with the other deployed systems reviewed here, detection
 ultimately relies on self-monitoring rather than any peer-warning mechanism.
-Tracking the IETF draft as it does, Signal's deployment also serves as a useful
+Tracking the IETF draft as it does, Signal's deployment also is a useful
 indicator of the direction in which standardized key-transparency deployments are
 heading.
 
@@ -1089,8 +1089,8 @@ live deployment~\cite{google-kt}. Apple Contact Key Verification (iMessage) is a
 CONIKS-style design that keeps verification state
 device-local~\cite[p.~4355]{optiks2024}\cite{apple-ckv}. Keybase, in production
 since 2014, is the deployed multi-device-keychain ancestor, but it targets no
-user key privacy, the privacy mechanism is precisely what ELEKTRA later
-added~\cite[p.~2]{len2023elektra}.
+user-key privacy. ELEKTRA later added precisely that privacy
+mechanism~\cite[p.~2]{len2023elektra}.
 
 Despite substantial differences in architecture, consistency mechanisms, and
 deployment environments, the deployed systems converge on a common operational

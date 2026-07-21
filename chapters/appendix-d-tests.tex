@@ -115,7 +115,7 @@ Test & Property checked \\
 \texttt{windowed\_consistency\_proof\_to\_pins\_upper\_bound} & the proof between two committed heads respects the RFC~9162 $\lceil\lg m\rceil + \lceil\lg n\rceil$ hash bound \\
 \midrule
 \texttt{update\_raw\_is\_write\_once} & a second write to an occupied raw label is rejected (\texttt{WriteOnceViolation}) and the directory is unchanged \\
-\texttt{update\_raw\_unchecked\_bypasses\_write\_once} & the explicit malicious-server path does overwrite: the bypass the transition audit must catch \\
+\texttt{update\_raw\_unchecked\_bypasses\_write\_once} & the explicit malicious-server path does overwrite: the bypass that the transition audit must catch \\
 \texttt{epoch\_delta\_records\_inserts\_and\_rotations} & each epoch's declared delta records VRF inserts, raw inserts, and rotations \\
 \texttt{attack\_remove\_raw\_is\_not\_declared} & a raw deletion changes the committed root but never appears in the declared delta: exactly the mismatch the transition audit detects \\
 \midrule
@@ -140,7 +140,7 @@ Module & Test & Property checked \\
 \texttt{auditor} & \texttt{transition\_audit\_passes\_for\_honest\_directory} & the declared delta replays to the committed root for an honest directory \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_deletion} & a deleted leaf makes the replay diverge and alarm \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_modification} & an in-place modification likewise diverges and alarms \\
-\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected: the kind-commitment pss-compromise path \\
+\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected: the kind-commitment pre-shared-secret-compromise path \\
 \texttt{auditor} & \texttt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert} & the same overwrite declared as an \textsf{Insert} of an already-present label is rejected (A1): closing the other delta-op variant \\
 \texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_replica} & a rejected transition leaves the auditor's replica untouched, so a single bad epoch cannot corrupt later audits \\
 \texttt{auditor} & \texttt{audit\_rejects\_unsigned\_or\_foreign\_sth} & an unsigned or foreign-key head is rejected before auditing \\
@@ -176,6 +176,8 @@ Module & Test & Property checked \\
 
 The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{106} Jest tests in
 eight suites: a live-server wire-parity suite, an in-process integration suite, and six unit suites.
+Some catalogue rows represent parameterized cases (twelve decoder mutations, three status mappings,
+three VRF vectors); the totals count executed tests.
 The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust
 server over the network; it is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
 to be running, and its five tests early-return as no-ops when the server is absent, so a bare
