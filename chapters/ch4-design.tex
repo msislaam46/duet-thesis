@@ -391,9 +391,9 @@ the same directional lookup label, the lemma holds even when $\sharedS$ is known
 Fix a signed tree head $\mathit{sth}$. Applying $\textsf{DeriveLabels}$ (\cref{ssec:design-labels})
 from Alice's and Bob's respective viewpoints gives the same lookup label,
 \[
-  \ell^\A_{\mathsf{peer}} = \HKDFexp\!\big(\mathit{PRK},\ \texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},\ 32\big) = \ell^\B_{\mathsf{self}};
+  \ell^\A_{\mathsf{peer}} = \HKDFexp\!\big(\mathit{PRK},\ \texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},\ 32\big) = \ell^\B_{\mathsf{self}}.
 \]
-write $\ell$ for this shared label. If the client verification chain of \cref{ssec:design-verify}
+Let $\ell$ denote this shared label. If the client verification chain of \cref{ssec:design-verify}
 accepts a value $v_{\mathsf{peer}}$ at $\ell$ under $\mathit{sth}$ (Alice's lookup of Bob's key) and a
 value $v_{\mathsf{self}}$ at $\ell$ under the same $\mathit{sth}$ (Bob's self-check), then
 $v_{\mathsf{peer}}=v_{\mathsf{self}}$, unless the soundness of the prefix or log-inclusion proof, or
