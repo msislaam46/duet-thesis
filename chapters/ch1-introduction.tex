@@ -71,9 +71,9 @@ framework~\cite{dowling2023acka} (the instantiation claimed, with its scope, in
 \cref{sec:bg-contrib}), and frames the guarantee
 precisely as detection over a semi-trusted directory rather than prevention.
 
-\paragraph{Cryptographic.} A formal detection experiment for the dual-index scheme, stated over
-standard assumptions with a reduction sketch, the full reduction being left as future work
-(\cref{def:dualindex-detect}); and the \emph{windowed consistency proof}, the application of a
+\paragraph{Cryptographic.} A same-head consistency lemma for the dual-index scheme, showing that a
+substituted peer key cannot pass an honest party's self-check under one signed head, with the full
+detection reduction left as future work (\cref{lem:dualindex-consistency}); and the \emph{windowed consistency proof}, the application of a
 standard RFC~9162 distant-head consistency proof to the offline-monitoring policy, letting a client
 re-verify the log in one proof rather than $W$, with size logarithmic in the endpoint log sizes
 rather than linear in the epochs missed (\cref{sec:design-windowed}, \cref{lem:windowed-size}).

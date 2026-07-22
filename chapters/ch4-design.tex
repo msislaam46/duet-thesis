@@ -377,69 +377,46 @@ key, is the victim's self-check the sole detector. The
 residual limitation is the trust-on-first-use caveat of \cref{sec:threat-fair}: a
 substitution that predates first contact pins the incorrect key.
 
-\subsection{Security Experiment and Detection Argument}\label{ssec:design-experiment}
+\subsection{Shared-Label Consistency}\label{ssec:design-experiment}
 
-The security goal of the dual-index scheme is formalized by the experiment
-$\Expt{dual\text{-}det}{\Pi,\Adv}$ below, in which $\Pi$ denotes the dual-index scheme and
-$\Adv$ a probabilistic polynomial-time adversary (written $\Adv$ rather than $\A$, which
-already denotes Alice); the notation adapts ACKA's $\CEAsec$
-experiment~\cite{dowling2023acka}. The experiment is run by a challenger that invokes
-$\Adv$. The adversary controls the directory server and, following ACKA, may choose the
-session secret and the identities. Security therefore rests on consistency of the registered keys
-rather than on secrecy of those inputs. After the honest keys are registered, $\Adv$ publishes a directory
-state and a signed tree head and answers each honest lookup with a value and proof of its
-choosing. The adversary succeeds if an honest party accepts a substituted key while no
-detection mechanism is triggered: both parties' self-checks pass and the warning slot is
-provably empty.
+The core detection property of the dual-index scheme is a static, same-head consistency
+statement: under one signed tree head the label Alice reads for Bob's key and the label Bob
+self-checks are the same label, so it cannot carry two different authenticated values. The lemma
+below isolates this shared-label binding argument. It deliberately does not model warning
+publication, multiple epochs, offline catch-up, or equivocation --- each is handled by a separate
+mechanism noted afterwards --- and it does not rest on secrecy of $\sharedS$: it holds even if the
+adversary knows it.
 
-\begin{exptbox}{Experiment $\Expt{dual\text{-}det}{\Pi,\Adv}(\secpar)$}
-\small
-\begin{enumerate}\setlength{\itemsep}{1pt}
-  \item $(\sharedS, \mathit{id}_\A, \mathit{id}_\B, \mathit{pk}_\A, \mathit{pk}_\B) \gets \Adv(\secpar)$ \quad (the adversary's choice of secret, identities, and honest keys).
-  \item The challenger derives $(\ell^\A_{\mathsf{self}}, \ell^\A_{\mathsf{peer}}, \ell_{\mathsf{warn}}) \gets \mathsf{Derive}(\sharedS, \mathit{id}_\A, \mathit{id}_\B)$; by symmetry $\ell^\A_{\mathsf{peer}} = \ell^\B_{\mathsf{self}}$ (\cref{ssec:design-properties}).
-  \item The challenger registers the honest keys: $\mathit{pk}_\A$ at $\ell^\A_{\mathsf{self}}$ and $\mathit{pk}_\B$ at $\ell^\B_{\mathsf{self}}$.
-  \item $\Adv$ publishes a directory state (prefix tree and log) and a signed tree head $\mathit{sth}$.
-  \item $\mathit{pk}_{\mathsf{peer}} \gets \mathsf{VerLookup}(\ell^\A_{\mathsf{peer}}, \mathit{sth})$ \quad (Alice's lookup of Bob's key).
-  \item $\mathit{pk}_{\mathsf{self}} \gets \mathsf{VerLookup}(\ell^\B_{\mathsf{self}}, \mathit{sth})$ \quad (Bob's self-check).
-  \item $\mathit{warn} \gets \mathsf{VerWarn}(\ell_{\mathsf{warn}}, \mathit{sth})$ \quad (proven (non-)inclusion of the warning slot).
-  \item \textbf{return}~$1$ if $\mathit{pk}_{\mathsf{peer}} \notin \{\bot, \mathit{pk}_\B\} \wedge \mathit{pk}_{\mathsf{self}} = \mathit{pk}_\B \wedge \mathit{warn} = \mathsf{absent}$; otherwise $0$.
-\end{enumerate}
-{\footnotesize $\mathsf{VerLookup}$ returns the committed value at a label, or $\bot$ if no
-valid proof is supplied; $\mathsf{VerWarn}$ returns $\mathsf{absent}$ when the warning slot
-is proven empty and $\mathsf{present}$ otherwise. Both run the verification chain of
-\cref{ssec:design-verify} against $\mathit{sth}$.}
-\end{exptbox}
+\begin{lemma}[Same-head label consistency]\label{lem:dualindex-consistency}
+Fix a signed tree head $\mathit{sth}$, and let $\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$
+be the shared label the canonical ordering assigns to the conversation pair
+$(\mathit{id}_\A,\mathit{id}_\B)$ (\cref{ssec:design-labels}). If the client verification chain of
+\cref{ssec:design-verify} accepts a value $v_{\mathsf{peer}}$ at $\ell$ under $\mathit{sth}$ (Alice's
+lookup of Bob's key) and a value $v_{\mathsf{self}}$ at $\ell$ under the same $\mathit{sth}$ (Bob's
+self-check), then $v_{\mathsf{peer}}=v_{\mathsf{self}}$ except with probability negligible in
+$\secpar$, over the soundness of the prefix and log-inclusion proofs and the collision resistance of
+$\Hash$ (\cref{def:hash}).
+\end{lemma}
 
-The experiment models the state \emph{after} the honest party's monitor has reacted to a
-substitution: on observing $\mathit{pk}_{\mathsf{peer}} \neq \mathit{pk}_\B$, the client
-writes to $\ell_{\mathsf{warn}}$, so $\mathit{warn} = \mathsf{absent}$ holds only if the
-adversary suppressed that write, which against a committed log requires a forged
-non-inclusion proof. A multi-round interactive formulation that makes the
-write-then-recheck explicit across epochs is left to future work.
+\paragraph{Argument.} The canonical $\min/\max$ ordering makes $\ell^\A_{\mathsf{peer}}$ and
+$\ell^\B_{\mathsf{self}}$ the one label $\ell$ (\cref{ssec:design-properties}). Under a single
+$\mathit{sth}$ a verifying inclusion proof binds $\ell$ to exactly one committed prefix-tree leaf,
+whose value is fixed by the log-inclusion proof against the one signed root. Two accepted values
+$v_{\mathsf{peer}}\neq v_{\mathsf{self}}$ at $\ell$ under that root would exhibit two verifying
+openings of one committed label, contradicting proof soundness and the collision resistance of the
+Merkle construction.
 
-\begin{definition}[Dual-detection security]
-A dual-index scheme $\Pi$ is \emph{dual-detection-secure} if, for every probabilistic
-polynomial-time adversary $\Adv$,
-\[
-  \advantage{dual\text{-}det}{\Pi,\Adv}(\secpar) \;=\;
-  \Pr\!\big[\,\Expt{dual\text{-}det}{\Pi,\Adv}(\secpar) = 1\,\big] \;\le\; \negl(\secpar).
-\]
-\end{definition}
-
-\paragraph{Detection Argument (Proof Intuition, Not a Full Reduction).} The symmetry of the derivation
-(\cref{ssec:design-properties}) underpins the detection guarantee: the slot Alice reads for
-Bob's key, $\ell^\A_{\mathsf{peer}}$, is exactly the slot Bob self-checks,
-$\ell^\B_{\mathsf{self}}$. Under a single signed tree head, a valid inclusion proof binds
-that label to one committed value, so a winning adversary must return
-$\mathit{pk}_{\mathsf{peer}} \neq \mathit{pk}_\B$ to Alice while Bob's self-check at the same label still
-yields $\mathit{pk}_\B$: two contradictory authenticated values for the same committed
-label under one root, implying a violation of the collision resistance of the Merkle hash
-construction. Suppressing the warning after a detected mismatch likewise requires a forged
-non-inclusion proof. The remaining attack is equivocation, serving Alice and Bob
-different signed heads (attack A4), which lies outside this experiment and is handled by
-the cross-vantage auditor Goal~G4 (Fork Detection). A fully quantified reduction with concrete
-advantage bounds, and a unified treatment of the network and malicious-server adversaries,
-is left to future work (\cref{ch:discussion}).
+The consequence is the detection guarantee. A malicious server that returns a substituted
+$v_{\mathsf{peer}}\neq\mathit{pk}_\B$ to Alice under a head Bob also self-checks cannot, under that
+same head, keep Bob's self-check returning $\mathit{pk}_\B$: Bob obtains the substituted value at his
+own label through a valid lookup proof and detects it. The behaviours this static lemma excludes are
+covered elsewhere. Label unpredictability and pre-position resistance require an honestly
+established, secret $\sharedS$ and are argued in \cref{ssec:design-labels}. Warning publication, its
+\emph{pre-commit} censorship (the A2 compound signal of a key mismatch together with a proven-empty
+slot) and \emph{post-commit} deletion are handled by the write-once policy, the transition audit, and
+the persistence check of \cref{ssec:design-detection}. Split-view equivocation (A4) is handled by the
+cross-vantage auditor (Goal~G4, Fork Detection). A fully quantified reduction and an interactive,
+multi-epoch detection experiment are left to future work (\cref{ch:discussion}).
 
 The dual-index mechanism complements rather than replaces CEA. $\CEA$ authenticates the
 values stored at directory entries by deriving per-epoch fingerprints; the dual-index

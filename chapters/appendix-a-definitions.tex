@@ -323,22 +323,22 @@ Specified in \cref{ssec:design-detection}; implemented by \textsf{PersistenceChe
 (\cref{alg:detect}).
 \end{definition}
 
-\begin{definition}[Dual-index detection experiment]\label{def:dualindex-detect}
-\intuition{The adversary wins only if it makes a client accept a substituted key while the warning
-slot stays provably empty, i.e.\ if it substitutes without any warning being raised.}
-Let $\Adv$ be a probabilistic polynomial-time adversary controlling the server and the network under
-the model of \cref{ch:threat}. In the experiment $\Expt{dual\text{-}det}{\Adv}$, $\Adv$ interacts with
-an honest client and peer and wins if it causes the client to accept a peer key
-$\mathit{pk}'\neq\mathit{pk}_{\B}$ under a signed head $\STH_t$ for which $\mathsf{CheckWarning}$
-returns \textsc{Safe}. The scheme achieves Goal~G1 (Key-Substitution Detection)
-if $\advantage{dual\text{-}det}{\Adv}=\Pr[\Expt{dual\text{-}det}{\Adv}=1]$ is negligible in
-$\secpar$. For the raw dual-index path the argument rests on the labels being unpredictable to the
-adversary: it relies on HKDF (\cref{def:hkdf}) behaving as a PRF keyed by an unknown, sufficiently
-high-entropy conversation secret, on the unforgeability of the warning-MAC, on the collision
-resistance of $\Hash$ (\cref{def:hash}), on the soundness of the inclusion and prefix proofs, and on
-the unforgeability of the STH signature (\cref{def:sig}). The uniqueness of the VRF
-(\cref{def:vrf-security}) is what binds the separate global VRF-indexed path, not the secrecy of the
-raw dual-index labels. The
-narrative argument for this claim is given in \cref{ssec:design-detection}; a full reduction is left
-to future work (\cref{ch:discussion}).
+\begin{definition}[Same-head label consistency and Goal~G1]\label{def:dualindex-detect}
+\intuition{Under one signed head the peer-lookup label and the owner's self-check label are the same
+slot, so a substituted peer key cannot pass the owner's self-check; full G1 detection then adds the
+warning channel and the auditor, and its quantified reduction is future work.}
+The static core of Goal~G1 (Key-Substitution Detection) is a same-head consistency property
+(\cref{lem:dualindex-consistency}): fixing a signed head $\STH_t$, the shared label
+$\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$ cannot carry two verifying values, by soundness
+of the prefix and inclusion proofs and collision resistance of $\Hash$ (\cref{def:hash}). This holds
+even if the adversary knows $\sharedS$. Goal~G1 in the full model of \cref{ch:threat} additionally
+relies on several properties with distinct adversary scopes, each argued separately: the raw
+dual-index labels being unpredictable to the operator before first use, which needs HKDF
+(\cref{def:hkdf}) as a PRF keyed by an unknown, high-entropy $\sharedS$; the unforgeability of the
+warning-MAC, for authenticated peer warnings; and, for the separate global VRF-indexed path, the
+uniqueness of the VRF (\cref{def:vrf-security}) rather than label secrecy. Warning censorship (both a
+dropped pre-commit write proven absent and a post-commit deletion) is handled by the write-once
+policy, the transition audit, and the persistence check, and split-view equivocation by the
+cross-vantage auditor (\cref{ssec:design-detection}). A single quantified reduction combining these
+properties is left to future work (\cref{ch:discussion}).
 \end{definition}
