@@ -52,8 +52,7 @@ the in-protocol hooks left to future work in \cref{ch:discussion}: the per-conve
 secret is derived from a deterministic stand-in (\texttt{pocSharedSecret}) rather than bridged out
 of libsignal's live X3DH state, and continuous mode is driven by a deterministically seeded
 simulated Double Ratchet rather than the client's live ratchet. The stand-ins exercise the same
-construction and wire format, but the security consequence must be stated plainly rather than glossed
-as merely a different input source: \texttt{pocSharedSecret} is a \emph{public} function of the two
+construction and wire format. This separation has one security consequence. \texttt{pocSharedSecret} is a \emph{public} function of the two
 parties' identity keys, so unlike a real X3DH/PQXDH secret it is computable by the server (indeed by
 anyone). Under the stand-in the derived labels are therefore \emph{predictable}, not unguessable, and
 the secrecy-dependent guarantees, unlinkability of the slots and the server's inability to
@@ -416,7 +415,7 @@ the two client instances.
 \screenshotplaceholder{0.49\textwidth}{figures/ui-vrf.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/ui-cea.png}
 \caption[Global-VRF and CEA detection paths.]{Global-VRF and CEA detection paths. Left: an account-wide monitor detects
-replacement of the VRF-derived identity entry (attack A1; console: \emph{the server replaced it
+replacement of the VRF-derived identity entry (scenario A1a, global VRF slot; console: \emph{the server replaced it
 [MitM, A1]}). Right: continuous (CEA) mode detects a conflicting per-epoch fingerprint after
 ratchet-key injection. Both paths raise the red warning banner.}
 \label{fig:impl-screens-fronts}
@@ -424,13 +423,14 @@ ratchet-key injection. Both paths raise the red warning banner.}
 
 \begin{figure}[ht]
 \centering
-\screenshotplaceholder{0.49\textwidth}{figures/auditor-consistent.png}\hfill
+\screenshotplaceholder{0.49\textwidth}{figures/auditor-rotations.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
-\caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's three
-outputs by slot and attack. The global-slot substitution A1a logs \textsc{consistent}, because the
-identity slot is \textsc{mutable} and the rotation is a legal declared operation, so detection rests
-on the client self-check. The immutable-slot overwrite A1b trips the transition audit
-(\textsc{ImmutableRotation}). An equivocation A4 raises \textsc{alarm: fork}.}
+\caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's outputs
+by slot and attack. \emph{Left} (the two rotation cases): the global-slot substitution A1a logs
+\textsc{consistent}, because the identity slot is \textsc{mutable} and the rotation is a legal
+declared operation, so detection rests on the client self-check; the immutable-slot overwrite A1b
+trips the transition audit (\textsc{ImmutableRotation}). \emph{Right:} an equivocation A4 raises
+\textsc{alarm: fork}.}
 \label{fig:impl-auditor}
 \end{figure}
 
@@ -626,26 +626,32 @@ itself down; this was resolved by bootstrapping a genesis epoch at initializatio
 demonstration was not reproducible because attack state persisted in memory; an administrative reset
 that rebuilds the server from its seed fixed that, and is also what makes the demonstration repeatable.
 
-\paragraph{Trusted Computing Base and Fail-Closed Behaviour.} On the client, the trusted computing base is the verifier and the cryptographic crates it
-calls (\cref{ssec:impl-core-crypto}) together with the operator's two public keys, the STH signing key
-and the VRF key, pinned on first use; the server, the network, and the log are \emph{not} trusted, and
-every answer they give is re-checked against those keys. The \emph{verifier} is fail-closed: any
-failure (an invalid or absent signed-tree-head signature, a prefix root that does not recompute, a
-missing log inclusion, a proof whose label does not match the one queried, or a VRF binding that
-does not hold) yields a \emph{reject} verdict rather than falling through to acceptance. One
-integration caveat must be stated plainly, because it marks the boundary between what the verifier
-guarantees and what the prototype currently enforces. In the present Signal Desktop prekey-bundle
-hook (\cref{ssec:impl-hooks}) that reject verdict is presented \emph{advisorily}. The user is shown
-the red warning, but the hook does not yet abort session establishment. Turning the hook fail-closed
-(refusing the session on a red verdict rather than only warning) is a deployment policy decision
-left to future work (\cref{ch:discussion}); the guarantee proven here is that the verifier never
-\emph{accepts} a bad answer, not that the current integration blocks the session on one. Availability failures are the one
-case deliberately \emph{not} treated as an attack: an unreachable server yields the amber notice of
-\cref{ssec:impl-verifier}, never the red verdict. The prototype classifies an outage as an availability failure rather than as
-successful verification, but it does not distinguish a benign outage from a malicious refusal to
-serve; treating a persistent outage as suspicious is a deployment-policy decision left to future work. Hardening every request handler against
-a poisoned lock, rather than relying on the genesis-epoch bootstrap above, is noted as a production
-follow-up. These properties, and the reproducibility of the whole, are taken up next.
+\paragraph{Trusted Computing Base and Fail-Closed Behaviour.} On the client, the trusted computing
+base is the verifier and the cryptographic crates it calls (\cref{ssec:impl-core-crypto}), together
+with the operator's two public keys, the STH signing key and the VRF key, pinned on first use. The
+server, the network, and the log are \emph{not} trusted, and every answer they give is re-checked
+against those keys.
+
+The \emph{verifier} is fail-closed. Any failure (an invalid or absent signed-tree-head signature, a
+prefix root that does not recompute, a missing log inclusion, a proof whose label does not match the
+one queried, or a VRF binding that does not hold) yields a \emph{reject} verdict rather than falling
+through to acceptance.
+
+The present Signal Desktop prekey-bundle hook (\cref{ssec:impl-hooks}) presents that reject verdict
+\emph{advisorily}, which marks the boundary between what the verifier guarantees and what the
+prototype currently enforces. The user is shown the red warning, but the hook does not yet abort
+session establishment. Turning the hook fail-closed (refusing the session on a red verdict rather
+than only warning) is a deployment policy decision left to future work (\cref{ch:discussion}). The
+guarantee proven here is that the verifier never \emph{accepts} a bad answer, not that the current
+integration blocks the session on one.
+
+Availability failures are the one case deliberately \emph{not} treated as an attack. An unreachable
+server yields the amber notice of \cref{ssec:impl-verifier}, never the red verdict. The prototype
+classifies an outage as an availability failure rather than as successful verification, but it does
+not distinguish a benign outage from a malicious refusal to serve; treating a persistent outage as
+suspicious is a deployment-policy decision left to future work. Hardening every request handler
+against a poisoned lock, rather than relying on the genesis-epoch bootstrap above, is noted as a
+production follow-up. These properties, and the reproducibility of the whole, are taken up next.
 
 % ============================================================================
 \section{Reproducibility}\label{sec:impl-repro}

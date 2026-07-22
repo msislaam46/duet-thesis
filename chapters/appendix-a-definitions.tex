@@ -1,6 +1,6 @@
 \chapter{Formal Definitions}\label{app:definitions}
 
-This appendix collects the formal definitions on which the design (\cref{ch:design}) and its
+This appendix defines the formal notions on which the design (\cref{ch:design}) and its
 analysis rest. Each is stated in the thesis's standard notation, and each records where it is
 used in the thesis. Definitions of standard primitives are given as they appear in the specifications
 they are drawn from and are cited accordingly; the dual-index scheme of \cref{sec:def-dualindex} is
@@ -328,19 +328,23 @@ Specified in \cref{ssec:design-detection}; implemented by \textsf{PersistenceChe
 slot, so a substituted peer key cannot pass the owner's self-check; full G1 detection then adds the
 warning channel and the auditor, and its quantified reduction is future work.}
 The static core of Goal~G1 (Key-Substitution Detection) is a same-head consistency property
-(\cref{lem:dualindex-consistency}): fixing a signed head $\STH_t$, the shared label
+(\cref{lem:dualindex-consistency}). Fixing a signed head $\STH_t$, the shared label
 $\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$ cannot carry two verifying values, by soundness
 of the prefix and inclusion proofs and collision resistance of $\Hash$ (\cref{def:hash}). This holds
-even if the adversary knows $\sharedS$. Goal~G1 in the full model of \cref{ch:threat} additionally
-relies on several properties with distinct adversary scopes, each argued separately: the raw
-dual-index labels being unpredictable to the operator before first use, which needs HKDF
-(\cref{def:hkdf}) as a PRF keyed by an unknown, high-entropy $\sharedS$; the unforgeability of the
-warning-MAC, for authenticated peer warnings; and, for the separate global VRF-indexed path, the
-uniqueness of the VRF (\cref{def:vrf-security}) rather than label secrecy. Warning censorship
-separates into two cases: a dropped pre-commit write is caught by the verified read-back, where a key
-mismatch together with a proven-empty slot forms the A2 compound alarm, while a post-commit deletion
-is caught by the transition audit and the retained persistence evidence; the write-once policy
-prevents overwriting a committed warning. Split-view equivocation is handled by the cross-vantage
-auditor (\cref{ssec:design-detection}). A single quantified reduction combining these
-properties is left to future work (\cref{ch:discussion}).
+even if the adversary knows $\sharedS$.
+
+Goal~G1 in the full model of \cref{ch:threat} additionally relies on three properties with distinct
+adversary scopes, each argued separately. The raw dual-index labels must be unpredictable to the
+operator before first use, which needs HKDF (\cref{def:hkdf}) as a PRF keyed by an unknown,
+high-entropy $\sharedS$. Authenticated peer warnings need the unforgeability of the warning-MAC. The
+separate global VRF-indexed path rests on the uniqueness of the VRF (\cref{def:vrf-security}) rather
+than on label secrecy.
+
+Warning censorship is handled in two cases. A dropped pre-commit write is caught by the verified
+read-back, where a key mismatch together with a proven-empty slot forms the A2 compound alarm. A
+post-commit deletion is caught by the transition audit and the retained persistence evidence, and the
+write-once policy prevents overwriting a committed warning. Split-view equivocation is handled by the
+cross-vantage auditor (\cref{ssec:design-detection}).
+
+A single quantified reduction combining these properties is left to future work (\cref{ch:discussion}).
 \end{definition}

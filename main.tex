@@ -132,8 +132,8 @@ In component measurements of the verification chain, the VRF-indexed lookup proo
 size of \SI{817}{B} on a directory of $10^6$ labels, comparable to a dense Merkle-log inclusion
 proof at the same directory scale, and median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels, growing far more slowly than $N$. At a one-month
-window, the single windowed proof reduces raw consistency-path hash bytes by a factor of
-\num{695} against the evaluation's synthetic per-epoch baseline, which re-fetches one proof for
+window, the single windowed proof carries roughly \num{700}-fold fewer raw consistency-path hash
+bytes than the evaluation's synthetic per-epoch baseline, which re-fetches one proof for
 each missed epoch.
 
 Together, these results show that an in-band peer-warning channel and a single distant-head

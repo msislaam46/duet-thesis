@@ -364,7 +364,7 @@ check by the writer retaining a committed warning's inclusion proof and assembli
 on any later disappearance (\cref{ch:impl}). The one element left to deployment is
 authenticated writes (account-layer proof of raw-label ownership), without which the write-once
 policy still binds an honest server and the transition audit still binds a malicious one, but a
-malicious client could pre-emptively occupy an as-yet-empty peer slot (\cref{ch:discussion}).
+malicious client could pre-emptively occupy a currently empty peer slot (\cref{ch:discussion}).
 
 Detection is bidirectional, which matters for the offline case. The victim's own-key
 self-check publishes the warning when the victim notices the wrong key under its own
