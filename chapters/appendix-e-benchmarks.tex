@@ -323,8 +323,7 @@ establishment, and the remainder of the messaging-client handshake.
 \caption{Metric $\to$ Criterion group $\to$ CSV source (for reproduction).}
 \label{tab:bench-repro}
 \footnotesize
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}l l >{\raggedright\arraybackslash}p{8.8cm}@{}}
 \toprule
 Metric & Criterion group & CSV source \\
 \midrule
@@ -342,6 +341,5 @@ M11 & \texttt{M11\_handshake\_overhead}& \texttt{rust\_benchmark\_timings.csv} (
 M12 & \texttt{M12\_auditor}            & \texttt{rust\_benchmark\_timings.csv} (\texttt{M12\_audit\_epoch}, \texttt{M12\_detect\_fork}) \\
 M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (write counts); \texttt{rust\_benchmark\_timings.csv} (\texttt{M13\_session\_verify}, \texttt{M13\_continuous\_verify}) \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabular}
 \end{table}

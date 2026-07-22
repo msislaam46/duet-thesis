@@ -1029,7 +1029,8 @@ source of the throughput and third-party-auditor figures.)
 Signal's deployment is notable because it closely tracks the emerging IETF Key
 Transparency standard: its \texttt{key-transparency-server} implements the draft
 with some modifications, exposing Search and Monitor endpoints, public audit
-endpoints, and a third-party auditor with test vectors, and it keys the directory
+endpoints, and auditor interoperability test vectors (the auditor's deployment
+operator is not documented), and it keys the directory
 with an elliptic-curve VRF (ECVRF) from the suite family the standard
 recommends~\cite{signal-kt-server}. It stores three lookup keys: an identity key
 indexed by the account's identifier (the ACI, the per-account identity Signal
@@ -1262,12 +1263,12 @@ PRISM & account keys & whole-directory verification & No (commitments only) &
 WhatsApp (AKD) & identity key & infrastructure audit (monitoring off) & No & n/a
   (monitoring off) & signed root + public WORM audit \\
 Signal KT & identity key, phone, username hash & self-monitoring + audit & No &
-  n/a & auditor-signed tree (operator undoc.) \\
+  n/a & signed head; public audit endpoints (operator not documented) \\
 Proton KT & email $\to$ SKL fingerprints & self-audit + external audit & No &
   self-audit within 90 days & CT logs + External Audit \\
 Google KT & account keys & self-monitoring & No & n/a & CONIKS map in a CT log \\
-Apple CKV & identity key & automatic device + CloudKit check & No & n/a & CONIKS-style
-  map + in-band gossip + audit \\
+Apple CKV & identity key & automatic device verification + E2E-encrypted CloudKit
+  cross-check & No & n/a & on-device consistency + encrypted log-hash gossip + internal audit \\
 \bottomrule
 \end{tabular}
 

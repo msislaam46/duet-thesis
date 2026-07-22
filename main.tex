@@ -176,7 +176,7 @@ and my family, whose encouragement made this work possible.
 \listoftables
 
 % NOTATION TABLE — central, consistent notation definitions.
-% Keep this synchronized with kt-macros.sty. One row per macro.
+% Keep this synchronized with kt-macros.sty. One row per reader-facing global notation family.
 \chapter*{Notation}
 % The \small must stay scoped to this table: unbraced, it leaks into every
 % chapter and appendix that follows and silently sets the whole body a size
@@ -187,7 +187,8 @@ and my family, whose encouragement made this work possible.
 \toprule
 Symbol & Meaning \\
 \midrule
-$\A, \B$ & honest parties (Alice, Bob); $\Srv$: server; $\Adv$: adversary \\
+$\A,\ \B$;\ $\Srv$;\ $\Adv$ & honest parties Alice and Bob; the (possibly malicious) server; the PPT adversary \\
+$\Expt{sec}{\Pi},\ \advantage{sec}{\Pi}$;\ $\secpar$;\ $\negl$ & a security experiment and the adversary's advantage in it; the security parameter; a negligible function \\
 $\pkid{U}, \skid{U}$ & long-term identity key pair of user $U$ \\
 $\spk{U}, \sig{\spk{U}}$ & signed pre-key and its signature under $\skid{U}$ \\
 $\opk{U}{i}$ & $i$-th one-time pre-key of $U$ \\
@@ -196,11 +197,16 @@ $\xIK{U},\xSPK{U},\xOPK{U},\xEK{U}$ & Extended Triple Diffie--Hellman (X3DH)-spe
 $\sharedS$ & X3DH shared secret \\
 $\DH{X}{Y};\ \KDF$ & Diffie--Hellman value of two key pairs; key-derivation function \\
 $\Hash$ & collision-resistant hash $\{0,1\}^*\!\to\!\{0,1\}^{256}$ (SHA-256) \\
+$\mathsf{HKDF}\text{-}\mathsf{Extract},\ \mathsf{HKDF}\text{-}\mathsf{Expand}$ & HKDF (RFC~5869): $\mathit{PRK}\gets\mathsf{Extract}(\text{salt},\sharedS)$, then a domain-separated $\mathsf{Expand}$ per label \\
+$\VRF,\ \VRFeval,\ \VRFvfy$;\ $\beta$ & verifiable random function (ECVRF, RFC~9381): evaluate and verify; $\beta$ the output whose prefix is the global label \\
+$\MTH$ & Merkle Tree Hash: the log-tree root over an ordered leaf list (RFC~9162) \\
 $\ell_{\mathsf{self}}, \ell_{\mathsf{peer}}, \ell_{\mathsf{warn}}$ & dual-index labels: own-key lookup, peer-key lookup, and shared warning slot \\
 $t$; $\STH_t$ & epoch number; signed tree head at epoch $t$ \\
 $h_t$; $r_t$ & log-tree root; prefix-tree root at epoch $t$ \\
 $\pincl, \pcons, \pvrf$ & inclusion / consistency / verifiable-random-function (VRF) proofs \\
-$W$ & offline window (epochs); $N$: number of labels; $E$: number of epochs \\
+$\CKA,\ \CEA,\ \CEAsec,\ \Logsec$ & ACKA components: continuous key agreement, continuous entity authentication and its security notion, and the abstract secure log \\
+$T_t,\ I_t,\ k_t,\ L_t,\ F_t$ & continuous-mode (CEA) per-epoch values: public ratchet key, secret input, chained state, label, and fingerprint \\
+$W$;\ $N$;\ $E$ & offline window (epochs); number of labels; number of epochs \\
 $\concat$ & byte-string concatenation \\
 \bottomrule
 \end{tabular}

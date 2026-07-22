@@ -265,7 +265,7 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
   \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to the caller's verified head; a signed but stale/forked head is rejected}
   \Req $\mathit{sth'}.\mathit{config\_hash}=\textsf{H}(P)\ \wedge\ \mathit{sth'}.\mathit{epoch}+1=\mathit{sth'}.\mathit{tree\_size}$ \tcp*{policy pin ($P$ = pinned keys/suite/version/cadence/policy) and well-formed head}
-  \Req $\pi_{\mathrm{prefix}}.\mathit{label}=\mathit{label}$ \tcp*{label binding (every path): the proof must speak about the requested label, so that a valid proof for a different label is rejected}
+  \Req $\pi_{\mathrm{prefix}}.\mathit{label}=\mathit{label}$ \tcp*{label binding (every path): the proof must speak about the requested label, so a valid proof for a different label is rejected}
   \If{$\mathit{user\_id}$ given}{
     $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\mathit{label}$ \tcp*[f]{VRF path: the derived label equals the requested one}\;
   }
@@ -286,11 +286,11 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
 }
 \Fn{\normalfont\textsf{RetrieveKey}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
   $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-  $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK})$ \tcp*{advance $\mathit{last\_sth}$ to the current verified head: every lookup binds to it}
+  $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK},\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$ \tcp*{advance $\mathit{last\_sth}$ to the current verified head: every lookup binds to it}
   $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$;\ \ \Req $pk\ne\bot$\;
   \KwRet $pk$\;
 }
-\Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server},\lself,\lwarn,\mathit{PRK}$)}{
+\Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server},\lself,\lwarn,\mathit{PRK},\mathit{id_A},\mathit{id_B}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
   \uIf{$\mathit{last\_sth}=\bot$}{
     $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}); no history to check}
@@ -306,7 +306,7 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
   }
   \tcc{the self-key lookup and warning check below run on every tick, including an unchanged head}
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth_{new}})$;\ \ \Req $v\ne\bot$\;
-  \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}},\mathit{PRK})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
+  \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}},\mathit{PRK},\mathit{id_A},\mathit{id_B})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
   $\mathit{last\_sth}\gets \mathit{sth_{new}}$\;
 }
 \end{algorithm}
@@ -329,7 +329,7 @@ persistence component, retained evidence.
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
     $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"peer-slot-replaced"},pk,\mathit{ts}),\mathit{PRK})$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"peer-slot-replaced"},pk,\mathit{ts}),\mathit{PRK},\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$\;
     \textbf{raise} SecurityAlert\;
   }
   \KwRet $pk$\;
@@ -356,16 +356,16 @@ persistence component, retained evidence.
   \If{$v_{\mathsf{vrf}}\ne\mathit{own\_pk}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v_{\mathsf{vrf}},\mathit{ts}),\mathit{PRK})$ \tcp*{global substitution: trip every peer's slot}
+      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v_{\mathsf{vrf}},\mathit{ts}),\mathit{PRK},\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$ \tcp*{global substitution: trip every peer's slot}
     }
     \textbf{raise} SecurityAlert\;
   }
   \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
     $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ \tcp*{(b) session monitor: the dual-index self slot the peer reads}
-    $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK})$\;
+    $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK},\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$\;
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$\;
     \If{$v\ne\mathit{own\_pk}$}{
-      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"lookup-replaced"},v,\mathit{ts}),\mathit{PRK})$\;
+      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"lookup-replaced"},v,\mathit{ts}),\mathit{PRK},\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$\;
       \textbf{raise} SecurityAlert\;
     }
   }
@@ -487,7 +487,7 @@ the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
   $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
   \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{no advance}}
   \If{$v\ne F^{*}$}{
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t),\mathit{PRK})$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t),\mathit{PRK},\min(\mathit{id_{sender}},\mathit{id_{self}}),\max(\mathit{id_{sender}},\mathit{id_{self}}))$\;
     \KwRet \textsc{Fork} \tcp*{no advance}
   }
   $\textsf{CeaUpdate}(I)$ \tcp*{advance on \textsc{Consistent}}

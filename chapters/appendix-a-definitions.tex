@@ -277,7 +277,7 @@ extracts $\mathit{PRK}=\HKDFex(\text{salt}=\text{\texttt{"duet-dual-index"}},\ \
   \lblwarn &= \HKDFexp(\mathit{PRK},\ \texttt{"warning"}\concat \min(\mathit{id}_\A,\mathit{id}_\B)\concat \max(\mathit{id}_\A,\mathit{id}_\B),\ 32),
 \end{align*}
 using HKDF-SHA256 (\cref{def:hkdf}). The canonical ordering of identifiers in $\lblwarn$ makes the
-warning label symmetric, so that both parties address the same warning slot, while the lookup labels are
+warning label symmetric, so both parties address the same warning slot, while the lookup labels are
 deliberately asymmetric. Specified in \cref{ssec:design-labels}.
 \end{definition}
 

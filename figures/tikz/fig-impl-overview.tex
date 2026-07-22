@@ -11,7 +11,7 @@
       dual-index derivation\\ continuous monitoring (CEA)\\ HTTP API (\cref{app:apiref})
       \end{tabular}};
   \node[grp,minimum width=5.6cm,below=1.1cm of srv] (aud)
-     {\textbf{Cross-vantage auditor}\\[1pt]{\scriptsize independent process: poll STH; verify append-only; detect forks}};
+     {\textbf{Cross-vantage auditor}\\[1pt]{\scriptsize independent process: poll STH + epoch deltas; verify append-only + transition; detect forks}};
   \draw[<->] (sd) -- node[right,font=\scriptsize]{HTTP / JSON} (srv);
-  \draw[->,dashed] (aud) -- node[right,font=\scriptsize]{poll STH + consistency proofs} (srv);
+  \draw[->,dashed] (aud) -- node[right,font=\scriptsize]{poll STH + epoch deltas + consistency proof} (srv);
 \end{tikzpicture}

@@ -84,9 +84,10 @@ overcome end to end.
 \input{figures/tikz/fig-impl-overview}
 \caption[The implemented system.]{The implemented system. A TypeScript client embedded in Signal Desktop verifies keys
 against the Rust reference implementation, the standalone server that holds all server-side
-components, over HTTP; an independent auditor polls the signed tree head and consistency proofs.
-The client and the Rust implementation are held to byte-for-byte agreement by shared test vectors;
-the HTTP API is detailed in \cref{app:apiref}.}
+components, over HTTP; an independent auditor polls the signed tree head, epoch deltas, and
+consistency proofs. Shared test vectors require byte-for-byte equality between the client and the
+Rust implementation for the covered protocol operations and inputs; the HTTP API is detailed in
+\cref{app:apiref}.}
 \label{fig:impl-overview}
 \end{figure}
 
@@ -290,7 +291,7 @@ processes it exercises (the directory server, the auditor, and the attacker) and
 and banner through which verdicts reach the user, with the client verifying against the live
 networked stack.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-signal}
 \caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three

@@ -133,7 +133,7 @@ against a signed root.}
 \end{figure}
 
 Step~1 is a mandatory requested-label binding on \emph{every} path: the prefix proof must
-concern the exact label the client queried, so that a genuine proof for a different leaf is rejected.
+concern the exact label the client queried, so a genuine proof for a different leaf is rejected.
 Step~2 is the anti-substitution VRF binding on the global path: it ties the queried
 identity, through the VRF, to that same slot (on the global path the VRF output equalling the
 queried label is what supplies step~1). Step~2 is skipped on
@@ -214,7 +214,8 @@ parties' keys coexist in the directory, and the shared warning slot sits alongsi
 \centering
 \input{figures/tikz/fig-design-dualindex}
 \caption[The dual-index scheme's three derived slots.]{The dual-index scheme: the two lookup slots (one per participant) and the shared
-warning slot are all derived by HKDF from the conversation's shared secret $\sharedS$. Since
+warning slot are all derived from the conversation's shared secret $\sharedS$ by a single
+HKDF-Extract followed by three domain-separated HKDF-Expand steps. Since
 both parties hold the same $\sharedS$, they derive the identical warning label $\ell_{\mathsf{warn}}$,
 so a warning written by either party appears in a slot both sides read; a party holding a different secret
 $\sharedS'$ derives a disjoint set of labels and cannot reach these slots.}
@@ -251,7 +252,9 @@ audit, and the persistence check of \cref{ssec:design-detection}.
 \paragraph{Scope of the Warning Channel.} The bidirectional warning defends a conversation
 \emph{after} its X3DH/PQXDH handshake has completed honestly, so that Alice and Bob hold a genuine
 shared secret $\sharedS$ the server never learns. The threat it targets is a malicious server
-(or network) substituting a key for an \emph{already-established} pair (attacks A1, A5). It does
+substituting a key for an \emph{already-established} pair (attacks A1, A5). The first-contact
+network-substitution case (A3) is not a warning-channel target; it is instead caught by the
+label-layer signals described below. The warning channel does
 \emph{not} claim to catch a man-in-the-middle interposed \emph{during} first contact. If the
 adversary sits in the handshake itself, Alice and Bob complete \emph{separate} handshakes with the
 adversary and never share a single $\sharedS$, so no common rendezvous label exists; that case is the
@@ -516,7 +519,7 @@ different $L_t$) or produces a conflicting fingerprint at the agreed label, caug
 epoch. On a fork, continuous mode reuses the dual-index warning slot to alert the peer in
 band, a composition ACKA itself does not provide.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-modes}
 \caption[Session mode versus continuous mode.]{Session mode (left): labels derived from the initial secret $\sharedS$, at which
@@ -580,7 +583,7 @@ complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are give
 client verification (\cref{alg:merklelog,alg:prefix,alg:client}); \cref{tab:alg-purpose} maps each of
 the eight algorithms to its purpose.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-windowed}
 \caption[Windowed offline catch-up.]{Offline catch-up over a window $W = n-m$ epochs. The na\"ive approach verifies one
