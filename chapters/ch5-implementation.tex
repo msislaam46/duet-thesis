@@ -637,13 +637,10 @@ prefix root that does not recompute, a missing log inclusion, a proof whose labe
 one queried, or a VRF binding that does not hold) yields a \emph{reject} verdict rather than falling
 through to acceptance.
 
-The present Signal Desktop prekey-bundle hook (\cref{ssec:impl-hooks}) presents that reject verdict
-\emph{advisorily}, which marks the boundary between what the verifier guarantees and what the
-prototype currently enforces. The user is shown the red warning, but the hook does not yet abort
-session establishment. Turning the hook fail-closed (refusing the session on a red verdict rather
-than only warning) is a deployment policy decision left to future work (\cref{ch:discussion}). The
-verifier rejects the invalid cases described above. The present integration, however, does not yet
-abort session establishment on every rejecting verdict.
+The present Signal Desktop prekey-bundle hook (\cref{ssec:impl-hooks}) marks the boundary between
+what the verifier guarantees and what the prototype currently enforces. It surfaces each rejecting
+verdict as a red warning but does not abort session establishment. Blocking such sessions is a
+deployment-policy decision left to future work (\cref{ch:discussion}).
 
 Availability failures are the one case deliberately \emph{not} treated as an attack. An unreachable
 server yields the amber notice of \cref{ssec:impl-verifier}, never the red verdict. The prototype
