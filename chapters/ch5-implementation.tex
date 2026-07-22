@@ -416,7 +416,7 @@ the two client instances.
 \screenshotplaceholder{0.49\textwidth}{figures/ui-cea.png}
 \caption[Global-VRF and CEA detection paths.]{Global-VRF and CEA detection paths. Left: an account-wide monitor detects
 replacement of the VRF-derived identity entry (scenario A1a, global VRF slot; console: \emph{the server replaced it
-[MitM, A1]}). Right: continuous (CEA) mode detects a conflicting per-epoch fingerprint after
+(MitM, attack A1a)}). Right: continuous (CEA) mode detects a conflicting per-epoch fingerprint after
 ratchet-key injection. Both paths raise the red warning banner.}
 \label{fig:impl-screens-fronts}
 \end{figure}
@@ -426,10 +426,10 @@ ratchet-key injection. Both paths raise the red warning banner.}
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-rotations.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
 \caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's outputs
-by slot and attack. \emph{Left} (the two rotation cases): the global-slot substitution A1a logs
-\textsc{consistent}, because the identity slot is \textsc{mutable} and the rotation is a legal
-declared operation, so detection rests on the client self-check; the immutable-slot overwrite A1b
-trips the transition audit (\textsc{ImmutableRotation}). \emph{Right:} an equivocation A4 raises
+by slot and attack. \emph{Left:} the global-slot substitution A1a is a legal declared rotation (the
+identity slot is \textsc{mutable}), so the auditor logs \textsc{consistent} and detection rests on
+the client self-check. The same capture shows the immutable-slot overwrite A1b tripping the
+transition audit (\textsc{ImmutableRotation}). \emph{Right:} an equivocation A4 raises
 \textsc{alarm: fork}.}
 \label{fig:impl-auditor}
 \end{figure}
@@ -572,7 +572,7 @@ The next section examines the engineering obstacles met on both sides of the HTT
 \FloatBarrier
 \section{System-Wide Engineering Challenges}\label{sec:impl-challenges}
 
-Building the system end to end revealed obstacles at every layer. This section collects the most
+Building the system end to end revealed obstacles at every layer. This section examines the most
 instructive, each with the resolution adopted, grouped by where they arose: the protocol the two
 implementations must agree on, the concurrency of a live multi-client deployment, the Electron
 client integration, and the server's robustness under load.
@@ -642,8 +642,8 @@ The present Signal Desktop prekey-bundle hook (\cref{ssec:impl-hooks}) presents 
 prototype currently enforces. The user is shown the red warning, but the hook does not yet abort
 session establishment. Turning the hook fail-closed (refusing the session on a red verdict rather
 than only warning) is a deployment policy decision left to future work (\cref{ch:discussion}). The
-guarantee proven here is that the verifier never \emph{accepts} a bad answer, not that the current
-integration blocks the session on one.
+verifier rejects the invalid cases described above. The present integration, however, does not yet
+abort session establishment on every rejecting verdict.
 
 Availability failures are the one case deliberately \emph{not} treated as an attack. An unreachable
 server yields the amber notice of \cref{ssec:impl-verifier}, never the red verdict. The prototype

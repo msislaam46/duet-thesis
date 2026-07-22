@@ -51,7 +51,7 @@ a specific later chapter:
   windowed consistency proof of \cref{sec:design-windowed} and its measurement in
   \cref{ssec:eval-catchup}.)}
   \item[RQ4 (client-integration feasibility).] Does the scheme integrate into a real messaging-client
-  codebase (Signal Desktop) with practical measured component costs, rather than only into a standalone model? \emph{(Answered by the Signal Desktop
+  codebase (Signal Desktop) while retaining practical, measured component costs, rather than only into a standalone model? \emph{(Answered by the Signal Desktop
   integration of \cref{ch:impl} and the deployment analysis of \cref{sec:eval-deploy}.)}
 \end{description}
 
@@ -65,10 +65,10 @@ Extract-and-Expand Key Derivation Function (HKDF), that either party can raise
 and that, for an honestly established and monitored conversation, a malicious server can neither
 pre-position nor censor undetectably, turning a silent substitution into an automatic, bidirectional,
 in-band alert (\cref{sec:design-dual}). More broadly,
-the thesis frames this scheme as a concrete instantiation and measurement of the abstract
+the thesis presents this scheme as a concrete instantiation and measurement of the abstract
 append-only-log component of the Authenticated Continuous Key Agreement (ACKA)
 framework~\cite{dowling2023acka} (the instantiation claimed, with its scope, in
-\cref{sec:bg-contrib}), and frames the guarantee
+\cref{sec:bg-contrib}), and defines its guarantee
 precisely as detection over a semi-trusted directory rather than prevention.
 
 \paragraph{Cryptographic.} The cryptographic contribution applies an RFC~9162 distant-head
@@ -87,9 +87,9 @@ two layers' shared protocol operations are checked byte-for-byte against cross-l
 
 \paragraph{Empirical.} The empirical contribution is a benchmark campaign (metrics M1--M13) with four principal findings. The
 implemented VRF-indexed lookup proof is at rough size parity with CONIKS, with the detection channel
-CONIKS lacks obtained through additional same-shape lookups rather than a larger proof. Median full
-client verification stays below \SI{150}{\micro\second} median across the measured range, through
-$10^7$ labels, and grows far more slowly than $N$. A month-long offline catch-up costs a few
+CONIKS lacks obtained through additional same-shape lookups rather than a larger proof. The median
+full-client verification time remains below \SI{150}{\micro\second} throughout the measured range, up
+to $10^7$ labels, and grows far more slowly than $N$. A month-long offline catch-up costs a few
 hundred bytes against the hundreds of kilobytes that per-epoch re-fetching would spend. A systematic security
 evaluation using the STRIDE threat-classification framework and the MITRE ATT\&CK knowledge base
 covers the resulting system (\cref{ch:eval}).

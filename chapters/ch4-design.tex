@@ -665,7 +665,7 @@ $\Logsec$ & abstract append-only secure log (consistency + exclusion) & KT verif
 \end{tabular}}
 \end{table}
 
-Three deliberate departures from the paper are stated plainly, because each corresponds to one of
+The implementation makes three deliberate departures from the paper, each corresponding to one of
 the ACKA limitations identified in \cref{sec:bg-acka}, and instantiating $\Logsec$
 addresses it. First, where $\CEA$ authenticates fingerprints, the session-mode scheme
 additionally derives \emph{labels} from the shared secret, adding the in-band
@@ -682,7 +682,7 @@ deployable system.
 \section{Design Decisions and Alternatives}\label{sec:design-decisions}
 
 The design rests on a number of choices, each made against a specific alternative and,
-where possible, with a deployed precedent. \Cref{tab:design-decisions} collects them; the
+where possible, with a deployed precedent. \Cref{tab:design-decisions} summarizes them; the
 paragraphs below expand the three that most affect the system's behaviour.
 
 \begin{table}[htbp]
