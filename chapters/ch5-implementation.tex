@@ -632,18 +632,18 @@ with the operator's two public keys, the STH signing key and the VRF key, pinned
 server, the network, and the log are \emph{not} trusted, and every answer they give is re-checked
 against those keys.
 
-The \emph{verifier} is fail-closed. Any failure (an invalid or absent signed-tree-head signature, a
-prefix root that does not recompute, a missing log inclusion, a proof whose label does not match the
-one queried, or a VRF binding that does not hold) yields a \emph{reject} verdict rather than falling
-through to acceptance.
+The \emph{verifier} is fail-closed for integrity checks. Any cryptographic or proof-validation
+failure (an invalid or absent signed-tree-head signature, a prefix root that does not recompute, a
+missing log inclusion, a proof whose label does not match the one queried, or a VRF binding that does
+not hold) yields a \emph{reject} verdict rather than falling through to acceptance.
 
 The present Signal Desktop prekey-bundle hook (\cref{ssec:impl-hooks}) marks the boundary between
 what the verifier guarantees and what the prototype currently enforces. It surfaces each rejecting
 verdict as a red warning but does not abort session establishment. Blocking such sessions is a
 deployment-policy decision left to future work (\cref{ch:discussion}).
 
-Availability failures are the one case deliberately \emph{not} treated as an attack. An unreachable
-server yields the amber notice of \cref{ssec:impl-verifier}, never the red verdict. The prototype
+Availability failures are reported separately and are not classified as integrity attacks by the
+verifier. An unreachable server yields the amber notice of \cref{ssec:impl-verifier}, never the red verdict. The prototype
 classifies an outage as an availability failure rather than as successful verification, but it does
 not distinguish a benign outage from a malicious refusal to serve; treating a persistent outage as
 suspicious is a deployment-policy decision left to future work. Hardening every request handler
