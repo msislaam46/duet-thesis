@@ -73,7 +73,7 @@ overhead. \Cref{fig:impl-overview} shows the implemented system as a whole: the 
 embedded in Signal Desktop, the Rust reference implementation that houses all server-side components of the
 prototype (the prefix tree, the Merkle log, the signed-tree-head signer, the ECVRF, the dual-index
 derivation, and the continuous-monitoring layer) reached over HTTP, and the independent Rust
-auditor that polls the server's signed tree head and consistency proofs from a separate vantage
+auditor that polls the server's signed tree head, epoch deltas, and consistency proofs from a separate vantage
 point. The remainder of this chapter follows the boundary the figure draws: \cref{sec:impl-modules}
 details the Rust cryptographic core, \cref{sec:impl-signal} the TypeScript client, \cref{sec:impl-tests}
 the parity regime that binds the two, and \cref{sec:impl-challenges} the engineering obstacles
