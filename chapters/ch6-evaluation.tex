@@ -307,16 +307,16 @@ windowed proof stays a few hundred bytes, growing logarithmically (\cref{tab:eva
 \label{fig:eval-catchup-plot}
 \end{figure}
 
-The saving is linear in $W$ (measured $\approx 0.97\,W$), not $W/\lg W$, as \cref{fig:eval-catchup-plot}
-makes visible on a log axis: a client offline for a month
+The saving grows approximately linearly with the window (measured $\approx 0.97\,W$), as \cref{fig:eval-catchup-plot}
+makes visible on a log axis. A client offline for a month
 sends a \num{320}\,byte proof in place of \num{222528}\,bytes, a \num{695}-fold reduction, and the
 generation-time counterpart is similar in magnitude (\SI{0.3}{\micro\second} windowed versus
 \SI{184.8}{\micro\second} sequential at $W=720$: medians over the log alone, which the prefix-tree
-memoization does not touch). The two ratios are separate measurements and should not be conflated:
-the \num{695}-fold figure is a computed count of raw path hash bytes, whereas the generation-time figure is timed,
+memoization does not touch). The two ratios are separate measurements.
+The \num{695}-fold figure is a computed count of raw path-hash bytes, whereas the generation-time figure is timed,
 and the windowed median sits at the \SI{0.1}{\micro\second} resolution this chapter quotes to, so
-their quotient is only good to a couple of significant figures ($\approx$\num{600}-fold). Both say the
-same thing about the mechanism: one proof replaces $W$ of them. This directly addresses the monitoring-bandwidth problem that CONIKS lists as
+their quotient is good to only a couple of significant figures ($\approx$\num{600}-fold). One windowed
+proof thus replaces the $W$ per-epoch proofs, directly addressing the monitoring-bandwidth problem that CONIKS lists as
 an open extension.
 
 \subsection{Warning-Slot Lookup Cost and False Positives (M5, M6)}\label{ssec:eval-detection}
@@ -410,7 +410,7 @@ The measured constancy of prefix verification from $10^3$ to $10^7$,
 \SI{25.9}{\micro\second} at $10^3$ and \SI{26.0}{\micro\second} at $10^7$, is strong empirical
 evidence that the tree walk is bounded by the fixed \num{256}-level height rather than by $N$. Full client
 verification is not quite as flat: its median reads \SI{131.9}{\micro\second} at $10^6$ and
-\SI{147.1}{\micro\second} at $10^7$. These M7 figures are medians of the randomized \num{1000}-lookup
+\SI{147.1}{\micro\second} at $10^7$. These size-and-verify-at-scale figures (M7) are medians of the randomized \num{1000}-lookup
 distribution recorded to the CSV, whose proof shape varies with the sampled label; the fixed-target
 Criterion group, which repeatedly times a single fixed lookup path, is exploratory and is not the
 reported scale figure. Against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at
@@ -492,7 +492,8 @@ the compute floor of the audit, not the end-to-end cost of the protocol.
 
 The design offers two operating modes (\cref{ssec:design-modes}): session mode writes one directory
 entry per signed-pre-key rotation, and continuous mode writes one per ratchet epoch for finer-grained,
-ACKA CEA-style detection. The cost of that granularity is not verification time. A per-check operation
+ACKA CEA-style detection. The two modes have effectively indistinguishable per-check verification
+costs; their difference is in write frequency. A per-check operation
 costs \SI{27.2}{\micro\second} in session mode and \SI{27.5}{\micro\second} in continuous mode (medians, \cref{app:benchmarks}; both include
 server-side proof generation). The two medians differ by \SI{0.3}{\micro\second}, and no ordering
 conclusion is drawn from that gap: the $\pm$ column is a confidence half-width of the \emph{mean}
@@ -505,13 +506,13 @@ log-inclusion steps, both under the same label-bound verifier. Client-side label
 sub-microsecond HKDF/hash) is performed once in setup and excluded from both timed bodies, so the two
 medians compare like for like. One residual asymmetry is disclosed: continuous mode appends one log
 leaf per registered epoch (here $K$ epochs) whereas session mode commits once, so the continuous
-log-inclusion proof is over a marginally deeper log; the effect is within the reported precision and
-does not change the conclusion that granularity costs write rate, not verification time. Neither figure includes a VRF step, because the
+log-inclusion proof is over a marginally deeper log; the effect is within the reported precision,
+leaving the two modes' per-check verification costs effectively equal. Neither figure includes a VRF step, because the
 dual-index and CEA paths use client-derived rather than VRF-derived labels
 (\cref{ssec:design-verify}), and neither includes the signed-tree-head signature verification that
 the full specified check of \cref{app:algorithms} performs; \cref{ssec:eval-latency} shows that the
-full client verification, including that signature, costs $\approx$\SI{128}{\micro\second}. The cost
-of the granularity is instead the number of directory writes. \Cref{tab:eval-modes} reports the write
+full client verification, including that signature, costs $\approx$\SI{128}{\micro\second}. The modes
+differ instead in the number of directory writes. \Cref{tab:eval-modes} reports the write
 counts over a conversation of $E$ hourly epochs, with a signed-pre-key rotation every 30 days
 ($R=720$).
 
@@ -625,7 +626,7 @@ per epoch at $N \approx 2^{32}$), so the derived total is indicative rather than
 plausible churn it remains over three orders of magnitude larger than the windowed proof
 ($529{,}920/320 \approx 1{,}656\times$).
 
-Fourth, full client verification stays below \SI{150}{\micro\second} through $10^7$ labels. CONIKS
+Finally, full client verification stays below \SI{150}{\micro\second} through $10^7$ labels. CONIKS
 reports \SI{159}{\micro\second} to verify the authentication path at $N = 10^7$ and approximately
 \SI{400}{\micro\second} to verify the signed-tree-root signature, and reports no VRF-verification
 time~\cite[\S5.3]{melara2015coniks}; the total of \SI{559}{\micro\second} is the sum, computed here,
@@ -671,7 +672,7 @@ scope is X1, direct key extraction, which no key-transparency system addresses.
 Attack & Mechanism (goal) & Evidence & Result \\
 \midrule
 A1/A3/A5 key substitution & proof-chain verification; identity re-fetch / predecessor cross-signature; dual-index self-check + warning (G1) & A1 self-check + warning; A3 forged response fails proof verification; A5 predecessor cross-signature rejection; scenario suite (\cref{tab:impl-t5b}) & detected, 1--2 epochs \\
-A2 warning censorship & self-check key mismatch + proof-verified warning absence (G1) & compound signal: key mismatch and proven non-inclusion of the warning; scenario A2 & detected \\
+A2 warning censorship & self-check key mismatch + proof-verified warning absence (extension of G1) & compound signal: key mismatch and proven non-inclusion of the warning; scenario A2 & detected \\
 A4 split-view equivocation & cross-vantage auditor (G4) & \SI{27.9}{\micro\second} per check; equivocation-detection test & detected, 1 epoch \\
 directory enumeration & ECVRF labels (G3) & RFC~9381 conformance vectors (\cref{sec:impl-tests}) & prevented \\
 X1 key extraction & None (out of scope) & no KT system addresses it & n/a \\
@@ -691,7 +692,7 @@ security argument; the full technique matrix and the per-category STRIDE tables 
 
 \subsection{STRIDE Coverage}\label{ssec:eval-stride}
 
-A STRIDE enumeration over the three trust domains (the server (Merkle log, prefix tree, signed
+A STRIDE analysis over the three trust domains (the server (Merkle log, prefix tree, signed
 tree head), the client (registration, verification, warning monitor), and the auditor) yields
 twenty distinct threats. \Cref{tab:eval-stride} summarizes the outcome: sixteen are addressed by an
 implemented control (some by cryptographic prevention, the rest by after-the-fact detection through
@@ -702,7 +703,9 @@ the transparency log, the warning channel, or the auditor) and four are residual
 \caption[STRIDE coverage of the key-transparency system.]{STRIDE coverage of the key-transparency system. A threat is counted \emph{addressed} when an
 implemented control prevents or detects the principal attack outcome (the per-row control column in
 \cref{app:security} states which of the two applies), and \emph{residual} when no
-implemented control addresses it.}
+implemented control addresses it. The 1--2 epoch figure in the Tampering row is the scripted
+one-action-per-epoch demonstration schedule (\cref{ssec:eval-timeline}), not a protocol-wide
+detection bound.}
 \label{tab:eval-stride}
 \small
 \begin{tabular}{@{}lccp{6.0cm}@{}}
@@ -710,7 +713,7 @@ implemented control addresses it.}
 Category & Threats & Addressed & Residual \\
 \midrule
 Spoofing & 4 & 4 & None \\
-Tampering & 3 & 3 & None (substitution caught within 1--2 epochs) \\
+Tampering & 3 & 3 & addressed by detection; demonstration observed 1--2 epochs \\
 Repudiation & 3 & 3 & None \\
 Information disclosure & 3 & 2 & operator learns the label$\leftrightarrow$user mapping \\
 Denial of service & 4 & 1 & rate-limiting, staleness timeout, gossip transport (all deployment-layer, unimplemented) \\

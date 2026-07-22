@@ -15,7 +15,7 @@
   \node[box] (sl) at (0,-0.7) {labels};
   \node[box] (sk) at (0,-1.9) {identity key};
   \draw[->] (s) -- node[right,font=\footnotesize]{HKDF} (sl);
-  \draw[->,dashed] (sl) -- node[right,font=\footnotesize]{stores} (sk);
+  \draw[->,dashed] (sl) -- node[right,font=\footnotesize]{register at label} (sk);
   \node[align=center,font=\footnotesize] at (0,-2.9) {one write per\\pre-key rotation};
 
   % ---- continuous (CEA) mode (right): compact state machine ----

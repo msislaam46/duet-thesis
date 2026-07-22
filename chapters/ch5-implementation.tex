@@ -73,7 +73,7 @@ overhead. \Cref{fig:impl-overview} shows the implemented system as a whole: the 
 embedded in Signal Desktop, the Rust reference implementation that houses all server-side components of the
 prototype (the prefix tree, the Merkle log, the signed-tree-head signer, the ECVRF, the dual-index
 derivation, and the continuous-monitoring layer) reached over HTTP, and the independent Rust
-auditor that polls the server's signed tree head and consistency proofs from a separate vantage
+auditor that polls the server's signed tree head, epoch deltas, and consistency proofs from a separate vantage
 point. The remainder of this chapter follows the boundary the figure draws: \cref{sec:impl-modules}
 details the Rust cryptographic core, \cref{sec:impl-signal} the TypeScript client, \cref{sec:impl-tests}
 the parity regime that binds the two, and \cref{sec:impl-challenges} the engineering obstacles
@@ -84,9 +84,10 @@ overcome end to end.
 \input{figures/tikz/fig-impl-overview}
 \caption[The implemented system.]{The implemented system. A TypeScript client embedded in Signal Desktop verifies keys
 against the Rust reference implementation, the standalone server that holds all server-side
-components, over HTTP; an independent auditor polls the signed tree head and consistency proofs.
-The client and the Rust implementation are held to byte-for-byte agreement by shared test vectors;
-the HTTP API is detailed in \cref{app:apiref}.}
+components, over HTTP; an independent auditor polls the signed tree head, epoch deltas, and
+consistency proofs. Shared test vectors require byte-for-byte equality between the client and the
+Rust implementation for the covered protocol operations and inputs; the HTTP API is detailed in
+\cref{app:apiref}.}
 \label{fig:impl-overview}
 \end{figure}
 
@@ -160,7 +161,7 @@ heavily, which the next subsection describes.
 
 \subsection{The ECVRF and Dual-Index Modules}\label{ssec:impl-core-crypto}
 
-Three modules carry the heavier cryptography. The \texttt{vrf} module implements the
+Three modules implement the main cryptographic operations. The \texttt{vrf} module implements the
 ECVRF-EDWARDS25519-SHA512-TAI construction of RFC~9381 (suite \texttt{0x03}), which produces the
 verifiable pseudorandom labels used on the global-lookup path; the \texttt{dual\_index} module
 derives the three labels $\ell_{\mathsf{self}}$, $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$
@@ -171,10 +172,10 @@ of the ACKA framework~\cite{dowling2023acka} that drives ongoing monitoring.
 These modules rest on established cryptographic crates rather than custom implementations.
 \texttt{sha2} provides SHA-256, \texttt{hkdf} the HKDF dual-index derivation, \texttt{ed25519-dalek}
 the Ed25519 signing and verification of the signed tree head, and \texttt{curve25519-dalek} the
-Edwards-curve arithmetic over which the ECVRF of RFC~9381 is implemented in-house; the ECVRF is the
-only primitive written by hand, and it is validated against the published suite-\texttt{0x03} test
+Edwards-curve arithmetic over which the ECVRF of RFC~9381 is implemented in-house. The ECVRF is the
+one hand-written primitive, validated against the published suite-\texttt{0x03} test
 vectors (\cref{sec:impl-tests}). The implementation preserves the asymptotic complexity established
-in the design (\cref{ch:design}): prefix-tree lookups, log inclusion and consistency proofs, and
+in the design (\cref{ch:design}), where prefix-tree lookups, log inclusion and consistency proofs, and
 their client-side verification remain logarithmic in the number of entries, while label derivation
 and signature verification remain constant in directory size, the behaviour the evaluation of
 \cref{ch:eval} measures directly. Computing labels and signing roots is separate from answering clients
@@ -197,8 +198,8 @@ screens of \cref{fig:demo-baseline,fig:demo-cmd,fig:demo-equivocation}), and the
 catalogue in \cref{app:tests}
 (\cref{tab:tests-rust-prim,tab:tests-rust-server,tab:tests-rust-system,tab:tests-jest-wire,tab:tests-jest-unit,tab:tests-adversarial}).
 
-The directory-immutability safeguards of \cref{ssec:design-detection} are implemented across these
-components rather than left to deployment. The server enforces the write-once policy in its raw-label
+The directory-immutability safeguards of \cref{ssec:design-detection} are enforced across these
+components. The server enforces the write-once policy in its raw-label
 update path. Thus, a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
 \texttt{/update-raw} endpoint answers \texttt{409 Conflict}), while the privileged interface exposes
 an explicit unchecked overwrite so the adversarial suite can play a malicious operator. Every commit
@@ -216,9 +217,9 @@ assembles the inclusion proof, the proven non-inclusion, and the consistency pro
 heads into a bundle that verifies against the server's own signatures. The warning payload itself
 carries an HKDF-derived MAC (\cref{alg:dualindex}) so that a reader can distinguish a peer-authored
 warning from one the operator injected once it has learned the slot's label. The single element left
-to deployment is authenticated writes: without account-layer proof of raw-label ownership the
+to a production deployment is authenticated writes. Without account-layer proof of raw-label ownership the
 write-once policy still binds an honest server and the transition audit still binds a malicious one,
-but a malicious client could pre-emptively occupy an as-yet-empty peer slot (\cref{ch:discussion}).
+but a malicious client could pre-emptively occupy a currently unoccupied peer slot (\cref{ch:discussion}).
 
 \begin{figure}[htbp]
 \centering
@@ -226,7 +227,7 @@ but a malicious client could pre-emptively occupy an as-yet-empty peer slot (\cr
 \caption[Transition-audit state flow.]{The networked auditor first classifies the head
 (\cref{alg:auditor}) and then replays the declared transitions transactionally. Both checks must pass
 before the state updates atomically. When a valid second-vantage head is available, it provides an
-additional fork check; if it is unavailable, no G4 verdict is reached and the primary commit is not
+additional fork check; if it is unavailable, no G4 (fork-detection) verdict is reached and the primary commit is not
 blocked.}
 \label{fig:impl-transition-audit}
 \end{figure}
@@ -243,8 +244,8 @@ is the epoch commit, which snapshots the tree by a deep clone; \cref{ch:eval} qu
 
 \subsection{Benchmark Infrastructure}\label{ssec:impl-bench}
 
-Since the evaluation of \cref{ch:eval} rests on the numbers this harness produces, its methodology
-belongs here, with the results themselves deferred. Measurements are taken two ways. Criterion drives
+The benchmark harness produces the measurements reported in \cref{ch:eval}; this section records its
+methodology, deferring the results themselves. Measurements are taken two ways. Criterion drives
 the statistical benchmarks, warming up for a fixed interval and then collecting a configured number
 of samples over a fixed measurement window (its sampling is parameterized, not stopped on any
 convergence criterion), from which it derives confidence intervals by bootstrap resampling and
@@ -266,15 +267,15 @@ $10^7$-label runs used for comparison with CONIKS report distributions over a th
 begins from fresh server state; an administrative reset rebuilds the directory from its seed. No
 residual state from a previous run can leak into a measurement.
 
-Together the server, auditor, and benchmark harness are the whole of the Rust side. The client that
+Together, the server, auditor, and benchmark harness form the Rust implementation. The client that
 consumes their proofs (and that must reproduce their cryptography exactly) is the
 subject of the next section.
 
 % ============================================================================
 \section{Signal Desktop Integration}\label{sec:impl-signal}
 
-Where the Rust crate is a server to be measured, the TypeScript layer is a verifier to be
-deployed. It re-implements only what a client needs and places no trust in the server, and the
+The Rust crate provides the measured server and reference verifier; the TypeScript layer integrates
+verification into Signal Desktop. It re-implements only what a client needs and places no trust in the server, and the
 whole section is confined to the front end: what the client checks, and where it attaches to
 Signal.
 
@@ -290,7 +291,7 @@ processes it exercises (the directory server, the auditor, and the attacker) and
 and banner through which verdicts reach the user, with the client verifying against the live
 networked stack.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-signal}
 \caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
@@ -527,7 +528,7 @@ complete test catalogue is given in \cref{app:tests}.
 \toprule
 Test & Component & Property checked & Why it matters \\
 \midrule
-exhaustive inclusion + forgeries & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a substituted value still needs a valid proof (A1) \\
+exhaustive inclusion + forgeries & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a substituted value still needs a valid proof (A1, server-side key substitution) \\
 exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (A4) \\
 RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & label integrity and directory privacy (G3); interoperability with Signal's keytrans \\
 cross-implementation vectors & \texttt{dual\_index} & Rust and TypeScript derive identical labels & both parties must address one shared warning slot (G1) \\
@@ -565,8 +566,7 @@ X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 \end{tabularx}
 \end{table}
 
-The obstacles overcome in reaching this agreement, on both sides of the HTTP boundary, are collected
-in the next section.
+The next section examines the engineering obstacles met on both sides of the HTTP boundary.
 
 % ============================================================================
 \FloatBarrier
@@ -633,9 +633,9 @@ every answer they give is re-checked against those keys. The \emph{verifier} is 
 failure (an invalid or absent signed-tree-head signature, a prefix root that does not recompute, a
 missing log inclusion, a proof whose label does not match the one queried, or a VRF binding that
 does not hold) yields a \emph{reject} verdict rather than falling through to acceptance. One
-integration caveat must be stated plainly, because it is the boundary between what the verifier
-guarantees and what the prototype currently enforces: in the present Signal Desktop prekey-bundle
-hook (\cref{ssec:impl-hooks}) that reject verdict is presented \emph{advisorily}: the user is shown
+integration caveat must be stated plainly, because it marks the boundary between what the verifier
+guarantees and what the prototype currently enforces. In the present Signal Desktop prekey-bundle
+hook (\cref{ssec:impl-hooks}) that reject verdict is presented \emph{advisorily}. The user is shown
 the red warning, but the hook does not yet abort session establishment. Turning the hook fail-closed
 (refusing the session on a red verdict rather than only warning) is a deployment policy decision
 left to future work (\cref{ch:discussion}); the guarantee proven here is that the verifier never

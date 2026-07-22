@@ -31,7 +31,7 @@ GET  & \texttt{/search-by-user-id} & lookup by user identifier, with the VRF pro
 GET  & \texttt{/consistency} & consistency proof between two log sizes (\texttt{from}, \texttt{to}) \\
 GET  & \texttt{/epoch} & current epoch number \\
 GET  & \texttt{/log-root-at} & log root at a given tree size \\
-GET  & \texttt{/epoch-delta} & a committed epoch's declared update set and committed directory root, so a networked auditor can replay the transition (\cref{alg:auditor}) \\
+GET  & \texttt{/epoch-delta} & a committed epoch's declared update set and committed directory root, so that a networked auditor can replay the transition (\cref{alg:auditor}) \\
 GET  & \texttt{/vrf-public-key} & operator VRF public key \\
 GET  & \texttt{/sth-public-key} & operator STH signing public key \\
 POST & \texttt{/register} & register a user's key (server derives the VRF label) \\

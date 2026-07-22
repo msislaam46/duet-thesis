@@ -43,9 +43,9 @@ can be tied, through one chain of proofs, back to a signed head.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-design-arch}
-\caption[Overall system architecture.]{Overall architecture showing the three authenticated data structures
-(prefix tree $\to$ log $\to$ STH) and the VRF used to derive global directory
-labels.}
+\caption[The authenticated directory core.]{The authenticated directory core, showing the three authenticated data structures
+(prefix tree $\to$ log $\to$ STH) and the VRF that derives global directory
+labels. The client warning path and the independent auditor appear in the end-to-end figures below.}
 \label{fig:design-arch}
 \end{figure}
 
@@ -214,7 +214,8 @@ parties' keys coexist in the directory, and the shared warning slot sits alongsi
 \centering
 \input{figures/tikz/fig-design-dualindex}
 \caption[The dual-index scheme's three derived slots.]{The dual-index scheme: the two lookup slots (one per participant) and the shared
-warning slot are all derived by HKDF from the conversation's shared secret $\sharedS$. Since
+warning slot are all derived from the conversation's shared secret $\sharedS$ by a single
+HKDF-Extract followed by three domain-separated HKDF-Expand steps. Since
 both parties hold the same $\sharedS$, they derive the identical warning label $\ell_{\mathsf{warn}}$,
 so a warning written by either party appears in a slot both sides read; a party holding a different secret
 $\sharedS'$ derives a disjoint set of labels and cannot reach these slots.}
@@ -250,8 +251,10 @@ audit, and the persistence check of \cref{ssec:design-detection}.
 
 \paragraph{Scope of the Warning Channel.} The bidirectional warning defends a conversation
 \emph{after} its X3DH/PQXDH handshake has completed honestly, so that Alice and Bob hold a genuine
-shared secret $\sharedS$ the server never learns. This is the threat it targets: a malicious server
-(or network) substituting a key for an \emph{already-established} pair (attacks A1, A5). It does
+shared secret $\sharedS$ the server never learns. The threat it targets is a malicious server
+substituting a key for an \emph{already-established} pair (attacks A1, A5). The first-contact
+network-substitution case (A3) is not a warning-channel target; it is instead caught by the
+label-layer signals described below. The warning channel does
 \emph{not} claim to catch a man-in-the-middle interposed \emph{during} first contact. If the
 adversary sits in the handshake itself, Alice and Bob complete \emph{separate} handshakes with the
 adversary and never share a single $\sharedS$, so no common rendezvous label exists; that case is the
@@ -352,7 +355,7 @@ is the transition audit that closes this residual, because an auditor that valid
 update set detects the deletion independently of either party. With these safeguards in place, the
 server's only remaining suppression strategy is to refuse service entirely (to decline lookups,
 withhold epochs, or withhold the auditor's disclosure), producing an observable denial of service,
-which is itself a signal (attack A2). All three safeguards are implemented in the prototype: the
+which is itself a signal (attack A2, warning censorship). All three safeguards are implemented in the prototype: the
 write-once policy is enforced by the server's raw-label update interface, the transition audit by the
 auditor replaying each epoch's declared update set against the committed root, and the persistence
 check by the writer retaining a committed warning's inclusion proof and assembling deletion evidence
@@ -478,15 +481,16 @@ party who sent that epoch's ratchet key first, which binds the fingerprint to th
 key $T_t$ and lets a substituted key be detected at the shared label.
 
 The ordering of operations within an epoch follows ACKA's composed construction
-(their Figure~8) in three respects, each of which matters for correctness. First, the label and
+(their Figure~8~\cite{dowling2023acka}) in three respects, each of which matters for correctness. First, the label and
 fingerprint are computed over the \emph{current} (pre-update) state and the \emph{public} key, and
 only then is the \emph{secret} $I_t$ mixed into the chain; mixing the secret epoch key rather than
 the public ratchet key keeps the chain unpredictable to an adversary that has compromised the
-pre-shared state: the property the unlinkability and forgery-resistance arguments need. The secret
-is domain-separated before folding ($\KDF(I_t, \text{\texttt{"CEA"}})$, ACKA Figure~8): in a faithful
-deployment $I_t$ is Signal's chain key $ck$, which also feeds the session-key derivation (the paper's $\KDF(I_t,
-\text{\texttt{"CKA"}})$), so the \texttt{"CEA"} tag keeps the value folded into the transparency chain
-independent of the session key: the key separation the security argument relies on. Second,
+pre-shared state: the property the unlinkability and forgery-resistance arguments need. Before the
+secret is folded into the CEA chain, it is domain-separated as $\KDF(I_t, \text{\texttt{"CEA"}})$
+(ACKA Figure~8). In a faithful deployment $I_t$ is Signal's chain key $ck$, which also feeds the
+session-key derivation (the paper's $\KDF(I_t, \text{\texttt{"CKA"}})$). The distinct \texttt{"CEA"}
+and \texttt{"CKA"} tags keep the transparency-chain value independent of the session key, the key
+separation the security argument relies on. Second,
 before posting, the sender checks that the label $L_t$ is unoccupied: ACKA specifies that ``the
 sender will also check if the label has already been uploaded to the log with a fingerprint, which
 would indicate an impersonation''~\cite{dowling2023acka}, and the sender advances its chain only
@@ -495,17 +499,17 @@ verification returns \textsc{Consistent}: a detected fork halts the session (the
 carried across a fork), and a pending lookup (the sender's fingerprint not yet committed) leaves the
 receiver's state untouched, so the check can be retried without desynchronizing the chain.
 
-One representational point requires an explicit statement. ACKA's log stores a \emph{vector} of
+The two designs represent a label's history differently. ACKA's log stores a \emph{vector} of
 fingerprints per label, and its receiver rejects unless exactly one fingerprint is present; the alarm
-condition is two fingerprints at one label. DUET's directory stores exactly one value per label, so that
-alarm condition maps onto two mechanisms instead: the honest sender's pre-post check fails against an
-occupied label (the case in which the adversary posted first), and the transition audit
-(\cref{ssec:design-detection}), which rejects the converse case, in which an adversary
-\emph{overwrites} the honest fingerprint after it committed: because each leaf commits its
+condition is two fingerprints at one label. DUET's directory stores exactly one value per label, so the
+two-fingerprint alarm maps onto two mechanisms instead. The honest sender's pre-post check fails against an
+occupied label, the case in which the adversary posted first. The transition audit
+(\cref{ssec:design-detection}) rejects the converse case, in which an adversary
+\emph{overwrites} the honest fingerprint after it committed; because each leaf commits its
 mutable/immutable kind into its hash, an immutable-label rotation is structurally rejected. This is
 exactly the pre-shared-state overwrite argued in full above, the case the receiver's per-epoch
 verdict alone cannot catch, so detection instead rests on the auditor's rejection. Entry
-immutability is thus not an implementation detail but the property that lets ACKA's security argument
+immutability is therefore the property that lets ACKA's security argument
 carry over to this instantiation, and, with the committed leaf kind, it is enforced auditably rather
 than assumed.
 
@@ -515,7 +519,7 @@ different $L_t$) or produces a conflicting fingerprint at the agreed label, caug
 epoch. On a fork, continuous mode reuses the dual-index warning slot to alert the peer in
 band, a composition ACKA itself does not provide.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-modes}
 \caption[Session mode versus continuous mode.]{Session mode (left): labels derived from the initial secret $\sharedS$, at which
@@ -528,14 +532,13 @@ step, folding the secret $I_t$ to give $k_{t+1}$, and stays unchanged on \textsc
 \end{figure}
 
 The two modes differ in their authentication coverage and cost
-(\cref{fig:design-modes}). \textbf{Session mode} authenticates at the level of the identity key,
+(\cref{fig:design-modes}). \emph{Session mode} authenticates at the level of the identity key,
 with one write per pre-key rotation, and needs fewer directory writes and a smaller integration
 surface than continuous mode; a production deployment still needs the hooks and safeguards of
 \cref{ch:discussion}.
-\textbf{Continuous mode} authenticates each ratchet epoch, with one write per epoch, and
-detects the post-compromise active man-in-the-middle that is ACKA's principal security guarantee, at a substantially higher log-write rate. The two are modes of one system, sharing
-the prefix tree, the log, the STH, and the warning channel; their cost is measured in
-\cref{ch:eval}. Two limitations remain and are stated explicitly. First, in the prototype the chained
+\emph{Continuous mode} authenticates each ratchet epoch, with one write per epoch, and
+detects the post-compromise active man-in-the-middle that is ACKA's principal security guarantee, at a substantially higher log-write rate. The two are modes of one system. They share
+the prefix tree, the log, the STH, and the warning channel, and \cref{ch:eval} compares their costs. Two limitations remain and are stated explicitly. First, in the prototype the chained
 secret is advanced deterministically from the shared secret; a production binding would replace this
 simulated epoch input with Signal's live Double Ratchet chain key $ck$, obtained together with the
 public ratchet key $T_t$ at a DH-ratchet-step integration point, which is a distinct hook from the
@@ -548,6 +551,7 @@ a bounded skipped-epoch window in the same manner (\cref{ch:discussion}). Cross-
 vectors verify byte-for-byte equivalence of the Rust and TypeScript CEA constructions.
 
 % ============================================================================
+\FloatBarrier
 \section{Windowed Consistency Proofs}\label{sec:design-windowed}
 
 The windowed consistency proof closes Problem~2 of \cref{sec:bg-open}, the linear cost
@@ -579,7 +583,7 @@ complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are give
 client verification (\cref{alg:merklelog,alg:prefix,alg:client}); \cref{tab:alg-purpose} maps each of
 the eight algorithms to its purpose.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-windowed}
 \caption[Windowed offline catch-up.]{Offline catch-up over a window $W = n-m$ epochs. The na\"ive approach verifies one
@@ -641,6 +645,7 @@ scheme it is one, of size $O(\log n)$ in the log size $n$. This is the parameter
 evaluation of \cref{ch:eval}.
 
 % ============================================================================
+\FloatBarrier
 \section{Instantiating ACKA}\label{sec:design-acka}
 
 The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:

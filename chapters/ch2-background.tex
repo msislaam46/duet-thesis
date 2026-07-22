@@ -1029,7 +1029,8 @@ source of the throughput and third-party-auditor figures.)
 Signal's deployment is notable because it closely tracks the emerging IETF Key
 Transparency standard: its \texttt{key-transparency-server} implements the draft
 with some modifications, exposing Search and Monitor endpoints, public audit
-endpoints, and a third-party auditor with test vectors, and it keys the directory
+endpoints, and auditor interoperability test vectors (the auditor's deployment
+operator is not documented), and it keys the directory
 with an elliptic-curve VRF (ECVRF) from the suite family the standard
 recommends~\cite{signal-kt-server}. It stores three lookup keys: an identity key
 indexed by the account's identifier (the ACI, the per-account identity Signal
@@ -1242,33 +1243,43 @@ and figures are cited in \cref{sec:bg-vkd} and in the findings below.}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}p{1.6cm}p{2.2cm}p{2.7cm}p{1.5cm}p{2.2cm}p{2.6cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.6cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{2.6cm}@{}}
 \toprule
 System & What it logs & Primary detection mechanism & In-band peer warning &
   Offline protection & Consistency / fork resistance \\
 \midrule
-CONIKS & identity key & self-monitoring & No & linear, $\Theta(\ell)$ catch-up &
+CONIKS & username $\to$ key binding & self-monitoring & No & linear, $\Theta(\ell)$ catch-up &
   client gossip (unspecified) \\
-SEEMless & identity key (versioned) & self-monitoring (manual) & No & per-update
+SEEMless & identity key (versioned) & self-monitoring (client history checks) & No & per-update
   history & $\ge$1 honest auditor; commitment distribution assumed \\
-Parakeet & identity key & self-monitoring & No & per-update & $3f{+}1$ witness
+Parakeet & identity key & self-monitoring & No & bounded: check before compaction & $3f{+}1$ witness
   quorum \\
 ELEKTRA & multi-device keychains & self-monitoring & reset only & per-update &
   external auditor; RZKS rotation \\
-OPTIKS & identity key (+ devices) & self-monitoring (single proof) & No & bounded
+OPTIKS & identity key (+ devices) & self-monitoring (single proof, common case) & No & bounded
   (``time periods'') & $\ge$1 auditor + bulletin board \\
-PRISM & account keys & whole-directory verification & suggested only &
+PRISM & account keys & whole-directory verification & No (commitments only) &
   constant-size proof & zk-rollup on a DA layer \\
 WhatsApp (AKD) & identity key & infrastructure audit (monitoring off) & No & n/a
   (monitoring off) & signed root + public WORM audit \\
 Signal KT & identity key, phone, username hash & self-monitoring + audit & No &
-  n/a & third-party auditor \\
+  n/a & signed head; public audit endpoints (operator not documented) \\
 Proton KT & email $\to$ SKL fingerprints & self-audit + external audit & No &
-  $\le$90-day self-audit & CT logs + External Audit \\
+  self-audit within 90 days & CT logs + External Audit \\
 Google KT & account keys & self-monitoring & No & n/a & CONIKS map in a CT log \\
-Apple CKV & identity key & device-local & No & n/a & CONIKS-style map \\
+Apple CKV & identity key & automatic device verification + E2E-encrypted CloudKit
+  cross-check & No & n/a & on-device consistency + encrypted log-hash gossip + internal audit \\
 \bottomrule
 \end{tabular}
+
+\vspace{3pt}
+{\footnotesize\raggedright \emph{In-band peer warning} denotes a peer-propagated
+substitution warning: evidence written by one participant to a
+conversation-specific location that the other participant verifies. SEEMless
+self-monitoring assumes the user recalls their own update times; Apple CKV
+propagates in-band \emph{commitment} gossip and PRISM suggests carrying
+\emph{commitments} in encrypted messages, but neither is a peer substitution
+warning under this definition.\par}
 \end{table}
 
 Taken together, the columns of \cref{tab:bg-compare} reveal a common pattern:
@@ -1355,10 +1366,11 @@ with self-monitoring disabled and a manual fallback on
 failure~\cite[pp.~5, 10]{whatsapp2023whitepaper}. This recurring design choice
 motivates the problem formulated in \cref{sec:bg-open}. The question, therefore,
 is not whether existing VKDs can detect directory equivocation or malicious key
-substitution, they can, but how that evidence reaches the affected
+substitution; they can. It is how that evidence reaches the affected
 communicating parties in time to influence the security of a conversation.
 
 % ============================================================================
+\FloatBarrier
 \section{Open Problems for Key Transparency in Asynchronous Messaging}\label{sec:bg-open}
 
 The comparison of \cref{sec:bg-compare} and the ACKA limitations of
@@ -1411,9 +1423,12 @@ whole-directory verification are all in use. What unites them is that detecting
 equivocation at all requires an independent mechanism that observes the directory
 from outside the victim's own session.
 
-These three problems (an absent peer-warning channel, a linear offline catch-up
-cost, and a split-view that local checks cannot expose) are the gaps the
-contributions of \cref{sec:bg-contrib} set out to close.
+Of these three, the first two (an absent peer-warning channel and a linear offline
+catch-up cost) are the client-facing gaps this thesis sets out to close directly;
+the third (a split-view that local checks cannot expose) is an inherited
+key-transparency requirement that any untrusted-directory design must meet,
+addressed here with a standard cross-vantage auditor rather than a new primitive.
+The contributions of \cref{sec:bg-contrib} take up all three.
 
 % ============================================================================
 \section{Research Gap and Contributions}\label{sec:bg-contrib}
@@ -1422,10 +1437,10 @@ The open problems of \cref{sec:bg-open} leave key transparency for asynchronous
 messaging without an in-band peer-warning channel, without an efficient offline
 catch-up, and without local detection of server equivocation; ACKA, conversely,
 supplies continuous authentication but only by assuming a log it can trust. The
-research gap is therefore the absence of a single system that is both resistant to a
-malicious directory server and continuously authenticated across the ratchet. The
-three problems are not addressed \emph{together} by any system surveyed in
-\cref{sec:bg-compare}, and that joint absence is the gap.
+research gap is therefore the absence of a single system that closes both
+client-facing gaps (in-band peer warning and efficient offline catch-up) while
+remaining resistant to a malicious directory server and continuously authenticated
+across the ratchet. No system surveyed in \cref{sec:bg-compare} does so.
 
 These limitations motivate the four principal contributions announced in
 \cref{ch:intro} (conceptual, cryptographic, systems, and empirical), which this section develops.
@@ -1441,14 +1456,15 @@ transparency for asynchronous messaging by adding automatic peer notification, e
 recovery, transparent equivocation detection, and continuous authentication over an untrusted
 directory. The mechanisms are parallel, not layered: the log-based warning scheme does not depend on
 the ACKA continuous-mode instantiation, which realizes one operating mode of the system rather than
-its foundation. The mechanisms developed below realize these four contributions; each heading names
+its foundation. The mechanisms developed below implement these four contributions; each heading names
 its parent category, so the number of mechanisms is not a count of separate contributions.
 
-\paragraph{Mechanism 1 (Conceptual): Dual-Index Warning Scheme.} This addresses Problem 1 by
+\paragraph{Mechanism 1 (Conceptual): Dual-Index Warning Scheme.} This addresses Problem~1
+(the absent in-band peer-warning channel; \cref{sec:bg-open}) by
 providing automatic, bidirectional, in-band detection of a man-in-the-middle. Alice and
 Bob derive from their shared secret $S$ not only a lookup label but a shared
 \emph{warning} label $\ell_{\mathsf{warn}}$, an initially empty leaf in the same log. If
-either party detects a key mismatch, it writes to that leaf. Because the label is derived
+either party detects a key mismatch, it writes to that leaf. Since the label is derived
 from $S$, which the server does not hold, the server can neither pre-position a
 value on the slot nor predict where a warning will land. Once a warning is committed, a
 write-once update policy, a per-epoch transition audit, and a writer-side persistence
@@ -1460,7 +1476,8 @@ client-side detection but relies on anonymous
 lookups~\cite{yadav2020poster,yadav2022fakekey}, a cost Parakeet explicitly objects
 to~\cite[p.~14]{malvai2023parakeet} and which DUET's unlinkable derived labels avoid.
 
-\paragraph{Mechanism 2 (Cryptographic): Windowed Consistency Proofs.} These address Problem 2,
+\paragraph{Mechanism 2 (Cryptographic): Windowed Consistency Proofs.} These address Problem~2
+(linear offline catch-up; \cref{sec:bg-open}),
 reducing the offline catch-up from $W$ sequential consistency proofs (one per missed
 epoch) to a \emph{single} RFC~9162 consistency proof spanning the whole window. The saving
 is in the number of proofs (one rather than $W$): the client verifies one proof from the
@@ -1469,7 +1486,8 @@ length $E_1$ (\cref{lem:windowed-size}), logarithmic in the log length and indep
 directory's user count $N$, rather than linear in the window $W$. It does not make the proof
 size independent of the current head.
 
-\paragraph{Mechanism 3 (Systems): Cross-Vantage Auditor.} This addresses Problem 3: it
+\paragraph{Mechanism 3 (Systems): Cross-Vantage Auditor.} This addresses Problem~3
+(split-view equivocation; \cref{sec:bg-open}), the inherited key-transparency requirement: it
 cross-checks tree heads observed from a second vantage point and flags two validly-signed
 heads at one epoch as an equivocation, detecting the split-view that local checks cannot.
 Mechanisms~1 through~3 are the transparency-log half of the work.
@@ -1508,12 +1526,11 @@ automatic in-band detection.
 
 \paragraph{Mechanism 6 (Systems, Empirical): Implementation and Evaluation.} This is the engineering
 core of the thesis and a contribution in its own right. The core is a Rust \texttt{duet}
-crate whose library modules total roughly \num{3600} lines (the full Rust implementation, with the
-server, auditor, and benchmark binaries, is about \num{6600}; see \cref{ch:impl}), implementing the
+crate whose library modules implement the
 sparse-Merkle-tree directory, the RFC~9162
 append-only log with its inclusion and consistency proofs, the Ed25519 signed tree head,
 the ECVRF lookup (RFC~9381)~\cite{rfc9381}, the dual-index warning, the windowed catch-up,
-and the cross-vantage auditor. It is integrated into the Signal Desktop client, where the
+and the cross-vantage auditor, alongside the server, auditor, and benchmark binaries (\cref{ch:impl}). It is integrated into the Signal Desktop client, where the
 verification is hooked into the key-upload and key-fetch paths. A standalone networked
 directory server and an independent auditor service back a two-client, cross-process
 demonstration of substitution and equivocation being caught in band, and the Rust and
