@@ -82,12 +82,10 @@ overcome end to end.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-overview}
-\caption[The implemented system.]{The implemented system. A TypeScript client embedded in Signal Desktop verifies keys
-against the Rust reference implementation, the standalone server that holds all server-side
-components, over HTTP; an independent auditor polls the signed tree head, epoch deltas, and
-consistency proofs. Shared test vectors require byte-for-byte equality between the client and the
-Rust implementation for the covered protocol operations and inputs; the HTTP API is detailed in
-\cref{app:apiref}.}
+\caption[The implemented system.]{The implemented system. The TypeScript client verifies keys against the Rust
+reference server over HTTP. An independent auditor retrieves the signed tree head, epoch deltas, and
+consistency proofs. Shared test vectors require byte-for-byte agreement for the covered operations
+and inputs. \Cref{app:apiref} specifies the HTTP API.}
 \label{fig:impl-overview}
 \end{figure}
 
@@ -348,10 +346,11 @@ establishment (\cref{ssec:impl-demo}).
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-verify}
-\caption[Per-lookup client--server verification exchange.]{The client--server exchange on each peer-key retrieval: the server returns the value with its
-prefix, log-inclusion, and signed-tree-head proofs, all verified locally, and the warning slot's
-proven (non-)inclusion then decides between a clean verdict and a warning (any failed check yields
-a rejecting verdict, which the advisory hook reports but does not use to block the session). This is the runtime implementation of the verification chain of \cref{ssec:design-verify}.}
+\caption[Peer-key retrieval and warning verification.]{Peer-key retrieval and warning verification. The server returns a value with its
+prefix proof, its log-inclusion proof, and the signed tree head. The client verifies every component
+locally, then verifies inclusion or non-inclusion at the warning slot. Any failed check produces a
+rejecting verdict. The advisory hook displays that verdict but does not block session establishment.
+It is the runtime form of the verification chain of \cref{ssec:design-verify}.}
 \label{fig:impl-verify}
 \end{figure}
 
@@ -415,10 +414,10 @@ the two client instances.
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/ui-vrf.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/ui-cea.png}
-\caption[Global-VRF and CEA detection fronts.]{The other two detection fronts, each terminating in the same red banner. Left: the global
-VRF-derived identity slot, whose overwrite is caught by the account-wide monitor (console: \emph{the
-server replaced it [MitM, A1]}). Right: continuous (CEA) mode, in which an injected ratchet key
-produces a conflicting per-epoch fingerprint and the same warning fires.}
+\caption[Global-VRF and CEA detection paths.]{Global-VRF and CEA detection paths. Left: an account-wide monitor detects
+replacement of the VRF-derived identity entry (attack A1; console: \emph{the server replaced it
+[MitM, A1]}). Right: continuous (CEA) mode detects a conflicting per-epoch fingerprint after
+ratchet-key injection. Both paths raise the red warning banner.}
 \label{fig:impl-screens-fronts}
 \end{figure}
 
@@ -427,10 +426,10 @@ produces a conflicting per-epoch fingerprint and the same warning fires.}
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-consistent.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
 \caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's three
-outputs by slot and attack. The global-slot substitution A1a logs \textsc{consistent} (the identity
-slot is \textsc{mutable}, so the rotation is a legal declared operation and detection rests on the
-client self-check); the immutable-slot overwrite A1b trips the transition audit
-(\textsc{ImmutableRotation}); and an equivocation A4 raises \textsc{alarm: fork}.}
+outputs by slot and attack. The global-slot substitution A1a logs \textsc{consistent}, because the
+identity slot is \textsc{mutable} and the rotation is a legal declared operation, so detection rests
+on the client self-check. The immutable-slot overwrite A1b trips the transition audit
+(\textsc{ImmutableRotation}). An equivocation A4 raises \textsc{alarm: fork}.}
 \label{fig:impl-auditor}
 \end{figure}
 

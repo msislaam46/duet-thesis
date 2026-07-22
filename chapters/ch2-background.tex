@@ -240,8 +240,9 @@ message.
 identity key, signed pre-key, signature, and (optionally) a one-time pre-key.
 Alice retrieves the bundle, samples an ephemeral key $\xEK{A}$, derives
 $\sharedS$ from the four Diffie--Hellman values, and sends an initial message
-carrying her identity key $\xIK{A}$ and ephemeral key $\xEK{A}$, from which Bob
-recomputes the same Diffie--Hellman values while offline.}
+carrying her identity key $\xIK{A}$ and ephemeral key $\xEK{A}$. Bob can process
+it and derive the same shared secret when he next comes online, even though he was
+offline when Alice initiated the session.}
 \label{fig:bg-x3dh}
 \end{figure}
 

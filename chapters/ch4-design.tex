@@ -213,12 +213,12 @@ parties' keys coexist in the directory, and the shared warning slot sits alongsi
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-design-dualindex}
-\caption[The dual-index scheme's three derived slots.]{The dual-index scheme: the two lookup slots (one per participant) and the shared
-warning slot are all derived from the conversation's shared secret $\sharedS$ by a single
-HKDF-Extract followed by three domain-separated HKDF-Expand steps. Since
-both parties hold the same $\sharedS$, they derive the identical warning label $\ell_{\mathsf{warn}}$,
-so a warning written by either party appears in a slot both sides read; a party holding a different secret
-$\sharedS'$ derives a disjoint set of labels and cannot reach these slots.}
+\caption[The dual-index scheme's three derived slots.]{Two lookup slots and a shared warning slot are derived from the conversation's
+shared secret $\sharedS$. HKDF-Extract produces $\mathit{PRK}$, and three domain-separated HKDF-Expand
+operations produce $\ell_{\mathsf{self}}$, $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$. Since
+Alice and Bob hold the same $\sharedS$, they compute the same warning label and can read either
+party's warning. A party holding a different secret $\sharedS'$ derives a disjoint label set and
+cannot access these slots.}
 \label{fig:design-dualindex}
 \end{figure}
 
@@ -499,12 +499,11 @@ band, a composition ACKA itself does not provide.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-modes}
-\caption[Session mode versus continuous mode.]{Session mode (left): labels derived from the initial secret $\sharedS$, at which
-the identity key is registered once per pre-key rotation. Continuous mode (right), as a CEA state
-machine: at each epoch the label and fingerprint are derived over the pre-update state $k_t$ and
-authenticate the public ratchet key $T_t$; the chain advances only on a confirmed \textsc{consistent}
-step, folding the secret $I_t$ to give $k_{t+1}$, and stays unchanged on \textsc{fork} or
-\textsc{notposted}.}
+\caption[Session mode versus continuous mode.]{Session mode, shown on the left, derives labels from the initial secret $\sharedS$
+and registers the identity key once per pre-key rotation. Continuous mode derives a label and
+fingerprint from the pre-update state $k_t$ at every epoch and authenticates the public ratchet key
+$T_t$. The chain advances only after a confirmed \textsc{consistent} result, when $I_t$ is
+incorporated to produce $k_{t+1}$. It remains unchanged after \textsc{fork} or \textsc{notposted}.}
 \label{fig:design-modes}
 \end{figure}
 

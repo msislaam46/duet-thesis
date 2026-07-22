@@ -1,20 +1,26 @@
 % fig-design-dualindex.tex — extracted from ch4-design.tex
 % Label: \label{fig:design-dualindex}
 \begin{tikzpicture}[font=\small,>=Stealth,
-   slot/.style={draw,rounded corners,minimum width=2.6cm,minimum height=10mm,align=center},
-   sec/.style={draw,rounded corners,fill=black!6,minimum width=1.9cm,minimum height=13mm,align=center},
-   kdf/.style={draw,rounded corners,fill=black!3,align=center,minimum height=12mm},
-   elbl/.style={font=\scriptsize,align=center}]
+   slot/.style={draw,rounded corners,minimum width=2.4cm,minimum height=9mm,align=center},
+   sec/.style={draw,rounded corners,fill=black!6,minimum width=1.7cm,minimum height=12mm,align=center},
+   kdf/.style={draw,rounded corners,fill=black!3,align=center,minimum height=11mm},
+   exp/.style={draw,rounded corners,fill=black!3,align=center,font=\scriptsize,minimum height=9mm,text width=3.0cm}]
   \node[sec] (S) at (0,0) {$\sharedS$\\[-1pt]\footnotesize shared\\[-3pt]\footnotesize secret};
-  \node[kdf,minimum width=2.9cm] (ext) at (3.1,0)
+  \node[kdf,minimum width=2.6cm] (ext) at (2.7,0)
     {HKDF-Extract\\[1pt]{\scriptsize salt ``\texttt{duet-dual-index}''}};
-  \node[draw,rounded corners,minimum width=1.0cm,minimum height=8mm] (prk) at (5.7,0) {PRK};
-  \node[slot] (self) at (10.7,1.95)  {$\ell_{\mathsf{self}}$\\[-1pt]\footnotesize Alice's key};
-  \node[slot] (peer) at (10.7,0)     {$\ell_{\mathsf{peer}}$\\[-1pt]\footnotesize Bob's key};
-  \node[slot,fill=black!10] (warn) at (10.7,-1.95) {$\ell_{\mathsf{warn}}$\\[-1pt]\footnotesize shared tripwire};
+  \node[draw,rounded corners,minimum width=1.0cm,minimum height=8mm] (prk) at (4.9,0) {PRK};
+  \node[exp] (esf) at (7.5,2.05)  {HKDF-Expand\\``lookup''$\,\|\,\mathit{id_A}\|\mathit{id_B}$};
+  \node[exp] (epr) at (7.5,0)     {HKDF-Expand\\``lookup''$\,\|\,\mathit{id_B}\|\mathit{id_A}$};
+  \node[exp] (ewn) at (7.5,-2.05) {HKDF-Expand\\``warning''$\,\|\,\min\|\max$};
+  \node[slot] (self) at (10.6,2.05)  {$\ell_{\mathsf{self}}$\\[-1pt]\footnotesize Alice's key};
+  \node[slot] (peer) at (10.6,0)     {$\ell_{\mathsf{peer}}$\\[-1pt]\footnotesize Bob's key};
+  \node[slot,fill=black!10] (warn) at (10.6,-2.05) {$\ell_{\mathsf{warn}}$\\[-1pt]\footnotesize shared warning slot};
   \draw[->] (S.east) -- (ext.west);
   \draw[->] (ext.east) -- (prk.west);
-  \draw[->] (prk.east) -- node[elbl,above,pos=0.55]{\texttt{Expand}\\``lookup''$\,\|\,\mathit{id_A}\|\mathit{id_B}$} (self.west);
-  \draw[->] (prk.east) -- node[elbl,above]{\texttt{Expand}\\``lookup''$\,\|\,\mathit{id_B}\|\mathit{id_A}$} (peer.west);
-  \draw[->] (prk.east) -- node[elbl,below,pos=0.55]{\texttt{Expand}\\``warning''$\,\|\,\min\|\max$} (warn.west);
+  \draw[->] (prk.east) -- (esf.west);
+  \draw[->] (prk.east) -- (epr.west);
+  \draw[->] (prk.east) -- (ewn.west);
+  \draw[->] (esf.east) -- (self.west);
+  \draw[->] (epr.east) -- (peer.west);
+  \draw[->] (ewn.east) -- (warn.west);
 \end{tikzpicture}
