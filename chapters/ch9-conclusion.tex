@@ -59,7 +59,7 @@ conversation, a server can still substitute a key but can no longer do so silent
 deployment such as Signal it presents a narrow, well-defined addition rather than a wholesale
 change: a write path for warning and per-session labels alongside the identity directory it
 already maintains. Each check uses one or two label-bound lookups of the directory's existing
-proof form, with M3 a conservative sub-millisecond upper proxy for the local verification work of
+proof form, with M3 (lookup-verification latency) a conservative sub-millisecond upper proxy for the local verification work of
 one such lookup; binding the labels to the live X3DH secret is the scoped next integration step
 (\cref{ch:discussion}). Key transparency has, until now, told users that they must check their
 keys themselves; this work shows that the client can perform those checks automatically.

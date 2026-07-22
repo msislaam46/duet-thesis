@@ -137,8 +137,8 @@ boundary case where this assumption is lifted is scenario X1.
 The implications of these adversary capabilities for the design are developed in
 \cref{ch:design}.
 
-The adversary model gives rise to the attack scenarios summarized in
-\cref{tab:threat-attacks}, ranging from the honest baseline (A0) through the
+\Cref{tab:threat-attacks} summarizes the attack scenarios this adversary model
+admits, ranging from the honest baseline (A0) through the
 attacks the system is designed to detect (A1--A5) to the boundary case it does not
 address (X1). Each scenario is evaluated experimentally in \cref{ch:eval}.
 
@@ -162,6 +162,7 @@ X1 & endpoint holder & impersonate using the victim's key & out of scope (bounda
 \end{tabular}
 \end{table}
 
+\FloatBarrier
 \subsection{Attack Scenarios}\label{ssec:threat-scenarios}
 
 The scenarios below turn the adversary model of \cref{tab:threat-attacks} into concrete attacks,
@@ -169,14 +170,16 @@ ordered from the primary key-substitution threat through its network and equivoc
 endpoint-compromise boundary. Each is described the same way: what the adversary does, what the
 victim would observe, and which mechanism detects it.
 
-\paragraph{A1: Key Substitution.} A1 is the primary attack in the model: a
+\paragraph{A1: Key Substitution.} A1 is the primary attack in the model. A
 compromised or coerced server writes its own key in place of the victim's. The
 substituted key is internally consistent, since the malicious server has
 legitimately appended the forged key to its own Merkle log and can produce valid
 inclusion proofs for it, so detection does not come from the structural proof
 machinery. It comes from
 the victim observing the wrong key under its own name and from the peer learning
-of the substitution through the in-band warning channel.
+of the substitution through the in-band warning channel. The evaluation
+(\cref{ch:eval}) instantiates A1 in two forms: A1a, substitution of the global
+identity slot, and A1b, substitution of an immutable dual-index session slot.
 
 \paragraph{A2: Warning Censorship.} A2 extends A1 by considering a malicious
 server that additionally suppresses warning writes. Such a server would not
@@ -242,17 +245,17 @@ out-of-scope endpoint boundary (X1), is presented with the evaluation in
 To ensure the threat model reflects real-world deployment constraints, two of its
 foundational assumptions require explicit justification.
 
-\paragraph{Realism of the Malicious-Server Assumption.} This is the standard
+\paragraph{The Malicious-Server Assumption in Practice.} This is the standard
 assumption of the key-transparency field. The same semi-trusted, potentially
 equivocating server appears in CONIKS~\cite{melara2015coniks},
 SEEMless~\cite{chase2019seemless}, Parakeet~\cite{malvai2023parakeet}, and the
 IETF Key Transparency architecture, and the active network adversary is the one
 ACKA~\cite{dowling2023acka} is designed to defend against. The assumption also
-reflects deployment reality: in every deployed end-to-end encrypted messenger the
-key-distribution server is the single point of trust, and its compromise, whether
-by intrusion or by legal compulsion, is a documented concern; fake-key attacks in
-deployed messengers show that this is not a hypothetical
-surface~\cite{yadav2022fakekey}. Assuming the server may misbehave is therefore a
+reflects deployment practice. Deployed end-to-end encrypted messengers commonly
+rely on a key-distribution service to return users' public keys, and compromise or
+coercion of that service can enable key substitution. Documented fake-key attacks
+show the threat is practical rather than
+hypothetical~\cite{yadav2022fakekey}. Assuming the server may misbehave is therefore a
 conservative and well-precedented modelling choice.
 
 \paragraph{Rejection of the Honest-Routing Assumption.} The model deliberately does not assume
@@ -263,7 +266,7 @@ directory can force a hostile network to deliver packets. Its purpose is instead
 compromise into detectable misbehaviour: a censored write, a
 missing epoch, or a proof that fails to verify is observable, whereas a
 substituted key on an unaccountable server is not. The guarantee is therefore
-\textbf{detection, not prevention}: the system does not stop a determined operator
+\textbf{detection, not prevention}. The system does not stop a determined operator
 from interfering, but ensures that interference cannot be silent.
 
 One limitation remains, inherited from the trust-on-first-use assumption that also
@@ -313,6 +316,7 @@ first contact poisons the baseline, the first-key limitation noted earlier. This
 limitation is revisited in \cref{ch:discussion}.
 
 % ============================================================================
+\FloatBarrier
 \section{Security Goals}\label{sec:threat-goals}
 
 The adversary model and assumptions define the security goals of the system. The
