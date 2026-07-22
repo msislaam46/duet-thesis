@@ -29,7 +29,7 @@ paired later with the evidence that answers it and the criterion by which it cou
 falsified.
 
 \paragraph{Thesis Statement.} The central claim this dissertation defends is that automatic, in-band
-detection of key substitution can be added to a deployed messaging key directory at essentially the
+detection of key substitution can be added to a messaging key-directory architecture at essentially the
 asymptotic cost the directory already pays, without a manual user ceremony. It does so without
 enlarging the lookup proof, and while replacing one proof per missed epoch with a single proof whose
 size grows logarithmically in the endpoint log sizes.
@@ -51,7 +51,7 @@ a specific later chapter:
   windowed consistency proof of \cref{sec:design-windowed} and its measurement in
   \cref{ssec:eval-catchup}.)}
   \item[RQ4 (client-integration feasibility).] Does the scheme integrate into a real messaging-client
-  codebase (Signal Desktop) at a practical, measured cost, rather than only into a standalone model? \emph{(Answered by the Signal Desktop
+  codebase (Signal Desktop) while retaining practical, measured component costs, rather than only into a standalone model? \emph{(Answered by the Signal Desktop
   integration of \cref{ch:impl} and the deployment analysis of \cref{sec:eval-deploy}.)}
 \end{description}
 
@@ -59,37 +59,37 @@ a specific later chapter:
 
 This thesis makes four principal contributions:
 
-\paragraph{Conceptual.} A \emph{dual-index warning scheme}: a per-conversation construction that gives
+\paragraph{Conceptual.} The conceptual contribution is a \emph{dual-index warning scheme}, a per-conversation construction that gives
 each pair of users a shared warning slot in the directory, derived with the HMAC-based
 Extract-and-Expand Key Derivation Function (HKDF), that either party can raise
 and that, for an honestly established and monitored conversation, a malicious server can neither
 pre-position nor censor undetectably, turning a silent substitution into an automatic, bidirectional,
 in-band alert (\cref{sec:design-dual}). More broadly,
-the thesis frames this scheme as a concrete instantiation and measurement of the abstract
+the thesis presents this scheme as a concrete instantiation and measurement of the abstract
 append-only-log component of the Authenticated Continuous Key Agreement (ACKA)
 framework~\cite{dowling2023acka} (the instantiation claimed, with its scope, in
-\cref{sec:bg-contrib}), and frames the guarantee
+\cref{sec:bg-contrib}), and defines its guarantee
 precisely as detection over a semi-trusted directory rather than prevention.
 
-\paragraph{Cryptographic.} A formal detection experiment for the dual-index scheme, stated over
-standard assumptions with a reduction sketch, the full reduction being left as future work
-(\cref{def:dualindex-detect}); and the \emph{windowed consistency proof}, the application of a
-standard RFC~9162 distant-head consistency proof to the offline-monitoring policy, letting a client
-re-verify the log in one proof rather than $W$, with size logarithmic in the endpoint log sizes
-rather than linear in the epochs missed (\cref{sec:design-windowed}, \cref{lem:windowed-size}).
-\cref{ch:design} disclaims any new cryptographic primitive here: the contribution is the proof
-construction and its measured trade-off, not a new object.
+\paragraph{Cryptographic.} The cryptographic contribution applies an RFC~9162 distant-head
+consistency proof to offline monitoring. A returning client re-verifies the log with one proof
+instead of retrieving one proof for every missed epoch, and the proof size stays logarithmic in the
+endpoint log sizes rather than linear in the epochs missed (\cref{sec:design-windowed},
+\cref{lem:windowed-size}). A same-head consistency lemma (\cref{lem:dualindex-consistency}) supports
+the dual-index design by showing that Alice's peer lookup and Bob's self-check cannot authenticate
+different values under one signed head. \cref{ch:design} establishes these properties and
+\cref{ch:eval} evaluates their costs.
 
-\paragraph{Systems.} A complete implementation in two independently implemented layers whose shared
-protocol operations are checked byte-for-byte against cross-language test vectors: a standalone Rust reference implementation (the \texttt{duet} crate, an HTTP directory server,
-and a cross-vantage auditor) and an embedded TypeScript verifier integrated into a fork of the real
-Signal Desktop client (\cref{ch:impl}).
+\paragraph{Systems.} The systems contribution comprises a standalone Rust reference implementation
+(the \texttt{duet} crate, an HTTP directory server, and a cross-vantage auditor) and an embedded
+TypeScript verifier integrated into a fork of the real Signal Desktop client (\cref{ch:impl}). The
+two layers' shared protocol operations are checked byte-for-byte against cross-language test vectors.
 
-\paragraph{Empirical.} A benchmark campaign (metrics M1--M13) with four principal findings. The
+\paragraph{Empirical.} The empirical contribution is a benchmark campaign (metrics M1--M13) with four principal findings. The
 implemented VRF-indexed lookup proof is at rough size parity with CONIKS, with the detection channel
-CONIKS lacks obtained through additional same-shape lookups rather than a larger proof. Median full
-client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more
-slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}). A month-long offline catch-up costs a few
+CONIKS lacks obtained through additional same-shape lookups rather than a larger proof. The median
+full-client verification time remains below \SI{150}{\micro\second} throughout the measured range, up
+to $10^7$ labels, and grows far more slowly than $N$. A month-long offline catch-up costs a few
 hundred bytes against the hundreds of kilobytes that per-epoch re-fetching would spend. A systematic security
 evaluation using the STRIDE threat-classification framework and the MITRE ATT\&CK knowledge base
 covers the resulting system (\cref{ch:eval}).
@@ -104,7 +104,7 @@ ACKA. \Cref{ch:impl} describes the two-layer implementation and its integration 
 \Cref{ch:eval} evaluates the system empirically and against the threat model, and draws out the
 implications for deployment. \Cref{ch:discussion} discusses the results, limitations, and future work.
 \Cref{ch:lsepi} considers the legal, social, ethical, and professional dimensions.
-\Cref{ch:conclusion} concludes the thesis. Supporting material is collected in the appendices: formal
+\Cref{ch:conclusion} concludes the thesis. Supporting material is provided in the appendices: formal
 definitions (\cref{app:definitions}), algorithms (\cref{app:algorithms}), the implementation and
 API reference (\cref{app:apiref}), the test catalogue (\cref{app:tests}), the full benchmark
 results (\cref{app:benchmarks}), the security-analysis tables (\cref{app:security}), a traceability

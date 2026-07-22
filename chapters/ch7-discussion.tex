@@ -19,7 +19,7 @@ added to a messaging directory without changing the asymptotic cost of the proof
 already serves, at the measured cost of additional proof-shaped lookups. \Cref{ch:eval} shows that the implemented VRF-indexed lookup
 proof is at rough size parity with CONIKS while carrying a warning channel CONIKS lacks, that full client
 median verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows far more
-slowly than $N$ (\SIrange{128.1}{147.1}{\micro\second}), and that an offline
+slowly than $N$, and that an offline
 client catches up in a few hundred bytes where naïve monitoring would spend hundreds of kilobytes.
 The detection the design adds does not show up as a new asymptotic cost: it rides on the same
 logarithmic proofs the directory already produces. This result supports the deployment
@@ -182,7 +182,7 @@ the consistency proof between the two heads into a bundle that verifies against 
 signatures. The one remaining deployment-path item is authenticated writes
 (account-layer proof that a caller owns the raw label it writes), without which the write-once
 policy still binds an honest server and the auditor still binds a malicious one, but a malicious
-\emph{client} could pre-emptively occupy an as-yet-empty peer slot. The in-process implementation and its
+\emph{client} could pre-emptively occupy a currently empty peer slot. The in-process implementation and its
 adversarial tests are described in \cref{ch:impl}; the argument that these safeguards bind
 a fully malicious operator is exactly the suppression argument of \cref{ch:design}.
 

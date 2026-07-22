@@ -1,6 +1,6 @@
 \chapter{Implementation Reference}\label{app:apiref}
 
-This appendix collects the implementation-level interface details referenced from
+This appendix documents the implementation-level interface details referenced from
 \cref{ch:impl}: the directory server's REST API, the privileged testing interface, the
 Signal Desktop integration hooks and user-interface events, the repository layout, and the
 runner commands. None of it is needed to follow the design (\cref{ch:design}) or the
@@ -20,7 +20,7 @@ that the client can run the full verification chain (\cref{ssec:design-verify}).
 \centering
 \caption{Public directory-server endpoints.}
 \label{tab:apiref-public}
-\small
+\footnotesize
 \begin{tabular}{@{}lp{3.9cm}p{7.6cm}@{}}
 \toprule
 Method & Path & Purpose \\
@@ -44,6 +44,7 @@ GET  & \texttt{/dashboard}, \texttt{/internals}, \texttt{/integration}, \texttt{
 \end{table}
 
 % ----------------------------------------------------------------------------
+\FloatBarrier
 \section{Privileged Testing Interface}\label{sec:apiref-admin}
 
 A separate administrative API, bound to an internal-only port, is used exclusively by the
@@ -71,6 +72,7 @@ POST & \texttt{/admin/reset} & rebuild the server from its fixed seed with a fre
 \end{table}
 
 % ----------------------------------------------------------------------------
+\FloatBarrier
 \section{Signal Desktop Integration Hooks and Events}\label{sec:apiref-hooks}
 
 \Cref{tab:apiref-hooks} maps the integration concepts of \cref{sec:impl-signal} to the
@@ -112,6 +114,7 @@ demonstration: inject a ratchet fork & \texttt{kt:cea-inject} \\
 \end{table}
 
 % ----------------------------------------------------------------------------
+\FloatBarrier
 \section{Repository Layout and Runner Commands}\label{sec:apiref-repo}
 
 The implementation is organized as follows:
@@ -139,9 +142,10 @@ instead. The networked-in-app mode is enabled by setting a server URL in
 the client's environment before launch.
 
 % ----------------------------------------------------------------------------
+\FloatBarrier
 \section{Demonstration Gallery}\label{sec:apiref-demo}
 
-This section collects the supporting captures for the demonstration of \cref{ssec:impl-demo}: the
+This section presents the supporting captures for the demonstration of \cref{ssec:impl-demo}: the
 honest baseline before any attack, and the attacker-side terminals that stage each scenario. The
 main detection screenshots (the two clients showing the warning, the VRF and continuous-mode fronts,
 and the auditor) are in \cref{ssec:impl-demo}. The honest baseline is shown in

@@ -32,10 +32,8 @@
 \setlength{\emergencystretch}{4em}
 \usepackage{siunitx}         % \SI{159}{\micro\second} etc.
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e} % Algorithms 1-3
-\usepackage{tcolorbox}       % Expt security-game boxes (ACKA-style security games)
 \usepackage{placeins}        % \FloatBarrier: keep floats within their section (no cross-section drift)
 \setlength{\belowcaptionskip}{6pt} % gap between an (above) table caption and its header rule; also a little air after figure captions
-\tcbuselibrary{skins,breakable}
 \usepackage{csquotes}
 \usepackage[backend=biber,style=ieee,sorting=none]{biblatex}
 \addbibresource{references.bib}
@@ -79,23 +77,6 @@
     \centering\ttfamily\footnotesize #2\\[6pt]%
     \normalfont\itshape [screenshot placeholder]}}}
 
-% ── Experiment block for security games (ACKA-paper style) ──
-% A proper framed box in the clean crypto-paper style (thin black rule all
-% round, white background, bold title with a rule under it, then the numbered
-% game lines) — NOT a shaded/rounded tcolorbox that reads as a "note". Mirrors
-% the experiment layout of ACKA (Dowling & Hale, Fig. 7).
-\newsavebox{\exptboxsave}
-\newenvironment{exptbox}[1]{%
-  \par\addvspace{\medskipamount}%
-  \setlength{\fboxsep}{8pt}\setlength{\fboxrule}{0.6pt}%
-  \begin{lrbox}{\exptboxsave}%
-  \begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}%
-  {\bfseries #1}\par\vspace{3pt}\hrule\vspace{5pt}%
-}{%
-  \end{minipage}%
-  \end{lrbox}%
-  \noindent\fbox{\usebox{\exptboxsave}}\par\addvspace{\medskipamount}%
-}
 
 \begin{document}
 \onehalfspacing              % 1.5 line spacing throughout the body
@@ -151,8 +132,8 @@ In component measurements of the verification chain, the VRF-indexed lookup proo
 size of \SI{817}{B} on a directory of $10^6$ labels, comparable to a dense Merkle-log inclusion
 proof at the same directory scale, and median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels, growing far more slowly than $N$. At a one-month
-window, the single windowed proof reduces raw consistency-path hash bytes by a factor of
-\num{695} against the evaluation's synthetic per-epoch baseline, which re-fetches one proof for
+window, the single windowed proof reduces the raw consistency-path hash-byte count by approximately
+\num{700}$\times$ against the evaluation's synthetic per-epoch baseline, which re-fetches one proof for
 each missed epoch.
 
 Together, these results show that an in-band peer-warning channel and a single distant-head
@@ -188,7 +169,7 @@ and my family, whose encouragement made this work possible.
 Symbol & Meaning \\
 \midrule
 $\A,\ \B$;\ $\Srv$;\ $\Adv$ & honest parties Alice and Bob; the (possibly malicious) server; the PPT adversary \\
-$\Expt{sec}{\Pi},\ \advantage{sec}{\Pi}$;\ $\secpar$;\ $\negl$ & a security experiment and the adversary's advantage in it; the security parameter; a negligible function \\
+$\Expt{sec}{\Pi}$;\ $\secpar$;\ $\negl$ & a security experiment (e.g.\ the VRF pseudorandomness game); the security parameter; a negligible function \\
 $\pkid{U}, \skid{U}$ & long-term identity key pair of user $U$ \\
 $\spk{U}, \sig{\spk{U}}$ & signed pre-key and its signature under $\skid{U}$ \\
 $\opk{U}{i}$ & $i$-th one-time pre-key of $U$ \\

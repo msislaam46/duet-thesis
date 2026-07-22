@@ -90,7 +90,7 @@ Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Modify a key at a label & owner's self-check detects the mismatch & detection latency (1--2 epochs) \\
+Modify a key at a label & owner's self-check detects the mismatch & scripted demonstration: observed within 1--2 epochs; not a protocol-wide latency bound \\
 Alter a historical entry & append-only log + consistency proofs & none (cryptographic) \\
 Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (cryptographic) \\
 \bottomrule

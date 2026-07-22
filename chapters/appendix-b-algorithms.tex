@@ -14,7 +14,7 @@
 \SetAlCapFnt{\small}
 \SetAlCapNameFnt{\small}
 
-This appendix collects the eight algorithms the thesis refers to. They fall into two groups.
+This appendix specifies the eight algorithms the thesis refers to. They fall into two groups.
 Algorithms~\ref{alg:merklelog}--\ref{alg:dualindex} are the data-structure and derivation
 primitives: the Merkle log tree, the sparse prefix tree, the key-transparency server that combines
 them, and the dual-index label derivation. Algorithms~\ref{alg:client}--\ref{alg:cea} are the
@@ -236,8 +236,8 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
   \Else{
     \textbf{propagate} the error \tcp*{transport/other failure: availability, not censorship}
   }
-  $\mathit{sth}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{confirm under a fresh validated head}
-  \lIf{$v=\bot$}{\textbf{alarm} \textsc{WarningCensored} \tcp*[f]{provably empty or unprovable: possible warning censorship}}
+  $\mathit{sth}\gets \mathit{server}.\textsf{GetCurrentSTH}()$ \tcp*{confirm the write under a fresh validated head}
+  \lIf{$\textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ rejects or returns $\bot$}{\textbf{alarm} \textsc{WarningCensored} \tcp*[f]{no provable committed warning: an invalid proof or a proven absence}}
 }
 \Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth},\mathit{PRK},\mathit{id_A},\mathit{id_B}$)}{
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}

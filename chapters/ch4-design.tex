@@ -213,12 +213,12 @@ parties' keys coexist in the directory, and the shared warning slot sits alongsi
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-design-dualindex}
-\caption[The dual-index scheme's three derived slots.]{The dual-index scheme: the two lookup slots (one per participant) and the shared
-warning slot are all derived from the conversation's shared secret $\sharedS$ by a single
-HKDF-Extract followed by three domain-separated HKDF-Expand steps. Since
-both parties hold the same $\sharedS$, they derive the identical warning label $\ell_{\mathsf{warn}}$,
-so a warning written by either party appears in a slot both sides read; a party holding a different secret
-$\sharedS'$ derives a disjoint set of labels and cannot reach these slots.}
+\caption[The dual-index scheme's three derived slots.]{Two lookup slots and a shared warning slot are derived from the conversation's
+shared secret $\sharedS$. HKDF-Extract produces $\mathit{PRK}$, and three domain-separated HKDF-Expand
+operations produce $\ell_{\mathsf{self}}$, $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$. Since
+Alice and Bob hold the same $\sharedS$, they compute the same warning label and can read either
+party's warning. A party holding a different secret $\sharedS'$ derives a disjoint label set and
+cannot access these slots.}
 \label{fig:design-dualindex}
 \end{figure}
 
@@ -228,14 +228,16 @@ ordering applied to the warning label alone. Cross-implementation test vectors v
 byte-for-byte equivalence of the derivation across the Rust and TypeScript implementations
 (\cref{app:algorithms}).
 
+\FloatBarrier
 \subsection{The Three Security Properties}\label{ssec:design-properties}
 
 The derivation gives the scheme three properties on which detection rests.
 
-\paragraph{Symmetry.} Under the canonical ordering, $A.\ell_{\mathsf{self}} =
-B.\ell_{\mathsf{peer}}$, $A.\ell_{\mathsf{peer}} = B.\ell_{\mathsf{self}}$, and
-$A.\ell_{\mathsf{warn}} = B.\ell_{\mathsf{warn}}$, so the two parties agree on which slot
-each key lives in and, above all, on the one warning slot they both watch.
+\paragraph{Symmetry.} From Alice's and Bob's respective viewpoints, the directional lookup
+derivation gives $A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and $A.\ell_{\mathsf{peer}} =
+B.\ell_{\mathsf{self}}$, while the canonical identity ordering gives $A.\ell_{\mathsf{warn}} =
+B.\ell_{\mathsf{warn}}$. The two parties therefore agree on which slot each key lives in and, above
+all, on the one warning slot they both watch.
 
 \paragraph{Unlinkability.} The server does not hold $\sharedS$, so the HKDF outputs are
 pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
@@ -362,7 +364,7 @@ check by the writer retaining a committed warning's inclusion proof and assembli
 on any later disappearance (\cref{ch:impl}). The one element left to deployment is
 authenticated writes (account-layer proof of raw-label ownership), without which the write-once
 policy still binds an honest server and the transition audit still binds a malicious one, but a
-malicious client could pre-emptively occupy an as-yet-empty peer slot (\cref{ch:discussion}).
+malicious client could pre-emptively occupy a currently empty peer slot (\cref{ch:discussion}).
 
 Detection is bidirectional, which matters for the offline case. The victim's own-key
 self-check publishes the warning when the victim notices the wrong key under its own
@@ -377,69 +379,49 @@ key, is the victim's self-check the sole detector. The
 residual limitation is the trust-on-first-use caveat of \cref{sec:threat-fair}: a
 substitution that predates first contact pins the incorrect key.
 
-\subsection{Security Experiment and Detection Argument}\label{ssec:design-experiment}
+\subsection{Shared-Label Consistency}\label{ssec:design-consistency}
 
-The security goal of the dual-index scheme is formalized by the experiment
-$\Expt{dual\text{-}det}{\Pi,\Adv}$ below, in which $\Pi$ denotes the dual-index scheme and
-$\Adv$ a probabilistic polynomial-time adversary (written $\Adv$ rather than $\A$, which
-already denotes Alice); the notation adapts ACKA's $\CEAsec$
-experiment~\cite{dowling2023acka}. The experiment is run by a challenger that invokes
-$\Adv$. The adversary controls the directory server and, following ACKA, may choose the
-session secret and the identities. Security therefore rests on consistency of the registered keys
-rather than on secrecy of those inputs. After the honest keys are registered, $\Adv$ publishes a directory
-state and a signed tree head and answers each honest lookup with a value and proof of its
-choosing. The adversary succeeds if an honest party accepts a substituted key while no
-detection mechanism is triggered: both parties' self-checks pass and the warning slot is
-provably empty.
+The core detection property of the dual-index scheme is a static, same-head consistency statement.
+Under one signed tree head the label Alice reads for Bob's key and the label Bob self-checks are the
+same label, so it cannot carry two different authenticated values. Separate mechanisms address
+warning publication, multiple epochs, offline catch-up, and equivocation. Because both parties derive
+the same directional lookup label, the lemma holds even when $\sharedS$ is known.
 
-\begin{exptbox}{Experiment $\Expt{dual\text{-}det}{\Pi,\Adv}(\secpar)$}
-\small
-\begin{enumerate}\setlength{\itemsep}{1pt}
-  \item $(\sharedS, \mathit{id}_\A, \mathit{id}_\B, \mathit{pk}_\A, \mathit{pk}_\B) \gets \Adv(\secpar)$ \quad (the adversary's choice of secret, identities, and honest keys).
-  \item The challenger derives $(\ell^\A_{\mathsf{self}}, \ell^\A_{\mathsf{peer}}, \ell_{\mathsf{warn}}) \gets \mathsf{Derive}(\sharedS, \mathit{id}_\A, \mathit{id}_\B)$; by symmetry $\ell^\A_{\mathsf{peer}} = \ell^\B_{\mathsf{self}}$ (\cref{ssec:design-properties}).
-  \item The challenger registers the honest keys: $\mathit{pk}_\A$ at $\ell^\A_{\mathsf{self}}$ and $\mathit{pk}_\B$ at $\ell^\B_{\mathsf{self}}$.
-  \item $\Adv$ publishes a directory state (prefix tree and log) and a signed tree head $\mathit{sth}$.
-  \item $\mathit{pk}_{\mathsf{peer}} \gets \mathsf{VerLookup}(\ell^\A_{\mathsf{peer}}, \mathit{sth})$ \quad (Alice's lookup of Bob's key).
-  \item $\mathit{pk}_{\mathsf{self}} \gets \mathsf{VerLookup}(\ell^\B_{\mathsf{self}}, \mathit{sth})$ \quad (Bob's self-check).
-  \item $\mathit{warn} \gets \mathsf{VerWarn}(\ell_{\mathsf{warn}}, \mathit{sth})$ \quad (proven (non-)inclusion of the warning slot).
-  \item \textbf{return}~$1$ if $\mathit{pk}_{\mathsf{peer}} \notin \{\bot, \mathit{pk}_\B\} \wedge \mathit{pk}_{\mathsf{self}} = \mathit{pk}_\B \wedge \mathit{warn} = \mathsf{absent}$; otherwise $0$.
-\end{enumerate}
-{\footnotesize $\mathsf{VerLookup}$ returns the committed value at a label, or $\bot$ if no
-valid proof is supplied; $\mathsf{VerWarn}$ returns $\mathsf{absent}$ when the warning slot
-is proven empty and $\mathsf{present}$ otherwise. Both run the verification chain of
-\cref{ssec:design-verify} against $\mathit{sth}$.}
-\end{exptbox}
-
-The experiment models the state \emph{after} the honest party's monitor has reacted to a
-substitution: on observing $\mathit{pk}_{\mathsf{peer}} \neq \mathit{pk}_\B$, the client
-writes to $\ell_{\mathsf{warn}}$, so $\mathit{warn} = \mathsf{absent}$ holds only if the
-adversary suppressed that write, which against a committed log requires a forged
-non-inclusion proof. A multi-round interactive formulation that makes the
-write-then-recheck explicit across epochs is left to future work.
-
-\begin{definition}[Dual-detection security]
-A dual-index scheme $\Pi$ is \emph{dual-detection-secure} if, for every probabilistic
-polynomial-time adversary $\Adv$,
+\begin{lemma}[Same-head label consistency]\label{lem:dualindex-consistency}
+Fix a signed tree head $\mathit{sth}$. Applying $\textsf{DeriveLabels}$ (\cref{ssec:design-labels})
+from Alice's and Bob's respective viewpoints gives the same lookup label,
 \[
-  \advantage{dual\text{-}det}{\Pi,\Adv}(\secpar) \;=\;
-  \Pr\!\big[\,\Expt{dual\text{-}det}{\Pi,\Adv}(\secpar) = 1\,\big] \;\le\; \negl(\secpar).
+  \ell^\A_{\mathsf{peer}} = \HKDFexp\!\big(\mathit{PRK},\ \texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},\ 32\big) = \ell^\B_{\mathsf{self}}.
 \]
-\end{definition}
+Let $\ell$ denote this shared label. If the client verification chain of \cref{ssec:design-verify}
+accepts a value $v_{\mathsf{peer}}$ at $\ell$ under $\mathit{sth}$ (Alice's lookup of Bob's key) and a
+value $v_{\mathsf{self}}$ at $\ell$ under the same $\mathit{sth}$ (Bob's self-check), then
+$v_{\mathsf{peer}}=v_{\mathsf{self}}$, unless the soundness of the prefix or log-inclusion proof, or
+the collision resistance of $\Hash$ (\cref{def:hash}), is violated.
+\end{lemma}
 
-\paragraph{Detection Argument (Proof Intuition, Not a Full Reduction).} The symmetry of the derivation
-(\cref{ssec:design-properties}) underpins the detection guarantee: the slot Alice reads for
-Bob's key, $\ell^\A_{\mathsf{peer}}$, is exactly the slot Bob self-checks,
-$\ell^\B_{\mathsf{self}}$. Under a single signed tree head, a valid inclusion proof binds
-that label to one committed value, so a winning adversary must return
-$\mathit{pk}_{\mathsf{peer}} \neq \mathit{pk}_\B$ to Alice while Bob's self-check at the same label still
-yields $\mathit{pk}_\B$: two contradictory authenticated values for the same committed
-label under one root, implying a violation of the collision resistance of the Merkle hash
-construction. Suppressing the warning after a detected mismatch likewise requires a forged
-non-inclusion proof. The remaining attack is equivocation, serving Alice and Bob
-different signed heads (attack A4), which lies outside this experiment and is handled by
-the cross-vantage auditor Goal~G4 (Fork Detection). A fully quantified reduction with concrete
-advantage bounds, and a unified treatment of the network and malicious-server adversaries,
-is left to future work (\cref{ch:discussion}).
+\paragraph{Argument.} Alice's peer-lookup and Bob's self-lookup resolve to the same label
+$\ell=\HKDFexp(\mathit{PRK},\texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},32)$, the
+directional slot for Bob's key (the canonical $\min/\max$ ordering applies only to
+$\ell_{\mathsf{warn}}$). Under a single $\mathit{sth}$ a verifying inclusion proof binds $\ell$ to
+exactly one committed prefix-tree leaf, whose value is fixed by the log-inclusion proof against the
+one signed root. Two accepted values $v_{\mathsf{peer}}\neq v_{\mathsf{self}}$ at $\ell$ under that
+root would exhibit two verifying openings of one committed label, contradicting proof soundness and
+the collision resistance of the Merkle construction.
+
+Within this same-head setting, the lemma gives the detection guarantee. A malicious server that
+returns a substituted $v_{\mathsf{peer}}\neq\mathit{pk}_\B$ to Alice under a head Bob also self-checks
+cannot, under that same head, keep Bob's self-check returning $\mathit{pk}_\B$. Bob then obtains the
+substituted value at his own label through a valid lookup proof and detects it. The behaviours the
+lemma excludes are covered by separate mechanisms. Label unpredictability and pre-position resistance
+require an honestly established, secret $\sharedS$, and are argued in \cref{ssec:design-labels}.
+Pre-commit censorship is detected during the verified read-back. A key mismatch together with a
+proven-empty warning slot produces the A2 compound alarm. If a committed warning is later deleted,
+the transition audit and retained persistence evidence expose the deletion, and the write-once policy
+prevents an existing warning from being overwritten (\cref{ssec:design-detection}). Split-view
+equivocation (A4) is handled by the cross-vantage auditor (Goal~G4, Fork Detection). A fully
+quantified reduction and an interactive, multi-epoch detection experiment are left to future work
+(\cref{ch:discussion}).
 
 The dual-index mechanism complements rather than replaces CEA. $\CEA$ authenticates the
 values stored at directory entries by deriving per-epoch fingerprints; the dual-index
@@ -522,12 +504,11 @@ band, a composition ACKA itself does not provide.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-modes}
-\caption[Session mode versus continuous mode.]{Session mode (left): labels derived from the initial secret $\sharedS$, at which
-the identity key is registered once per pre-key rotation. Continuous mode (right), as a CEA state
-machine: at each epoch the label and fingerprint are derived over the pre-update state $k_t$ and
-authenticate the public ratchet key $T_t$; the chain advances only on a confirmed \textsc{consistent}
-step, folding the secret $I_t$ to give $k_{t+1}$, and stays unchanged on \textsc{fork} or
-\textsc{notposted}.}
+\caption[Session mode versus continuous mode.]{Session mode, shown on the left, derives labels from the initial secret $\sharedS$
+and registers the identity key once per pre-key rotation. Continuous mode derives a label and
+fingerprint from the pre-update state $k_t$ at every epoch and authenticates the public ratchet key
+$T_t$. The chain advances only after a confirmed \textsc{consistent} result, when $I_t$ is
+incorporated to produce $k_{t+1}$. It remains unchanged after \textsc{fork} or \textsc{notposted}.}
 \label{fig:design-modes}
 \end{figure}
 
@@ -684,7 +665,7 @@ $\Logsec$ & abstract append-only secure log (consistency + exclusion) & KT verif
 \end{tabular}}
 \end{table}
 
-Three deliberate departures from the paper are stated plainly, because each corresponds to one of
+The implementation makes three deliberate departures from the paper, each corresponding to one of
 the ACKA limitations identified in \cref{sec:bg-acka}, and instantiating $\Logsec$
 addresses it. First, where $\CEA$ authenticates fingerprints, the session-mode scheme
 additionally derives \emph{labels} from the shared secret, adding the in-band
@@ -701,7 +682,7 @@ deployable system.
 \section{Design Decisions and Alternatives}\label{sec:design-decisions}
 
 The design rests on a number of choices, each made against a specific alternative and,
-where possible, with a deployed precedent. \Cref{tab:design-decisions} collects them; the
+where possible, with a deployed precedent. \Cref{tab:design-decisions} summarizes them; the
 paragraphs below expand the three that most affect the system's behaviour.
 
 \begin{table}[htbp]

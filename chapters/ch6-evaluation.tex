@@ -10,7 +10,7 @@ taxonomy (\cref{sec:eval-security}). The principal findings are four. First, the
 at rough size parity with CONIKS. Second, detection is obtained through additional lookups
 of the same shape rather than any enlargement of that proof. Third, offline catch-up needs one proof
 rather than $W$ (\num{695}-fold fewer raw path-hash bytes at a one-month window against this
-chapter's synthetic baseline). Fourth and finally, median full client verification stays below
+chapter's synthetic baseline). Finally, median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
 
 % ============================================================================
@@ -115,7 +115,7 @@ it is a coarse hot-path observation and is treated as one. Proof sizes are compu
 so they carry no confidence interval; the scale figures (M7) are distributions over \num{1000}
 random lookups per $N$. All runs use fixed cryptographic and sampling seeds and are reproducible by
 the procedure of \cref{sec:impl-repro}; the full per-parameter tables, at the resolution the CSVs
-record, are collected in \cref{app:benchmarks}
+record, are reported in \cref{app:benchmarks}
 (\cref{tab:bench-env,tab:bench-m1,tab:bench-m4,tab:bench-latency,tab:bench-detection,tab:bench-maint,tab:bench-auditor,tab:bench-scale,tab:bench-modes,tab:bench-repro}). Timing medians are quoted in the body to one decimal
 place ($0.1\,\si{\micro\second}$): finer precision would be spurious for a wall-clock median, and
 sub-microsecond digits vary between runs (for example, the VRF-verify median reads
@@ -427,7 +427,7 @@ deployment would move to the persistent, sharded storage this prototype delibera
 \subsection{Operation Rates, Rotation, and Epoch Commit (M8--M11)}\label{ssec:eval-throughput}
 
 Server-side maintenance costs decide how large a deployment one machine can sustain.
-\Cref{tab:eval-server} collects them. The median latencies correspond to estimated single-thread rates of about \num{8360} lookups and
+\Cref{tab:eval-server} summarizes them. The median latencies correspond to estimated single-thread rates of about \num{8360} lookups and
 \num{6630} updates per second at $N=10^4$. Key rotation (overwriting an existing binding) costs
 \SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$: approximately unchanged over the measured range, for the same reason proof
 generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
@@ -841,7 +841,7 @@ write amplification of $\approx 720\times$ under the hourly-epoch benchmark mode
 with ratchet cadence rather than sitting at a fixed cap (\cref{ssec:eval-modes}). The measured
 verification path meets the latency target, but the $O(N)$ epoch commit, the memory footprint,
 persistence, and networked operation remain deployment limitations rather than solved problems.
-Before a design of this kind could ship it would need the engineering work stated plainly in
+Before a design of this kind could ship it would need the engineering work set out in
 \cref{ch:discussion}: authenticated writes on the directory API, persistent sharded storage, and
 closing the operator's label$\leftrightarrow$user query-privacy residual (\cref{ssec:eval-stride})
 with an oblivious lookup. While those engineering items remain open, the component measurements show the cryptographic

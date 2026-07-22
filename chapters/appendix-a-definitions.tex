@@ -1,6 +1,6 @@
 \chapter{Formal Definitions}\label{app:definitions}
 
-This appendix collects the formal definitions on which the design (\cref{ch:design}) and its
+This appendix defines the formal notions on which the design (\cref{ch:design}) and its
 analysis rest. Each is stated in the thesis's standard notation, and each records where it is
 used in the thesis. Definitions of standard primitives are given as they appear in the specifications
 they are drawn from and are cited accordingly; the dual-index scheme of \cref{sec:def-dualindex} is
@@ -323,22 +323,28 @@ Specified in \cref{ssec:design-detection}; implemented by \textsf{PersistenceChe
 (\cref{alg:detect}).
 \end{definition}
 
-\begin{definition}[Dual-index detection experiment]\label{def:dualindex-detect}
-\intuition{The adversary wins only if it makes a client accept a substituted key while the warning
-slot stays provably empty, i.e.\ if it substitutes without any warning being raised.}
-Let $\Adv$ be a probabilistic polynomial-time adversary controlling the server and the network under
-the model of \cref{ch:threat}. In the experiment $\Expt{dual\text{-}det}{\Adv}$, $\Adv$ interacts with
-an honest client and peer and wins if it causes the client to accept a peer key
-$\mathit{pk}'\neq\mathit{pk}_{\B}$ under a signed head $\STH_t$ for which $\mathsf{CheckWarning}$
-returns \textsc{Safe}. The scheme achieves Goal~G1 (Key-Substitution Detection)
-if $\advantage{dual\text{-}det}{\Adv}=\Pr[\Expt{dual\text{-}det}{\Adv}=1]$ is negligible in
-$\secpar$. For the raw dual-index path the argument rests on the labels being unpredictable to the
-adversary: it relies on HKDF (\cref{def:hkdf}) behaving as a PRF keyed by an unknown, sufficiently
-high-entropy conversation secret, on the unforgeability of the warning-MAC, on the collision
-resistance of $\Hash$ (\cref{def:hash}), on the soundness of the inclusion and prefix proofs, and on
-the unforgeability of the STH signature (\cref{def:sig}). The uniqueness of the VRF
-(\cref{def:vrf-security}) is what binds the separate global VRF-indexed path, not the secrecy of the
-raw dual-index labels. The
-narrative argument for this claim is given in \cref{ssec:design-detection}; a full reduction is left
-to future work (\cref{ch:discussion}).
+\begin{definition}[Same-head label consistency and Goal~G1]\label{def:g1-consistency}
+\intuition{Under one signed head the peer-lookup label and the owner's self-check label are the same
+slot, so a substituted peer key cannot pass the owner's self-check; full G1 detection then adds the
+warning channel and the auditor, and its quantified reduction is future work.}
+The static core of Goal~G1 (Key-Substitution Detection) is a same-head consistency property
+(\cref{lem:dualindex-consistency}). Fixing a signed head $\STH_t$, the shared label
+$\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$ cannot carry two verifying values, by soundness
+of the prefix and inclusion proofs and collision resistance of $\Hash$ (\cref{def:hash}). This holds
+even if the adversary knows $\sharedS$.
+
+Goal~G1 in the full model of \cref{ch:threat} additionally relies on three properties with distinct
+adversary scopes, each argued separately. The raw dual-index labels must be unpredictable to the
+operator before first use, which needs HKDF (\cref{def:hkdf}) as a PRF keyed by an unknown,
+high-entropy $\sharedS$. Authenticated peer warnings need the unforgeability of the warning-MAC. The
+separate global VRF-indexed path rests on the uniqueness of the VRF (\cref{def:vrf-security}) rather
+than on label secrecy.
+
+Warning censorship is handled in two cases. A dropped pre-commit write is caught by the verified
+read-back, where a key mismatch together with a proven-empty slot forms the A2 compound alarm. A
+post-commit deletion is caught by the transition audit and the retained persistence evidence, and the
+write-once policy prevents overwriting a committed warning. Split-view equivocation is handled by the
+cross-vantage auditor (\cref{ssec:design-detection}).
+
+A single quantified reduction combining these properties is left to future work (\cref{ch:discussion}).
 \end{definition}
