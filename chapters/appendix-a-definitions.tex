@@ -336,9 +336,11 @@ relies on several properties with distinct adversary scopes, each argued separat
 dual-index labels being unpredictable to the operator before first use, which needs HKDF
 (\cref{def:hkdf}) as a PRF keyed by an unknown, high-entropy $\sharedS$; the unforgeability of the
 warning-MAC, for authenticated peer warnings; and, for the separate global VRF-indexed path, the
-uniqueness of the VRF (\cref{def:vrf-security}) rather than label secrecy. Warning censorship (both a
-dropped pre-commit write proven absent and a post-commit deletion) is handled by the write-once
-policy, the transition audit, and the persistence check, and split-view equivocation by the
-cross-vantage auditor (\cref{ssec:design-detection}). A single quantified reduction combining these
+uniqueness of the VRF (\cref{def:vrf-security}) rather than label secrecy. Warning censorship
+separates into two cases: a dropped pre-commit write is caught by the verified read-back, where a key
+mismatch together with a proven-empty slot forms the A2 compound alarm, while a post-commit deletion
+is caught by the transition audit and the retained persistence evidence; the write-once policy
+prevents overwriting a committed warning. Split-view equivocation is handled by the cross-vantage
+auditor (\cref{ssec:design-detection}). A single quantified reduction combining these
 properties is left to future work (\cref{ch:discussion}).
 \end{definition}

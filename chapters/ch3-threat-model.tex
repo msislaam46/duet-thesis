@@ -29,10 +29,10 @@ stronger baseline against which end-to-end secure messaging can be evaluated.
 % ============================================================================
 \section{System Model and Actors}\label{sec:threat-system}
 
-The setting is the asynchronous messaging deployment introduced in
-\cref{sec:bg-signal}: two users, Alice and Bob, communicate through
-infrastructure operated by a service provider, and at least one party may be
-offline when the other wishes to act. The system model comprises four actors: the
+DUET considers asynchronous communication between Alice and Bob over
+infrastructure operated by a service provider (\cref{sec:bg-signal}); either party
+may be offline while the other sends a message or updates key material. The system
+model comprises four actors: the
 communicating clients, the messaging infrastructure, the key-transparency
 service, and independent auditors. Their respective responsibilities and trust
 assumptions define the attack surface considered throughout the remainder of this
@@ -97,6 +97,7 @@ auditor observes the log from a separate vantage point.}
 \end{figure}
 
 % ============================================================================
+\FloatBarrier
 \section{Adversary Model}\label{sec:threat-adversary}
 
 The threat model combines two well-established adversary models, because the
@@ -372,6 +373,7 @@ G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\
 \end{table}
 
 % ============================================================================
+\FloatBarrier
 \section{Out of Scope}\label{sec:threat-scope}
 
 The following are explicitly out of scope.
