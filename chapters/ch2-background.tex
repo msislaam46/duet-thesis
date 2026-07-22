@@ -239,8 +239,8 @@ message.
 \caption[X3DH message sequence.]{X3DH message sequence. Bob publishes a pre-key bundle containing his
 identity key, signed pre-key, signature, and (optionally) a one-time pre-key.
 Alice retrieves the bundle, samples an ephemeral key $\xEK{A}$, derives
-$\sharedS$ from the three mandatory Diffie--Hellman values (and a fourth when a
-one-time pre-key is present), and sends an initial message
+$\sharedS$ from three Diffie--Hellman values, or four when Bob's bundle contains
+a one-time pre-key, and sends an initial message
 carrying her identity key $\xIK{A}$ and ephemeral key $\xEK{A}$. Bob can process
 it and derive the same shared secret when he next comes online, even though he was
 offline when Alice initiated the session.}

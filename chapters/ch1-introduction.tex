@@ -71,16 +71,14 @@ framework~\cite{dowling2023acka} (the instantiation claimed, with its scope, in
 \cref{sec:bg-contrib}), and frames the guarantee
 precisely as detection over a semi-trusted directory rather than prevention.
 
-\paragraph{Cryptographic.} The \emph{windowed consistency proof}: the application of a standard
-RFC~9162 distant-head consistency proof to the offline-monitoring policy, letting a client re-verify
-the log in one proof rather than $W$, with size logarithmic in the endpoint log sizes rather than
-linear in the epochs missed (\cref{sec:design-windowed}, \cref{lem:windowed-size}). A same-head
-consistency lemma (\cref{lem:dualindex-consistency}) provides supporting formal analysis of the
-dual-index design, showing that a substituted peer key cannot pass an honest party's self-check under
-one signed head; it follows directly from opening one authenticated label under a single root, and
-the full detection reduction is left as future work. \cref{ch:design} disclaims any new cryptographic
-primitive here: the contribution is the proof construction and its measured trade-off, not a new
-object.
+\paragraph{Cryptographic.} The cryptographic contribution applies an RFC~9162 distant-head
+consistency proof to offline monitoring. A returning client re-verifies the log with one proof
+instead of retrieving one proof for every missed epoch, and the proof size stays logarithmic in the
+endpoint log sizes rather than linear in the epochs missed (\cref{sec:design-windowed},
+\cref{lem:windowed-size}). A same-head consistency lemma (\cref{lem:dualindex-consistency}) supports
+the dual-index design by showing that Alice's peer lookup and Bob's self-check cannot authenticate
+different values under one signed head. \cref{ch:design} establishes these properties and
+\cref{ch:eval} evaluates their costs.
 
 \paragraph{Systems.} A complete implementation in two independently implemented layers whose shared
 protocol operations are checked byte-for-byte against cross-language test vectors: a standalone Rust reference implementation (the \texttt{duet} crate, an HTTP directory server,
