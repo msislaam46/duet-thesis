@@ -5,6 +5,7 @@
 % atomic commit, after replay and any available valid cross-vantage comparison.
 % Label: \label{fig:impl-transition-audit}
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=4mm,
+  edge/.style={->,shorten <=1pt,shorten >=2pt},
   proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.6cm,minimum height=6mm},
   dec/.style={draw,align=center,inner sep=3pt,text width=4.6cm,minimum height=6mm,fill=blue!6},
   term/.style={draw,rounded corners,align=center,inner sep=3pt,text width=3.7cm,minimum height=6mm},
@@ -18,33 +19,34 @@
   \node[dec,below=of a2] (a3) {log grew (new size $>$ baseline)?};
   \node[dec,below=9mm of a3] (a4) {equal head (same root): all epochs already audited?};
   \node[go,below=8mm of a4] (gob) {$\to$ transactional replay (b)};
-  \draw[->] (a0) -- (a1);
-  \draw[->] (a2) -- node[left,font=\tiny]{no} (a3);
-  \draw[->] (a3) -- node[left,font=\tiny]{no} (a4);
-  \draw[->] (a4) -- node[left,font=\tiny]{no: incomplete} (gob);
+  \draw[edge] (a0) -- (a1);
+  \draw[edge] (a2) -- node[left,font=\tiny]{no} (a3);
+  \draw[edge] (a3) -- node[left,font=\tiny]{no} (a4);
+  \draw[edge] (a4) -- node[left,font=\tiny]{no: incomplete} (gob);
 
   % right terminal column: alarms, no-op, and the grown-head consistency step
   \node[bad,right=12mm of a2] (t2) {ALARM (rollback / fork)};
-  \draw[->] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
+  \draw[edge] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
   \node[proc,right=12mm of a3,text width=3.7cm] (a3p) {verify RFC~9162 consistency proof};
-  \draw[->] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
+  \draw[edge] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
   \node[bad,below=5mm of a3p] (t3) {invalid: ALARM (persists), no replay};
-  \draw[->] (a3p) -- node[right,font=\tiny]{invalid} (t3);
+  \draw[edge] (a3p) -- node[right,font=\tiny]{invalid} (t3);
   \node[nop,below=4mm of t3] (t4) {idempotent: no state change};
-  \draw[->] (a4.east) |- node[below,font=\tiny,pos=0.85]{yes} (t4.west);
+  \draw[edge] (a4.east) |- node[below,font=\tiny,pos=0.85]{yes} (t4.west);
 
   % far-right bus: first-head (skip consistency) and valid-consistency both proceed to (b)
   \coordinate (chan) at ([xshift=10mm]a3p.east);
-  \draw[->] (a1) -- node[left,font=\tiny]{no} (a2);
+  \draw[edge] (a1) -- node[left,font=\tiny]{no} (a2);
   \draw (a1.east) -- node[above,font=\tiny,pos=0.62]{yes: skip consistency} (a1.east -| chan);
   \draw (a3p.east) -- node[above,font=\tiny]{valid} (a3p.east -| chan);
   \draw (a1.east -| chan) -- (gob.east -| chan);
-  \draw[->] (gob.east -| chan) -- (gob.east);
+  \draw[edge] (gob.east -| chan) -- (gob.east);
 \end{tikzpicture}
 
 \vspace{5pt}
 
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=3mm,
+  edge/.style={->,shorten <=1pt,shorten >=2pt},
   proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm},
   loop/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=10mm},
   cv/.style={draw,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm,fill=blue!6},
@@ -58,16 +60,16 @@
   \node[cv,below=of b1] (bcv) {\textbf{cross-vantage:} valid second-vantage head available?};
   \node[cv,below=6mm of bcv] (bcmp) {diverges from the primary head? (same-epoch different root, or a failed between-vantage consistency proof)};
   \node[good,below=6mm of bcmp] (b2) {commit replica, cursor, \emph{and} baseline atomically};
-  \draw[->] (b0) -- (b1);
-  \draw[->] (b1) -- (bcv);
-  \draw[->] (bcv) -- node[left,font=\tiny]{yes} (bcmp);
-  \draw[->] (bcmp) -- node[left,font=\tiny]{no: agree} (b2);
+  \draw[edge] (b0) -- (b1);
+  \draw[edge] (b1) -- (bcv);
+  \draw[edge] (bcv) -- node[left,font=\tiny]{yes} (bcmp);
+  \draw[edge] (bcmp) -- node[left,font=\tiny]{no: agree} (b2);
   \node[bad,right=12mm of b1] (r2) {ALARM (audit failed): root mismatch, duplicate insert (A1), or immutable \mbox{rotation}};
   \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard candidate, retry (not a fork)};
-  \draw[->] (b1.east) -- node[above,font=\tiny,fill=white,inner sep=1pt]{replay fail} (r2.west);
-  \draw[->] (b1.north east) -- node[font=\tiny,fill=white,inner sep=1pt,pos=0.6]{fetch fail} (r1.west);
+  \draw[edge] (b1.east) -- node[above,font=\tiny,fill=white,inner sep=1pt]{replay fail} (r2.west);
+  \draw[edge] (b1.north east) -- node[above,font=\tiny,fill=white,inner sep=1pt,pos=0.4]{fetch fail} (r1.west);
   \node[bad,right=12mm of bcmp] (r3) {vantages diverge: ALARM (equivocation / fork)};
-  \draw[->] (bcmp.east) -- node[above,font=\tiny]{yes} (r3.west);
-  \coordinate (byp) at ([xshift=-9mm]bcv.west);
-  \draw[->] (bcv.west) -- node[above,font=\tiny,align=center]{no / invalid:\\no G4 verdict} (byp) |- (b2.west);
+  \draw[edge] (bcmp.east) -- node[above,font=\tiny]{yes} (r3.west);
+  \coordinate (byp) at ([xshift=-28mm]bcv.west);
+  \draw[edge] (bcv.west) -- node[above,font=\tiny,align=center]{no / invalid:\\no G4 verdict} (byp) |- (b2.west);
 \end{tikzpicture}
