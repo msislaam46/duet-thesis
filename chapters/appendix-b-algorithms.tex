@@ -386,8 +386,8 @@ epoch~0 (IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}), an
 one all-or-nothing transaction only if every stage passes (a failed delta fetch is retried). The
 verdicts separate availability from equivocation. \textsc{ConsistencyUnverified} covers any
 consistency proof, primary or cross-vantage, that is missing, unparseable, or fails to verify, and it
-holds the baseline. \textsc{Fork} is reserved for the one publishable equivocation: two same-size
-signed heads with different roots. \textsc{ConsistentNoVantage} marks a commit reached with no valid
+holds the baseline. \textsc{Fork} is reserved for directly evidenced equivocation: two validly signed heads of the same
+size with different roots. \textsc{ConsistentNoVantage} marks a commit reached with no valid
 second vantage.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
@@ -426,7 +426,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
 
 \begin{algorithm}[H]
 \addtocounter{algocf}{-1}%
-\caption{Networked auditor, continued: the \textsf{AuditTransition} and \textsf{DetectFork} helpers of Algorithm~\ref{alg:auditor}}
+\caption{Networked auditor, continued (\textsf{AuditTransition} and \textsf{DetectFork})}
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{candidate},e,\mathit{delta}_e,r_{\mathrm{head}},\mathit{size}_{\mathrm{head}}$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
   \lIf{$\pi_{\mathrm{incl}}$ does not prove leaf index $e$ with value $r_{e}$ included under $r_{\mathrm{head}}$ at tree size $\mathit{size}_{\mathrm{head}}$}{\KwRet \textsc{TransitionFailed}}
