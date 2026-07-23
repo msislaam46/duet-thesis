@@ -1,18 +1,30 @@
 % fig-bg-ratchet.tex — extracted from ch2-background.tex
 % Label: \label{fig:bg-ratchet}
 \begin{tikzpicture}[>=Stealth,font=\small,
-   box/.style={draw,rounded corners,minimum width=2cm,minimum height=8mm}]
-  \node[box] (r0) {root key $rk_0$};
-  \node[box,right=1.4cm of r0] (r1) {root key $rk_1$};
-  \node[box,right=1.4cm of r1] (r2) {root key $rk_2$};
-  \draw[->] (r0) -- node[above]{DH} (r1);
-  \draw[->] (r1) -- node[above]{DH} (r2);
-  \node[box,below=1cm of r1] (c1) {chain key $ck_1$};
-  \node[box,right=1.2cm of c1,minimum width=1.5cm] (c2) {$ck_2$};
-  \node[box,right=1.2cm of c2,minimum width=1.5cm] (c3) {$ck_3$};
-  \draw[->] (r1) -- (c1);
-  \draw[->] (c1) -- node[above]{KDF} (c2);
-  \draw[->] (c2) -- node[above]{KDF} (c3);
+   box/.style={draw,rounded corners,minimum width=1.8cm,minimum height=8mm},
+   kdf/.style={draw,rounded corners,fill=black!6,minimum width=1.2cm,minimum height=7mm,align=center}]
+  % root-key row, passing through explicit KDF_RK nodes
+  \node[box] (r0) {$rk_0$};
+  \node[kdf,right=1.15cm of r0] (k0) {$\KDF_{RK}$};
+  \node[box,right=1.15cm of k0] (r1) {$rk_1$};
+  \node[kdf,right=1.15cm of r1] (k1) {$\KDF_{RK}$};
+  \node[box,right=1.15cm of k1] (r2) {$rk_2$};
+  \draw[->] (r0) -- (k0);
+  \draw[->] (k0) -- (r1);
+  \draw[->] (r1) -- (k1);
+  \draw[->] (k1) -- (r2);
+  % fresh DH output enters each KDF_RK from above (second input)
+  \draw[->] ($(k0)+(0,1.05)$) -- node[right,font=\footnotesize]{DH output} (k0.north);
+  \draw[->] ($(k1)+(0,1.05)$) -- node[right,font=\footnotesize]{DH output} (k1.north);
+  % chain-key row: KDF_RK's second output feeds the sending chain
+  \node[box,below=1.15cm of k0,minimum width=1.6cm] (c1) {chain key $ck_1$};
+  \node[box,right=1.2cm of c1,minimum width=1.4cm] (c2) {$ck_2$};
+  \node[box,right=1.2cm of c2,minimum width=1.4cm] (c3) {$ck_3$};
+  \draw[->] (k0.south) -- (c1.north);
+  \draw[->] (c1) -- node[above,font=\footnotesize]{KDF} (c2);
+  \draw[->] (c2) -- node[above,font=\footnotesize]{KDF} (c3);
+  \node[font=\footnotesize,align=left,anchor=east] at ($(c1.west)+(-0.3,0)$) {sending chain\\(one direction shown)};
+  % message keys
   \node[box,below=8mm of c1,minimum width=1.3cm] (m1) {$mk_1$};
   \node[box,below=8mm of c2,minimum width=1.3cm] (m2) {$mk_2$};
   \node[box,below=8mm of c3,minimum width=1.3cm] (m3) {$mk_3$};

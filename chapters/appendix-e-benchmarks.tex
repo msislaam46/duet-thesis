@@ -1,7 +1,7 @@
 \chapter{Full Benchmark Results}\label{app:benchmarks}
 
 This appendix reproduces the complete aggregate benchmark tables summarized in \cref{ch:eval}. All figures are
-from a single measurement campaign on the environment recorded below; sizes are exact and
+from a single benchmark run on the environment recorded below; sizes are exact and
 seed-deterministic, and timings are medians (with the 95th percentile and a 95\% confidence
 half-width where the harness records them). The metric families M1--M13 are as defined by the
 measurement map in \cref{sec:eval-method} (\cref{tab:eval-map}); baselines are named, not coded
@@ -312,12 +312,12 @@ M7 runs only with \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes a
 and must reproduce byte-for-byte; timings reproduce within noise.
 
 \medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The Criterion
-groups and CSV keys below are frozen provenance identifiers and retain some historical names: in
-particular, \texttt{windowed\_full\_client\_verify} does not time a catch-up proof (it is the M3 full
-signed-head lookup verification), \texttt{M8\_throughput} records per-operation latencies from which a
-single-thread rate is derived, and \texttt{M11\_handshake\_overhead} measures one complete signed-head
-KT lookup verification invoked at the handshake hook, excluding X3DH/PQXDH, network transfer, session
-establishment, and the remainder of the messaging-client handshake.
+groups and CSV keys below are frozen provenance identifiers, so some retain historical names.
+\texttt{windowed\_full\_client\_verify} is the M3 full signed-head lookup verification and does not
+time a catch-up proof. \texttt{M8\_throughput} records per-operation latencies from which a
+single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures one signed-head KT lookup
+verification at the handshake hook. It excludes X3DH/PQXDH, network transfer, and the remainder of
+session establishment.
 
 \begin{table}[ht]
 \centering

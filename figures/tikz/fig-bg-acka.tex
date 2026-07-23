@@ -1,17 +1,17 @@
 % fig-bg-acka.tex — extracted from ch2-background.tex
 % Label: \label{fig:bg-acka}
 \begin{tikzpicture}[>=Stealth, font=\small,
-   box/.style={draw, rounded corners, minimum width=24mm, minimum height=16mm,
-               align=center, inner sep=2pt},
-   open/.style={draw, densely dashed, rounded corners, minimum width=24mm,
-                minimum height=16mm, align=center, inner sep=2pt}]
-  \node[box]  (cka) at (0,0)    {\textbf{CKA}\\[2pt]\footnotesize continuous key\\ agreement (the ratchet)};
-  \node[box]  (cea) at (5.4,0)  {\textbf{CEA\,/\,CEAsec}\\[2pt]\footnotesize per-epoch\\ label \& fingerprint};
-  \node[open] (log) at (10.6,0) {\textbf{Logsec}\\[2pt]\footnotesize append-only,\\ immutable log};
+   box/.style={draw, rounded corners, minimum width=26mm, minimum height=20mm,
+               align=center, text width=24mm, inner sep=2pt},
+   open/.style={draw, densely dashed, rounded corners, minimum width=26mm,
+                minimum height=20mm, align=center, text width=24mm, inner sep=2pt}]
+  \node[box]  (cka) at (0,0)    {\textbf{CKA}\\[2pt]\footnotesize continuous key agreement (the ratchet)};
+  \node[box]  (cea) at (5.6,0)  {\textbf{CEA}\\[2pt]\footnotesize per-epoch label \& fingerprint (security: CEAsec)};
+  \node[open] (log) at (11.2,0) {\textbf{LOG}\\[2pt]\footnotesize append-only, immutable log (security: Logsec)};
   \draw[->] (cka) -- node[above,font=\scriptsize]{public $T_t$}
-                     node[below,font=\scriptsize]{secret $I_t{=}ck_t$} (cea);
-  \draw[->] (cea) -- node[above,font=\scriptsize]{post\,/\,query}
-                     node[below,font=\scriptsize]{fingerprint} (log);
-  \node[align=center, text=black!55, font=\footnotesize] at (10.6,-1.7)
-       {\emph{deliberately unspecified}\\ \emph{(the open slot)}};
+                     node[below,font=\scriptsize]{secret $I_t$} (cea);
+  \draw[->] ([yshift=2.5mm]cea.east) -- node[above,font=\scriptsize]{post} ([yshift=2.5mm]log.west);
+  \draw[<-] ([yshift=-2.5mm]cea.east) -- node[below,font=\scriptsize]{query} ([yshift=-2.5mm]log.west);
+  \node[align=center, text=black!55, font=\footnotesize] at (11.2,-1.9)
+       {\emph{concrete realization left open}};
 \end{tikzpicture}

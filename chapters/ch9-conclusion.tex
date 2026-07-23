@@ -1,65 +1,71 @@
 \chapter{Conclusion}\label{ch:conclusion}
 
-End-to-end encryption is only as trustworthy as the keys it runs on, and in the deployed messaging systems this thesis considers
-those keys are handed out by a server that users must simply trust. The traditional
-defence, the manual safety-number comparison, detects a substituted key only if both parties carry
-out an out-of-band ritual that only about one in seven complete without guidance~\cite{vaziripour2017}, and the
-key-transparency deployments that have begun to automate it (\cref{ssec:bg-gap}) still warn only
-the key's owner, never the peer. This thesis set out to close that gap: to make
-key substitution automatically detectable, in band, and at a cost a real messaging service could
-afford.
+The security of end-to-end encryption depends on authentic public keys, and in the messaging systems
+this thesis considers a service-operated directory distributes those keys. The traditional
+defence, manual safety-number comparison, detects a substituted key only when both parties complete
+an out-of-band verification ceremony. A usability study reported a 14\% success rate across unguided
+pair--application trials, with only two of twelve pairs completing the ceremony in any tested
+application~\cite{vaziripour2017}. The key-transparency deployments surveyed in \cref{ch:background}
+automate part of this process (\cref{ssec:bg-gap}) but warn only the key's owner, not the peer. This
+thesis set out to close that gap: to make key substitution automatically detectable, in band, and
+without changing the proof asymptotics the directory already serves.
 
-To do so it instantiated the abstract log component of the ACKA framework as a concrete verifiable
-directory: an append-only Merkle log over a path-compressed sparse prefix tree, with ECVRF-derived
-labels and an Ed25519 signed tree head, following the IETF KeyTrans draft. On top of it, it added two
+The work instantiates ACKA's abstract log component as a concrete verifiable directory. It uses an
+append-only Merkle log over a path-compressed sparse prefix tree, with ECVRF-derived labels and an
+Ed25519 signed tree head, following the IETF KeyTrans draft. On top of it, the thesis adds two
 mechanisms. The dual-index warning scheme (\cref{ch:design}) derives, for each conversation, a shared
-warning slot to which either party can write an alert and that the server can neither forge in advance nor censor
-undetectably after the fact, turning a silent substitution into a detectable one. The windowed consistency proof lets a
-client that has been offline for a long window catch up with a single short proof rather than one per
-missed epoch. Both were implemented in a standalone Rust reference implementation and exercised through a
-verifier embedded in Signal Desktop (\cref{ch:impl}), and both were evaluated against the threat model
-of \cref{ch:threat}.
+warning slot to which either party can write an alert. The server cannot predict the slot before the
+label is first used, cannot censor a warning before it commits without raising the compound A2 signal
+of a key mismatch beside a proof-verified empty slot, and cannot make a committed warning disappear
+without that removal being exposed as deletion or tampering. A silent substitution thereby becomes
+detectable. The windowed consistency proof lets a client that has been offline for a long window catch
+up with a single short proof rather than one per missed epoch. Both were implemented in a standalone
+Rust reference implementation and exercised through a verifier embedded in Signal Desktop
+(\cref{ch:impl}). The dual-index scheme was exercised against the attack taxonomy of \cref{ch:threat},
+while the windowed proof was evaluated for correctness, size, and generation cost.
 
 The evaluation (\cref{ch:eval}) shows that this detection is added without changing the asymptotic
 complexity of the lookup proof, using additional lookups of the shape the client already verifies. The
 implemented (VRF-indexed) lookup proof is at rough size parity with CONIKS, while the scheme adds a warning
 channel CONIKS lacks.
-Median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels and grows
-far more slowly than $N$, about
-\num{3.8} times faster than CONIKS at matched scale even though it includes the VRF check that CONIKS's
-figures omit (both totals include the signature check, and the cross-hardware comparison is
-indicative only). A month-long offline catch-up is one distant-head consistency proof rather than $W$
+Median full client verification is \SI{147.1}{\micro\second} at $10^7$ labels, stays below
+\SI{150}{\micro\second} across the measured range, and grows far more slowly than $N$. CONIKS reports a
+larger per-lookup verification time at matched scale, on different hardware and excluding the VRF check
+DUET includes, so the comparison is indicative only. A month-long offline catch-up is one distant-head consistency proof rather than $W$
 of them, a few hundred raw path bytes against the hundreds of kilobytes a synthetic baseline that
-re-fetches a current-head-anchored proof for each missed epoch would instead spend. The marginal server-side warning-slot read (M5) costs microseconds; the complete detector performs
-one or two full proof-verified lookups of the shape M3 measures, whose combined latency was not
-measured, with no false alarms observed over a thousand clean deterministic sessions, and the cross-vantage auditor's local
-fork check runs at a median \SI{27.9}{\micro\second} (p95 \SI{34.2}{\micro\second}) against one
-observed head. The adversarial suite detects every substitution and
-equivocation scenario it enumerates, and a STRIDE analysis leaves four residual risks: one the label-to-user
-mapping inherent to any semi-trusted-server directory, the other three availability functions left to
-a production deployment.
+re-fetches a current-head-anchored proof for each missed epoch would instead spend. The marginal server-side warning-slot read (M5) costs \SI{1.62}{\micro\second} on the clean path and
+\SI{1.72}{\micro\second} on the attacked path. An isolated in-process \texttt{KTClient.detectMitm} check performs one or two
+raw-label, proof-verified lookups; a full monitor pass performs additional checks. M3 provides a conservative upper proxy for the local verification
+work of one lookup, and their combined latency was not measured. No false
+alarms were observed over a thousand clean deterministic sessions (M6). The cross-vantage auditor's
+one-head fork check has a median local cost of \SI{27.9}{\micro\second} (p95
+\SI{34.2}{\micro\second}). The system produced the expected detection verdict in every enumerated substitution and equivocation
+scenario. The STRIDE analysis identifies four residual risks. One is the label-to-user mapping
+inherent to a semi-trusted directory. The other three concern availability functions not implemented
+by the prototype.
 
-Read against the research questions of \cref{sec:intro-aims}, the evidence is direct. RQ1 (in-band
-detection) is answered by the dual-index warning and its clean pass across the full
-adversarial suite, with no false alarms observed in the clean deterministic trials. RQ2 (cost) is
-answered by the proof-size parity and the sub-\SI{150}{\micro\second} verification reported above.
-RQ3 (offline) is answered by the single windowed catch-up proof reported above, whose size is bounded
-by the endpoint log sizes rather than the window's length. RQ4 (client-integration feasibility) is answered by the
-verifier running inside a fork of the real Signal Desktop client at that measured local cost; the
-integration is a prototype with an advisory hook and deterministic stand-ins, so it establishes
-feasibility of hook placement and proof verification rather than enforced session blocking. The thesis
-statement, that this detection can be added without changing the asymptotic complexity of the
-proofs the directory already serves using additional lookups of the existing shape, is thereby
-supported for the measured prototype properties listed above, subject to the limitations of \cref{ch:discussion}. The full chain from each research question and contribution kind
-to its supporting evidence is tabulated in \cref{app:traceability}
-(\cref{tab:trace-rq,tab:trace-contrib}).
+Read against the research questions of \cref{sec:intro-aims}, each is answered by a specific evidence
+type. RQ1 (in-band detection) is answered by the implemented system producing the expected verdict
+across the enumerated adversarial scenarios, including the dual-index warning cases. The deterministic
+clean-session sanity check produced no false alarms. RQ2 (cost) is answered at component level: an
+individual lookup proof is unchanged in size, an isolated in-process \texttt{KTClient.detectMitm} check performs one or two raw-label lookups,
+M3 provides a conservative upper proxy for the local verification work of one such lookup, and the
+combined detector cost was not measured.
+RQ3 (offline) is answered by the single windowed catch-up proof, whose size is bounded
+by the endpoint log sizes rather than the window's length. RQ4 (client-integration feasibility) is
+answered by the verifier running inside a fork of the real Signal Desktop client, which establishes
+hook placement and execution of the TypeScript verifier path. The integration is a prototype with an
+advisory hook and deterministic stand-ins rather than enforced session blocking. The Rust harness
+separately measures the corresponding cryptographic operations. These results support the thesis statement for the
+measured prototype properties listed above, subject to the limitations of \cref{ch:discussion}. The
+traceability matrix links each research question and contribution to its supporting evidence
+(\cref{app:traceability}, \cref{tab:trace-rq,tab:trace-contrib}).
 
-The result is a design that detects rather than prevents: for an honestly established, monitored
-conversation, a server can still substitute a key but can no longer do so silently. To a
-deployment such as Signal it presents a narrow, well-defined addition rather than a wholesale
-change: a write path for warning and per-session labels alongside the identity directory it
-already maintains. Each check uses one or two label-bound lookups of the directory's existing
-proof form, with M3 (lookup-verification latency) a conservative sub-millisecond upper proxy for the local verification work of
-one such lookup; binding the labels to the live X3DH secret is the scoped next integration step
-(\cref{ch:discussion}). Key transparency has, until now, told users that they must check their
-keys themselves; this work shows that the client can perform those checks automatically.
+For an honestly established and monitored conversation, DUET detects key substitution rather than
+preventing it. A malicious server may still replace a key, but the substitution cannot remain silent.
+Integrating the design into a service such as Signal would extend the existing identity directory
+with warning writes and per-session labels. Each isolated in-process \texttt{KTClient.detectMitm} check performs one or two label-bound lookups using
+the directory's existing proof structure. Binding these labels to Signal's live X3DH secret remains
+the next integration step described in \cref{ch:discussion}. Safety-number authentication has
+traditionally required users to verify keys themselves. The prototype demonstrates that the
+corresponding directory and peer-warning checks can instead run automatically in the client.

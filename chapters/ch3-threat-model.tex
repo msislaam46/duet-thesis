@@ -49,8 +49,10 @@ catching up after an offline period is a primary concern.
 The \textbf{message-delivery and key-distribution server} is the provider's
 infrastructure. It stores and serves the X3DH pre-key bundles that Alice needs to
 start a session with Bob (\cref{ssec:bg-x3dh}) and relays ciphertext between the
-parties. It is the single point through which public keys reach their consumers,
-and therefore the single point at which a key can be substituted.
+parties. It is the single service-side point through which public keys reach their consumers,
+and therefore the single service-side point at which a key can be substituted; the
+client--service channel is the other substitution surface, modelled separately as
+the network adversary (A3, \cref{sec:threat-adversary}).
 
 The \textbf{key-transparency log server} maintains the verifiable directory and
 its append-only log, answers lookup and monitoring queries with cryptographic
@@ -105,7 +107,7 @@ system must reason about both network attacks and malicious key-directory
 behaviour. For the network, the analysis adopts the Dolev--Yao
 model~\cite{dolevyao1983}; for the infrastructure, it adopts the
 semi-trusted-server model of the key-transparency literature. These adversaries
-are independent, and deployments may face either or both simultaneously.
+are modelled separately, and deployments may face either or both simultaneously.
 
 \paragraph{The Network Attacker (Dolev--Yao).} Following Dolev and
 Yao~\cite{dolevyao1983}, the network adversary has maximal control of the wire:
@@ -130,7 +132,8 @@ cannot find collisions in SHA-256, solve the discrete-logarithm problem
 underlying X25519, or forge an Ed25519 signature. It cannot forge a
 verifiable-random-function proof without the server's VRF secret key, nor produce
 a Merkle inclusion proof for an entry that was never committed to the log. It
-cannot sustain equivocation without detection by an honest auditor. And it cannot
+cannot sustain equivocation without detection by an honest auditor holding a valid,
+independent second-vantage head (\cref{sec:threat-goals}). And it cannot
 compromise an honest client's device: endpoint security is out of scope, and the
 boundary case where this assumption is lifted is scenario X1.
 
@@ -156,7 +159,7 @@ A1 & malicious server & substitute a user's key & self-check + peer warning \\
 A2 & malicious server & substitute a key and censor the warning & substitution + missing warning \\
 A3 & network (Dolev--Yao) & substitute a key in transit & divergent labels + global identity binding \\
 A4 & malicious server & equivocate (split-view) & cross-vantage auditor \\
-A5 & malicious server & substitute during a key rotation & identity re-fetch + warning \\
+A5 & malicious server & substitute during a key rotation & identity re-fetch + predecessor cross-signature; warning \\
 X1 & endpoint holder & impersonate using the victim's key & out of scope (boundary) \\
 \bottomrule
 \end{tabular}
@@ -172,10 +175,9 @@ victim would observe, and which mechanism detects it.
 
 \paragraph{A1: Key Substitution.} A1 is the primary attack in the model. A
 compromised or coerced server writes its own key in place of the victim's. The
-substituted key is internally consistent, since the malicious server has
+substituted key is internally consistent: the malicious server has
 legitimately appended the forged key to its own Merkle log and can produce valid
-inclusion proofs for it, so detection does not come from the structural proof
-machinery. It comes from
+inclusion proofs for it, so the Merkle proofs alone do not detect A1. Detection instead comes from
 the victim observing the wrong key under its own name and from the peer learning
 of the substitution through the in-band warning channel. The evaluation
 (\cref{ch:eval}) instantiates A1 in two forms: A1a, substitution of the global
@@ -187,11 +189,13 @@ faithfully record the warning that exposes it, so it drops the write. The design
 treats the combination of a detected substitution and a suppressed write as a
 signal in itself, since a server cannot serve a clean directory while selectively
 dropping only the writes that would incriminate it without that selectivity being
-observable. A2 also covers the stronger, delayed form of censorship: a server that
-first commits the warning and then removes it in a later epoch. Such a deletion is
-inexpressible in the epoch's declared update set, so it causes the auditor's
-transition replay to diverge, and the warning's writer retains the proofs that turn the
-disappearance into publishable evidence (\cref{ch:design}). For an \emph{offline} client relying on
+observable. A2 is censorship \emph{before} the warning commits: the server drops the
+write so that no warning ever enters the log. Deleting a warning \emph{after} it has
+committed is a separate tampering event rather than a form of A2: such a deletion is
+inexpressible in the epoch's declared update set, so the live transition audit detects it when its
+replay diverges. Separately, a specified and unit-tested persistence component lets the writer retain
+evidence of the disappearance; this component is not wired into the live background monitor
+(\cref{ch:design}). For an \emph{offline} client relying on
 windowed catch-up, detection is therefore conditional: the endpoint proof establishes append-only
 consistency, but it flags an in-window substitution only if the warning committed and survived to the
 catch-up read (\cref{ssec:design-catchup}). A transient substitution whose warning write is dropped
@@ -211,7 +215,7 @@ adversary that has already compromised a session and then injects a forged ratch
 key mid-conversation is invisible to a server-side audit, because the server and
 log remain honest. Continuous mode detects it because each epoch logs a
 fingerprint of the ratchet key, so an injected key produces a conflicting
-fingerprint at the agreed label and the same warning fires.
+fingerprint at the agreed label and the same warning is raised.
 
 \paragraph{A4: Equivocation (Split-View).} Inherited from Certificate
 Transparency (\cref{ssec:bg-ct2kt}), the server signs two heads at one epoch, one
@@ -224,7 +228,7 @@ substituting its own key while presenting the rotation as genuine, so the peer
 derives the wrong secret and lands at a different directory index. The defence
 anchors a rotation to identity rather than to the session: on a rotation the peer
 re-fetches the current key from the global VRF directory by user identity and compares
-it against the key it already trusts, so a substituted rotation surfaces as a changed
+it against the key it already trusts, so a substituted rotation is detected as a changed
 identity key rather than being accepted silently, and the dual-index warning is
 the in-band backstop. (Binding successive rotations into a cross-signed per-user key
 chain, as CONIKS's strict key-change policy and ELEKTRA do, would strengthen this further and is noted as future
@@ -306,8 +310,10 @@ functions. The first is fork detection (scenario A4): detecting an equivocating
 server requires a second, independent vantage point against which to compare tree
 heads. The second is the per-epoch transition audit (\cref{ch:design}), which
 binds a malicious operator to declare every cross-epoch mutation and thereby
-catches the delayed warning deletion of A2's strong form; the warning's writer
-independently retains deletion evidence that requires no auditor. Neither
+catches a post-commit warning deletion (tampering, distinct from A2's pre-commit
+censorship); the warning's writer additionally holds deletion evidence, a specified and
+unit-tested reference component that is not wired into the live monitor, so live detection of
+post-commit deletion currently rests on the transition audit. Neither
 function is required for the dual-index warning mechanism itself. Detection of
 server-side substitution (A1) and network man-in-the-middle (A3) is performed by
 the communicating clients and depends on no auditor. These claims are distinct:
@@ -324,8 +330,11 @@ limitation is revisited in \cref{ch:discussion}.
 
 The adversary model and assumptions define the security goals of the system. The
 system is expected to satisfy four security goals, each tied to the attack it
-addresses and the mechanism that delivers it; \cref{app:definitions} defines the formal experiment that makes
-each goal precise, and \cref{ch:eval} demonstrates each goal empirically.
+addresses and the mechanism that delivers it. \cref{app:definitions} defines the formal statement that
+makes each goal precise, and \cref{ch:eval} evaluates the implemented controls: G1 and G2 are
+demonstrated by the adversarial and catch-up experiments, G3 rests on the VRF pseudorandomness
+assumption with RFC~9381 conformance evidence, and G4 is demonstrated under the stated second-vantage
+condition.
 
 \paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
 adversary (A3) substitutes a key, an honest party detects it once an honest monitor completes the
@@ -361,7 +370,7 @@ goal that depends on the auditor-honesty assumption (\cref{sec:threat-assumption
 \Cref{tab:threat-goals} maps the goals onto the attacks they address and the
 mechanisms that deliver them. Each mechanism is specified in \cref{ch:design}.
 
-\begin{table}[t]
+\begin{table}[H]
 \centering
 \caption{Security goals, the attacks they address, and the mechanisms that deliver
 them.}
@@ -371,7 +380,7 @@ them.}
 \toprule
 Goal & Attack(s) & Security mechanism & Auditor? \\
 \midrule
-G1 key-substitution detection & A1, A3, A5 & dual-index warning for A1/A5 (bidirectional); divergent labels + global VRF identity binding for A3; identity-anchored rotation for A5 & no \\
+G1 key-substitution detection & A1, A3, A5 & dual-index warning for A1/A5 (bidirectional); divergent labels + global VRF identity binding for A3; identity re-fetch + predecessor cross-signature for A5 & no \\
 G2 offline-window consistency & general rewriting & windowed consistency proofs & no \\
 G3 directory privacy & enumeration / recon & VRF-derived labels & no \\
 G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\
@@ -387,8 +396,9 @@ The following are explicitly out of scope.
 
 \begin{itemize}
   \item \textbf{Prevention.} A determined operator or network can always refuse
-  service; the contribution is to make such interference detectable rather than to
-  prevent it.
+  service; the contribution is to ensure interference cannot masquerade as successful
+  verification: a refusal or drop is observable as an unavailable or incomplete check,
+  though its cause is not attributed.
   \item \textbf{Endpoint security.} A compromised device (X1) is outside the
   model; no directory mechanism can help once the adversary holds the victim's
   keys.

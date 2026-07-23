@@ -1,16 +1,18 @@
 \chapter{Test Catalogue}\label{app:tests}
 
-This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
+This appendix summarizes the complete test corpus that backs the conformance claims of \cref{sec:impl-tests}.
 The test corpus comprises the following groups. The Rust core is covered by \num{97} unit and invariant tests across
-nine modules, the \num{8}-scenario adversarial integration suite, and \num{22} tests in the
+nine modules, the \num{8}-scenario adversarial integration suite, and \num{25} tests in the
 \texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
-five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-failure test, and nine
-\texttt{PollStatus} tests covering every poll verdict and the exact status-line mapping),
-\num{127} tests in total, run under \texttt{cargo test}; the TypeScript
+five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-failure test, and twelve
+\texttt{PollStatus} tests covering every poll verdict, including the missing, unparseable, and failing
+consistency-proof cases that return \textsc{ConsistencyUnverified}, and the exact status-line
+mapping), \num{130} tests in total, run under \texttt{cargo test}. The TypeScript
 client is covered by \num{106} Jest tests in eight suites,
 and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs. The
-representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
-complete listing follows.
+representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}. The unit,
+cross-language, and TypeScript tests are catalogued in the tables that follow. The \texttt{kt\_auditor}
+binary tests are summarized by category above rather than listed individually.
 
 % ----------------------------------------------------------------------------
 \section{Rust Unit and Property Tests}\label{sec:tests-rust}
@@ -270,8 +272,8 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & caller guard: a confirmed publication sets the guard, suppressing re-writes \\
 \texttt{remote\_kt\_client} & session caller guard: \texttt{sessionWarnedPeers} advances only on a confirmed \texttt{lookup-replaced} write \\
 \midrule
-\texttt{background\_monitor} & \texttt{emitToSignalUI} fires \texttt{kt:warning} (DOM) and does not touch the Whisper bus \\
-\texttt{background\_monitor} & \texttt{emitOfflineToSignalUI} fires \texttt{kt:unreachable} only (never a MitM alert) \\
+\texttt{background\_monitor} & \texttt{emitToSignalUI} emits \texttt{kt:warning} (DOM) and does not touch the Whisper bus \\
+\texttt{background\_monitor} & \texttt{emitOfflineToSignalUI} emits \texttt{kt:unreachable} only (never a MitM alert) \\
 \texttt{background\_monitor} & server unreachable $\to$ \texttt{kt:unreachable}, not a red MitM alert \\
 \texttt{background\_monitor} & error from a server that did respond $\to$ red (\texttt{kt:warning}) \\
 \texttt{background\_monitor} & own key replaced (\texttt{matches=false}) $\to$ red \\
