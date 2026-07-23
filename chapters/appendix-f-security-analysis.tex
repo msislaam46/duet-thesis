@@ -21,7 +21,7 @@ technique families are mitigated: T1557 (with sub-technique T1557.004) and T1565
 sub-technique T1565.002); T1552.004 is the explicit endpoint-compromise boundary (X1).}
 \label{tab:sec-mitre}
 \footnotesize
-\begin{tabular}{@{}p{1.7cm}p{2.2cm}p{3.1cm}p{4.5cm}l@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.7cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{4.5cm}l@{}}
 \toprule
 ID & Technique & Vector in KT & KT mitigation & Scen. \\
 \midrule
@@ -69,7 +69,7 @@ are limitations of rows that are counted addressed.
 \caption{Spoofing (4/4 addressed).}
 \label{tab:stride-s}
 \footnotesize
-\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
 \midrule
@@ -86,7 +86,7 @@ Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \caption{Tampering (3/3 addressed).}
 \label{tab:stride-t}
 \footnotesize
-\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
 \midrule
@@ -102,7 +102,7 @@ Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (c
 \caption{Repudiation (3/3 addressed).}
 \label{tab:stride-r}
 \footnotesize
-\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
 \midrule
@@ -118,7 +118,7 @@ Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under
 \caption{Information Disclosure (2/3, 1 residual).}
 \label{tab:stride-i}
 \footnotesize
-\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
 \midrule
@@ -134,7 +134,7 @@ Leak the shared secret from a label & HKDF-Expand (dual-index labels) and ECVRF 
 \caption{Denial of Service (1/4, 3 residual).}
 \label{tab:stride-d}
 \footnotesize
-\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
 \midrule
@@ -151,7 +151,7 @@ Flood with fake registrations & deployment-level rate limiting & \emph{not imple
 \caption{Elevation of Privilege (3/3 addressed).}
 \label{tab:stride-e}
 \footnotesize
-\begin{tabular}{@{}p{4.4cm}p{5.2cm}p{4.0cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
 \midrule

@@ -470,15 +470,16 @@ would be weak evidence of agreement in the next.
 On top of that contract, testing is organized around two questions: whether each component
 conforms to its specification, and whether the system as a whole detects the attacks of the threat
 model. The first is addressed by unit and invariant tests close to the code; the second by an
-adversarial scenario suite. \Cref{fig:impl-testing} traces the testing pipeline, from
-specification conformance up to the end-to-end scenarios and performance benchmarks.
+adversarial scenario suite. \Cref{fig:impl-testing} maps the five evidence classes; each supports the implementation
+independently, from specification conformance to the end-to-end scenarios and the performance
+benchmarks.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-testing}
-\caption[The testing pipeline.]{The testing pipeline: specification conformance against published vectors, per-module
+\caption[The evidence classes.]{The evidence classes: specification conformance against published vectors, per-module
 unit and invariant tests, cross-language equivalence vectors, end-to-end adversarial scenarios,
-and the performance benchmarks of \cref{ch:eval}.}
+and the performance benchmarks of \cref{ch:eval}, each an independent line of support.}
 \label{fig:impl-testing}
 \end{figure}
 

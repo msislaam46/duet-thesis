@@ -149,7 +149,8 @@ warning slot is genuinely empty rather than merely unreported.
   \KwRet $(\mathit{value}\text{ or }\bot,\ \pi)$\;
 }
 \Fn{\normalfont\textsf{RootFromProof}($\pi$)}{
-  $c\gets e$ \textbf{if} $\pi.\mathit{value}=\bot$ \textbf{else} $\Hleaf(\pi.\mathit{kind}\concat\pi.\mathit{label}\concat\pi.\mathit{value})$ \tcp*{kind authenticated by the root}\;
+  \uIf{$\pi.\mathit{value}=\bot$}{$c\gets e$ \tcp*[f]{absence: leaf hash is the empty hash}}
+  \Else{$c\gets\Hleaf(\pi.\mathit{kind}\concat\pi.\mathit{label}\concat\pi.\mathit{value})$ \tcp*[f]{kind authenticated by the root}}
   \For{$i\gets 0$ \KwTo $255$}{
     $s\gets$ next sibling from $\pi.\mathit{siblings}$ if $\mathit{bitmap}[i]$ set, else $e$\;
     \lIf{$c=e\wedge s=e$}{\textbf{continue}}
@@ -251,7 +252,8 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
 \paragraph{Client verification (Algorithm~\ref{alg:client}).} These procedures are the client's entire
 trust boundary: every value it accepts is checked against a signed tree head before use.
 \textsf{VerifiedLookup} returns a value only when the prefix proof, the log-inclusion proof, and the
-STH signature all verify and bind to the caller's pinned head, and it fails closed on any mismatch.
+STH signature all verify, bind to the caller's pinned head, and carry the pinned configuration
+commitment, and it fails closed on any mismatch.
 \textsf{Register}, \textsf{RetrieveKey}, and \textsf{WindowedCatchUp} build on it to establish, read,
 and re-synchronize client state. In the implementation these are provided by monitor-level composition
 (the background \texttt{monitorConversation} loop) rather than as one-to-one methods; \textsf{RetrieveKey}'s
@@ -263,8 +265,8 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
 \Fn{\normalfont\textsf{VerifiedLookup}($\mathit{server},\mathit{label},\mathit{sth},[\mathit{user\_id},\pi_{\mathrm{vrf}}]$)}{
   $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
-  \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to the caller's verified head; a signed but stale/forked head is rejected}
-  \Req $\mathit{sth'}.\mathit{config\_hash}=\textsf{H}(P)\ \wedge\ \mathit{sth'}.\mathit{epoch}+1=\mathit{sth'}.\mathit{tree\_size}$ \tcp*{policy pin ($P$ = pinned keys/suite/version/cadence/policy) and well-formed head}
+  \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to caller's verified head}
+  \Req $\mathit{sth'}.\mathit{config\_hash}=\textsf{H}(P)\ \wedge\ \mathit{sth'}.\mathit{epoch}+1=\mathit{sth'}.\mathit{tree\_size}$ \tcp*{policy pin + well-formed head}
   \Req $\pi_{\mathrm{prefix}}.\mathit{label}=\mathit{label}$ \tcp*{label binding (every path): the proof must concern the exact queried label}
   \If{$\mathit{user\_id}$ given}{
     $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\mathit{label}$ \tcp*[f]{VRF path: the derived label equals the requested one}\;
