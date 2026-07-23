@@ -62,9 +62,10 @@ This thesis makes four principal contributions:
 \paragraph{Conceptual.} The conceptual contribution is a \emph{dual-index warning scheme}. In it, the
 HMAC-based Extract-and-Expand Key Derivation Function (HKDF) turns a conversation's shared secret
 into two directional lookup labels and one shared warning slot to which either party can write an
-authenticated alert. For an honestly established and monitored conversation, a malicious server can
-neither pre-position that slot nor censor the alert undetectably, so a silent substitution becomes an
-automatic, bidirectional, in-band detection (\cref{sec:design-dual}). More broadly,
+authenticated alert. For an honestly established and monitored conversation, a malicious server cannot predict and
+pre-position that slot before the label is first used, and cannot suppress a committed alert
+undetectably afterwards, so a silent substitution becomes an automatic, bidirectional, in-band
+detection (\cref{sec:design-dual}). More broadly,
 the thesis presents this scheme as a concrete instantiation and measurement of the abstract
 append-only-log component of the Authenticated Continuous Key Agreement (ACKA)
 framework~\cite{dowling2023acka} (the instantiation claimed, with its scope, in
