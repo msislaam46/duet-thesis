@@ -184,9 +184,11 @@ $10^6$ & 20 & 640 & 23 & 913 \\
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-sizes-plot}
-\caption[Lookup proof size versus directory size.]{Lookup proof size versus directory size $N$ (log $x$): both grow as $\sim\lg N$, and
-the VRF-indexed lookup proof carries only the fixed \num{177}-byte VRF-and-metadata overhead over the
-single-index path (\cref{tab:eval-sizes}).}
+\caption[Lookup proof size versus directory size.]{Lookup proof size versus directory size $N$ (log $x$): both grow as $\sim\lg N$. The
+VRF-indexed lookup proof adds a fixed \num{177}-byte VRF-and-metadata component plus \num{32} bytes
+per prefix sibling; through $10^5$ the two paths sample the same number of siblings, so the gap is
+exactly \num{177}\,bytes, while at $10^6$ the VRF path has \num{23} siblings to the reference's
+\num{20}, widening the gap by three further \num{32}-byte hashes (\cref{tab:eval-sizes}).}
 \label{fig:eval-sizes-plot}
 \end{figure}
 

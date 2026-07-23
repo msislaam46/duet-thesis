@@ -48,7 +48,7 @@
   proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm},
   loop/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=10mm},
   cv/.style={draw,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm,fill=blue!6},
-  term/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.0cm,minimum height=6mm},
+  term/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.2cm,minimum height=6mm},
   bad/.style={term,draw=red!60!black,fill=red!3},
   rtr/.style={term,draw=orange!80!black,fill=orange!4},
   good/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm,draw=green!50!black,fill=green!5}]
@@ -62,10 +62,10 @@
   \draw[->] (b1) -- (bcv);
   \draw[->] (bcv) -- node[left,font=\tiny]{yes} (bcmp);
   \draw[->] (bcmp) -- node[left,font=\tiny]{no: agree} (b2);
-  \node[bad,right=12mm of b1] (r2) {root mismatch / duplicate insert (A1) / immutable rotation: ALARM (audit failed)};
+  \node[bad,right=12mm of b1] (r2) {ALARM (audit failed): root mismatch, duplicate insert (A1), or immutable \mbox{rotation}};
   \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard candidate, retry (not a fork)};
-  \draw[->] (b1.east) -- node[above,font=\tiny]{replay fail} (r2.west);
-  \draw[->] (b1.north east) -- node[above,font=\tiny,pos=0.55]{fetch fail} (r1.west);
+  \draw[->] (b1.east) -- node[above,font=\tiny,fill=white,inner sep=1pt]{replay fail} (r2.west);
+  \draw[->] (b1.north east) -- node[font=\tiny,fill=white,inner sep=1pt,pos=0.6]{fetch fail} (r1.west);
   \node[bad,right=12mm of bcmp] (r3) {vantages diverge: ALARM (equivocation / fork)};
   \draw[->] (bcmp.east) -- node[above,font=\tiny]{yes} (r3.west);
   \coordinate (byp) at ([xshift=-9mm]bcv.west);

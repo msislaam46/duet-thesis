@@ -35,3 +35,6 @@ FIX_PLAN_*
 *_REVIEW_FINDINGS.md
 *_FINDINGS.md
 .claude/
+
+# latexmk error-recovery artifacts
+*-SAVE-ERROR
