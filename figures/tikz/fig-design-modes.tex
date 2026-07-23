@@ -4,6 +4,7 @@
 % confirmed/Consistent step; leave the state unchanged on Fork or NotPosted.
 % Label: \label{fig:design-modes}
 \begin{tikzpicture}[>=Stealth,font=\footnotesize,
+   edge/.style={->,shorten <=1pt,shorten >=2pt},
    box/.style={draw,rounded corners,align=center,minimum width=2cm,minimum height=7mm},
    st/.style={draw,rounded corners,align=center,inner sep=3pt,minimum height=6mm},
    ok/.style={draw,rounded corners,align=center,inner sep=3pt,draw=green!50!black},
@@ -14,8 +15,8 @@
   \node[box] (s)  at (0,0.5)  {$\sharedS$};
   \node[box] (sl) at (0,-0.7) {labels};
   \node[box] (sk) at (0,-1.9) {identity key};
-  \draw[->] (s) -- node[right,font=\footnotesize]{HKDF} (sl);
-  \draw[->,dashed] (sl) -- node[right,align=left,font=\footnotesize]{register\\at label} (sk);
+  \draw[edge] (s) -- node[right,font=\footnotesize]{HKDF} (sl);
+  \draw[edge,dashed] (sl) -- node[right,font=\footnotesize]{register} (sk);
   \node[align=center,font=\footnotesize] at (0,-2.9) {one write per\\pre-key rotation};
 
   % ---- continuous (CEA) mode (right): compact state machine ----
@@ -25,9 +26,9 @@
   \node[st] (cw) at (4.3,-2.1)  {verified write / read;\\sender occupied-label check};
   \node[ok] (cok) at (4.3,-3.5) {\textbf{Consistent} (confirmed): advance,\\fold secret $I_t \to k_{t+1}$};
   \node[no] (cno) at (9.0,-2.1) {\textbf{Fork} / \textbf{NotPosted}:\\no advance};
-  \draw[->] (cs) -- (cd);
-  \draw[->] (cd) -- (cw);
-  \draw[->,green!50!black] (cw) -- node[right,font=\scriptsize]{confirmed} (cok);
-  \draw[->,red!60!black] (cw.east) -- (cno.west);
+  \draw[edge] (cs) -- (cd);
+  \draw[edge] (cd) -- (cw);
+  \draw[edge,green!50!black] (cw) -- node[right,font=\scriptsize]{confirmed} (cok);
+  \draw[edge,red!60!black] (cw.east) -- (cno.west);
   \node[align=center,font=\footnotesize] at (4.3,-4.5) {one write per ratchet epoch};
 \end{tikzpicture}
