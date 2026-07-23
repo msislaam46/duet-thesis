@@ -11,9 +11,9 @@
   \node[sub,minimum width=2.0cm] (ui) at (1.8,-0.75) {Security UI\\(badge / banner)};
   \draw[->] (client) -- node[above,font=\scriptsize]{verdicts} (ui);
   \node[box,minimum width=2.4cm,fill=black!8] (srv) at (7.0,0.4) {Rust server};
-  \node[box,minimum width=2.0cm] (aud) at (5.8,-2.0) {auditor};
-  \node[box,minimum width=2.0cm,draw=red!60!black] (atk) at (8.2,-2.0) {attacker};
+  \node[box,minimum width=2.0cm] (aud) at (5.0,-2.2) {auditor};
+  \node[box,minimum width=2.0cm,draw=red!60!black] (atk) at (8.4,-2.2) {attacker};
   \draw[<->] (app.east) -- node[above,font=\scriptsize]{HTTP} (srv.west);
-  \draw[->,dashed] (aud) -- node[above,pos=0.5,fill=white,inner sep=1pt,font=\scriptsize]{poll STH + deltas/proofs} (srv);
-  \draw[->,dashed,red!60!black] (atk) -- node[right,font=\scriptsize]{stage attack} (srv);
+  \draw[->,dashed] (aud) -- node[left,align=center,fill=white,inner sep=1pt,font=\scriptsize]{poll STH,\\deltas, proofs} (srv);
+  \draw[->,dashed,red!60!black] (atk) -- node[right,align=center,font=\scriptsize]{stage\\attack} (srv);
 \end{tikzpicture}
