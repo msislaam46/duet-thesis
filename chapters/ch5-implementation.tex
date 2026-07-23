@@ -25,11 +25,11 @@ while the client-side verification and the user-interface hooks are integrated d
 Signal Desktop's TypeScript codebase. The first layer is the \texttt{duet} crate. It is the reference implementation of the design, and it
 is the implementation on which all measurements reported in \cref{ch:eval} are performed. Rust was
 chosen for the measurement core because it is the language of the comparable production systems
-(Parakeet and Meta's \texttt{akd} library are both Rust~\cite{malvai2023parakeet,facebook-akd})
-and because it allows the directory to be built against the libsignal codebase~\cite{libsignal}
-rather than as a separate model. The crate builds and tests without the rest of libsignal, which
-isolates the measurement environment while preserving compatibility with libsignal's integration
-interface. Its data structures and proof formats follow the KeyTrans draft and were designed by comparison
+(Parakeet and Meta's \texttt{akd} library are both Rust~\cite{malvai2023parakeet,facebook-akd}).
+The crate is a standalone workspace with no libsignal dependency, which isolates the measurement
+environment; the connection to libsignal is a separate integration patch at the pre-key-bundle hook
+(\cref{ssec:impl-hooks}), so compatibility with libsignal's integration surface is preserved without
+building against it. Its data structures and proof formats follow the KeyTrans draft and were designed by comparison
 with Signal's own Go implementation~\cite{signal-kt-server}; the cryptographic primitives are
 independently validated against the RFC test vectors (\cref{app:tests}). There is no executable
 Go\,$\leftrightarrow$\,DUET interoperability test: the proof encodings differ deliberately
@@ -38,8 +38,10 @@ Go\,$\leftrightarrow$\,DUET interoperability test: the proof encodings differ de
 The second layer is an integration into the Signal Desktop client~\cite{signal-desktop}, written
 in TypeScript. Its purpose is to demonstrate that the design runs end to end against real identity
 keys inside the Signal Desktop client codebase, rather than solely within the benchmark harness. The client
-is a pure verifier: it re-implements the same verification primitives (prefix-root recomputation,
-Merkle inclusion, ECVRF, Ed25519) so that no trust is placed in the server, and the Rust and
+re-implements the same verification primitives (prefix-root recomputation,
+Merkle inclusion, ECVRF, Ed25519) so that no trust is placed in the server, and it additionally
+performs the client-originated writes of the design: registering its key at the dual-index lookup
+slot and publishing warnings. The Rust and
 TypeScript implementations produce byte-identical outputs on the shared dual-index,
 warning-MAC, CEA, signed-tree-head, ECVRF, and Merkle test vectors (\cref{sec:impl-tests}); the
 deliberately different external wire formats are excluded.
@@ -52,14 +54,18 @@ the in-protocol hooks left to future work in \cref{ch:discussion}: the per-conve
 secret is derived from a deterministic stand-in (\texttt{pocSharedSecret}) rather than bridged out
 of libsignal's live X3DH state, and continuous mode is driven by a deterministically seeded
 simulated Double Ratchet rather than the client's live ratchet. The stand-ins exercise the same
-construction and wire format. This separation has one security consequence. \texttt{pocSharedSecret} is a \emph{public} function of the two
+construction and wire format.
+
+This separation has one security consequence. \texttt{pocSharedSecret} is a \emph{public} function of the two
 parties' identity keys, so unlike a real X3DH/PQXDH secret it is computable by the server (indeed by
 anyone). Under the stand-in the derived labels are therefore \emph{predictable}, not unguessable, and
-the secrecy-dependent guarantees, unlinkability of the slots and the server's inability to
+the secrecy-dependent guarantees, pre-use unpredictability of the slots and the server's inability to
 pre-position a value on them (\cref{ssec:design-properties}), hold only once the genuine secret is
 bridged in. What the prototype validates end-to-end is the construction, wire format, and detection
 logic; those secrecy-dependent properties are argued against the design, not demonstrated by the
-stand-in. As a further prototype boundary, the demo server treats mutex poisoning and VRF
+stand-in.
+
+As a further prototype boundary, the demo server treats mutex poisoning and VRF
 encode-to-curve exhaustion (a fatal abort only if all \num{256} encode-to-curve candidates fail, an
 aggregate event of probability ${\approx}\,2^{-256}$ under the modeled candidate distribution)
 as fatal, aborting rather than degrading gracefully; a production service would report these as
@@ -67,7 +73,7 @@ recoverable errors.
 
 This separation is deliberate. Keeping the cryptographic core independent of the Signal Desktop
 integration lets all measurements be performed on a standalone reference implementation while
-interoperability with a production messaging client is validated independently, and it ensures
+interoperability with a production messaging client is demonstrated at the integration and control-flow level, and it ensures
 that the performance figures of \cref{ch:eval} are not distorted by Electron or user-interface
 overhead. \Cref{fig:impl-overview} maps the implemented components and their communication paths: the TypeScript client
 embedded in Signal Desktop, the Rust reference implementation that houses the directory server (the prefix tree, the Merkle log,
@@ -119,7 +125,7 @@ Module & Specification implemented & Conformance evidence \\
 \texttt{auditor} & cross-vantage fork detection + per-epoch transition audit (\cref{alg:auditor}) & append-only audit + equivocation tests; transition audit catches undeclared deletion and modification \\
 \texttt{monitor} & writer-side persistence check + deletion-evidence bundle (\cref{alg:detect}) & persistence holds while committed; deletion yields evidence that verifies against the server's signed heads \\
 \texttt{cea} & ACKA example CEA construction~\cite{dowling2023acka}; server-composed register/verify with sender pre-post check and advance-only-on-success (\cref{alg:cea}) & cross-implementation vectors vs.\ TypeScript; occupied-label and no-advance-on-fork/not-posted tests \\
-\texttt{hook\_process\_\allowbreak prekey\_bundle} & libsignal pre-key-bundle integration point & the hook at which the live X3DH secret is available \\
+\texttt{hook\_process\_\allowbreak prekey\_bundle} & libsignal pre-key-bundle integration point (integration patch, not part of the standalone directory build) & marks the hook at which the live X3DH secret is available \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -153,7 +159,7 @@ empty-sibling hash chain, so that serving a proof whose co-path meets a compress
 recompute the up-to-256-level chain on every lookup. Its proofs are bitmap-compressed, and a client
 recomputes the root from such a proof to check a lookup without trusting the server.
 
-The whole of this state sits behind a single lock: the server serializes all access to one
+All server state is protected by a single lock: the server serializes all access to one
 \texttt{KTServer} instance through an \texttt{Arc<Mutex<KTServer>>}, so reads and writes are mutually
 exclusive rather than sharded or replicated, the single-machine bound already set out in
 \cref{sec:impl-strategy}. Over this state sits the cryptography that the design leans on most
@@ -169,16 +175,18 @@ from the shared secret by HKDF-SHA256 (RFC~5869), exactly as specified in
 \cref{ssec:design-labels}, and the \texttt{cea} module implements the continuous example construction
 of the ACKA framework~\cite{dowling2023acka} that drives ongoing monitoring.
 
-These modules rest on established cryptographic crates rather than custom implementations.
+These modules delegate most standard primitives to established cryptographic crates; the ECVRF protocol is the exception, implemented directly as noted below.
 \texttt{sha2} provides SHA-256, \texttt{hkdf} the HKDF dual-index derivation, \texttt{ed25519-dalek}
 the Ed25519 signing and verification of the signed tree head, and \texttt{curve25519-dalek} the
 Edwards-curve arithmetic over which the ECVRF of RFC~9381 is implemented in-house. The ECVRF is the
 one hand-written primitive, validated against the published suite-\texttt{0x03} test
 vectors (\cref{sec:impl-tests}). The implementation preserves the asymptotic complexity established
 in the design (\cref{ch:design}), where prefix-tree lookups, log inclusion and consistency proofs, and
-their client-side verification remain logarithmic in the number of entries, while label derivation
-and signature verification remain constant in directory size, the behaviour the evaluation of
-\cref{ch:eval} measures directly. Computing labels and signing roots is separate from answering clients
+the prefix tree walks a fixed 256-bit path whose computation is independent of the number of entries,
+with the transmitted compressed proof carrying approximately $\log N$ non-default siblings; log
+inclusion and consistency proofs and their client-side verification remain logarithmic in the log
+size; and label derivation and signature verification remain constant in directory size, the
+behaviour the evaluation of \cref{ch:eval} measures directly. Computing labels and signing roots is separate from answering clients
 over the network, which is the subject of the last subsection of the core.
 
 \subsection{The HTTP Server and Auditor Binary}\label{ssec:impl-core-server}
@@ -213,12 +221,16 @@ structure~\cite{ietf-keytrans-protocol}. Independently of any auditor, the
 \texttt{monitor} module checks, for a warning's writer, that a committed warning remains present: it retains the inclusion proof
 and signed tree head of the epoch at which the warning committed and, on any later disappearance,
 assembles the inclusion proof, the proven non-inclusion, and the consistency proof between the two
-heads into a bundle that verifies against the server's own signatures. The warning payload itself
+heads into a bundle that verifies against the server's own signatures. The module is exercised by unit tests
+as a reference component; the live background monitor runs the detection and warning-publication path
+only (\cref{app:algorithms}). The warning payload itself
 carries an HKDF-derived MAC (\cref{alg:dualindex}) so that a reader can distinguish a peer-authored
-warning from one the operator injected once it has learned the slot's label. The single element left
+warning from one the operator injected once it has learned the slot's label. One write-path element left
 to a production deployment is authenticated writes. Without account-layer proof of raw-label ownership the
 write-once policy still binds an honest server and the transition audit still binds a malicious one,
-but a malicious client could pre-emptively occupy a currently unoccupied peer slot (\cref{ch:discussion}).
+but a malicious client could pre-emptively occupy a currently unoccupied peer slot. \cref{ch:discussion}
+collects the remaining deployment work, including live secret capture, a freshness policy, persistent
+storage, networked operation, and abuse controls.
 
 \begin{figure}[htbp]
 \centering
@@ -248,7 +260,8 @@ methodology, deferring the results themselves. Measurements are taken two ways. 
 the statistical benchmarks, warming up for a fixed interval and then collecting a configured number
 of samples over a fixed measurement window (its sampling is parameterized, not stopped on any
 convergence criterion), from which it derives confidence intervals by bootstrap resampling and
-emits the full distribution; a lightweight companion harness times a fixed number of iterations
+its per-run sample sets stay in Criterion's own local reports, while the committed corpus records only
+summary statistics. A lightweight companion harness times a fixed number of iterations
 (\num{2000} per operation) against a monotonic clock and records the median, 95th percentile, and a
 95\% confidence half-width \emph{of the mean} (normal approximation) to CSV. The companion medians
 are the figures quoted in \cref{ch:eval}; no formal agreement test between the two is claimed, and
@@ -274,8 +287,8 @@ subject of the next section.
 \section{Signal Desktop Integration}\label{sec:impl-signal}
 
 The \texttt{duet} crate supplies the standalone Rust directory-server process and the reference
-verifier; the TypeScript layer integrates verification into Signal Desktop. It re-implements only what a client needs and places no trust in the server, and the
-whole section is confined to the front end: what the client checks, and where it attaches to
+verifier; the TypeScript layer integrates verification into Signal Desktop. It re-implements only what a client needs and places no trust in the server, and this
+section focuses on the client integration within the multi-process runtime: what the client checks, and where it attaches to
 Signal.
 
 The integration follows a multi-actor architecture. A standalone Rust directory server and an
@@ -314,8 +327,8 @@ inclusion fails to check.
 One behaviour of the verifier is worth drawing out, because it governs what the user sees: the
 client distinguishes unavailability from attack. A server that is merely unreachable must not be
 mistaken for an attacker, so an unreachable server raises a calm, amber unavailability notice and
-never the red man-in-the-middle alarm, which is reserved for a server that responds and is caught
-misbehaving. The next subsection identifies where these checks attach to the messaging client, and
+never the red integrity alarm, which is reserved for a proof or key-integrity failure or an
+authenticated peer warning. The next subsection identifies where these checks attach to the messaging client, and
 therefore where the verifier is invoked.
 
 \subsection{Hooking the Signal Lifecycle}\label{ssec:impl-hooks}
@@ -323,7 +336,9 @@ therefore where the verifier is invoked.
 The client attaches to three lifecycle points of the Signal client: the key-upload path, the
 peer-key-retrieval path, and session establishment. The
 peer-key-retrieval hook is the security-critical one: it runs the full verification chain
-(\cref{ssec:design-verify}) on a peer's key before that key is accepted. On the Rust side, a
+(\cref{ssec:design-verify}) on a peer's key at the retrieval boundary and reports the verdict. The
+hook is advisory; blocking session establishment on a rejecting verdict remains deployment-policy work
+(\cref{ssec:impl-demo}, \cref{ch:discussion}). On the Rust side, a
 hook in libsignal's pre-key-bundle processing marks the point at which the live X3DH secret is
 available: the place where the production binding of the real shared secret would attach, and
 where the prototype instead substitutes its deterministic stand-in. Verdicts appear in the user
@@ -332,26 +347,28 @@ banner, driven by DOM events that signal a warning (a detected key substitution 
 man-in-the-middle) and temporary unavailability. The concrete hook functions and event names are
 listed in \cref{app:apiref}.
 
-\Cref{fig:impl-verify} traces the exchange that the peer-key-retrieval hook performs. The client
-requests the peer's key at its label, and the server replies with the value together with the
-three proofs that bind it: the prefix proof, the log-inclusion proof, and the signed tree
-head. The client verifies all of these locally: it recomputes the prefix root from the
-returned proof, checks that this root is included in the log, and validates the tree-head
-signature, adding the VRF binding of the label on the global-lookup path. It then issues a second
-lookup for the shared warning slot, whose proven inclusion or non-inclusion is what separates a
-clean verdict from a warning. Any check that fails makes the verifier return a rejecting verdict
-rather than a clean one, so a substituted key or a withheld warning cannot pass verification
-silently; the prototype hook reports that verdict as a banner but does not itself yet block session
-establishment (\cref{ssec:impl-demo}).
+\Cref{fig:impl-verify} illustrates the matching branch of the networked \texttt{RemoteKTClient.detectMitm}
+path. The client reads its own dual-index lookup slot $\ell_{\mathsf{self}}$, and the server replies
+with the value together with the proofs that bind it: the prefix proof, the log-inclusion proof, and
+the signed tree head. The client verifies all of these locally: it recomputes the prefix root from the
+returned proof, checks that this root is included in the log, validates the tree-head
+signature, and anchors the head as an append-only extension of its pinned baseline. Only when the
+owner slot verifies and matches the client's own key does it issue a second
+lookup for the shared warning slot, whose proven inclusion or non-inclusion separates a
+clean verdict from a warning. The helper returns \texttt{null} when both lookups pass and a
+\texttt{MitmWarning} when the owner slot is absent or mismatched, or when the warning slot is occupied.
+A proof or head-anchoring failure causes the helper to throw. The live background monitor does not call
+this helper directly: it implements the corresponding checks in \texttt{monitorConversation}
+(\cref{alg:detect}), publishes warnings when required, and reports its own \texttt{MonitorVerdict} or
+verification error through the advisory user interface (\cref{ssec:impl-demo}).
 
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-verify}
-\caption[Peer-key retrieval and warning verification.]{Peer-key retrieval and warning verification. The server returns a value with its
-prefix proof, its log-inclusion proof, and the signed tree head. The client verifies every component
-locally, then verifies inclusion or non-inclusion at the warning slot. Any failed check produces a
-rejecting verdict. The advisory hook displays that verdict but does not block session establishment.
-It is the runtime form of the verification chain of \cref{ssec:design-verify}.}
+\caption[Owner-slot and warning-slot verification.]{Matching branch of
+\texttt{RemoteKTClient.detectMitm}. The client verifies its own dual-index slot against a signed and
+append-only-anchored head. Only a match proceeds to the proof-verified warning-slot lookup. The
+method's outcomes and the separate live-monitor responsibilities are described in the text.}
 \label{fig:impl-verify}
 \end{figure}
 
@@ -381,7 +398,7 @@ the immutable-slot rotation.}
 
 The integration runs as a live, multi-actor demonstration: two linked Signal Desktop clients, the
 standalone Rust server, the auditor, and a scripted attacker, driven by the runner scripts of
-\cref{app:apiref}. Its purpose is to show the detection surfaces firing inside the real user
+\cref{app:apiref}. Its purpose is to demonstrate the detection paths in the Signal user
 interface rather than only in a benchmark. The clearest run is the dual-index substitution
 (scenario A1b). The attacker overwrites the victim's per-conversation slot on the shared server; on the
 victim's next monitor tick the own-key self-check fails, and the client writes the shared warning slot
@@ -438,7 +455,7 @@ transition audit (\textsc{ImmutableRotation}). \emph{Right:} an equivocation A4 
 The global-slot and continuous-mode fronts follow the same shape (\cref{fig:impl-screens-fronts}): for
 the global slot the attacker overwrites the VRF-derived identity entry and the account-wide monitor
 flags it; for continuous mode the attacker injects a forged ratchet key, whose per-epoch fingerprint
-conflicts with the one the directory holds, and the same warning fires. A staged equivocation (A4) is
+conflicts with the one the directory holds, and the same warning is raised. A staged equivocation (A4) is
 the one case the auditor, not the client, catches (\cref{fig:impl-auditor}, right). All three run in an isolated local test harness, against
 synthetic accounts, with no live Signal interception and no real users.
 
@@ -479,7 +496,8 @@ benchmarks.
 \input{figures/tikz/fig-impl-testing}
 \caption[The evidence classes.]{The evidence classes: specification conformance against published vectors, per-module
 unit and invariant tests, cross-language equivalence vectors, end-to-end adversarial scenarios,
-and the performance benchmarks of \cref{ch:eval}, each an independent line of support.}
+and the performance benchmarks of \cref{ch:eval}, each an independent line of support; the first four
+support correctness, the benchmarks support the cost claims of \cref{ch:eval}.}
 \label{fig:impl-testing}
 \end{figure}
 
@@ -530,14 +548,14 @@ test catalogue.
 \toprule
 Test & Component & Property checked & Why it matters \\
 \midrule
-exhaustive inclusion + forgeries & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a substituted value still needs a valid proof (A1, server-side key substitution) \\
-exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (A4) \\
-RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & label integrity and directory privacy (G3); interoperability with Signal's keytrans \\
+exhaustive inclusion + forgeries & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a forged or uncommitted response cannot pass verification; detecting A1 then rests on comparing the proven value against the expected key \\
+exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (G2; rollback/rewrite rejection) \\
+RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & directory privacy follows from the VRF assumption (G3); the vectors establish implementation conformance \\
 cross-implementation vectors & \texttt{dual\_index} & Rust and TypeScript derive identical labels & both parties must address one shared warning slot (G1) \\
-STH signature (happy / tamper / wrong-key) & \texttt{server} & only a correctly signed head is accepted & the client trusts only signed roots (A2, A4) \\
+STH signature (happy / tamper / wrong-key) & \texttt{server} & only a correctly signed head is accepted & signed-head authenticity, the prerequisite of every downstream verdict \\
 equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\Rightarrow$ fork & split-view detection (A4, G4) \\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
-windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding (A2) \\
+windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding: a stale or foreign signed head is rejected \\
 availability routing & monitor (TS) & an unreachable server yields amber, not red & a network partition is not an attack \\
 key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified \\
 \bottomrule
@@ -548,13 +566,13 @@ key-fetch status integrity & hook (TS) & only a proof-verified match emits \text
 \centering
 \caption[Adversarial scenarios and verdicts.]{Adversarial scenarios and their verdicts (Rust \texttt{tests/adversarial.rs}). All eight
 pass; A1 is exercised as two variants (global VRF slot and dual-index session slot), and A5 is a
-first-class asserted test. Quantitative detection latencies are reported in \cref{ch:eval}.}
+first-class asserted test. The detection points follow the scripted one-action-per-epoch demonstration schedule (\cref{ssec:eval-timeline}); end-to-end detection latency is not measured (\cref{ch:eval}).}
 \label{tab:impl-t5b}
 \footnotesize
 \renewcommand{\arraystretch}{1.1}
 \begin{tabularx}{\textwidth}{@{}lXXll@{}}
 \toprule
-Scenario & Scripted attack & Detection mechanism & Observed & Latency \\
+Scenario & Scripted attack & Detection mechanism & Observed & Scripted detection point \\
 \midrule
 A0 & honest baseline & all checks pass & pass & n/a \\
 A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\
@@ -629,7 +647,8 @@ demonstration was not reproducible because attack state persisted in memory; an 
 that rebuilds the server from its seed fixed that, and is also what makes the demonstration repeatable.
 
 \paragraph{Trusted Computing Base and Fail-Closed Behaviour.} On the client, the trusted computing
-base is the verifier and the cryptographic crates it calls (\cref{ssec:impl-core-crypto}), together
+base is the verifier implementation and its cryptographic dependencies (the audited primitive
+libraries of each language, \cref{ssec:impl-core-crypto}), together
 with the operator's two public keys, the STH signing key and the VRF key, pinned on first use. The
 server, the network, and the log are \emph{not} trusted, and every answer they give is re-checked
 against those keys.
@@ -640,7 +659,7 @@ missing log inclusion, a proof whose label does not match the one queried, or a 
 not hold) yields a \emph{reject} verdict rather than falling through to acceptance.
 
 The present Signal Desktop prekey-bundle hook (\cref{ssec:impl-hooks}) marks the boundary between
-what the verifier guarantees and what the prototype currently enforces. It surfaces each rejecting
+what the verifier guarantees and what the prototype currently enforces. It reports every rejecting
 verdict as a red warning but does not abort session establishment. Blocking such sessions is a
 deployment-policy decision left to future work (\cref{ch:discussion}).
 

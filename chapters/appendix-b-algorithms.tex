@@ -348,15 +348,15 @@ persistence component, retained evidence.
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{last\_sth})$\;
     \If{$v=\bot$}{
       \tcc{a committed leaf has disappeared: inclusion under $\mathit{sth}_w$, proven non-inclusion
-           under $\mathit{last\_sth}$, and the consistency proof between them are non-repudiable,
-           publishable proof of deletion (\cref{ssec:design-detection})}
+           under $\mathit{last\_sth}$, and the consistency proof between them are publicly verifiable
+           proof of deletion, attributable to the server's signing key (\cref{ssec:design-detection})}
       $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth}_w.\mathit{size},\mathit{last\_sth}.\mathit{size})$\;
       \textbf{raise} DeletionEvidence$(\lwarn,\mathit{sth}_w,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{last\_sth},\pi_{\mathrm{cons}})$\;
     }
   }
 }
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations},\mathit{id_{self}},\mathit{own\_pk}$)}{
-  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: the client's own VRF entry; fires with zero active conversations}
+  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: the client's own VRF entry; reports an alert even with no active conversations}
   \If{$v_{\mathsf{vrf}}\ne\mathit{own\_pk}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;

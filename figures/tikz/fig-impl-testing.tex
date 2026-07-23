@@ -10,6 +10,7 @@
   \node[st,below=4mm of unit] (xl) {cross-language vectors (Rust $=$ TypeScript)};
   \node[st,below=4mm of xl] (scen) {adversarial scenarios (A0--A5, X1)};
   \node[st,below=4mm of scen] (bench) {performance benchmarks (\cref{ch:eval})};
-  \node[st,right=24mm of xl,fill=black!4] (ev) {implementation\\evidence};
-  \foreach \a in {rfc,unit,xl,scen,bench}{\draw[->,shorten >=2pt] (\a.east) -- (ev.west);}
+  \node[st,right=24mm of xl,fill=black!4] (ev) {implementation and\\evaluation evidence};
+  \foreach \a in {rfc,unit,xl,scen}{\draw[->,shorten >=2pt] (\a.east) -- (ev.west);}
+  \draw[->,dashed,shorten >=2pt] (bench.east) -- (ev.west);
 \end{tikzpicture}

@@ -9,11 +9,13 @@
   \node[lf] (l0) at (0.5,0.4) {$d_0$};
   \node[lf] (l1) at (2.5,0.4) {$d_1$};
   \node[lf,very thick] (l2) at (4,0.4) {$d_2$};
-  \node[lf,fill=black!15] (l3) at (6,0.4) {$h_3$};
+  \node[lf,fill=black!15] (l3) at (6,0.4) {$d_3$};
   \draw (root)--(n01); \draw (root)--(n23);
   \draw (n01)--(l0); \draw (n01)--(l1);
   \draw (n23)--(l2); \draw (n23)--(l3);
-  \node[align=left,font=\footnotesize] at (9,1.6)
-    {Inclusion proof for $d_2$ (bold leaf):\\ shaded copath $\{h_3,\ h_{01}\}$.\\
-     The verifier recomputes\\ $h_{23}$ then $h_0$ from these.};
+  \node[align=left,anchor=west,text width=5.4cm,font=\footnotesize] at (7.2,1.7)
+    {Inclusion proof for $d_2$ (outlined leaf). Copath (shaded): the sibling
+     hash $h_3$ and the subtree hash $h_{01}$; the verifier recomputes $h_{23}$
+     then $h_0$ from these. Each leaf stores data $d_i$, and its tree node is
+     the leaf hash $H_{\mathrm{leaf}}(d_i)$.};
 \end{tikzpicture}
