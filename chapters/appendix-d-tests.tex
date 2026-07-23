@@ -121,7 +121,7 @@ Test & Property checked \\
 \midrule
 \texttt{equivocate\_produces\_conflicting\_signed\_head} & the test server can mint two validly signed heads at one epoch (the A4 fixture) \\
 \texttt{equivocate\_requires\_committed\_epoch} & equivocation requires a committed epoch to fork from \\
-\texttt{verify\_rejects\_malformed\_epoch\_size\_head} & a validly-signed head with $\text{epoch}+1\neq\text{tree\_size}$ is refused (\texttt{MalformedHead}), so a server cannot grow the log past the epoch it signs and hide the later leaves from the auditor \\
+\texttt{verify\_rejects\_malformed\_epoch\_size\_head} & a validly signed head with $\text{epoch}+1\neq\text{tree\_size}$ is refused (\texttt{MalformedHead}), so a server cannot grow the log past the epoch it signs and hide the later leaves from the auditor \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -261,7 +261,7 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & true on a validly signed head (TOFU baseline) \\
 \texttt{remote\_kt\_client} & false when the head carries a bad signature (foreign key) \\
 \texttt{remote\_kt\_client} & rejects a genuine proof presented for a different label than queried \\
-\texttt{remote\_kt\_client} & \texttt{writeWarning}: a forged 409 over a provably-empty slot is censorship (throws, guard unset) \\
+\texttt{remote\_kt\_client} & \texttt{writeWarning}: a forged 409 over a provably empty slot is censorship (throws, guard unset) \\
 \texttt{remote\_kt\_client} & \texttt{writeWarning}: an accepted-then-dropped write (slot still empty) is censorship (throws) \\
 \texttt{remote\_kt\_client} & \texttt{writeWarning}: a genuine occupied slot with a valid inclusion proof counts as published \\
 \texttt{remote\_kt\_client} & \texttt{writeWarning}: a successful confirmed publication resolves \\

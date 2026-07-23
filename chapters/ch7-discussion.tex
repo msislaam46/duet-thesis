@@ -116,7 +116,7 @@ changes the construction being exercised, but both must be replaced before the u
 active-MitM guarantees hold against a real adversary rather than a simulated one. Finally, the
 networked client ties every search-time signed tree head into one append-only chain: the head is
 signature-verified per lookup and its root extends the verified chain, via the same windowed consistency proof used
-for offline catch-up, into the client's pinned baseline, so a validly-signed but \emph{forked} head
+for offline catch-up, into the client's pinned baseline, so a validly signed but \emph{forked} head
 served only in a search response (and thus invisible to an auditor polling the public head alone) is
 rejected the instant it fails to chain. The residual here is not a client-side gap but the fundamental
 limitation already stated above: a \emph{fully consistent} split-world, whose branches each chain from

@@ -606,7 +606,7 @@ derived from a session secret, is HKDF, the HMAC-based extract-and-expand
 key-derivation function of RFC~5869~\cite{rfc5869}. Grounding each construction
 in its specification fixes the exact algorithm rather than an informal sketch of
 it. The draft leaves one question open: it calls for
-``reasonable monitoring windows'' so that intermittently-connected mobile
+``reasonable monitoring windows'' so that intermittently connected mobile
 clients need not replay every missed update, but leaves the mechanism for
 achieving them unspecified~\cite{ietf-keytrans-protocol}. This open question is
 the efficiency problem this thesis returns to in later chapters.
@@ -855,7 +855,7 @@ in 68.70\,ms. It
 sustains around 800 updates per second below 3.5\,s latency, and uses about
 4.5\,GB at five million users, projected to roughly 850\,GB at one
 billion~\cite[pp.~12--13]{malvai2023parakeet}. Its trade-offs are explicit: the
-witness set is a new, professionally-operated trust
+witness set is a new, professionally operated trust
 assumption~\cite[p.~14]{malvai2023parakeet}, its storage cost is effectively
 doubled by design to support concurrent reads and
 writes~\cite[p.~14]{malvai2023parakeet}, and detection remains
@@ -1393,7 +1393,7 @@ check~\cite[pp.~5, 10]{whatsapp2023whitepaper}. No existing VKD provides a
 peer-to-peer warning channel, a gap PRISM states in general terms~\cite[p.~6]{pusch2025prism}.
 
 \paragraph{Problem 2 (Linear Offline Catch-Up).} A mobile,
-intermittently-connected client faces an efficiency gap that the per-epoch
+intermittently connected client faces an efficiency gap that the per-epoch
 protocol does not address: a client offline for $W$ epochs must verify $W$
 sequential consistency proofs before it can trust the current head. Each proof is
 taken over the append-only \emph{epoch log}, which appends one directory root per
@@ -1488,7 +1488,7 @@ size independent of the current head.
 
 \paragraph{Mechanism 3 (Systems): Cross-Vantage Auditor.} This addresses Problem~3
 (split-view equivocation; \cref{sec:bg-open}), the inherited key-transparency requirement: it
-cross-checks tree heads observed from a second vantage point and flags two validly-signed
+cross-checks tree heads observed from a second vantage point and flags two validly signed
 heads at one epoch as an equivocation, detecting the split-view that local checks cannot.
 Mechanisms~1 through~3 are the transparency-log half of the work.
 
