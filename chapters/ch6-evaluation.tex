@@ -841,7 +841,7 @@ in-memory prototype deliberately does not model.
 Finally, the two operating modes bound the deployment choice rather than forcing it. Session mode is
 the deployable default (one directory write per signed-pre-key rotation, at parity with existing
 key-transparency systems) while continuous mode offers finer-grained, ACKA CEA-style detection at a
-write amplification of $\approx 720\times$ under the hourly-epoch benchmark model. The ratio scales
+write amplification of $\approx 720\times$ under the benchmark model with hourly epochs. The ratio scales
 with ratchet cadence rather than sitting at a fixed cap (\cref{ssec:eval-modes}). The measured
 verification path meets the latency target, but the $O(N)$ epoch commit, the memory footprint,
 persistence, and networked operation remain deployment limitations rather than solved problems.
