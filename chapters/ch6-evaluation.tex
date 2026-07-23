@@ -232,7 +232,7 @@ Operation & $N=10^3$ & $N=10^4$ & Scaling \\
 \midrule
 Server full search (gen, incl.\ VRF prove) & \SI{119.5}{\micro\second} & \SI{119.7}{\micro\second} & VRF-dominated, $\approx$flat over $10^3$--$10^4$ \\
 Prefix-root verify (client) & \SI{25.9}{\micro\second} & \SI{25.9}{\micro\second} & grows only with proof depth ($\sim\lg N$) \\
-VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} & constant-time \\
+VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} & flat in $N$ \\
 \textbf{Full signed-head lookup verification (windowed baseline)} & \textbf{\SI{128.1}{\micro\second}} & \textbf{\SI{128.6}{\micro\second}} & \textbf{$\approx$flat over $10^3$--$10^4$} \\
 \bottomrule
 \end{tabular}
@@ -242,7 +242,7 @@ The most important result is the last row, M3: the full signed-head lookup verif
 root recompute, log inclusion, and the Ed25519 signed-tree-head signature) costs about
 \SI{128}{\micro\second} over the measured $10^3$--$10^4$ range and grows only weakly with the
 directory (\cref{ssec:eval-scale}): its dominant cost centre, the VRF verify (\SI{76.0}{\micro\second}),
-is a constant-time elliptic-curve operation, and the prefix recompute (\SI{25.9}{\micro\second}) grows
+is an elliptic-curve operation whose cost is independent of directory size, and the prefix recompute (\SI{25.9}{\micro\second}) grows
 only with proof depth ($\sim\lg N$). The system therefore meets its sub-millisecond client-verify target with
 roughly sevenfold headroom, and does so while including the VRF verification that comparable systems
 exclude from their reported figures. The server-side full search is likewise near-flat over this
@@ -250,7 +250,7 @@ range, and this is a direct consequence of the compressed-leaf chain memo (\cref
 Before that optimization, proof generation grew with directory depth (from \SI{107}{\micro\second} to
 \SI{159}{\micro\second} across $N=10^3$--$10^4$) because each non-inclusion co-path recomputed a
 compressed leaf's \num{256}-level hash chain. Memoizing that chain top removes the $N$-dependent
-component, leaving generation dominated by the constant-time VRF prove: it reads \SI{119.5}{\micro\second}
+component, leaving generation dominated by the fixed-cost VRF prove: it reads \SI{119.5}{\micro\second}
 at $N=10^3$ and \SI{119.7}{\micro\second} at $N=10^4$, while the scale run's search median reads
 \SI{117.6}{\micro\second} at $N=10^6$ and \SI{141.2}{\micro\second} at $N=10^7$
 (\cref{ssec:eval-scale}): flat through $10^6$, then rising at $10^7$. Verification shows the same
@@ -417,7 +417,7 @@ Criterion group, which repeatedly times a single fixed lookup path, is explorato
 reported scale figure. Against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at
 $N\le10^4$ (\cref{tab:eval-latency}), the full check rises by roughly \num{15}\,\%
 (about \SI{19}{\micro\second}) while $N$ grows by four orders of magnitude. The two components that
-could carry a depth-driven increase, the prefix walk and the constant-time VRF, are themselves flat
+could carry a depth-driven increase, the prefix walk and the directory-size-independent VRF, are themselves flat
 across the same range, so the residual is not a tree-depth effect. The experiment does not isolate its
 source; possible contributors include the larger proof representation and differences between the two
 measurement contexts (\cref{sec:eval-method}). The claim the data supports is that the check grows far
@@ -433,7 +433,7 @@ Server-side maintenance costs decide how large a deployment one machine can sust
 \SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$: approximately unchanged over the measured range, for the same reason proof
 generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
 the unchanged user identifier, which a production server would cache, leaving only tens of
-microseconds of tree work. The verifiable random function, measured in isolation, is constant-time
+microseconds of tree work. The verifiable random function, measured in isolation, is independent of directory size
 to prove and to verify, confirming its $N$-independence; its isolated rows in \cref{app:benchmarks}
 differ from the in-path figures by a few percent in either direction, the benchmark-context and
 run-order sensitivity noted in \cref{sec:eval-method}. M11 measures the local CPU cost of one complete signed-head KT lookup verification invoked at the

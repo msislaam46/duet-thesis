@@ -3,7 +3,7 @@
 \begin{tikzpicture}[>=Stealth,font=\footnotesize,
    st/.style={draw,rounded corners,minimum width=4.6cm,minimum height=7mm,align=center}]
   \node[st] (rfc) {RFC test vectors (VRF, log proofs, HKDF)};
-  \node[st,below=4mm of rfc] (unit) {unit + property tests (per module)};
+  \node[st,below=4mm of rfc] (unit) {unit + invariant tests (per module)};
   \node[st,below=4mm of unit] (xl) {cross-language vectors (Rust $=$ TypeScript)};
   \node[st,below=4mm of xl] (scen) {adversarial scenarios (A0--A5, X1)};
   \node[st,below=4mm of scen,fill=black!4] (bench) {performance benchmarks (\cref{ch:eval})};

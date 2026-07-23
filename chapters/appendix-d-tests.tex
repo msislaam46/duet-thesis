@@ -1,7 +1,7 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
-The test corpus comprises the following groups. The Rust core is covered by \num{97} unit and property tests across
+The test corpus comprises the following groups. The Rust core is covered by \num{97} unit and invariant tests across
 nine modules, the \num{8}-scenario adversarial integration suite, and \num{22} tests in the
 \texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
 five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-failure test, and nine
@@ -15,7 +15,7 @@ complete listing follows.
 % ----------------------------------------------------------------------------
 \section{Rust Unit and Property Tests}\label{sec:tests-rust}
 
-The unit and property tests divide into three groups: the cryptographic primitives and data
+The unit and invariant tests divide into three groups: the cryptographic primitives and data
 structures (\cref{tab:tests-rust-prim}), the server and its verification chain
 (\cref{tab:tests-rust-server}), and the auditor, warning monitor, and continuous-authentication
 mode (\cref{tab:tests-rust-system}).

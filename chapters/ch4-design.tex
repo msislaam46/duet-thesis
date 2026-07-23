@@ -509,8 +509,9 @@ band, a composition ACKA itself does not provide.
 \caption[Session mode versus continuous mode.]{Session mode, shown on the left, derives labels from the initial secret $\sharedS$
 and registers the identity key once per pre-key rotation. Continuous mode derives a label and
 fingerprint from the pre-update state $k_t$ at every epoch and authenticates the public ratchet key
-$T_t$. The chain advances only after a confirmed \textsc{consistent} result, when $I_t$ is
-incorporated to produce $k_{t+1}$. It remains unchanged after \textsc{fork} or \textsc{notposted}.}
+$T_t$. The writer's chain advances once its publication is confirmed committed; the verifier's chain
+advances only on a \textsc{consistent} result. In both cases advancing incorporates $I_t$ to produce
+$k_{t+1}$; the state remains unchanged after \textsc{fork} or \textsc{notposted}.}
 \label{fig:design-modes}
 \end{figure}
 

@@ -387,7 +387,10 @@ Each head is processed as one all-or-nothing transaction: the epoch range is rep
 passes, while a failed delta fetch aborts and is retried on the next poll rather than raising a fork
 alarm. After committing, \textsc{Consistent} (a valid second-vantage head agreed) is distinguished
 from \textsc{ConsistentNoVantage} (no valid second-vantage head was available), so that a missing cross-vantage check is never mistaken
-for a passed one; the unit-test library auditor is an equivalent incremental variant.
+for a passed one. A grown head whose consistency proof is missing or unparseable returns
+\textsc{ConsistencyUnavailable} rather than \textsc{Fork}: append-only growth could not be verified
+and the baseline does not advance, but a withheld proof is not by itself proof of equivocation. The
+unit-test library auditor is an equivalent incremental variant.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
@@ -403,6 +406,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
     \lIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last}.\mathit{size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
     \If{$\mathit{sth_{new}}.\mathit{size}>\mathit{last}.\mathit{size}$}{
       $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
+      \lIf{$\pi=\bot$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnavailable} \tcp*[f]{growth unverifiable: refusal or fork}}
       \lIf{$\neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
     }
   }

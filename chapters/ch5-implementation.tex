@@ -60,7 +60,8 @@ pre-position a value on them (\cref{ssec:design-properties}), hold only once the
 bridged in. What the prototype validates end-to-end is the construction, wire format, and detection
 logic; those secrecy-dependent properties are argued against the design, not demonstrated by the
 stand-in. As a further prototype boundary, the demo server treats mutex poisoning and VRF
-encode-to-curve exhaustion (probability ${\approx}\,2^{-256}$ per attempt, over at most 256 attempts)
+encode-to-curve exhaustion (a fatal abort only if all \num{256} encode-to-curve candidates fail, an
+aggregate event of probability ${\approx}\,2^{-256}$ under the modeled candidate distribution)
 as fatal, aborting rather than degrading gracefully; a production service would report these as
 recoverable errors.
 
@@ -69,9 +70,10 @@ integration lets all measurements be performed on a standalone reference impleme
 interoperability with a production messaging client is validated independently, and it ensures
 that the performance figures of \cref{ch:eval} are not distorted by Electron or user-interface
 overhead. \Cref{fig:impl-overview} maps the implemented components and their communication paths: the TypeScript client
-embedded in Signal Desktop, the Rust reference implementation that houses all server-side components of the
-prototype (the prefix tree, the Merkle log, the signed-tree-head signer, the ECVRF, the dual-index
-derivation, and the continuous-monitoring layer) reached over HTTP, and the independent Rust
+embedded in Signal Desktop, the Rust reference implementation that houses the directory server (the prefix tree, the Merkle log,
+the signed-tree-head signer, and the ECVRF) together with reference implementations of the
+client-side constructions (the dual-index derivation and the continuous-monitoring layer), reached
+over HTTP, and the independent Rust
 auditor that polls the server's signed tree head, epoch deltas, and consistency proofs from a separate vantage
 point. The remainder of this chapter follows the boundary the figure draws: \cref{sec:impl-modules}
 details the Rust cryptographic core, \cref{sec:impl-signal} the TypeScript client, \cref{sec:impl-tests}
@@ -82,7 +84,7 @@ overcome end to end.
 \centering
 \input{figures/tikz/fig-impl-overview}
 \caption[The implemented system.]{The implemented system. The TypeScript client verifies keys against the Rust
-reference server over HTTP. An independent auditor retrieves the signed tree head, epoch deltas, and
+reference implementation (directory server plus reference client constructions) over HTTP. An independent auditor retrieves the signed tree head, epoch deltas, and
 consistency proofs. Shared test vectors require byte-for-byte agreement for the covered operations
 and inputs. \Cref{app:apiref} specifies the HTTP API.}
 \label{fig:impl-overview}
@@ -467,7 +469,7 @@ would be weak evidence of agreement in the next.
 
 On top of that contract, testing is organized around two questions: whether each component
 conforms to its specification, and whether the system as a whole detects the attacks of the threat
-model. The first is addressed by unit and property tests close to the code; the second by an
+model. The first is addressed by unit and invariant tests close to the code; the second by an
 adversarial scenario suite. \Cref{fig:impl-testing} traces the testing pipeline, from
 specification conformance up to the end-to-end scenarios and performance benchmarks.
 
@@ -475,7 +477,7 @@ specification conformance up to the end-to-end scenarios and performance benchma
 \centering
 \input{figures/tikz/fig-impl-testing}
 \caption[The testing pipeline.]{The testing pipeline: specification conformance against published vectors, per-module
-unit and property tests, cross-language equivalence vectors, end-to-end adversarial scenarios,
+unit and invariant tests, cross-language equivalence vectors, end-to-end adversarial scenarios,
 and the performance benchmarks of \cref{ch:eval}.}
 \label{fig:impl-testing}
 \end{figure}

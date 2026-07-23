@@ -451,8 +451,9 @@ question ``is this record in the log, at this position?'' without shipping the
 whole log: it consists of the sibling hashes along the path from the record's
 leaf up to the root, and the verifier recomputes the root from the record and
 those siblings and compares it against the published tree head. For a tree of
-$N$ leaves that path has length $\lceil\log_2 N\rceil$, so the proof is
-logarithmic in the size of the directory rather than linear~\cite[\S2.1.3]{rfc9162}.
+$N$ leaves that path has length at most $\lceil\log_2 N\rceil$, the exact length depending on the
+leaf's position and the tree size, so the proof is logarithmic in the size of the directory rather
+than linear~\cite[\S2.1.3]{rfc9162}.
 A consistency proof answers a different question (``is the log I see now an
 append-only extension of the one I saw before?'') by revealing the few
 internal nodes that let a verifier confirm that an earlier tree head is

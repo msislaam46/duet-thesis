@@ -24,7 +24,7 @@
   \node[st] (cs) at (4.3,0.5)   {state $k_t$};
   \node[st] (cd) at (4.3,-0.8)  {derive $L_t,F_t$ over $k_t$ (pre-update);\\authenticate public $T_t$};
   \node[st] (cw) at (4.3,-2.1)  {verified write / read;\\sender occupied-label check};
-  \node[ok] (cok) at (4.3,-3.5) {\textbf{Consistent} (confirmed): advance,\\fold secret $I_t \to k_{t+1}$};
+  \node[ok] (cok) at (4.3,-3.5) {writer: confirmed write; verifier: \textbf{Consistent}\\advance: fold $I_t \to k_{t+1}$};
   \node[no] (cno) at (9.0,-2.1) {\textbf{Fork} / \textbf{NotPosted}:\\no advance};
   \draw[edge] (cs) -- (cd);
   \draw[edge] (cd) -- (cw);
