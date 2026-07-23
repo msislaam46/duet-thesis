@@ -202,9 +202,12 @@ with a treatment of how joins and removals interact with the warning slot.
 \paragraph{Query Privacy via a Distributed OPRF.} A privacy property not provided by the deployed
 systems surveyed here, hiding the queried identity from the operator, is a natural extension. A client could blind its
 lookup identity with an oblivious pseudorandom function (RFC~9497~\cite{rfc9497}) before the server
-applies its VRF, so that the operator no longer learns which identity is being resolved. Hiding who
-makes the request is a separate, transport-layer problem, requiring an anonymizing relay or
-private-information-retrieval layer on top. Signal has shipped a
+applies its VRF, so that the operator no longer learns the raw lookup identity, subject to
+redesigning registration and the index association around the blinded value. Two further metadata
+problems are distinct from this and from each other: query privacy against the operator (hiding which
+entry is fetched, a private-information-retrieval question) and requester network anonymity (hiding
+who issues the request, an anonymizing-relay question). This is only a direction, not a complete
+architecture. Signal has shipped a
 distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal}, so the engineering pattern is proven in
 Signal's own lineage; adapting it to the label derivation is the open work.
 

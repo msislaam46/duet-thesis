@@ -329,10 +329,12 @@ each goal precise, and \cref{ch:eval} demonstrates each goal empirically.
 
 \paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
 adversary (A3) substitutes a key, an honest party detects it once an honest monitor completes the
-required verified lookups and, where the peer's warning is needed, that warning write commits. G1 is
-realized bidirectionally: the victim detects the wrong key under its own name, and a peer that has
-pinned the victim's key detects it on its next key-fetch; either can raise the in-band warning, so an
-offline victim remains covered. The scripted demonstration flags the change within one or two epochs
+required verified lookups and, where the peer's warning is needed, that warning write commits. For the established-pair attacks A1 and A5, G1 is realized bidirectionally through the in-band
+warning: the victim detects the wrong key under its own name, and a peer that has pinned the
+victim's key detects it on its next key-fetch; either can raise the shared warning, so an offline
+victim remains covered. First-contact substitution (A3) is instead caught by the divergence of the
+secret-derived lookup label together with comparison against the global VRF-bound identity entry, not
+by the warning channel. The scripted demonstration flags the change within one or two epochs
 of the next check, which is a demonstration schedule rather than a protocol-wide latency bound.
 
 \paragraph{G2: Consistency Across Offline Windows.} A client returning after an

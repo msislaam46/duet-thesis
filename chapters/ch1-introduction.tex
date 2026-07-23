@@ -61,8 +61,8 @@ This thesis makes four principal contributions:
 
 \paragraph{Conceptual.} The conceptual contribution is a \emph{dual-index warning scheme}, a per-conversation construction in which the HMAC-based
 Extract-and-Expand Key Derivation Function (HKDF) turns the shared conversation secret into two
-directional lookup labels and one shared warning slot that either party can raise
-and that, for an honestly established and monitored conversation, a malicious server can neither
+directional lookup labels and one shared warning slot to which either party can write an
+authenticated alert and that, for an honestly established and monitored conversation, a malicious server can neither
 pre-position nor censor undetectably, turning a silent substitution into an automatic, bidirectional,
 in-band alert (\cref{sec:design-dual}). More broadly,
 the thesis presents this scheme as a concrete instantiation and measurement of the abstract

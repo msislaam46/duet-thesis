@@ -40,7 +40,7 @@ in TypeScript. Its purpose is to demonstrate that the design runs end to end aga
 keys inside the Signal Desktop client codebase, rather than solely within the benchmark harness. The client
 is a pure verifier: it re-implements the same verification primitives (prefix-root recomputation,
 Merkle inclusion, ECVRF, Ed25519) so that no trust is placed in the server, and the Rust and
-TypeScript implementations are held to byte-for-byte agreement on the shared dual-index,
+TypeScript implementations produce byte-identical outputs on the shared dual-index,
 warning-MAC, CEA, signed-tree-head, ECVRF, and Merkle test vectors (\cref{sec:impl-tests}); the
 deliberately different external wire formats are excluded.
 

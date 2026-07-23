@@ -1534,7 +1534,7 @@ and the cross-vantage auditor, alongside the server, auditor, and benchmark bina
 verification is hooked into the key-upload and key-fetch paths. A standalone networked
 directory server and an independent auditor service back a two-client, cross-process
 demonstration of substitution and equivocation being caught in band, and the Rust and
-TypeScript builds are held to byte-for-byte agreement by shared cross-implementation test
+TypeScript builds produce byte-identical outputs on the shared cross-implementation test
 vectors. The prototype is deliberately single-machine and in-memory, with the genuine X3DH binding and the
 live-ratchet hook scoped as deployment work (\cref{ch:discussion}); within those boundaries it
 delivers the two-client demonstration just described. \Cref{ch:threat} next fixes the adversary
