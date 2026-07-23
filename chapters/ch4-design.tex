@@ -655,7 +655,7 @@ The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:
   design leaves unmodified; the prototype simulates its epoch input (\cref{ch:impl}).
   \item \textbf{$\CEA$}: a primitive that derives per-epoch fingerprints and labels
   from public keying material and a chained secret state.
-  \item \textbf{$\Logsec$}: an abstract secure log (append-only, with consistency and exclusion); its concrete realization left open.
+  \item \textbf{$\Logsec$}: ACKA's abstract secure-log interface, implemented here by DUET's append-only directory with consistency and exclusion proofs.
 \end{itemize}
 
 The three mechanisms of this chapter, together with the cross-vantage auditor, form the
