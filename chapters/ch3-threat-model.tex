@@ -21,7 +21,7 @@ separately: the malicious directory server of the key-transparency literature
 Continuous Key Agreement framework (\cref{sec:bg-acka}). These adversaries are
 historically isolated by incompatible assumptions: key transparency distrusts the
 infrastructure but ignores the continuous channel, whereas ACKA defends the
-continuous channel but abstracts the log behind a security definition rather than realizing a
+continuous channel but abstracts the log behind a security definition rather than constructing a
 distrusted one. By synthesizing these
 adversaries into a single, unified threat model, this thesis establishes a strictly
 stronger baseline against which end-to-end secure messaging can be evaluated.
@@ -74,7 +74,7 @@ The interactions between these actors define three trust boundaries
 \emph{client--server} boundary is semi-trusted: the standard key-transparency
 trust configuration inherited from CONIKS and the IETF architecture (\cref{sec:bg-logs}), in
 which the server is relied upon for availability but not for honesty, and not the
-abstract, security-defined log that ACKA leaves to be realized. The \emph{client--network} boundary is
+abstract, security-defined log that ACKA leaves to be implemented. The \emph{client--network} boundary is
 untrusted: the full active network adversary described below is adopted, the same
 adversary ACKA defends against in its continuous mode (\cref{sec:bg-acka}). The
 \emph{server--auditor} boundary is independent: the auditor's value is that its
@@ -124,7 +124,7 @@ can do so without being caught. It may substitute the key it serves for a user,
 censor writes a client attempts to make to the log, and equivocate by presenting
 two internally consistent but divergent views of the directory to different
 clients. This is the adversary key transparency was built to expose
-(\cref{sec:bg-vkd}), and it lies outside ACKA's detection theorem, which assumes a Logsec-secure log rather than realizing one against such a server.
+(\cref{sec:bg-vkd}), and it lies outside ACKA's detection theorem, which assumes a Logsec-secure log rather than constructing one against such a server.
 
 \paragraph{What the Adversary Cannot Do.} The model grants the adversary the
 capabilities above and no more. It cannot break the underlying primitives: it
@@ -338,7 +338,7 @@ condition.
 
 \paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
 adversary (A3) substitutes a key, an honest party detects it once an honest monitor completes the
-required verified lookups and, where the peer's warning is needed, that warning write commits. For the established-pair attacks A1 and A5, G1 is realized bidirectionally through the in-band
+required verified lookups and, where the peer's warning is needed, that warning write commits. For the established-pair attacks A1 and A5, G1 provides bidirectional detection through the in-band
 warning: the victim detects the wrong key under its own name, and a peer that has pinned the
 victim's key detects it on its next key-fetch; either can raise the shared warning, so an offline
 victim remains covered. First-contact substitution (A3) is instead caught by the divergence of the
