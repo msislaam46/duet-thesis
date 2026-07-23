@@ -149,7 +149,8 @@ warning slot is genuinely empty rather than merely unreported.
   \KwRet $(\mathit{value}\text{ or }\bot,\ \pi)$\;
 }
 \Fn{\normalfont\textsf{RootFromProof}($\pi$)}{
-  $c\gets e$ \textbf{if} $\pi.\mathit{value}=\bot$ \textbf{else} $\Hleaf(\pi.\mathit{kind}\concat\pi.\mathit{label}\concat\pi.\mathit{value})$ \tcp*{kind authenticated by the root}\;
+  \uIf{$\pi.\mathit{value}=\bot$}{$c\gets e$ \tcp*[f]{absence: leaf hash is the empty hash}}
+  \Else{$c\gets\Hleaf(\pi.\mathit{kind}\concat\pi.\mathit{label}\concat\pi.\mathit{value})$ \tcp*[f]{kind authenticated by the root}}
   \For{$i\gets 0$ \KwTo $255$}{
     $s\gets$ next sibling from $\pi.\mathit{siblings}$ if $\mathit{bitmap}[i]$ set, else $e$\;
     \lIf{$c=e\wedge s=e$}{\textbf{continue}}
@@ -228,7 +229,7 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
 \Fn{\normalfont\textsf{WriteWarning}($\mathit{server},\lwarn,\mathit{alert},\mathit{PRK},\mathit{id_A},\mathit{id_B}$)}{
   $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$ \tcp*{canonical identities bind $k_{\mathrm{mac}}$ to the pair}
   \uIf{$\mathit{server}.\textsf{UpdateRaw}(\lwarn,\ \mathit{alert}\concat\textsf{MAC}(k_{\mathrm{mac}},\mathit{alert}))$ succeeds}{
-    $\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{our write landed: seal it into an epoch}
+    $\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{the write landed: seal it into an epoch}
   }
   \uElseIf{\normalfont write-once conflict (typed 409)}{
     \emph{skip} \textsf{CommitEpoch} \tcp*{slot claims occupied; tolerated, not trusted}
@@ -251,7 +252,8 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
 \paragraph{Client verification (Algorithm~\ref{alg:client}).} These procedures are the client's entire
 trust boundary: every value it accepts is checked against a signed tree head before use.
 \textsf{VerifiedLookup} returns a value only when the prefix proof, the log-inclusion proof, and the
-STH signature all verify and bind to the caller's pinned head, and it fails closed on any mismatch.
+STH signature all verify, bind to the caller's pinned head, and carry the pinned configuration
+commitment, and it fails closed on any mismatch.
 \textsf{Register}, \textsf{RetrieveKey}, and \textsf{WindowedCatchUp} build on it to establish, read,
 and re-synchronize client state. In the implementation these are provided by monitor-level composition
 (the background \texttt{monitorConversation} loop) rather than as one-to-one methods; \textsf{RetrieveKey}'s
@@ -263,8 +265,8 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
 \Fn{\normalfont\textsf{VerifiedLookup}($\mathit{server},\mathit{label},\mathit{sth},[\mathit{user\_id},\pi_{\mathrm{vrf}}]$)}{
   $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
-  \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to the caller's verified head; a signed but stale/forked head is rejected}
-  \Req $\mathit{sth'}.\mathit{config\_hash}=\textsf{H}(P)\ \wedge\ \mathit{sth'}.\mathit{epoch}+1=\mathit{sth'}.\mathit{tree\_size}$ \tcp*{policy pin ($P$ = pinned keys/suite/version/cadence/policy) and well-formed head}
+  \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to caller's verified head}
+  \Req $\mathit{sth'}.\mathit{config\_hash}=\textsf{H}(P)\ \wedge\ \mathit{sth'}.\mathit{epoch}+1=\mathit{sth'}.\mathit{tree\_size}$ \tcp*{policy pin + well-formed head}
   \Req $\pi_{\mathrm{prefix}}.\mathit{label}=\mathit{label}$ \tcp*{label binding (every path): the proof must concern the exact queried label}
   \If{$\mathit{user\_id}$ given}{
     $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\mathit{label}$ \tcp*[f]{VRF path: the derived label equals the requested one}\;
@@ -354,7 +356,7 @@ persistence component, retained evidence.
   }
 }
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations},\mathit{id_{self}},\mathit{own\_pk}$)}{
-  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: our own VRF entry; fires with zero active conversations}
+  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: the client's own VRF entry; fires with zero active conversations}
   \If{$v_{\mathsf{vrf}}\ne\mathit{own\_pk}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
@@ -379,19 +381,18 @@ persistence component, retained evidence.
 
 \clearpage
 \paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor is an external verifier at an
-independent vantage point: it fetches signed heads and per-epoch deltas and checks each declared root
-against its own \emph{replica}, an independently reconstructed copy of the committed directory
-replayed from epoch~0 (after the IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}).
-Each head is processed as one all-or-nothing transaction: the epoch range is replayed onto a
-\emph{candidate replica} and committed to the live replica, cursor, and baseline only if every stage
-passes, while a failed delta fetch aborts and is retried on the next poll rather than raising a fork
-alarm. After committing, \textsc{Consistent} (a valid second-vantage head agreed) is distinguished
-from \textsc{ConsistentNoVantage} (no valid second-vantage head was available), so that a missing cross-vantage check is never mistaken
-for a passed one; the unit-test library auditor is an equivalent incremental variant.
+independent vantage: it replays each declared root against its own \emph{replica}, reconstructed from
+epoch~0 (IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}), and commits a head as
+one all-or-nothing transaction only if every stage passes (a failed delta fetch is retried). The
+verdicts separate availability from equivocation. \textsc{ConsistencyUnverified} covers any
+consistency proof, primary or cross-vantage, that is missing, unparseable, or fails to verify, and it
+holds the baseline. \textsc{Fork} is reserved for directly evidenced equivocation: two validly signed heads of the same
+size with different roots. \textsc{ConsistentNoVantage} marks a commit reached with no valid
+second vantage.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
-\caption{Networked auditor (fork detection and per-epoch transition audit)}\label{alg:auditor}
+\caption{Networked auditor: per-epoch audit (\textsf{AuditEpoch})}\label{alg:auditor}
 \KwData{trusted baseline head $\mathit{last}$ (initially $\bot$); committed $\mathit{replica}$ (a PrefixTree,
 empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
@@ -403,7 +404,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
     \lIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last}.\mathit{size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
     \If{$\mathit{sth_{new}}.\mathit{size}>\mathit{last}.\mathit{size}$}{
       $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
-      \lIf{$\neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+      \lIf{$\pi=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{append-only unverified}}
     }
   }
   $\mathit{candidate}\gets \textsf{clone}(\mathit{replica})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
@@ -416,10 +417,16 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
   $\mathit{vb}\gets\textsf{DetectFork}(\mathit{peer}.\textsf{CurrentHead}(),\mathit{sth_{new}},\mathit{server})$\;
   \lIf{$\mathit{vb}=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+  \lIf{$\mathit{vb}=\textsc{ConsistencyUnverified}$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{hold; no fork}}
   $\mathit{replica}\gets \mathit{candidate}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
   \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed, no G4}}
   \KwRet \textsc{Consistent}\;
 }
+\end{algorithm}
+
+\begin{algorithm}[H]
+\addtocounter{algocf}{-1}%
+\caption{Networked auditor, continued (\textsf{AuditTransition} and \textsf{DetectFork})}
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{candidate},e,\mathit{delta}_e,r_{\mathrm{head}},\mathit{size}_{\mathrm{head}}$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
   \lIf{$\pi_{\mathrm{incl}}$ does not prove leaf index $e$ with value $r_{e}$ included under $r_{\mathrm{head}}$ at tree size $\mathit{size}_{\mathrm{head}}$}{\KwRet \textsc{TransitionFailed}}
@@ -438,7 +445,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \Else{
     $m,n\gets$ smaller, larger of $\mathit{sth_b}.\mathit{size}$ and $\mathit{sth_{new}}.\mathit{size}$\;
     $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(m,n)$\;
-    \lIf{refused $\vee\ \neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m,n,\ \pi)$}{\KwRet \textsc{Fork}}
+    \lIf{$\pi=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m,n,\ \pi)$}{\KwRet \textsc{ConsistencyUnverified} \tcp*[f]{unverified: not proven equivocation}}
   }
   \KwRet \textsc{Consistent}\;
 }

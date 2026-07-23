@@ -225,8 +225,8 @@ cannot access these slots.}
 This corrects two simplifications that appeared in early descriptions of the scheme: it
 uses HKDF rather than a bare hash of $\sharedS$, and it uses three labels with canonical
 ordering applied to the warning label alone. Cross-implementation test vectors verify the
-byte-for-byte equivalence of the derivation across the Rust and TypeScript implementations
-(\cref{app:algorithms}).
+byte-for-byte equivalence of the derivation across the Rust and TypeScript implementations on the
+committed cross-language vectors (\cref{app:algorithms}).
 
 \FloatBarrier
 \subsection{The Three Security Properties}\label{ssec:design-properties}
@@ -242,8 +242,7 @@ all, on the one warning slot they both watch.
 \paragraph{Unlinkability.} The server does not hold $\sharedS$, so the HKDF outputs are
 pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
 any other leaf in the tree; it can therefore neither pre-position a value on the warning
-slot nor recognize and selectively censor it. This property must be stated with its precise scope:
-it holds up to the moment a label is first used. Any lookup or write necessarily reveals the queried
+slot nor recognize and selectively censor it. This protection holds only until the label is first used. Any lookup or write necessarily reveals the queried
 label to the operator, and repeated monitoring reveals which labels are read together, so after
 first use the operator can associate the three labels of a conversation with the clients that query
 them. What the scheme relies on is therefore unpredictability \emph{before} first use (the server
@@ -355,9 +354,11 @@ silent act into one that the warning's \emph{writer} detects and can prove; it d
 alert a \emph{peer} who had not yet read the warning during the window in which it was visible. It
 is the transition audit that closes this residual, because an auditor that validates every epoch's
 update set detects the deletion independently of either party. With these safeguards in place, the
-server's only remaining suppression strategy is to refuse service entirely (to decline lookups,
-withhold epochs, or withhold the auditor's disclosure), producing an observable denial of service,
-which is itself a signal (attack A2, warning censorship). All three safeguards are implemented in the prototype: the
+server's only remaining suppression strategy is refusal: withholding the lookup, the epoch, or the
+auditor's disclosure, whether for all clients or selectively for the one revealed warning label.
+Either way the refusal is observable, since a client treats anything other than a proof-verified
+response as a failed check rather than a clean absence, and the failed check joins the key mismatch
+to produce the A2 signal. All three safeguards are implemented in the prototype: the
 write-once policy is enforced by the server's raw-label update interface, the transition audit by the
 auditor replaying each epoch's declared update set against the committed root, and the persistence
 check by the writer retaining a committed warning's inclusion proof and assembling deletion evidence
@@ -476,10 +477,11 @@ separation the security argument relies on. Second,
 before posting, the sender checks that the label $L_t$ is unoccupied: ACKA specifies that ``the
 sender will also check if the label has already been uploaded to the log with a fingerprint, which
 would indicate an impersonation''~\cite{dowling2023acka}, and the sender advances its chain only
-after its write is confirmed committed. Third, the receiver advances its chain only when a
-verification returns \textsc{Consistent}: a detected fork halts the session (the state is not
-carried across a fork), and a pending lookup (the sender's fingerprint not yet committed) leaves the
-receiver's state untouched, so the check can be retried without desynchronizing the chain.
+after its write is confirmed in a committed head. Third, the receiver advances its chain only when a
+verification returns \textsc{Consistent}. A detected fork leaves the chain unadvanced over the
+disputed epoch and surfaces an advisory in-band warning; the prototype does not block the Signal
+session. A pending lookup (the sender's fingerprint not yet committed) leaves the receiver's state
+untouched, so the check can be retried without desynchronizing the chain.
 
 The two designs represent a label's history differently. ACKA's log stores a \emph{vector} of
 fingerprints per label, and its receiver rejects unless exactly one fingerprint is present; the alarm
@@ -507,8 +509,9 @@ band, a composition ACKA itself does not provide.
 \caption[Session mode versus continuous mode.]{Session mode, shown on the left, derives labels from the initial secret $\sharedS$
 and registers the identity key once per pre-key rotation. Continuous mode derives a label and
 fingerprint from the pre-update state $k_t$ at every epoch and authenticates the public ratchet key
-$T_t$. The chain advances only after a confirmed \textsc{consistent} result, when $I_t$ is
-incorporated to produce $k_{t+1}$. It remains unchanged after \textsc{fork} or \textsc{notposted}.}
+$T_t$. The writer's chain advances once its publication is confirmed in a committed head; the verifier's chain
+advances only on a \textsc{consistent} result. In both cases advancing incorporates $I_t$ to produce
+$k_{t+1}$; the state remains unchanged after \textsc{fork} or \textsc{notposted}.}
 \label{fig:design-modes}
 \end{figure}
 
@@ -529,7 +532,7 @@ that is lost before the receiver processes its epoch would leave the two chains 
 divergent and every subsequent check failing. The Double Ratchet itself tolerates such loss through
 skipped-message keys; a production binding would therefore need to carry explicit epoch indices and
 a bounded skipped-epoch window in the same manner (\cref{ch:discussion}). Cross-implementation test
-vectors verify byte-for-byte equivalence of the Rust and TypeScript CEA constructions.
+vectors verify byte-for-byte agreement of the Rust and TypeScript CEA constructions on the committed vectors.
 
 % ============================================================================
 \FloatBarrier
@@ -567,8 +570,9 @@ the eight algorithms to its purpose.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-windowed}
-\caption[Windowed offline catch-up.]{Offline catch-up over a window $W = n-m$ epochs. The na\"ive approach verifies one
-consistency proof per missed epoch (upper arcs, $O(W\log n)$); the windowed approach requests
+\caption[Windowed offline catch-up.]{Offline catch-up over a window $W = n-m$ epochs. The synthetic sequential baseline used in the evaluation verifies one
+consistency proof per missed epoch (upper arcs, $O(W\log n)$); RFC~9162 imposes no such
+requirement. The windowed approach requests
 a single RFC~9162 consistency proof between the previously trusted head $m$ and the current
 head $n$ (lower arc), logarithmic in the log size rather than linear in $W$.}
 \label{fig:design-windowed}
@@ -632,7 +636,8 @@ evaluation of \cref{ch:eval}.
 The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:
 
 \begin{itemize}
-  \item \textbf{$\CKA$ (Continuous Key Agreement)}: used unmodified.
+  \item \textbf{$\CKA$ (Continuous Key Agreement)}: represented by Signal's Double Ratchet, which the
+  design leaves unmodified; the prototype simulates its epoch input (\cref{ch:impl}).
   \item \textbf{$\CEA$}: a primitive that derives per-epoch fingerprints and labels
   from public keying material and a chained secret state.
   \item \textbf{$\Logsec$}: an abstract secure log (append-only, with consistency and exclusion); its concrete realization left open.
@@ -658,7 +663,7 @@ mapping is summarized in \cref{tab:design-acka}.
 \toprule
 ACKA component & Role in the framework & Instantiation in this work \\
 \midrule
-$\CKA$    & continuous key agreement & Signal's Double Ratchet, used unmodified \\
+$\CKA$    & continuous key agreement & Signal's Double Ratchet, unmodified at the design level; simulated in the prototype \\
 $\CEA$ & per-epoch fingerprints / labels & dual-index labels (session) and CEA fingerprints (continuous), adding an in-band warning channel \\
 $\Logsec$ & abstract append-only secure log (consistency + exclusion) & KT verifiable key directory: prefix tree + Merkle log + signed tree head + cross-vantage auditor \\
 \bottomrule
@@ -675,8 +680,8 @@ of \cref{sec:design-windowed} instead adds exactly the deferred,
 batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is
 honest and provides no out-of-band cross-checking of tree heads; the cross-vantage auditor
 of the threat model, which achieves Goal~G4 (Fork Detection) against attack A4, adds equivocation detection on top of the
-instantiated log. Closing these three gaps is what turns ACKA's abstract framework into a
-deployable system.
+instantiated log. Closing these three gaps turns ACKA's abstract framework into an implementable system design,
+delivered here as a concrete, measured prototype.
 
 % ============================================================================
 \section{Design Decisions and Alternatives}\label{sec:design-decisions}
@@ -694,7 +699,7 @@ paragraphs below expand the three that most affect the system's behaviour.
 \toprule
 Decision & Justification & Reference / precedent \\
 \midrule
-Sparse binary Merkle tree & uniform node semantics; cheap first-class non-inclusion for the warning tripwire; small audit surface & CONIKS, RFC~9162, IETF KeyTrans \\
+Sparse binary Merkle tree & uniform node semantics; cheap first-class non-inclusion for the warning slot; small audit surface & CONIKS, RFC~9162, IETF KeyTrans \\
 ECVRF-EDWARDS25519-SHA512-TAI for global labels & publicly verifiable directory privacy; parity with Signal's deployed keytrans VRF & RFC~9381; Signal keytrans \\
 SHA-256 with RFC~6962 domain tags & second-preimage separation of leaves and nodes; RFC~9162 alignment & RFC~6962/9162 \\
 HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF; PRF security underpins unlinkability & RFC~5869; Signal X3DH \\

@@ -103,7 +103,8 @@ bound each cost rather than attributing a clean mechanism-level contribution.
 
 Timings are collected two ways. Criterion provides the confidence intervals and regression plots;
 in parallel, a manual harness of \num{2000} timed iterations per operation records the median, the
-95th percentile, and a 95\% confidence half-width to \texttt{results/rust\_benchmark\_timings.csv}.
+95th percentile, and a 95\% confidence half-width, from sequential in-process iterations (no
+randomized interleaving), to \texttt{results/rust\_benchmark\_timings.csv}.
 The manual-harness medians are quoted here. The harness produces uniformly formatted
 rows across every metric family. Two properties of those rows bound how they may be read. The median
 and 95th percentile are descriptive sample statistics, carrying no interval. The $\pm$ column is a
@@ -163,7 +164,7 @@ so both objects grow logarithmically in $N$ as the sparse-tree design predicts
 
 \begin{table}[ht]
 \centering
-\caption{Lookup proof size versus directory size $N$ (single-epoch log, seed-deterministic). The
+\caption[Lookup proof size versus directory size (single-epoch log).]{Lookup proof size versus directory size $N$ (single-epoch log, seed-deterministic). The
 harness records the VRF-indexed lookup under the historical benchmark identifier \texttt{dual\_index}
 (\cref{app:benchmarks}).}
 \label{tab:eval-sizes}
@@ -232,17 +233,17 @@ Operation & $N=10^3$ & $N=10^4$ & Scaling \\
 \midrule
 Server full search (gen, incl.\ VRF prove) & \SI{119.5}{\micro\second} & \SI{119.7}{\micro\second} & VRF-dominated, $\approx$flat over $10^3$--$10^4$ \\
 Prefix-root verify (client) & \SI{25.9}{\micro\second} & \SI{25.9}{\micro\second} & grows only with proof depth ($\sim\lg N$) \\
-VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} & constant-time \\
+VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} & flat in $N$ \\
 \textbf{Full signed-head lookup verification (windowed baseline)} & \textbf{\SI{128.1}{\micro\second}} & \textbf{\SI{128.6}{\micro\second}} & \textbf{$\approx$flat over $10^3$--$10^4$} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The most important result is the last row, M3: the full signed-head lookup verification path, referred to more generally as full client verification (VRF label binding, value binding, prefix
+M3, the last row, measures the complete signed-head lookup-verification path, referred to more generally as full client verification (VRF label binding, value binding, prefix
 root recompute, log inclusion, and the Ed25519 signed-tree-head signature) costs about
 \SI{128}{\micro\second} over the measured $10^3$--$10^4$ range and grows only weakly with the
 directory (\cref{ssec:eval-scale}): its dominant cost centre, the VRF verify (\SI{76.0}{\micro\second}),
-is a constant-time elliptic-curve operation, and the prefix recompute (\SI{25.9}{\micro\second}) grows
+is an elliptic-curve operation whose cost is independent of directory size, and the prefix recompute (\SI{25.9}{\micro\second}) grows
 only with proof depth ($\sim\lg N$). The system therefore meets its sub-millisecond client-verify target with
 roughly sevenfold headroom, and does so while including the VRF verification that comparable systems
 exclude from their reported figures. The server-side full search is likewise near-flat over this
@@ -250,7 +251,7 @@ range, and this is a direct consequence of the compressed-leaf chain memo (\cref
 Before that optimization, proof generation grew with directory depth (from \SI{107}{\micro\second} to
 \SI{159}{\micro\second} across $N=10^3$--$10^4$) because each non-inclusion co-path recomputed a
 compressed leaf's \num{256}-level hash chain. Memoizing that chain top removes the $N$-dependent
-component, leaving generation dominated by the constant-time VRF prove: it reads \SI{119.5}{\micro\second}
+component, leaving generation dominated by the fixed-cost VRF prove: it reads \SI{119.5}{\micro\second}
 at $N=10^3$ and \SI{119.7}{\micro\second} at $N=10^4$, while the scale run's search median reads
 \SI{117.6}{\micro\second} at $N=10^6$ and \SI{141.2}{\micro\second} at $N=10^7$
 (\cref{ssec:eval-scale}): flat through $10^6$, then rising at $10^7$. Verification shows the same
@@ -269,8 +270,7 @@ proofs a monitoring policy chooses to fetch, not a cost RFC~9162 forces on an of
 taken over the epoch log, one leaf per epoch, their size is independent of the number of users
 $N$; the table therefore holds for every $N$ measured.
 
-Two properties of the comparison must be stated before the ratio is read, because both bound what it
-means. First, the baseline is \emph{synthetic}: the harness issues $W$ current-head-anchored
+Two properties of the comparison bound what the ratio means. First, the baseline is \emph{synthetic}: the harness issues $W$ current-head-anchored
 consistency proofs, which models a client that re-fetches a fresh proof against the latest head on
 each of $W$ occasions.\footnote{It is one baseline among several, not the cost of generic sequential
 catch-up. A client verifying adjacent $e \to e+1$ transitions is an equally reasonable naïve
@@ -417,7 +417,7 @@ Criterion group, which repeatedly times a single fixed lookup path, is explorato
 reported scale figure. Against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at
 $N\le10^4$ (\cref{tab:eval-latency}), the full check rises by roughly \num{15}\,\%
 (about \SI{19}{\micro\second}) while $N$ grows by four orders of magnitude. The two components that
-could carry a depth-driven increase, the prefix walk and the constant-time VRF, are themselves flat
+could carry a depth-driven increase, the prefix walk and the directory-size-independent VRF, are themselves flat
 across the same range, so the residual is not a tree-depth effect. The experiment does not isolate its
 source; possible contributors include the larger proof representation and differences between the two
 measurement contexts (\cref{sec:eval-method}). The claim the data supports is that the check grows far
@@ -433,7 +433,7 @@ Server-side maintenance costs decide how large a deployment one machine can sust
 \SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$: approximately unchanged over the measured range, for the same reason proof
 generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
 the unchanged user identifier, which a production server would cache, leaving only tens of
-microseconds of tree work. The verifiable random function, measured in isolation, is constant-time
+microseconds of tree work. The verifiable random function, measured in isolation, is independent of directory size
 to prove and to verify, confirming its $N$-independence; its isolated rows in \cref{app:benchmarks}
 differ from the in-path figures by a few percent in either direction, the benchmark-context and
 run-order sensitivity noted in \cref{sec:eval-method}. M11 measures the local CPU cost of one complete signed-head KT lookup verification invoked at the
@@ -672,7 +672,7 @@ scope is X1, direct key extraction, which no key-transparency system addresses.
 \toprule
 Attack & Mechanism (goal) & Evidence & Result \\
 \midrule
-A1/A3/A5 key substitution & proof-chain verification; identity re-fetch / predecessor cross-signature; dual-index self-check + warning (G1) & A1 self-check + warning; A3 forged response fails proof verification; A5 predecessor cross-signature rejection; scenario suite (\cref{tab:impl-t5b}) & detected, 1--2 epochs \\
+A1/A3/A5 key substitution & proof-chain verification; identity re-fetch / predecessor cross-signature; dual-index self-check + warning (G1) & A1 self-check + warning; A3 divergent secret-derived label plus comparison against the global VRF-bound identity entry; A5 predecessor cross-signature rejection; scenario suite (\cref{tab:impl-t5b}) & detected, 1--2 epochs \\
 A2 warning censorship & self-check key mismatch + proof-verified warning absence (extension of G1) & compound signal: key mismatch and proven non-inclusion of the warning; scenario A2 & detected \\
 A4 split-view equivocation & cross-vantage auditor (G4) & \SI{27.9}{\micro\second} per check; equivocation-detection test & detected, 1 epoch \\
 directory enumeration & ECVRF labels (G3) & RFC~9381 conformance vectors (\cref{sec:impl-tests}) & prevented \\
@@ -731,9 +731,9 @@ non-negligible residual), and substitution (tampering, and the impersonation cas
 caught by the owner's self-check and peer warning within one or two epochs. The four residual
 threats are not cryptographic weaknesses. One is inherent to the semi-trusted-server model: the
 operator necessarily learns which label belongs to which user, an information-disclosure residual
-shared by all deployed key-transparency systems, including CONIKS~\cite{melara2015coniks}, and not
+shared by the surveyed key-transparency deployments, including CONIKS~\cite{melara2015coniks}, and not
 addressed by ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather
-than realizing a distrusted one. The other three are availability functions the proof-of-concept
+than building a distrusted one. The other three are availability functions the proof-of-concept
 does not implement (write rate-limiting, a published-epoch staleness timeout, and a gossip
 transport that would surface proof-omission), each a deployment-layer engineering task
 (\cref{ch:discussion}) rather than a flaw in the construction. (A2's write censorship is, by
@@ -750,9 +750,10 @@ A5) suffices to interpose an attacker-controlled key and read at least one messa
 require staying hidden, so there is no AND with evasion. What the figure adds is the defence layer:
 each interposition route is detected on its own by a key-transparency control, and the two
 concealment attempts an adversary might mount to stay hidden (suppressing the dual-index warning, A2;
-equivocating to hide the divergence from the cross-vantage auditor, A4) are themselves detected. An
-adversary can therefore interpose a key but cannot do so undetectably: every route and every
-concealment attempt raises a signal. Only the endpoint-compromise boundary X1 escapes, exactly as
+equivocating to hide the divergence from the cross-vantage auditor, A4) are themselves detected. Under the
+threat-model assumptions, an adversary can therefore interpose a key but cannot do so undetectably:
+with honest establishment where the warning channel is claimed, an active monitor, and, for A4, one
+honest independent vantage, every route and every concealment attempt raises a signal. Only the endpoint-compromise boundary X1 escapes, exactly as
 scoped in \cref{ch:threat}.
 
 \begin{figure}[ht]
@@ -761,7 +762,9 @@ scoped in \cref{ch:threat}.
 \caption[Attack--defence tree for interposing an attacker key.]{Attack--defence tree for reading a
 conversation. Any one interposition route (A1, A3, A5) suffices to interpose an attacker-controlled
 key and is answered by a key-transparency control; the concealment attempts A2 and A4 are separate
-adversary defences, each itself detected. Only the endpoint-compromise boundary X1 is out of scope.}
+adversary defences, each itself detected. Only the endpoint-compromise boundary X1 is out of scope.
+Detection presumes the threat-model assumptions of \cref{ch:threat}: honest establishment where the
+warning channel is claimed, active monitoring, and an honest second vantage for A4.}
 \label{fig:eval-attacktree}
 \end{figure}
 
@@ -838,7 +841,7 @@ in-memory prototype deliberately does not model.
 Finally, the two operating modes bound the deployment choice rather than forcing it. Session mode is
 the deployable default (one directory write per signed-pre-key rotation, at parity with existing
 key-transparency systems) while continuous mode offers finer-grained, ACKA CEA-style detection at a
-write amplification of $\approx 720\times$ under the hourly-epoch benchmark model. The ratio scales
+write amplification of $\approx 720\times$ under the benchmark model with hourly epochs. The ratio scales
 with ratchet cadence rather than sitting at a fixed cap (\cref{ssec:eval-modes}). The measured
 verification path meets the latency target, but the $O(N)$ epoch commit, the memory footprint,
 persistence, and networked operation remain deployment limitations rather than solved problems.

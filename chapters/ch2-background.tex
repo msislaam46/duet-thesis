@@ -38,7 +38,7 @@ it leaves open.
 In end-to-end encrypted (E2EE) messaging, each user holds a secret key that
 never leaves their device and a corresponding public key that anyone may use to
 encrypt to them or to verify their signatures. To start a conversation, Alice
-must obtain Bob's public key from somewhere, and in every deployed messenger
+must obtain Bob's public key from somewhere, and in the mainstream deployed messengers
 that ``somewhere'' is a server the provider operates. The arrangement is, in
 effect, a phonebook that the operator controls. Alice looks up ``Bob'' and
 trusts the number written next to the name. If the operator writes its own key
@@ -180,9 +180,9 @@ Triple Diffie--Hellman (X3DH) protocol allows Alice to derive a shared secret
 keys with the identity, signed pre-key, and one-time pre-key material published
 by Bob.
 
-Following the notation used in the X3DH specification~\cite[\S2.4]{x3dh}, we
-denote identity keys by $\xIK{}$, signed pre-keys by $\xSPK{}$, one-time
-pre-keys by $\xOPK{}$, and ephemeral keys by $\xEK{}$. Hence we write $\xIK{U}$ for a
+Following the notation used in the X3DH specification~\cite[\S2.4]{x3dh}, this thesis
+denotes identity keys by $\xIK{}$, signed pre-keys by $\xSPK{}$, one-time
+pre-keys by $\xOPK{}$, and ephemeral keys by $\xEK{}$. Hence $\xIK{U}$ denotes a
 user's identity key, $\xEK{A}$ for Alice's ephemeral key, $\xSPK{U}$ for a
 signed pre-key, and $\xOPK{U}$ for a one-time pre-key, each a public key with a
 corresponding private key held by its owner, so that $\xIK{U}=\pkid{U}$,
@@ -392,7 +392,7 @@ be forced to publish an irrevocable, public record of the keys it serves, so
 that handing Alice a forged key for Bob becomes an act the server can be caught
 having committed in writing. This section develops the data structures that make
 such a record possible, in the order a reader needs them: the cryptographic
-notion of a commitment and the Merkle tree that realizes it
+notion of a commitment and the Merkle tree that implements it
 (\cref{ssec:bg-merkle}); the origin of these structures in Certificate
 Transparency, and the two changes required to carry them into messaging
 (\cref{ssec:bg-ct2kt}), and the architecture the IETF is now standardizing
@@ -451,8 +451,9 @@ question ``is this record in the log, at this position?'' without shipping the
 whole log: it consists of the sibling hashes along the path from the record's
 leaf up to the root, and the verifier recomputes the root from the record and
 those siblings and compares it against the published tree head. For a tree of
-$N$ leaves that path has length $\lceil\log_2 N\rceil$, so the proof is
-logarithmic in the size of the directory rather than linear~\cite[\S2.1.3]{rfc9162}.
+$N$ leaves that path has length at most $\lceil\log_2 N\rceil$, the exact length depending on the
+leaf's position and the tree size, so the proof is logarithmic in the size of the directory rather
+than linear~\cite[\S2.1.3]{rfc9162}.
 A consistency proof answers a different question (``is the log I see now an
 append-only extension of the one I saw before?'') by revealing the few
 internal nodes that let a verifier confirm that an earlier tree head is
@@ -605,12 +606,12 @@ derived from a session secret, is HKDF, the HMAC-based extract-and-expand
 key-derivation function of RFC~5869~\cite{rfc5869}. Grounding each construction
 in its specification fixes the exact algorithm rather than an informal sketch of
 it. The draft leaves one question open: it calls for
-``reasonable monitoring windows'' so that intermittently-connected mobile
+``reasonable monitoring windows'' so that intermittently connected mobile
 clients need not replay every missed update, but leaves the mechanism for
 achieving them unspecified~\cite{ietf-keytrans-protocol}. This open question is
 the efficiency problem this thesis returns to in later chapters.
 
-The signed tree head deserves one further note, because it is where this work
+The signed tree head is where this work
 hardens the standard design. The server signs each head with Ed25519 over the
 epoch number, the tree size, the log root and a timestamp. Earlier systems such
 as CONIKS instead published a \emph{linear hash chain} of signed roots, each
@@ -657,7 +658,7 @@ been deployed in practice (\cref{ssec:bg-vkd-deployed}).
 
 The systems surveyed in this section differ substantially in their data
 structures, their privacy guarantees, and their performance, yet they all
-realize the same underlying abstraction: a \emph{verifiable key directory}
+implement the same underlying abstraction: a \emph{verifiable key directory}
 (VKD). Informally, a VKD is an authenticated key--value directory that lets
 clients verify the correctness of directory responses without trusting the
 directory operator. Rather than returning a bare value, the directory returns a
@@ -854,7 +855,7 @@ in 68.70\,ms. It
 sustains around 800 updates per second below 3.5\,s latency, and uses about
 4.5\,GB at five million users, projected to roughly 850\,GB at one
 billion~\cite[pp.~12--13]{malvai2023parakeet}. Its trade-offs are explicit: the
-witness set is a new, professionally-operated trust
+witness set is a new, professionally operated trust
 assumption~\cite[p.~14]{malvai2023parakeet}, its storage cost is effectively
 doubled by design to support concurrent reads and
 writes~\cite[p.~14]{malvai2023parakeet}, and detection remains
@@ -1082,8 +1083,7 @@ peer-warning mechanism, this points to the broader difficulty of communicating K
 failures to end users.
 
 \subsubsection{Google KT, Apple CKV, and Keybase}
-Three further deployments complete the survey, less central to the argument but
-worth noting. Google Key Transparency is a CONIKS-derived VKD on Trillian that
+Three further deployments complete the survey. Google Key Transparency is a CONIKS-derived VKD on Trillian that
 snapshots a CONIKS-style map into a CT-style log and records, per account,
 \emph{who} changed each record, an early precursor of ELEKTRA's device
 cross-signing, but it is a general key-discovery service, self-monitoring, and
@@ -1226,9 +1226,8 @@ security problem is what motivates the synthesis this thesis proposes.
 
 This section draws the surveyed systems of \cref{sec:bg-vkd} together and
 identifies the common design patterns and remaining gaps that emerge across the
-literature. The
-purpose is not to rank the systems but to bring out the capabilities that remain
-unsupported across them. Those recurring gaps motivate the open problems of
+literature. The comparison identifies the capabilities that remain
+unsupported across the surveyed systems. Those recurring gaps motivate the open problems of
 \cref{sec:bg-open}. This section presents the comparison as a table, followed by five
 cross-cutting findings, keeping it descriptive, with references to the
 proposed scheme kept to forward references; its full treatment is deferred to
@@ -1262,8 +1261,8 @@ OPTIKS & identity key (+ devices) & self-monitoring (single proof, common case) 
   (``time periods'') & $\ge$1 auditor + bulletin board \\
 PRISM & account keys & whole-directory verification & No (commitments only) &
   constant-size proof & zk-rollup on a data-availability layer \\
-WhatsApp (AKD) & identity key & infrastructure audit (monitoring off) & No & n/a
-  (monitoring off) & signed root + public WORM audit \\
+WhatsApp (AKD) & identity key & infrastructure audit (self-monitoring off, 2023 whitepaper) & No & n/a
+  (self-monitoring off, 2023 whitepaper) & signed root + public WORM audit \\
 Signal KT & identity key, phone, username hash & self-monitoring + audit & No &
   n/a & signed head; public audit endpoints (operator not documented) \\
 Proton KT & email $\to$ SKL fingerprints & self-audit + external audit & No &
@@ -1377,14 +1376,12 @@ communicating parties in time to influence the security of a conversation.
 
 The comparison of \cref{sec:bg-compare} and the ACKA limitations of
 \cref{sec:bg-acka} leave three problems open for the asynchronous-messaging
-setting. Each is stated precisely and grounded in the systems that exhibit it,
-since a problem stated precisely is one whose proposed solution
-(\cref{sec:bg-contrib}) can be evaluated rather than merely claimed.
+setting.
 
-\paragraph{Problem 1 (No In-Band Peer Warning).} Detection in every system
-surveyed in \cref{sec:bg-compare} is strictly self-monitoring: only the victim,
-checking the entry under their own name, can notice a substituted key, and a peer
-who could detect the substitution has no in-band channel by which to warn them.
+\paragraph{Problem 1 (No In-Band Peer Warning).} No system surveyed in
+\cref{sec:bg-compare} propagates a detection to the affected peer in band: whether detection is
+self-monitoring or an automatic lookup check, only the party performing the check learns the result,
+and a peer who could detect the substitution has no channel by which to warn the key's owner.
 Concretely, a malicious server shows Bob a key for Alice that Bob's own monitor
 never examines (Bob monitors his own entry, not Alice's) while Alice, whose
 entry is untouched from her own vantage point, has nothing to report through any
@@ -1396,7 +1393,7 @@ check~\cite[pp.~5, 10]{whatsapp2023whitepaper}. No existing VKD provides a
 peer-to-peer warning channel, a gap PRISM states in general terms~\cite[p.~6]{pusch2025prism}.
 
 \paragraph{Problem 2 (Linear Offline Catch-Up).} A mobile,
-intermittently-connected client faces an efficiency gap that the per-epoch
+intermittently connected client faces an efficiency gap that the per-epoch
 protocol does not address: a client offline for $W$ epochs must verify $W$
 sequential consistency proofs before it can trust the current head. Each proof is
 taken over the append-only \emph{epoch log}, which appends one directory root per
@@ -1491,7 +1488,7 @@ size independent of the current head.
 
 \paragraph{Mechanism 3 (Systems): Cross-Vantage Auditor.} This addresses Problem~3
 (split-view equivocation; \cref{sec:bg-open}), the inherited key-transparency requirement: it
-cross-checks tree heads observed from a second vantage point and flags two validly-signed
+cross-checks tree heads observed from a second vantage point and flags two validly signed
 heads at one epoch as an equivocation, detecting the split-view that local checks cannot.
 Mechanisms~1 through~3 are the transparency-log half of the work.
 
@@ -1537,7 +1534,7 @@ and the cross-vantage auditor, alongside the server, auditor, and benchmark bina
 verification is hooked into the key-upload and key-fetch paths. A standalone networked
 directory server and an independent auditor service back a two-client, cross-process
 demonstration of substitution and equivocation being caught in band, and the Rust and
-TypeScript builds are held to byte-for-byte agreement by shared cross-implementation test
+TypeScript builds produce byte-identical outputs on the shared cross-implementation test
 vectors. The prototype is deliberately single-machine and in-memory, with the genuine X3DH binding and the
 live-ratchet hook scoped as deployment work (\cref{ch:discussion}); within those boundaries it
 delivers the two-client demonstration just described. \Cref{ch:threat} next fixes the adversary

@@ -1,21 +1,21 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix lists the full test suite that backs the conformance claims of \cref{sec:impl-tests}.
-The test corpus comprises the following groups. The Rust core is covered by \num{97} unit and property tests across
+The test corpus comprises the following groups. The Rust core is covered by \num{97} unit and invariant tests across
 nine modules, the \num{8}-scenario adversarial integration suite, and \num{22} tests in the
 \texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
 five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-failure test, and nine
 \texttt{PollStatus} tests covering every poll verdict and the exact status-line mapping),
 \num{127} tests in total, run under \texttt{cargo test}; the TypeScript
 client is covered by \num{106} Jest tests in eight suites,
-and a fixed set of cross-language vectors ties the two implementations together byte-for-byte. The
+and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}; the
 complete listing follows.
 
 % ----------------------------------------------------------------------------
 \section{Rust Unit and Property Tests}\label{sec:tests-rust}
 
-The unit and property tests divide into three groups: the cryptographic primitives and data
+The unit and invariant tests divide into three groups: the cryptographic primitives and data
 structures (\cref{tab:tests-rust-prim}), the server and its verification chain
 (\cref{tab:tests-rust-server}), and the auditor, warning monitor, and continuous-authentication
 mode (\cref{tab:tests-rust-system}).
@@ -121,7 +121,7 @@ Test & Property checked \\
 \midrule
 \texttt{equivocate\_produces\_conflicting\_signed\_head} & the test server can mint two validly signed heads at one epoch (the A4 fixture) \\
 \texttt{equivocate\_requires\_committed\_epoch} & equivocation requires a committed epoch to fork from \\
-\texttt{verify\_rejects\_malformed\_epoch\_size\_head} & a validly-signed head with $\text{epoch}+1\neq\text{tree\_size}$ is refused (\texttt{MalformedHead}), so a server cannot grow the log past the epoch it signs and hide the later leaves from the auditor \\
+\texttt{verify\_rejects\_malformed\_epoch\_size\_head} & a validly signed head with $\text{epoch}+1\neq\text{tree\_size}$ is refused (\texttt{MalformedHead}), so a server cannot grow the log past the epoch it signs and hide the later leaves from the auditor \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -251,17 +251,17 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & \textsc{key\_not\_in\_log} (proven non-inclusion) for an unregistered peer \\
 \texttt{remote\_kt\_client} & a stale old-leaf inclusion under the current STH is refused (currency pin) \\
 \texttt{remote\_kt\_client} & \texttt{matches=true} after honest registration \\
-\texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites our slot \\
+\texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites the client's slot \\
 \texttt{remote\_kt\_client} & kind commitment: a present raw leaf tagged \textsc{mutable} is rejected (owner-side kind check) \\
 \texttt{remote\_kt\_client} & concurrent catch-ups do not produce a spurious append-only failure \\
 \texttt{remote\_kt\_client} & null (safe) when the own lookup slot is intact and the warning slot is empty \\
-\texttt{remote\_kt\_client} & returns a warning when our lookup slot was replaced \\
+\texttt{remote\_kt\_client} & returns a warning when the client's lookup slot was replaced \\
 \texttt{remote\_kt\_client} & green on a clean conversation \\
 \texttt{remote\_kt\_client} & red when the per-conversation lookup slot is replaced \\
 \texttt{remote\_kt\_client} & true on a validly signed head (TOFU baseline) \\
 \texttt{remote\_kt\_client} & false when the head carries a bad signature (foreign key) \\
 \texttt{remote\_kt\_client} & rejects a genuine proof presented for a different label than queried \\
-\texttt{remote\_kt\_client} & \texttt{writeWarning}: a forged 409 over a provably-empty slot is censorship (throws, guard unset) \\
+\texttt{remote\_kt\_client} & \texttt{writeWarning}: a forged 409 over a provably empty slot is censorship (throws, guard unset) \\
 \texttt{remote\_kt\_client} & \texttt{writeWarning}: an accepted-then-dropped write (slot still empty) is censorship (throws) \\
 \texttt{remote\_kt\_client} & \texttt{writeWarning}: a genuine occupied slot with a valid inclusion proof counts as published \\
 \texttt{remote\_kt\_client} & \texttt{writeWarning}: a successful confirmed publication resolves \\

@@ -26,16 +26,17 @@ logarithmic proofs the directory already produces. This result supports the depl
 argument, because it means a provider does not have to choose between the transparency it already
 runs and the peer-warning channel that closes the gap manual safety numbers leave open.
 
-\paragraph{Where the Guarantee Comes From.} How the detection actually
-holds deserves care, because the substitution surface is larger than it first appears. A malicious server has two slots in which it can plant a victim's key:
+\paragraph{Where the Guarantee Comes From.} The substitution surface is larger than it first
+appears, so the grounds for detection are worth setting out. A malicious server has two slots in which it can plant a victim's key:
 the global VRF-derived slot, which it can both compute and overwrite, and the per-conversation
 dual-index slot, which it cannot derive without the shared secret but can overwrite through the
 registration-metadata link. The scheme does not prevent either overwrite: a server can always
 rewrite its own database. Detection instead rests on two facts established in \cref{ch:design}. The
 warning slot is derived by an independent HKDF label, so knowledge of a lookup label yields no
 ability to compute the warning label, and once a warning is committed the server cannot hide it
-silently: refusing to serve it is a total, observable write outage (proven non-inclusion turns
-censorship into a visible denial of service), and removing it in a later epoch is a deletion the
+silently: serving a verifiable answer reveals it, serving a proven non-inclusion is the A2 compound
+signal, and refusing the lookup, even selectively for that one revealed label, is a failed check the
+client never mistakes for a verified absence, and removing it in a later epoch is a deletion the
 declared update set cannot express, so the transition audit catches the divergent replay and the
 writer's persistence check converts the disappearance into publishable evidence
 (\cref{ssec:design-detection}). Under an active network man-in-the-middle, the two parties derive their
@@ -93,7 +94,7 @@ second vantage is a server-served stand-in driven by the testing interface; a pr
 would feed that second head over a real gossip channel or an independent auditor, with identical
 detection logic and only the transport changed. Separately, the STRIDE analysis
 (\cref{ssec:eval-stride}) leaves four residual threats, none a weakness in this construction. One is
-inherent to the semi-trusted-server model and shared by every deployed key-transparency system: the
+inherent to the semi-trusted-server model and shared by the deployed key-transparency systems surveyed here: the
 operator necessarily learns the label-to-user mapping (there is no query privacy from the operator).
 The other three are availability functions the proof-of-concept does not implement (write
 rate-limiting, a published-epoch staleness timeout, and a gossip transport for proof-omission), each
@@ -115,7 +116,7 @@ changes the construction being exercised, but both must be replaced before the u
 active-MitM guarantees hold against a real adversary rather than a simulated one. Finally, the
 networked client ties every search-time signed tree head into one append-only chain: the head is
 signature-verified per lookup and its root extends the verified chain, via the same windowed consistency proof used
-for offline catch-up, into the client's pinned baseline, so a validly-signed but \emph{forked} head
+for offline catch-up, into the client's pinned baseline, so a validly signed but \emph{forked} head
 served only in a search response (and thus invisible to an auditor polling the public head alone) is
 rejected the instant it fails to chain. The residual here is not a client-side gap but the fundamental
 limitation already stated above: a \emph{fully consistent} split-world, whose branches each chain from
@@ -201,10 +202,15 @@ with a treatment of how joins and removals interact with the warning slot.
 \paragraph{Query Privacy via a Distributed OPRF.} A privacy property not provided by the deployed
 systems surveyed here, hiding the queried identity from the operator, is a natural extension. A client could blind its
 lookup identity with an oblivious pseudorandom function (RFC~9497~\cite{rfc9497}) before the server
-applies its VRF, so the operator learns neither who is queried nor by whom. Signal has shipped a
-distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal},
-since retired in favour of enclave-based recovery, so the engineering pattern is proven in
-Signal's own lineage; adapting it to the label derivation is the open work.
+applies its VRF, so that the operator no longer learns the raw lookup identity, subject to
+redesigning registration and the index association around the blinded value. Two further metadata
+problems are distinct from this and from each other: query privacy against the operator (hiding which
+entry is fetched, a private-information-retrieval question) and requester network anonymity (hiding
+who issues the request, an anonymizing-relay question). This is only a direction, not a complete
+architecture. Signal has shipped a
+distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal}, which
+demonstrates practical use of the primitive in Signal-managed software; adapting it to this
+directory's registration and indexing remains open.
 
 \subsection{Deployment and Scale}
 

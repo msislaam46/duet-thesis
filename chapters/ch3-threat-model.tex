@@ -1,6 +1,6 @@
 \chapter{Threat Model and Problem Statement}\label{ch:threat}
 
-In this chapter we specify the threat model used throughout the thesis: the
+This chapter specifies the threat model used throughout the thesis: the
 adversary, its capabilities, and the security properties the system is expected
 to satisfy. Every guarantee claimed in \crefrange{ch:design}{ch:eval} is stated
 relative to this model, so the chapter fixes each term precisely before it is
@@ -154,7 +154,7 @@ Scenario & Adversary & Objective & Detection mechanism \\
 A0 & none & honest baseline & all checks pass \\
 A1 & malicious server & substitute a user's key & self-check + peer warning \\
 A2 & malicious server & substitute a key and censor the warning & substitution + missing warning \\
-A3 & network (Dolev--Yao) & substitute a key in transit & label divergence \\
+A3 & network (Dolev--Yao) & substitute a key in transit & divergent labels + global identity binding \\
 A4 & malicious server & equivocate (split-view) & cross-vantage auditor \\
 A5 & malicious server & substitute during a key rotation & identity re-fetch + warning \\
 X1 & endpoint holder & impersonate using the victim's key & out of scope (boundary) \\
@@ -201,7 +201,10 @@ within the window and then reverted is the residual this conditionality names.
 Dolev--Yao adversary substitutes a key in the bundle in transit. The two parties
 then derive different shared secrets, and because the dual-index labels are
 derived from that secret, they address disjoint locations in the directory: the
-victim queries a label at which the impersonator never registered.
+victim queries a label at which the impersonator never registered. In addition, the substituted
+bundle diverges from the identity entry at the victim's global VRF-derived label, so the client's
+comparison against that VRF-bound entry exposes the substitution independently of the missed
+dual-index slot.
 
 A3 also has a post-compromise variant that motivates the continuous mode: an
 adversary that has already compromised a session and then injects a forged ratchet
@@ -326,10 +329,12 @@ each goal precise, and \cref{ch:eval} demonstrates each goal empirically.
 
 \paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
 adversary (A3) substitutes a key, an honest party detects it once an honest monitor completes the
-required verified lookups and, where the peer's warning is needed, that warning write commits. G1 is
-realized bidirectionally: the victim detects the wrong key under its own name, and a peer that has
-pinned the victim's key detects it on its next key-fetch; either can raise the in-band warning, so an
-offline victim remains covered. The scripted demonstration flags the change within one or two epochs
+required verified lookups and, where the peer's warning is needed, that warning write commits. For the established-pair attacks A1 and A5, G1 is realized bidirectionally through the in-band
+warning: the victim detects the wrong key under its own name, and a peer that has pinned the
+victim's key detects it on its next key-fetch; either can raise the shared warning, so an offline
+victim remains covered. First-contact substitution (A3) is instead caught by the divergence of the
+secret-derived lookup label together with comparison against the global VRF-bound identity entry, not
+by the warning channel. The scripted demonstration flags the change within one or two epochs
 of the next check, which is a demonstration schedule rather than a protocol-wide latency bound.
 
 \paragraph{G2: Consistency Across Offline Windows.} A client returning after an
@@ -337,17 +342,20 @@ offline period requests one distant-head consistency proof rather than one per m
 confirms that the log it now sees is an append-only extension of the one it last verified. The
 proof's size depends on the endpoint log sizes rather than on a proof count fixed directly to the
 window $W$; the endpoints themselves grow as the log grows. This property ensures that intermittent connectivity does not impose a
-growing verification burden on returning clients.
+verification burden that grows with the number of missed epochs; the residual growth is the
+logarithmic dependence on the endpoint log sizes.
 
 \paragraph{G3: Directory Privacy.} The mapping between a user's identity and its
 directory slot is hidden from outsiders, via VRF-derived labels
-(\cref{ssec:bg-ct2kt}). The limit of this goal is stated precisely: it provides
+(\cref{ssec:bg-ct2kt}). The limit of this goal is that it provides
 directory privacy against third parties, not query privacy against the operator,
 which necessarily learns which identity it is asked to resolve. Query privacy from
 the operator is out of scope (\cref{sec:threat-scope}).
 
 \paragraph{G4: Fork Detection.} An equivocating server (A4) that signs two
-divergent heads at one epoch is detected by cross-vantage auditing. G4 is the only
+divergent heads at one epoch is detected by cross-vantage auditing when a valid, independent second-vantage head is available;
+absent one, the auditor reports \textsc{ConsistentNoVantage} rather than a fork verdict
+(\cref{ch:impl}). G4 is the only
 goal that depends on the auditor-honesty assumption (\cref{sec:threat-assumptions}).
 
 \Cref{tab:threat-goals} maps the goals onto the attacks they address and the
@@ -363,7 +371,7 @@ them.}
 \toprule
 Goal & Attack(s) & Security mechanism & Auditor? \\
 \midrule
-G1 key-substitution detection & A1, A3, A5 & dual-index warning (bidirectional); identity-anchored rotation for A5 & no \\
+G1 key-substitution detection & A1, A3, A5 & dual-index warning for A1/A5 (bidirectional); divergent labels + global VRF identity binding for A3; identity-anchored rotation for A5 & no \\
 G2 offline-window consistency & general rewriting & windowed consistency proofs & no \\
 G3 directory privacy & enumeration / recon & VRF-derived labels & no \\
 G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\

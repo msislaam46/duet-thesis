@@ -1,11 +1,15 @@
 % fig-impl-testing.tex — extracted from ch5-implementation.tex
+% Five independent evidence classes, each supporting the implementation on its
+% own (not a sequential pipeline): they converge on the implementation-evidence
+% node rather than feeding one into the next.
 % Label: \label{fig:impl-testing}
 \begin{tikzpicture}[>=Stealth,font=\footnotesize,
    st/.style={draw,rounded corners,minimum width=4.6cm,minimum height=7mm,align=center}]
   \node[st] (rfc) {RFC test vectors (VRF, log proofs, HKDF)};
-  \node[st,below=4mm of rfc] (unit) {unit + property tests (per module)};
+  \node[st,below=4mm of rfc] (unit) {unit + invariant tests (per module)};
   \node[st,below=4mm of unit] (xl) {cross-language vectors (Rust $=$ TypeScript)};
   \node[st,below=4mm of xl] (scen) {adversarial scenarios (A0--A5, X1)};
-  \node[st,below=4mm of scen,fill=black!4] (bench) {performance benchmarks (\cref{ch:eval})};
-  \foreach \a/\b in {rfc/unit,unit/xl,xl/scen,scen/bench}{\draw[->] (\a) -- (\b);}
+  \node[st,below=4mm of scen] (bench) {performance benchmarks (\cref{ch:eval})};
+  \node[st,right=24mm of xl,fill=black!4] (ev) {implementation\\evidence};
+  \foreach \a in {rfc,unit,xl,scen,bench}{\draw[->,shorten >=2pt] (\a.east) -- (ev.west);}
 \end{tikzpicture}
