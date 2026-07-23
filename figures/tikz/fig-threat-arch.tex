@@ -16,7 +16,7 @@
   % client--server links pass through the band
   \draw[->] (A.east) -- (S.west);
   \draw[->] (B.east) -- (S.west);
-  \node[font=\footnotesize,align=center] at (6.0,-1.9) {client\,$\leftrightarrow$\,server:\\semi-trusted};
+  \node[font=\footnotesize,align=center] at (6.0,-1.9) {service operator:\\semi-trusted};
   % independent auditor beyond the operator boundary
   \draw[<->,dashed,green!45!black] (S.east) -- node[above,font=\footnotesize]{independent} (Au.west);
 \end{tikzpicture}
