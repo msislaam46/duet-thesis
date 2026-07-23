@@ -272,8 +272,8 @@ subject of the next section.
 % ============================================================================
 \section{Signal Desktop Integration}\label{sec:impl-signal}
 
-The Rust crate provides the measured server and reference verifier; the TypeScript layer integrates
-verification into Signal Desktop. It re-implements only what a client needs and places no trust in the server, and the
+The \texttt{duet} crate supplies the standalone Rust directory-server process and the reference
+verifier; the TypeScript layer integrates verification into Signal Desktop. It re-implements only what a client needs and places no trust in the server, and the
 whole section is confined to the front end: what the client checks, and where it attaches to
 Signal.
 
@@ -293,9 +293,9 @@ networked stack.
 \centering
 \input{figures/tikz/fig-impl-signal}
 \caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
-lifecycle hooks and reports verdicts to the badge and banner, over HTTP with the Rust server that
-an independent auditor polls and a testing interface drives. Hook functions and verdict-event names
-are listed in \cref{app:apiref}.}
+lifecycle hooks and reports verdicts to the badge and banner, communicating over HTTP with the Rust
+directory server. An independent auditor polls that server, while the scripted attacker uses its
+privileged testing interface. Hook functions and verdict-event names are listed in \cref{app:apiref}.}
 \label{fig:impl-signal}
 \end{figure}
 
