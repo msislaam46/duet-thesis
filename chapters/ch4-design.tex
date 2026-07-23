@@ -6,7 +6,7 @@ overall architecture and its three authenticated data structures.
 in this thesis, the dual-index warning scheme and windowed consistency proofs.
 \Cref{sec:design-acka} explains how the complete design instantiates ACKA, and
 \cref{sec:design-decisions} justifies the principal design decisions. The
-constructions are given here at the level of structure and rationale. The full
+constructions are described here at the level of structure and rationale. The full
 pseudocode is in \cref{app:algorithms}, and every cost claimed in passing is
 measured in \cref{ch:eval}.
 
@@ -231,10 +231,10 @@ byte-for-byte equivalence of the derivation across the Rust and TypeScript imple
 \FloatBarrier
 \subsection{The Three Security Properties}\label{ssec:design-properties}
 
-The derivation gives the scheme three properties on which detection rests.
+The derivation establishes three properties on which detection rests.
 
 \paragraph{Symmetry.} From Alice's and Bob's respective viewpoints, the directional lookup
-derivation gives $A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and $A.\ell_{\mathsf{peer}} =
+derivation ensures $A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and $A.\ell_{\mathsf{peer}} =
 B.\ell_{\mathsf{self}}$, while the canonical identity ordering gives $A.\ell_{\mathsf{warn}} =
 B.\ell_{\mathsf{warn}}$. The two parties therefore agree on which slot each key lives in and, above
 all, on the one warning slot they both watch.
@@ -409,7 +409,7 @@ one signed root. Two accepted values $v_{\mathsf{peer}}\neq v_{\mathsf{self}}$ a
 root would exhibit two verifying openings of one committed label, contradicting proof soundness and
 the collision resistance of the Merkle construction.
 
-Within this same-head setting, the lemma gives the detection guarantee. A malicious server that
+Within this same-head setting, the lemma establishes the detection guarantee. A malicious server that
 returns a substituted $v_{\mathsf{peer}}\neq\mathit{pk}_\B$ to Alice under a head Bob also self-checks
 cannot, under that same head, keep Bob's self-check returning $\mathit{pk}_\B$. Bob then obtains the
 substituted value at his own label through a valid lookup proof and detects it. The behaviours the
@@ -559,8 +559,8 @@ is a signed, append-only extension of the state already trusted. The catch-up co
 therefore depends only logarithmically on the sizes of the previously trusted and current
 log states, rather than linearly on the number of missed epochs. The warning-slot lookup is
 performed during the same synchronization exchange and so does not change the asymptotic
-complexity. The proof sketch and the \textsf{WindowedCatchUp} procedure are given in
-\cref{app:algorithms}, alongside the pseudocode for the Merkle log tree, the sparse prefix tree, and
+complexity. \Cref{app:algorithms} presents the proof sketch and the \textsf{WindowedCatchUp} procedure,
+alongside the pseudocode for the Merkle log tree, the sparse prefix tree, and
 client verification (\cref{alg:merklelog,alg:prefix,alg:client}); \cref{tab:alg-purpose} maps each of
 the eight algorithms to its purpose.
 

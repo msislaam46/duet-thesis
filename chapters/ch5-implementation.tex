@@ -68,7 +68,7 @@ This separation is deliberate. Keeping the cryptographic core independent of the
 integration lets all measurements be performed on a standalone reference implementation while
 interoperability with a production messaging client is validated independently, and it ensures
 that the performance figures of \cref{ch:eval} are not distorted by Electron or user-interface
-overhead. \Cref{fig:impl-overview} shows the implemented system as a whole: the TypeScript client
+overhead. \Cref{fig:impl-overview} maps the implemented components and their communication paths: the TypeScript client
 embedded in Signal Desktop, the Rust reference implementation that houses all server-side components of the
 prototype (the prefix tree, the Merkle log, the signed-tree-head signer, the ECVRF, the dual-index
 derivation, and the continuous-monitoring layer) reached over HTTP, and the independent Rust
@@ -189,8 +189,7 @@ end-to-end demonstration (\cref{sec:impl-tests,ssec:impl-demo}). An independent
 auditor binary, a small \texttt{ureq} HTTP client, polls the signed tree head, verifies its Ed25519
 signature, and checks append-only consistency on each new epoch, so that a forked or rewritten
 history is caught from a second vantage point. A benchmark harness completes the set, driving the
-measurements of \cref{ch:eval}; the endpoint list and request formats are given in
-\cref{app:apiref} (the public, admin, hook, and event interfaces of
+measurements of \cref{ch:eval}; \cref{app:apiref} lists the endpoints and request formats (the public, admin, hook, and event interfaces of
 \cref{tab:apiref-public,tab:apiref-admin,tab:apiref-hooks,tab:apiref-events}, with the demonstration
 screens of \cref{fig:demo-baseline,fig:demo-cmd,fig:demo-equivocation}), and the complete test
 catalogue in \cref{app:tests}
@@ -209,7 +208,7 @@ root equals the committed root. A deletion (which the delta format cannot expres
 modification therefore makes the replay diverge and is caught, the role the IETF KeyTrans protocol
 assigns to third-party auditors through its \textsf{AuditorUpdate}
 structure~\cite{ietf-keytrans-protocol}. Independently of any auditor, the
-\texttt{monitor} module gives a warning's writer a persistence check: it retains the inclusion proof
+\texttt{monitor} module checks, for a warning's writer, that a committed warning remains present: it retains the inclusion proof
 and signed tree head of the epoch at which the warning committed and, on any later disappearance,
 assembles the inclusion proof, the proven non-inclusion, and the consistency proof between the two
 heads into a bundle that verifies against the server's own signatures. The warning payload itself
@@ -284,7 +283,7 @@ The TypeScript client is embedded in Signal Desktop. The system runs in two
 modes: the standalone networked stack, driven from the command line, and the
 networked-in-app mode in which the embedded client talks to the live Rust server, auditor, and
 attacker from within the real user interface, enabled at runtime by setting a server URL.
-\Cref{fig:impl-signal} shows the overall arrangement: the embedded client at the centre, the three
+\Cref{fig:impl-signal} maps the runtime arrangement: the embedded client at the centre, the three
 processes it exercises (the directory server, the auditor, and the attacker) and the badge
 and banner through which verdicts reach the user, with the client verifying against the live
 networked stack.
@@ -356,8 +355,8 @@ It is the runtime form of the verification chain of \cref{ssec:design-verify}.}
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
-\Cref{fig:impl-e2e} gives the end-to-end account across the four roles (Alice and Bob, each a client
-with its verifier embedded; the KT server; and the auditor). In the normal path Alice registers her
+\Cref{fig:impl-e2e} traces the normal and A1b attack workflows across the four roles. Alice and Bob
+each run an embedded verifier, while the KT server and auditor execute as separate processes. In the normal path Alice registers her
 key and commits; Bob's verifier then performs three label-bound, proof-verified lookups (the peer
 slot $\ell_A$ it retrieves Alice from, its own slot $\ell_B$, and the shared warning slot
 $\ell_{\mathsf{warn}}$, which is verifiably empty) and returns \textsc{safe}, while the auditor
@@ -469,7 +468,7 @@ would be weak evidence of agreement in the next.
 On top of that contract, testing is organized around two questions: whether each component
 conforms to its specification, and whether the system as a whole detects the attacks of the threat
 model. The first is addressed by unit and property tests close to the code; the second by an
-adversarial scenario suite. \Cref{fig:impl-testing} summarizes the testing pipeline, from
+adversarial scenario suite. \Cref{fig:impl-testing} traces the testing pipeline, from
 specification conformance up to the end-to-end scenarios and performance benchmarks.
 
 \begin{figure}[ht]
@@ -515,8 +514,8 @@ re-fetch and cross-signature), and the X1 endpoint-compromise case asserted as a
 boundary, all eight passing. \Cref{tab:impl-t5a} records, for
 representative correctness tests, the property checked and the threat or correctness
 requirement it protects, and \cref{tab:impl-t5b} records the adversarial scenarios with their
-expected and observed verdicts; the full results are reported in \cref{ch:eval}, and the
-complete test catalogue is given in \cref{app:tests}.
+expected and observed verdicts; the full results are reported in \cref{ch:eval}, and \cref{app:tests} lists the complete
+test catalogue.
 
 \begin{table}[ht]
 \centering

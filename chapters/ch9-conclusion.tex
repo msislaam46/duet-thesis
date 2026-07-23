@@ -12,7 +12,7 @@ afford.
 To do so it instantiated the abstract log component of the ACKA framework as a concrete verifiable
 directory: an append-only Merkle log over a path-compressed sparse prefix tree, with ECVRF-derived
 labels and an Ed25519 signed tree head, following the IETF KeyTrans draft. On top of it, it added two
-mechanisms. The dual-index warning scheme (\cref{ch:design}) gives each conversation a shared
+mechanisms. The dual-index warning scheme (\cref{ch:design}) derives, for each conversation, a shared
 warning slot that either party can raise and that the server can neither forge in advance nor censor
 undetectably after the fact, turning a silent substitution into a detectable one. The windowed consistency proof lets a
 client that has been offline for a long window catch up with a single short proof rather than one per

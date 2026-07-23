@@ -30,7 +30,7 @@ restructured an individual proof. \emph{Empirically}, the measured VRF-indexed l
 to the like-for-like VRF-indexed baseline (CONIKS), \num{817} against \num{768} derived bytes at
 $N=10^6$ (a \num{6.4}\% difference), rather than to a non-VRF single-index log, which is necessarily
 smaller by the VRF proof; this cross-paper comparison (\cref{sec:eval-compare}; \cref{ssec:eval-sizes}
-gives the single- versus VRF-indexed decomposition) is descriptive, not a falsification criterion.
+separates the single-index and VRF-indexed components of the proof size) is descriptive, not a falsification criterion.
 \emph{Operationally}, detection's cost is in requests and writes, not proof bytes. This has a
 source-verified part and a measured part. The source-verified part is the request count, from
 inspecting \texttt{detectMitm}: every check performs one label-bound owner-slot lookup and, only when
@@ -373,7 +373,7 @@ price of the continuous operating mode.
 To evaluate the prototype at a published large-directory reference point ($10^7$ labels, the scale
 CONIKS reports), the size and verification measurements were repeated at
 $N=10^6$ and $N=10^7$.
-\Cref{tab:eval-scale} gives the distribution over \num{1000} random lookups per $N$.
+\Cref{tab:eval-scale} reports the latency distribution over \num{1000} random lookups per $N$.
 
 \begin{table}[ht]
 \centering
@@ -553,7 +553,7 @@ neither path gains an artificial edge from skipping the label-binding check.
 \section{Comparison with Prior Systems}\label{sec:eval-compare}
 
 This section places the measured results beside the key-transparency systems surveyed in
-\cref{ch:background}. \Cref{tab:eval-compare} gives the comparison on the dimensions most relevant
+\cref{ch:background}. \Cref{tab:eval-compare} compares the systems on the dimensions most relevant
 to assessing a messaging deployment; the published figures are drawn from each system's paper or
 repository and, per the comparability note below, are order-of-magnitude.
 
@@ -822,7 +822,7 @@ though their combined bandwidth and end-to-end latency were not measured. In exc
 intended to replace a manual ceremony which, as \cref{ssec:eval-detection} discusses, most unprompted
 users never reliably locate and complete.
 
-On the server, the picture is more qualified, and the qualifications are exactly what a production
+On the server, the results require more qualification, and those qualifications are exactly what a production
 deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one
 operation that grows with $N$ ($\approx O(N)$, \SI{5.92}{\milli\second} at $10^4$,
 \cref{ssec:eval-throughput}), because the current server deep-clones its committed snapshot; a
