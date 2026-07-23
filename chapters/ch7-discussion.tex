@@ -208,8 +208,9 @@ problems are distinct from this and from each other: query privacy against the o
 entry is fetched, a private-information-retrieval question) and requester network anonymity (hiding
 who issues the request, an anonymizing-relay question). This is only a direction, not a complete
 architecture. Signal has shipped a
-distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal}, so the engineering pattern is proven in
-Signal's own lineage; adapting it to the label derivation is the open work.
+distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal}, which
+demonstrates practical use of the primitive in Signal-managed software; adapting it to this
+directory's registration and indexing remains open.
 
 \subsection{Deployment and Scale}
 

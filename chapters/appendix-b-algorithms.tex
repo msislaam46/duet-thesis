@@ -381,16 +381,14 @@ persistence component, retained evidence.
 
 \clearpage
 \paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor is an external verifier at an
-independent vantage: it fetches signed heads and per-epoch deltas and replays each declared root
-against its own \emph{replica}, reconstructed from epoch~0 (IETF KeyTrans
-\textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}). Each head is one all-or-nothing transaction,
-committed to the replica, cursor, and baseline only if every stage passes; a failed delta fetch is
-retried, not alarmed. The verdicts separate availability from equivocation: \textsc{Consistent} and
-\textsc{ConsistentNoVantage} distinguish a passed cross-vantage check from an absent one, while a
-missing or unparseable consistency proof (the primary append-only proof or the cross-vantage proof
-between two signed heads) returns \textsc{ConsistencyUnavailable}, holding the baseline without
-advancing. \textsc{Fork} is reserved for a supplied proof that fails, or two same-size heads with
-different roots.
+independent vantage: it replays each declared root against its own \emph{replica}, reconstructed from
+epoch~0 (IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}), and commits a head as
+one all-or-nothing transaction only if every stage passes (a failed delta fetch is retried). The
+verdicts separate availability from equivocation: \textsc{ConsistencyUnavailable} covers any
+consistency proof, primary or cross-vantage, that is missing, unparseable, or fails to verify, and
+holds the baseline; \textsc{Fork} is reserved for the one publishable equivocation, two same-size
+signed heads with different roots; \textsc{ConsistentNoVantage} marks a commit reached with no valid
+second vantage.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
@@ -406,8 +404,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
     \lIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last}.\mathit{size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
     \If{$\mathit{sth_{new}}.\mathit{size}>\mathit{last}.\mathit{size}$}{
       $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
-      \lIf{$\pi=\bot$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnavailable} \tcp*[f]{growth unverifiable: refusal or fork}}
-      \lIf{$\neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+      \lIf{$\pi=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnavailable} \tcp*[f]{append-only unverified}}
     }
   }
   $\mathit{candidate}\gets \textsf{clone}(\mathit{replica})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
@@ -420,7 +417,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
   $\mathit{vb}\gets\textsf{DetectFork}(\mathit{peer}.\textsf{CurrentHead}(),\mathit{sth_{new}},\mathit{server})$\;
   \lIf{$\mathit{vb}=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
-  \lIf{$\mathit{vb}=\textsc{ConsistencyUnavailable}$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnavailable} \tcp*[f]{cross-vantage proof withheld: hold, no fork}}
+  \lIf{$\mathit{vb}=\textsc{ConsistencyUnavailable}$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnavailable} \tcp*[f]{hold; no fork}}
   $\mathit{replica}\gets \mathit{candidate}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
   \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed, no G4}}
   \KwRet \textsc{Consistent}\;
@@ -443,8 +440,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \Else{
     $m,n\gets$ smaller, larger of $\mathit{sth_b}.\mathit{size}$ and $\mathit{sth_{new}}.\mathit{size}$\;
     $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(m,n)$\;
-    \lIf{$\pi=\bot$ \emph{(refused/unparseable)}}{\KwRet \textsc{ConsistencyUnavailable} \tcp*[f]{withheld cross-vantage proof: unavailable, not proven equivocation}}
-    \lIf{$\neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m,n,\ \pi)$}{\KwRet \textsc{Fork}}
+    \lIf{$\pi=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m,n,\ \pi)$}{\KwRet \textsc{ConsistencyUnavailable} \tcp*[f]{unverified: not proven equivocation}}
   }
   \KwRet \textsc{Consistent}\;
 }

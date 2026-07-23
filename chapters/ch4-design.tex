@@ -477,9 +477,10 @@ separation the security argument relies on. Second,
 before posting, the sender checks that the label $L_t$ is unoccupied: ACKA specifies that ``the
 sender will also check if the label has already been uploaded to the log with a fingerprint, which
 would indicate an impersonation''~\cite{dowling2023acka}, and the sender advances its chain only
-after its write is confirmed committed. Third, the receiver advances its chain only when a
-verification returns \textsc{Consistent}: a detected fork halts the session (the state is not
-carried across a fork), and a pending lookup (the sender's fingerprint not yet committed) leaves the
+after its write is confirmed in a committed head. Third, the receiver advances its chain only when a
+verification returns \textsc{Consistent}: a detected fork leaves the chain unadvanced over the
+disputed epoch and surfaces an advisory in-band warning (the prototype does not block the Signal
+session), and a pending lookup (the sender's fingerprint not yet committed) leaves the
 receiver's state untouched, so the check can be retried without desynchronizing the chain.
 
 The two designs represent a label's history differently. ACKA's log stores a \emph{vector} of
@@ -508,7 +509,7 @@ band, a composition ACKA itself does not provide.
 \caption[Session mode versus continuous mode.]{Session mode, shown on the left, derives labels from the initial secret $\sharedS$
 and registers the identity key once per pre-key rotation. Continuous mode derives a label and
 fingerprint from the pre-update state $k_t$ at every epoch and authenticates the public ratchet key
-$T_t$. The writer's chain advances once its publication is confirmed committed; the verifier's chain
+$T_t$. The writer's chain advances once its publication is confirmed in a committed head; the verifier's chain
 advances only on a \textsc{consistent} result. In both cases advancing incorporates $I_t$ to produce
 $k_{t+1}$; the state remains unchanged after \textsc{fork} or \textsc{notposted}.}
 \label{fig:design-modes}
