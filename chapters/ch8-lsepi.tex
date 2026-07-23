@@ -23,7 +23,8 @@ facts, the jurisdiction, and the mode of combination and distribution. The proto
 research artefact rather than a deployed service, so no public network offering has been made; but
 the licence terms have been respected throughout: the modifications are kept in a fork whose
 source is available, the upstream copyright and licence notices are preserved, and any future
-deployment would be released under AGPL-3.0. The independent Rust \texttt{duet} crate depends on
+deployment of the modified Signal code would carry the same AGPL-3.0 obligations, including the
+network-interaction source requirement. The independent Rust \texttt{duet} crate depends on
 permissively licensed libraries, including \texttt{sha2} and \texttt{hkdf} (MIT/Apache-2.0)
 and \texttt{curve25519-dalek} and \texttt{ed25519-dalek} (BSD-3-Clause), all compatible with that
 outcome. All third-party work (specifications, prior systems, and code) is attributed in the
@@ -32,8 +33,8 @@ references.
 A second consideration is export control. The work implements cryptographic software, which is
 regulated under the Wassenaar Arrangement and national export regimes; libsignal itself is
 published under the corresponding open-source exception for publicly available cryptographic source
-code. The contribution here adds no new cryptographic capability beyond standardized primitives
-(the RFC~9381 ECVRF, RFC~5869 HKDF, and Ed25519) and is released as open, published source. This
+code. The contribution composes standardized primitives
+(the RFC~9381 ECVRF, RFC~5869 HKDF, and Ed25519) without introducing new cryptographic algorithms, and is released as open, published source. This
 thesis does not determine the software's export-control classification: public availability may be
 relevant, but the applicable control lists and end-use rules require a case-specific assessment.
 
@@ -72,10 +73,10 @@ specification-grounded rather than security-through-obscurity, and its correctne
 reproducible tests against published vectors (\cref{sec:impl-tests}) rather than asserted.
 
 A dual-use dimension is unavoidable: strong messaging security protects everyone, including those
-who would misuse it. The settled position in the security community, which this work adopts, is
-that defensive integrity infrastructure of this kind is overwhelmingly to the public good, and that
-weakening it to disadvantage bad actors would disadvantage the far larger population of ordinary
-and at-risk users. Finally, the work followed responsible-disclosure norms in the small: the one
+who would misuse it. This project treats defensive integrity infrastructure of this kind as serving the public good,
+since weakening it to disadvantage bad actors would also weaken protection for the far larger
+population of ordinary and at-risk users; the professional codes cited in \cref{sec:lsepi-prof}
+support this position. Finally, the work followed responsible-disclosure norms in the small: the one
 security-relevant weakness found during integration, a per-lookup head-binding gap, was in
 the author's own prototype and was fixed (\cref{sec:impl-challenges}); no vulnerability in deployed
 Signal software was discovered, but had one been, the appropriate course would have been private

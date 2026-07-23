@@ -180,9 +180,9 @@ Triple Diffie--Hellman (X3DH) protocol allows Alice to derive a shared secret
 keys with the identity, signed pre-key, and one-time pre-key material published
 by Bob.
 
-Following the notation used in the X3DH specification~\cite[\S2.4]{x3dh}, we
-denote identity keys by $\xIK{}$, signed pre-keys by $\xSPK{}$, one-time
-pre-keys by $\xOPK{}$, and ephemeral keys by $\xEK{}$. Hence we write $\xIK{U}$ for a
+Following the notation used in the X3DH specification~\cite[\S2.4]{x3dh}, this thesis
+denotes identity keys by $\xIK{}$, signed pre-keys by $\xSPK{}$, one-time
+pre-keys by $\xOPK{}$, and ephemeral keys by $\xEK{}$. Hence $\xIK{U}$ denotes a
 user's identity key, $\xEK{A}$ for Alice's ephemeral key, $\xSPK{U}$ for a
 signed pre-key, and $\xOPK{U}$ for a one-time pre-key, each a public key with a
 corresponding private key held by its owner, so that $\xIK{U}=\pkid{U}$,
@@ -392,7 +392,7 @@ be forced to publish an irrevocable, public record of the keys it serves, so
 that handing Alice a forged key for Bob becomes an act the server can be caught
 having committed in writing. This section develops the data structures that make
 such a record possible, in the order a reader needs them: the cryptographic
-notion of a commitment and the Merkle tree that realizes it
+notion of a commitment and the Merkle tree that implements it
 (\cref{ssec:bg-merkle}); the origin of these structures in Certificate
 Transparency, and the two changes required to carry them into messaging
 (\cref{ssec:bg-ct2kt}), and the architecture the IETF is now standardizing
@@ -611,7 +611,7 @@ clients need not replay every missed update, but leaves the mechanism for
 achieving them unspecified~\cite{ietf-keytrans-protocol}. This open question is
 the efficiency problem this thesis returns to in later chapters.
 
-The signed tree head deserves one further note, because it is where this work
+The signed tree head is where this work
 hardens the standard design. The server signs each head with Ed25519 over the
 epoch number, the tree size, the log root and a timestamp. Earlier systems such
 as CONIKS instead published a \emph{linear hash chain} of signed roots, each
@@ -658,7 +658,7 @@ been deployed in practice (\cref{ssec:bg-vkd-deployed}).
 
 The systems surveyed in this section differ substantially in their data
 structures, their privacy guarantees, and their performance, yet they all
-realize the same underlying abstraction: a \emph{verifiable key directory}
+implement the same underlying abstraction: a \emph{verifiable key directory}
 (VKD). Informally, a VKD is an authenticated key--value directory that lets
 clients verify the correctness of directory responses without trusting the
 directory operator. Rather than returning a bare value, the directory returns a
@@ -1083,8 +1083,7 @@ peer-warning mechanism, this points to the broader difficulty of communicating K
 failures to end users.
 
 \subsubsection{Google KT, Apple CKV, and Keybase}
-Three further deployments complete the survey, less central to the argument but
-worth noting. Google Key Transparency is a CONIKS-derived VKD on Trillian that
+Three further deployments complete the survey. Google Key Transparency is a CONIKS-derived VKD on Trillian that
 snapshots a CONIKS-style map into a CT-style log and records, per account,
 \emph{who} changed each record, an early precursor of ELEKTRA's device
 cross-signing, but it is a general key-discovery service, self-monitoring, and
@@ -1227,9 +1226,8 @@ security problem is what motivates the synthesis this thesis proposes.
 
 This section draws the surveyed systems of \cref{sec:bg-vkd} together and
 identifies the common design patterns and remaining gaps that emerge across the
-literature. The
-purpose is not to rank the systems but to bring out the capabilities that remain
-unsupported across them. Those recurring gaps motivate the open problems of
+literature. The comparison identifies the capabilities that remain
+unsupported across the surveyed systems. Those recurring gaps motivate the open problems of
 \cref{sec:bg-open}. This section presents the comparison as a table, followed by five
 cross-cutting findings, keeping it descriptive, with references to the
 proposed scheme kept to forward references; its full treatment is deferred to
@@ -1263,8 +1261,8 @@ OPTIKS & identity key (+ devices) & self-monitoring (single proof, common case) 
   (``time periods'') & $\ge$1 auditor + bulletin board \\
 PRISM & account keys & whole-directory verification & No (commitments only) &
   constant-size proof & zk-rollup on a data-availability layer \\
-WhatsApp (AKD) & identity key & infrastructure audit (monitoring off) & No & n/a
-  (monitoring off) & signed root + public WORM audit \\
+WhatsApp (AKD) & identity key & infrastructure audit (self-monitoring off, 2023 whitepaper) & No & n/a
+  (self-monitoring off, 2023 whitepaper) & signed root + public WORM audit \\
 Signal KT & identity key, phone, username hash & self-monitoring + audit & No &
   n/a & signed head; public audit endpoints (operator not documented) \\
 Proton KT & email $\to$ SKL fingerprints & self-audit + external audit & No &

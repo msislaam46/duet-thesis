@@ -225,8 +225,8 @@ cannot access these slots.}
 This corrects two simplifications that appeared in early descriptions of the scheme: it
 uses HKDF rather than a bare hash of $\sharedS$, and it uses three labels with canonical
 ordering applied to the warning label alone. Cross-implementation test vectors verify the
-byte-for-byte equivalence of the derivation across the Rust and TypeScript implementations
-(\cref{app:algorithms}).
+byte-for-byte equivalence of the derivation across the Rust and TypeScript implementations on the
+committed cross-language vectors (\cref{app:algorithms}).
 
 \FloatBarrier
 \subsection{The Three Security Properties}\label{ssec:design-properties}
@@ -242,8 +242,7 @@ all, on the one warning slot they both watch.
 \paragraph{Unlinkability.} The server does not hold $\sharedS$, so the HKDF outputs are
 pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
 any other leaf in the tree; it can therefore neither pre-position a value on the warning
-slot nor recognize and selectively censor it. This property must be stated with its precise scope:
-it holds up to the moment a label is first used. Any lookup or write necessarily reveals the queried
+slot nor recognize and selectively censor it. This protection holds only until the label is first used. Any lookup or write necessarily reveals the queried
 label to the operator, and repeated monitoring reveals which labels are read together, so after
 first use the operator can associate the three labels of a conversation with the clients that query
 them. What the scheme relies on is therefore unpredictability \emph{before} first use (the server
@@ -532,7 +531,7 @@ that is lost before the receiver processes its epoch would leave the two chains 
 divergent and every subsequent check failing. The Double Ratchet itself tolerates such loss through
 skipped-message keys; a production binding would therefore need to carry explicit epoch indices and
 a bounded skipped-epoch window in the same manner (\cref{ch:discussion}). Cross-implementation test
-vectors verify byte-for-byte equivalence of the Rust and TypeScript CEA constructions.
+vectors verify byte-for-byte agreement of the Rust and TypeScript CEA constructions on the committed vectors.
 
 % ============================================================================
 \FloatBarrier
@@ -699,7 +698,7 @@ paragraphs below expand the three that most affect the system's behaviour.
 \toprule
 Decision & Justification & Reference / precedent \\
 \midrule
-Sparse binary Merkle tree & uniform node semantics; cheap first-class non-inclusion for the warning tripwire; small audit surface & CONIKS, RFC~9162, IETF KeyTrans \\
+Sparse binary Merkle tree & uniform node semantics; cheap first-class non-inclusion for the warning slot; small audit surface & CONIKS, RFC~9162, IETF KeyTrans \\
 ECVRF-EDWARDS25519-SHA512-TAI for global labels & publicly verifiable directory privacy; parity with Signal's deployed keytrans VRF & RFC~9381; Signal keytrans \\
 SHA-256 with RFC~6962 domain tags & second-preimage separation of leaves and nodes; RFC~9162 alignment & RFC~6962/9162 \\
 HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF; PRF security underpins unlinkability & RFC~5869; Signal X3DH \\

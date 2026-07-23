@@ -251,11 +251,11 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & \textsc{key\_not\_in\_log} (proven non-inclusion) for an unregistered peer \\
 \texttt{remote\_kt\_client} & a stale old-leaf inclusion under the current STH is refused (currency pin) \\
 \texttt{remote\_kt\_client} & \texttt{matches=true} after honest registration \\
-\texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites our slot \\
+\texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites the client's slot \\
 \texttt{remote\_kt\_client} & kind commitment: a present raw leaf tagged \textsc{mutable} is rejected (owner-side kind check) \\
 \texttt{remote\_kt\_client} & concurrent catch-ups do not produce a spurious append-only failure \\
 \texttt{remote\_kt\_client} & null (safe) when the own lookup slot is intact and the warning slot is empty \\
-\texttt{remote\_kt\_client} & returns a warning when our lookup slot was replaced \\
+\texttt{remote\_kt\_client} & returns a warning when the client's lookup slot was replaced \\
 \texttt{remote\_kt\_client} & green on a clean conversation \\
 \texttt{remote\_kt\_client} & red when the per-conversation lookup slot is replaced \\
 \texttt{remote\_kt\_client} & true on a validly signed head (TOFU baseline) \\

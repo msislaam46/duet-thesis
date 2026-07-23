@@ -460,9 +460,9 @@ the shared vectors cover, and how the combined system is then tested against the
 The two are pinned by a single cross-language contract. A fixed set of test vectors pins the HKDF
 dual-index derivation and the CEA construction byte-for-byte across the Rust and TypeScript
 implementations, and the same discipline keeps their Ed25519 signed-tree-head and Merkle
-computations in step, so any divergence on a covered operation-and-input vector manifests as a vector
-failure rather than passing silently; another input to the same operation can still diverge, so the
-remaining behaviour is supported, not proved, by language-specific unit and
+computations in step. Any divergence on a covered operation-and-input pair therefore manifests as a
+vector failure rather than passing silently. Since another input to the same operation can still
+diverge, the remaining behaviour is supported, not proved, by language-specific unit and
 integration tests. This contract is the basis for treating the TypeScript client as a faithful
 verifier of the Rust server's outputs on the covered operations; without it, agreement in one test
 would be weak evidence of agreement in the next.

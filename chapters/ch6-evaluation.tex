@@ -103,7 +103,8 @@ bound each cost rather than attributing a clean mechanism-level contribution.
 
 Timings are collected two ways. Criterion provides the confidence intervals and regression plots;
 in parallel, a manual harness of \num{2000} timed iterations per operation records the median, the
-95th percentile, and a 95\% confidence half-width to \texttt{results/rust\_benchmark\_timings.csv}.
+95th percentile, and a 95\% confidence half-width, from sequential in-process iterations (no
+randomized interleaving), to \texttt{results/rust\_benchmark\_timings.csv}.
 The manual-harness medians are quoted here. The harness produces uniformly formatted
 rows across every metric family. Two properties of those rows bound how they may be read. The median
 and 95th percentile are descriptive sample statistics, carrying no interval. The $\pm$ column is a
@@ -238,7 +239,7 @@ VRF proof verify (client) & \SI{76.0}{\micro\second} & \SI{76.0}{\micro\second} 
 \end{tabular}
 \end{table}
 
-The most important result is the last row, M3: the full signed-head lookup verification path, referred to more generally as full client verification (VRF label binding, value binding, prefix
+M3, the last row, measures the complete signed-head lookup-verification path, referred to more generally as full client verification (VRF label binding, value binding, prefix
 root recompute, log inclusion, and the Ed25519 signed-tree-head signature) costs about
 \SI{128}{\micro\second} over the measured $10^3$--$10^4$ range and grows only weakly with the
 directory (\cref{ssec:eval-scale}): its dominant cost centre, the VRF verify (\SI{76.0}{\micro\second}),
@@ -269,8 +270,7 @@ proofs a monitoring policy chooses to fetch, not a cost RFC~9162 forces on an of
 taken over the epoch log, one leaf per epoch, their size is independent of the number of users
 $N$; the table therefore holds for every $N$ measured.
 
-Two properties of the comparison must be stated before the ratio is read, because both bound what it
-means. First, the baseline is \emph{synthetic}: the harness issues $W$ current-head-anchored
+Two properties of the comparison bound what the ratio means. First, the baseline is \emph{synthetic}: the harness issues $W$ current-head-anchored
 consistency proofs, which models a client that re-fetches a fresh proof against the latest head on
 each of $W$ occasions.\footnote{It is one baseline among several, not the cost of generic sequential
 catch-up. A client verifying adjacent $e \to e+1$ transitions is an equally reasonable naïve
@@ -733,7 +733,7 @@ threats are not cryptographic weaknesses. One is inherent to the semi-trusted-se
 operator necessarily learns which label belongs to which user, an information-disclosure residual
 shared by the surveyed key-transparency deployments, including CONIKS~\cite{melara2015coniks}, and not
 addressed by ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather
-than realizing a distrusted one. The other three are availability functions the proof-of-concept
+than building a distrusted one. The other three are availability functions the proof-of-concept
 does not implement (write rate-limiting, a published-epoch staleness timeout, and a gossip
 transport that would surface proof-omission), each a deployment-layer engineering task
 (\cref{ch:discussion}) rather than a flaw in the construction. (A2's write censorship is, by

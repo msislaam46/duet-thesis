@@ -1,6 +1,6 @@
 \chapter{Threat Model and Problem Statement}\label{ch:threat}
 
-In this chapter we specify the threat model used throughout the thesis: the
+This chapter specifies the threat model used throughout the thesis: the
 adversary, its capabilities, and the security properties the system is expected
 to satisfy. Every guarantee claimed in \crefrange{ch:design}{ch:eval} is stated
 relative to this model, so the chapter fixes each term precisely before it is
@@ -345,7 +345,7 @@ logarithmic dependence on the endpoint log sizes.
 
 \paragraph{G3: Directory Privacy.} The mapping between a user's identity and its
 directory slot is hidden from outsiders, via VRF-derived labels
-(\cref{ssec:bg-ct2kt}). The limit of this goal is stated precisely: it provides
+(\cref{ssec:bg-ct2kt}). The limit of this goal is that it provides
 directory privacy against third parties, not query privacy against the operator,
 which necessarily learns which identity it is asked to resolve. Query privacy from
 the operator is out of scope (\cref{sec:threat-scope}).

@@ -229,7 +229,7 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
 \Fn{\normalfont\textsf{WriteWarning}($\mathit{server},\lwarn,\mathit{alert},\mathit{PRK},\mathit{id_A},\mathit{id_B}$)}{
   $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$ \tcp*{canonical identities bind $k_{\mathrm{mac}}$ to the pair}
   \uIf{$\mathit{server}.\textsf{UpdateRaw}(\lwarn,\ \mathit{alert}\concat\textsf{MAC}(k_{\mathrm{mac}},\mathit{alert}))$ succeeds}{
-    $\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{our write landed: seal it into an epoch}
+    $\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{the write landed: seal it into an epoch}
   }
   \uElseIf{\normalfont write-once conflict (typed 409)}{
     \emph{skip} \textsf{CommitEpoch} \tcp*{slot claims occupied; tolerated, not trusted}
@@ -356,7 +356,7 @@ persistence component, retained evidence.
   }
 }
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations},\mathit{id_{self}},\mathit{own\_pk}$)}{
-  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: our own VRF entry; fires with zero active conversations}
+  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: the client's own VRF entry; fires with zero active conversations}
   \If{$v_{\mathsf{vrf}}\ne\mathit{own\_pk}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;

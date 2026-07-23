@@ -26,8 +26,8 @@ logarithmic proofs the directory already produces. This result supports the depl
 argument, because it means a provider does not have to choose between the transparency it already
 runs and the peer-warning channel that closes the gap manual safety numbers leave open.
 
-\paragraph{Where the Guarantee Comes From.} How the detection actually
-holds deserves care, because the substitution surface is larger than it first appears. A malicious server has two slots in which it can plant a victim's key:
+\paragraph{Where the Guarantee Comes From.} The substitution surface is larger than it first
+appears, so the grounds for detection are worth setting out. A malicious server has two slots in which it can plant a victim's key:
 the global VRF-derived slot, which it can both compute and overwrite, and the per-conversation
 dual-index slot, which it cannot derive without the shared secret but can overwrite through the
 registration-metadata link. The scheme does not prevent either overwrite: a server can always
