@@ -34,8 +34,9 @@ registration-metadata link. The scheme does not prevent either overwrite: a serv
 rewrite its own database. Detection instead rests on two facts established in \cref{ch:design}. The
 warning slot is derived by an independent HKDF label, so knowledge of a lookup label yields no
 ability to compute the warning label, and once a warning is committed the server cannot hide it
-silently: refusing to serve it is a total, observable write outage (proven non-inclusion turns
-censorship into a visible denial of service), and removing it in a later epoch is a deletion the
+silently: serving a verifiable answer reveals it, serving a proven non-inclusion is the A2 compound
+signal, and refusing the lookup, even selectively for that one revealed label, is a failed check the
+client never mistakes for a verified absence, and removing it in a later epoch is a deletion the
 declared update set cannot express, so the transition audit catches the divergent replay and the
 writer's persistence check converts the disappearance into publishable evidence
 (\cref{ssec:design-detection}). Under an active network man-in-the-middle, the two parties derive their
@@ -93,7 +94,7 @@ second vantage is a server-served stand-in driven by the testing interface; a pr
 would feed that second head over a real gossip channel or an independent auditor, with identical
 detection logic and only the transport changed. Separately, the STRIDE analysis
 (\cref{ssec:eval-stride}) leaves four residual threats, none a weakness in this construction. One is
-inherent to the semi-trusted-server model and shared by every deployed key-transparency system: the
+inherent to the semi-trusted-server model and shared by the deployed key-transparency systems surveyed here: the
 operator necessarily learns the label-to-user mapping (there is no query privacy from the operator).
 The other three are availability functions the proof-of-concept does not implement (write
 rate-limiting, a published-epoch staleness timeout, and a gossip transport for proof-omission), each
@@ -201,9 +202,10 @@ with a treatment of how joins and removals interact with the warning slot.
 \paragraph{Query Privacy via a Distributed OPRF.} A privacy property not provided by the deployed
 systems surveyed here, hiding the queried identity from the operator, is a natural extension. A client could blind its
 lookup identity with an oblivious pseudorandom function (RFC~9497~\cite{rfc9497}) before the server
-applies its VRF, so the operator learns neither who is queried nor by whom. Signal has shipped a
-distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal},
-since retired in favour of enclave-based recovery, so the engineering pattern is proven in
+applies its VRF, so that the operator no longer learns which identity is being resolved. Hiding who
+makes the request is a separate, transport-layer problem, requiring an anonymizing relay or
+private-information-retrieval layer on top. Signal has shipped a
+distributed OPRF over Ristretto255 in its SVR3 secure-value-recovery scheme~\cite{libsignal}, so the engineering pattern is proven in
 Signal's own lineage; adapting it to the label derivation is the open work.
 
 \subsection{Deployment and Scale}

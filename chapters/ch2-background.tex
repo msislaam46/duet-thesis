@@ -38,7 +38,7 @@ it leaves open.
 In end-to-end encrypted (E2EE) messaging, each user holds a secret key that
 never leaves their device and a corresponding public key that anyone may use to
 encrypt to them or to verify their signatures. To start a conversation, Alice
-must obtain Bob's public key from somewhere, and in every deployed messenger
+must obtain Bob's public key from somewhere, and in the mainstream deployed messengers
 that ``somewhere'' is a server the provider operates. The arrangement is, in
 effect, a phonebook that the operator controls. Alice looks up ``Bob'' and
 trusts the number written next to the name. If the operator writes its own key
@@ -1377,14 +1377,12 @@ communicating parties in time to influence the security of a conversation.
 
 The comparison of \cref{sec:bg-compare} and the ACKA limitations of
 \cref{sec:bg-acka} leave three problems open for the asynchronous-messaging
-setting. Each is stated precisely and grounded in the systems that exhibit it,
-since a problem stated precisely is one whose proposed solution
-(\cref{sec:bg-contrib}) can be evaluated rather than merely claimed.
+setting.
 
-\paragraph{Problem 1 (No In-Band Peer Warning).} Detection in every system
-surveyed in \cref{sec:bg-compare} is strictly self-monitoring: only the victim,
-checking the entry under their own name, can notice a substituted key, and a peer
-who could detect the substitution has no in-band channel by which to warn them.
+\paragraph{Problem 1 (No In-Band Peer Warning).} No system surveyed in
+\cref{sec:bg-compare} propagates a detection to the affected peer in band: whether detection is
+self-monitoring or an automatic lookup check, only the party performing the check learns the result,
+and a peer who could detect the substitution has no channel by which to warn the key's owner.
 Concretely, a malicious server shows Bob a key for Alice that Bob's own monitor
 never examines (Bob monitors his own entry, not Alice's) while Alice, whose
 entry is untouched from her own vantage point, has nothing to report through any

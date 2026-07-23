@@ -28,7 +28,7 @@ ID & Technique & Vector in KT & KT mitigation & Scen. \\
 T1557 & Adversary-in-the-Middle & network interception of X3DH & label mismatch (different secret $\Rightarrow$ different label) & A3 \\
 T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & shared-secret divergence & A3 \\
 T1565 & Data Manipulation & modify key bindings in the tree & Merkle inclusion-proof verification & A1,A3,A4 \\
-T1565.002 & Transmitted Data Manipulation & replace a key in transit & label mismatch (different secret) + warning-label propagation & A3 \\
+T1565.002 & Transmitted Data Manipulation & replace a key in transit & label mismatch (different secret) + global VRF identity binding & A3 \\
 T1552.004 & Private Keys & extract insecurely stored private keys from a device & \emph{none}: KT boundary (endpoint compromise) & X1 \\
 \bottomrule
 \end{tabular}
@@ -140,7 +140,7 @@ Threat & KT control & Residual \\
 \midrule
 Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented; freshness alarm left to deployment} \\
 Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve; a refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the PoC; counted as an availability residual} \\
-Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & client out-of-band alert \\
+Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & \emph{surfacing beyond the prototype warning UI (for example an out-of-band alert) left to deployment} \\
 Flood with fake registrations & deployment-level rate limiting & \emph{not implemented in the PoC (operational risk)} \\
 \bottomrule
 \end{tabular}

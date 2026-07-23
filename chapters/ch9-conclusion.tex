@@ -1,7 +1,7 @@
 \chapter{Conclusion}\label{ch:conclusion}
 
-End-to-end encryption is only as trustworthy as the keys it runs on, and in every deployed messaging
-system those keys are handed out by a server that users must simply trust. The traditional
+End-to-end encryption is only as trustworthy as the keys it runs on, and in the deployed messaging systems this thesis considers
+those keys are handed out by a server that users must simply trust. The traditional
 defence, the manual safety-number comparison, detects a substituted key only if both parties carry
 out an out-of-band ritual that only about one in seven complete without guidance~\cite{vaziripour2017}, and the
 key-transparency deployments that have begun to automate it (\cref{ssec:bg-gap}) still warn only
@@ -30,9 +30,9 @@ far more slowly than $N$, about
 figures omit (both totals include the signature check, and the cross-hardware comparison is
 indicative only). A month-long offline catch-up is one distant-head consistency proof rather than $W$
 of them, a few hundred raw path bytes against the hundreds of kilobytes a synthetic baseline that
-re-fetches a current-head-anchored proof for each missed epoch would instead spend. The marginal
-warning-slot read costs microseconds on top of a lookup the client already verifies, with no false
-alarms observed over a thousand clean deterministic sessions, and the cross-vantage auditor's local
+re-fetches a current-head-anchored proof for each missed epoch would instead spend. The marginal server-side warning-slot read (M5) costs microseconds; the complete detector performs
+one or two full proof-verified lookups of the shape M3 measures, whose combined latency was not
+measured, with no false alarms observed over a thousand clean deterministic sessions, and the cross-vantage auditor's local
 fork check runs at a median \SI{27.9}{\micro\second} (p95 \SI{34.2}{\micro\second}) against one
 observed head. The adversarial suite detects every substitution and
 equivocation scenario it enumerates, and a STRIDE analysis leaves four residual risks: one the label-to-user

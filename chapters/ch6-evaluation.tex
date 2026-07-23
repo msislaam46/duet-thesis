@@ -731,7 +731,7 @@ non-negligible residual), and substitution (tampering, and the impersonation cas
 caught by the owner's self-check and peer warning within one or two epochs. The four residual
 threats are not cryptographic weaknesses. One is inherent to the semi-trusted-server model: the
 operator necessarily learns which label belongs to which user, an information-disclosure residual
-shared by all deployed key-transparency systems, including CONIKS~\cite{melara2015coniks}, and not
+shared by the surveyed key-transparency deployments, including CONIKS~\cite{melara2015coniks}, and not
 addressed by ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather
 than realizing a distrusted one. The other three are availability functions the proof-of-concept
 does not implement (write rate-limiting, a published-epoch staleness timeout, and a gossip
@@ -750,9 +750,10 @@ A5) suffices to interpose an attacker-controlled key and read at least one messa
 require staying hidden, so there is no AND with evasion. What the figure adds is the defence layer:
 each interposition route is detected on its own by a key-transparency control, and the two
 concealment attempts an adversary might mount to stay hidden (suppressing the dual-index warning, A2;
-equivocating to hide the divergence from the cross-vantage auditor, A4) are themselves detected. An
-adversary can therefore interpose a key but cannot do so undetectably: every route and every
-concealment attempt raises a signal. Only the endpoint-compromise boundary X1 escapes, exactly as
+equivocating to hide the divergence from the cross-vantage auditor, A4) are themselves detected. Under the
+threat-model assumptions, an adversary can therefore interpose a key but cannot do so undetectably:
+with honest establishment where the warning channel is claimed, an active monitor, and, for A4, one
+honest independent vantage, every route and every concealment attempt raises a signal. Only the endpoint-compromise boundary X1 escapes, exactly as
 scoped in \cref{ch:threat}.
 
 \begin{figure}[ht]
@@ -761,7 +762,9 @@ scoped in \cref{ch:threat}.
 \caption[Attack--defence tree for interposing an attacker key.]{Attack--defence tree for reading a
 conversation. Any one interposition route (A1, A3, A5) suffices to interpose an attacker-controlled
 key and is answered by a key-transparency control; the concealment attempts A2 and A4 are separate
-adversary defences, each itself detected. Only the endpoint-compromise boundary X1 is out of scope.}
+adversary defences, each itself detected. Only the endpoint-compromise boundary X1 is out of scope.
+Detection presumes the threat-model assumptions of \cref{ch:threat}: honest establishment where the
+warning channel is claimed, active monitoring, and an honest second vantage for A4.}
 \label{fig:eval-attacktree}
 \end{figure}
 

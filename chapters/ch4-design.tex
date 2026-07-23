@@ -355,9 +355,11 @@ silent act into one that the warning's \emph{writer} detects and can prove; it d
 alert a \emph{peer} who had not yet read the warning during the window in which it was visible. It
 is the transition audit that closes this residual, because an auditor that validates every epoch's
 update set detects the deletion independently of either party. With these safeguards in place, the
-server's only remaining suppression strategy is to refuse service entirely (to decline lookups,
-withhold epochs, or withhold the auditor's disclosure), producing an observable denial of service,
-which is itself a signal (attack A2, warning censorship). All three safeguards are implemented in the prototype: the
+server's only remaining suppression strategy is refusal: withholding the lookup, the epoch, or the
+auditor's disclosure, whether for all clients or selectively for the one revealed warning label.
+Either way the refusal is observable, since a client treats anything other than a proof-verified
+response as a failed check rather than a clean absence, and the failed check joins the key mismatch
+to produce the A2 signal. All three safeguards are implemented in the prototype: the
 write-once policy is enforced by the server's raw-label update interface, the transition audit by the
 auditor replaying each epoch's declared update set against the committed root, and the persistence
 check by the writer retaining a committed warning's inclusion proof and assembling deletion evidence
@@ -632,7 +634,8 @@ evaluation of \cref{ch:eval}.
 The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:
 
 \begin{itemize}
-  \item \textbf{$\CKA$ (Continuous Key Agreement)}: used unmodified.
+  \item \textbf{$\CKA$ (Continuous Key Agreement)}: represented by Signal's Double Ratchet, which the
+  design leaves unmodified; the prototype simulates its epoch input (\cref{ch:impl}).
   \item \textbf{$\CEA$}: a primitive that derives per-epoch fingerprints and labels
   from public keying material and a chained secret state.
   \item \textbf{$\Logsec$}: an abstract secure log (append-only, with consistency and exclusion); its concrete realization left open.
@@ -658,7 +661,7 @@ mapping is summarized in \cref{tab:design-acka}.
 \toprule
 ACKA component & Role in the framework & Instantiation in this work \\
 \midrule
-$\CKA$    & continuous key agreement & Signal's Double Ratchet, used unmodified \\
+$\CKA$    & continuous key agreement & Signal's Double Ratchet, unmodified at the design level; simulated in the prototype \\
 $\CEA$ & per-epoch fingerprints / labels & dual-index labels (session) and CEA fingerprints (continuous), adding an in-band warning channel \\
 $\Logsec$ & abstract append-only secure log (consistency + exclusion) & KT verifiable key directory: prefix tree + Merkle log + signed tree head + cross-vantage auditor \\
 \bottomrule
@@ -675,8 +678,8 @@ of \cref{sec:design-windowed} instead adds exactly the deferred,
 batched catch-up an intermittently connected client needs. Third, ACKA assumes the log is
 honest and provides no out-of-band cross-checking of tree heads; the cross-vantage auditor
 of the threat model, which achieves Goal~G4 (Fork Detection) against attack A4, adds equivocation detection on top of the
-instantiated log. Closing these three gaps is what turns ACKA's abstract framework into a
-deployable system.
+instantiated log. Closing these three gaps turns ACKA's abstract framework into an implementable system design,
+delivered here as a concrete, measured prototype.
 
 % ============================================================================
 \section{Design Decisions and Alternatives}\label{sec:design-decisions}
