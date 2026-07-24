@@ -668,6 +668,7 @@ scope is X1, direct key extraction, which no key-transparency system addresses.
 \centering
 \caption[Threats, defending mechanisms, evidence, and outcome.]{Threats, defending mechanisms, evidence, and outcome.}
 \label{tab:eval-security}
+\setlength{\extrarowheight}{2pt}
 \footnotesize
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}lp{3.6cm}p{4.4cm}l@{}}
@@ -695,7 +696,7 @@ security argument; the full technique matrix and the per-category STRIDE tables 
 
 \subsection{STRIDE Coverage}\label{ssec:eval-stride}
 
-A STRIDE analysis over the three trust domains (the server (Merkle log, prefix tree, signed
+A STRIDE analysis~\cite{stride} over the three trust domains (the server (Merkle log, prefix tree, signed
 tree head), the client (registration, verification, warning monitor), and the auditor) yields
 twenty distinct threats. \Cref{tab:eval-stride} summarizes the outcome: sixteen are addressed by an
 implemented control (some by cryptographic prevention, the rest by after-the-fact detection through

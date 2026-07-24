@@ -515,7 +515,8 @@ Detection then proceeds as in ACKA: an active man-in-the-middle that injects a f
 $T'$ either posts under a label the impersonated party never derives (a different chain gives a
 different $L_t$) or produces a conflicting fingerprint at the agreed label, caught epoch by
 epoch. On a fork, continuous mode reuses the dual-index warning slot to alert the peer in
-band, a composition ACKA itself does not provide.
+band, a composition ACKA itself does not provide. \Cref{fig:design-modes} contrasts the two
+authentication modes.
 
 \begin{figure}[H]
 \centering
@@ -564,7 +565,7 @@ separate proofs and an overall verification cost of $O(W \cdot \log n)$. Success
 consistency proofs contain substantial overlap, making repeated verification redundant. Instead, the
 client requests a single consistency proof spanning its previously trusted log size $m$
 and the current log size $n$, returned together with the latest signed tree head.
-RFC~9162 guarantees that such a proof has size
+RFC~9162~\cite{rfc9162} guarantees that such a proof has size
 \begin{equation}\label{eq:design-proofsize}
   |\pcons(m, n)| \le \lceil \log_2 m \rceil + \lceil \log_2 n \rceil \quad\text{hashes},
 \end{equation}
@@ -709,20 +710,21 @@ paragraphs below expand the three that most affect the system's behaviour.
 \centering
 \caption{Principal design decisions.}
 \label{tab:design-decisions}
+\setlength{\extrarowheight}{2pt}
 \small
 \begin{tabular}{@{}p{4.0cm}p{5.4cm}p{3.6cm}@{}}
 \toprule
 Decision & Justification & Reference / precedent \\
 \midrule
-Sparse binary Merkle tree & uniform node semantics; cheap first-class non-inclusion for the warning slot; small audit surface & CONIKS, RFC~9162, IETF KeyTrans \\
-ECVRF-EDWARDS25519-SHA512-TAI for global labels & publicly verifiable directory privacy; parity with Signal's deployed keytrans VRF & RFC~9381; Signal keytrans \\
-SHA-256 with RFC~6962 domain tags & second-preimage separation of leaves and nodes; RFC~9162 alignment & RFC~6962/9162 \\
-HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF; PRF security underpins pre-use unpredictability & RFC~5869; Signal X3DH \\
-Two-tree (prefix + log) combined stack & one verifiable chain from entry to signed head & IETF KeyTrans draft \\
-Hourly epochs (tunable) & balances proof freshness against commit cost & CONIKS \\
+Sparse binary Merkle tree & uniform node semantics; cheap first-class non-inclusion for the warning slot; small audit surface & CONIKS~\cite{melara2015coniks}; IETF KeyTrans~\cite{ietf-keytrans-protocol} \\
+ECVRF-EDWARDS25519-SHA512-TAI for global labels & publicly verifiable directory privacy; parity with Signal's deployed keytrans VRF & RFC~9381~\cite{rfc9381}; Signal keytrans~\cite{signal-kt-server} \\
+SHA-256 with RFC~6962 domain tags & second-preimage separation of leaves and nodes; RFC~9162 alignment & RFC~6962/9162~\cite{rfc6962,rfc9162} \\
+HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF; PRF security underpins pre-use unpredictability & RFC~5869~\cite{rfc5869}; Signal X3DH~\cite{x3dh} \\
+Two-tree (prefix + log) combined stack & one verifiable chain from entry to signed head & IETF KeyTrans draft~\cite{ietf-keytrans-protocol} \\
+Hourly epochs (tunable) & balances proof freshness against commit cost & CONIKS~\cite{melara2015coniks} \\
 Client-tunable window $W$ & lets each client trade catch-up frequency against per-check cost & this work \\
-Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability ACKA's Logsec assumes; makes warning deletion detectable and provable & ACKA (Dowling--Hale); IETF KeyTrans auditing \\
-Truncate VRF output $\beta$ to 32 bytes & 256-bit label space; matches the prefix-tree label width & Signal keytrans \texttt{proofToHash} \\
+Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability ACKA's Logsec assumes; makes warning deletion detectable and provable & ACKA~\cite{dowling2023acka}; IETF KeyTrans auditing~\cite{ietf-keytrans-protocol} \\
+Truncate VRF output $\beta$ to 32 bytes & 256-bit label space; matches the prefix-tree label width & Signal keytrans~\cite{signal-kt-server} \\
 \bottomrule
 \end{tabular}
 \end{table}
