@@ -43,9 +43,9 @@ can be tied, through one chain of proofs, back to a signed head.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-design-arch}
-\caption[The authenticated directory core.]{The authenticated directory core, showing the three authenticated data structures
-(prefix tree $\to$ log $\to$ STH) and the VRF that derives global directory
-labels. The client warning path and the independent auditor appear in the end-to-end figures below.}
+\caption[The authenticated directory core.]{The authenticated directory core. The prefix tree,
+Merkle log, and signed tree head form the commitment chain. The VRF derives global directory
+labels.}
 \label{fig:design-arch}
 \end{figure}
 
@@ -218,12 +218,12 @@ parties' keys coexist in the directory, and the shared warning slot sits alongsi
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-design-dualindex}
-\caption[The dual-index scheme's three derived slots.]{Two lookup slots and a shared warning slot are derived from the conversation's
-shared secret $\sharedS$. HKDF-Extract produces $\mathit{PRK}$, and three domain-separated HKDF-Expand
-operations produce $\ell_{\mathsf{self}}$, $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$. Since
-Alice and Bob hold the same $\sharedS$, they compute the same warning label and can read either
-party's warning. A party holding a different secret $\sharedS'$ derives a disjoint label set and
-cannot locate these slots before their first use.}
+\caption[The dual-index scheme's three derived slots.]{Two lookup slots and a shared warning slot
+are derived from the conversation secret $\sharedS$. HKDF-Extract produces $\mathit{PRK}$.
+Three domain-separated HKDF-Expand operations then produce $\ell_{\mathsf{self}}$,
+$\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$. Alice and Bob share $\sharedS$, so they derive
+the same warning label and can read either party's warning. A different secret $\sharedS'$ produces
+a disjoint label set.}
 \label{fig:design-dualindex}
 \end{figure}
 \FloatBarrier
@@ -521,12 +521,13 @@ authentication modes.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-modes}
-\caption[Session mode versus continuous mode.]{Session mode, shown on the left, derives labels from the initial secret $\sharedS$
-and registers the identity key once per pre-key rotation. Continuous mode derives a label and
-fingerprint from the pre-update state $k_t$ at every epoch and authenticates the public ratchet key
-$T_t$. The writer's chain advances once its publication is confirmed in a committed head; the verifier's chain
-advances only on a \textsc{consistent} result. In both cases advancing incorporates $I_t$ to produce
-$k_{t+1}$; the state remains unchanged after \textsc{fork} or \textsc{notposted}.}
+\caption[Session mode versus continuous mode.]{Session mode derives labels from the initial secret
+$\sharedS$ and registers the identity key once per pre-key rotation. Continuous mode derives a
+label and fingerprint from the pre-update state $k_t$ at every epoch and authenticates the public
+ratchet key $T_t$. The writer advances its chain after publication is confirmed in a committed
+head. The verifier advances only after a \textsc{consistent} result. Each advance incorporates
+$I_t$ to produce $k_{t+1}$. A \textsc{fork} or \textsc{notposted} result leaves the state
+unchanged.}
 \label{fig:design-modes}
 \end{figure}
 
@@ -585,11 +586,11 @@ the eight algorithms to its purpose.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-windowed}
-\caption[Windowed offline catch-up.]{Offline catch-up over a window $W = n-m$ epochs. The synthetic sequential baseline used in the evaluation verifies one
-consistency proof per missed epoch (upper arcs, $O(W\log n)$); RFC~9162 imposes no such
-requirement. The windowed approach requests
-a single RFC~9162 consistency proof between the previously trusted head $m$ and the current
-head $n$ (lower arc), logarithmic in the log size rather than linear in $W$.}
+\caption[Windowed offline catch-up.]{Offline catch-up over $W=n-m$ epochs. The upper arcs show
+the synthetic evaluation baseline, which verifies one consistency proof per missed epoch at
+$O(W\log n)$. The lower arc shows the RFC~9162 windowed approach, which requests one
+consistency proof between the trusted head at $m$ and the current head at $n$. Its proof size is
+logarithmic in the log size.}
 \label{fig:design-windowed}
 \end{figure}
 

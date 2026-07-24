@@ -122,8 +122,8 @@ summarizes the key material each party holds.
 \begin{table}[H]
 \centering
 \caption[Signal key material.]{Signal key material. Following the X3DH specification, each public key
-has a corresponding private key held by its owner; the identity secret key
-$\skid{}$ additionally signs the signed pre-key.}
+has a corresponding private key held by its owner. The identity secret key
+$\skid{}$ also signs the signed pre-key.}
 \label{tab:bg-keymat}
 \small
 \begin{tabular}{@{}lll@{}}
@@ -243,13 +243,13 @@ message.
 \centering
 \input{figures/tikz/fig-bg-x3dh}
 \caption[X3DH message sequence.]{X3DH message sequence. Bob publishes a pre-key bundle containing his
-identity key, signed pre-key, signature, and (optionally) a one-time pre-key.
-Alice retrieves the bundle, samples an ephemeral key $\xEK{A}$, derives
-$\sharedS$ from three Diffie--Hellman values, or four when Bob's bundle contains
-a one-time pre-key, and sends an initial message
-carrying her identity key $\xIK{A}$ and ephemeral key $\xEK{A}$. Bob can process
-it and derive the same shared secret when he next comes online (simplified; server-fetch and verification internals are described in the text), even though he was
-offline when Alice initiated the session. Schematic based on the X3DH specification~\cite{x3dh}.}
+identity key, signed pre-key, and signature. The bundle may also contain a one-time pre-key.
+Alice verifies the signed-pre-key signature, samples an ephemeral key $\xEK{A}$, and derives
+$\sharedS$ from three Diffie--Hellman values. A fourth value is included when the bundle contains
+a one-time pre-key. Alice then sends an initial message containing $\xIK{A}$ and $\xEK{A}$.
+Bob derives the same shared secret when he next comes online. The diagram is simplified. The text
+describes the omitted server-fetch and verification details. Based on the X3DH
+specification~\cite{x3dh}.}
 \label{fig:bg-x3dh}
 \end{figure}
 
@@ -285,12 +285,12 @@ ratchet and the symmetric-key chains interact.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-ratchet}
-\caption[Double Ratchet key schedule.]{Double Ratchet key schedule. Each participant maintains a
-sending and a receiving chain; the figure shows one direction. $\KDF_{RK}$ consumes the current root
-key and a fresh Diffie--Hellman output and returns the next root key and a chain key~\cite{doubleratchet}.
-Each symmetric ratchet step then derives the next chain key and one message key $mk_i$; message
-keys are never used to derive further keys, so each can be deleted (or stored
-for out-of-order messages) without affecting the others.}
+\caption[Double Ratchet key schedule.]{Double Ratchet key schedule. Each participant maintains
+sending and receiving chains, and the figure follows one direction. $\KDF_{RK}$ combines the current
+root key with a fresh Diffie--Hellman output to produce the next root key and a chain
+key~\cite{doubleratchet}. Each symmetric-ratchet step produces the next chain key and one message
+key $mk_i$. No later key depends on a message key, so it can be deleted after use or retained
+temporarily for out-of-order delivery.}
 \label{fig:bg-ratchet}
 \end{figure}
 
@@ -476,9 +476,10 @@ illustrates an inclusion proof and the copath a verifier recomputes from.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-merkle}
-\caption[A Merkle log tree and inclusion proof.]{A Merkle log tree on four records. An inclusion proof for $d_2$ is the
-shaded copath $\{h_3, h_{01}\}$, from which the verifier recomputes the root
-$h_0$ and checks it against the published tree head. Based on the RFC~9162 log-tree construction~\cite{rfc9162}.}
+\caption[A Merkle log tree and inclusion proof.]{A Merkle log tree on four records. The shaded
+copath $\{h_3,h_{01}\}$ is the inclusion proof for $d_2$. It allows the verifier to recompute
+$h_0$ and compare it with the published tree head. Based on the RFC~9162 log-tree
+construction~\cite{rfc9162}.}
 \label{fig:bg-merkle}
 \end{figure}
 
@@ -574,12 +575,11 @@ malicious server maintains.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-splitview}
-\caption[The split-view (fork) attack.]{The split-view (fork) attack: the server shows Alice tree head
-$\logroot{A}$ and Bob a different $\logroot{B}$, each internally consistent.
-Only a cross-vantage comparison of the two heads exposes the fork. Two heads of the same signed size
-with different roots are direct equivocation evidence; heads of different sizes require a valid
-consistency proof between them, failing which the result is \emph{consistency unverified} rather than a
-proven fork.}
+\caption[The split-view (fork) attack.]{The split-view attack. The server shows Alice tree head
+$\logroot{A}$ and Bob a different $\logroot{B}$, with each view internally consistent.
+A cross-vantage comparison exposes the divergence. Two validly signed heads of the same size with
+different roots provide direct evidence of equivocation. Heads of different sizes require a valid
+consistency proof. A missing or invalid proof produces the verdict \emph{consistency unverified}.}
 \label{fig:bg-splitview}
 \end{figure}
 
@@ -1193,12 +1193,12 @@ resistance must extend to the keying material itself~\cite[p.~23]{dowling2023ack
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-acka}
-\caption[The three ACKA primitives composed as a pipeline]{The three primitives
-of ACKA composed as a pipeline. CKA supplies each epoch's public ratchet key
-$T_t$ (which CEA authenticates) and secret input $I_t$ ($=ck_t$ in ACKA's Signal mapping, which updates the
-fingerprint) to CEA/CEAsec, which posts a per-epoch label and fingerprint to
-Logsec and later queries them. The dashed LOG box represents ACKA's abstract Logsec interface.
-\cref{ch:design} implements it as DUET's auditable directory. Composition based on Dowling and Hale~\cite{dowling2023acka}.}
+\caption[The three ACKA primitives composed as a pipeline]{The three ACKA primitives composed as a
+pipeline. CKA supplies the public ratchet key $T_t$ that CEA authenticates and the secret input
+$I_t$ that updates the fingerprint. In ACKA's Signal mapping, $I_t=ck_t$. CEA/CEAsec posts a
+per-epoch label and fingerprint to Logsec and later queries them. The dashed LOG box represents
+ACKA's abstract Logsec interface, which \cref{ch:design} implements as DUET's auditable directory.
+Based on Dowling and Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
 
@@ -1244,11 +1244,9 @@ proposed scheme kept to forward references; its full treatment is deferred to
 
 \begin{table}[t]
 \centering
-\caption[Cross-system comparison of key-transparency directories.]{Cross-system comparison of key-transparency directories. The comparison
-focuses on the properties most relevant to key-substitution detection: what is
-authenticated, who detects inconsistencies, how clients recover after being
-offline, and how consistency between directory states is maintained. Mechanisms
-and figures are cited in \cref{sec:bg-vkd} and in the findings below.}
+\caption[Cross-system comparison of key-transparency directories.]{Cross-system comparison of
+key-transparency directories. The columns cover authenticated objects, inconsistency detection,
+offline recovery, and consistency between directory states.}
 \label{tab:bg-compare}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -1315,9 +1313,10 @@ construction developed in \cref{ch:design}.
 
 \begin{table}[H]
 \centering
-\caption[X3DH key-material coverage: Signal versus this thesis.]{Coverage of the X3DH key material: Signal's Safety Number versus the
-scheme proposed in this thesis (forward reference; mechanism and rationale in
-\cref{ch:design}). The Signal column concerns the Safety Number alone; optional AKV is discussed in \cref{ssec:bg-gap}.}
+\caption[X3DH key-material coverage: Signal versus this thesis.]{Coverage of X3DH key material by
+Signal's Safety Number and the scheme proposed in this thesis. \Cref{ch:design} develops the proposed
+mechanism and its rationale. The Signal column describes the Safety Number. Optional AKV is
+discussed in \cref{ssec:bg-gap}.}
 \label{tab:bg-x3dh-coverage}
 \small
 \renewcommand{\arraystretch}{1.4}

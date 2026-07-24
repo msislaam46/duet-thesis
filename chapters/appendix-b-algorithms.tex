@@ -467,7 +467,7 @@ its chain only after confirming that the write committed. The receiver advances 
 \textsc{Consistent} verdict, leaving its state unchanged on \textsc{Fork} or \textsc{NotPosted}.
 
 \begin{algorithm}[H]
-\caption{Continuous Entity Authentication mode (CEA; per-ratchet, ACKA CEA construction)}\label{alg:cea}
+\caption{ACKA Continuous Entity Authentication Mode}\label{alg:cea}
 \KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and $\mathit{PRK}$
 from Alg.~\ref{alg:dualindex} (the label uses canonical $\min/\max$ id order: one slot per epoch;
 the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
