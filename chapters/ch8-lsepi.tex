@@ -25,6 +25,26 @@ The independent Rust \texttt{duet} crate depends on permissively licensed librar
 \texttt{ed25519-dalek} (BSD-3-Clause), which are compatible with those obligations. All third-party
 work (specifications, prior systems, and code) is attributed in the references.
 
+There is a lawful route by which Signal could evaluate and adopt this work. The Signal Foundation is
+the parent of Signal Messenger, LLC, and supports the development and operation of the messenger.
+Integration of a code contribution would ordinarily be handled through Signal Messenger's software
+projects~\cite{signal-foundation-structure}. The design described in this thesis may be independently
+implemented because copyright protects the expression of software rather than the underlying ideas
+or methods~\cite{uk-software-copyright}. Direct reuse of the implementation requires a separate
+licence analysis. Changes made within the Signal Desktop and libsignal codebases remain subject to
+AGPL-3.0 and its corresponding-source requirements~\cite{agpl3}. An upstream contribution would also
+follow Signal's contributor-licence process, under which a contributor must have authority to grant
+the relevant rights and must identify third-party material~\cite{signal-cla}. The independently
+written Rust crate has no separate project-level licence at the time of submission, so Signal could
+not copy that code merely because it accompanies the thesis. Direct reuse would require an explicit
+licence or written grant from the relevant rights holder after ownership under university policy had
+been confirmed. This could be provided through an AGPL-3.0 release of the original components or a
+direct licence or assignment accepted as part of an upstream contribution. Signal could instead
+implement the published design independently. In either case,
+adoption would still require Signal's own security, privacy, export-control, and deployment review.
+This paragraph identifies a route for lawful evaluation and transfer rather than giving a legal
+opinion.
+
 A second consideration is export control. Cryptographic software may fall within UK strategic export
 controls depending on its functionality, destination, end use, and the applicable control-list
 provisions. Public source availability and the use of published algorithms do not alone determine
