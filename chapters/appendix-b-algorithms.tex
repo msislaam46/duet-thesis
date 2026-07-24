@@ -42,7 +42,7 @@ Algorithm & Purpose \\
 \end{tabular}
 \end{table}
 
-\paragraph{Notation.} $\Hash(\cdot)$ is SHA-256. Tree hashing is domain-separated per RFC 6962/9162: a
+\paragraph{Notation.} $\Hash(\cdot)$ is SHA-256. Tree hashing is domain-separated per RFC 6962/9162~\cite{rfc6962,rfc9162}: a
 leaf hashes as $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and an internal node as
 $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. The operator $\concat$ denotes byte
 concatenation. Identities are fixed-width 16-byte service IDs; this is a precondition of the
@@ -62,7 +62,7 @@ implementation enforces it at the API boundary.
 
 \clearpage
 \paragraph{The Merkle log (Algorithm~\ref{alg:merklelog}).} The append-only log layer under every
-signed head. It fixes the RFC~9162 tree-hash and proof conventions used everywhere else: inclusion
+signed head. It fixes the RFC~9162~\cite{rfc9162} tree-hash and proof conventions used everywhere else: inclusion
 proofs bind one leaf to a root, and consistency proofs bind an old root to a newer one, the
 primitive that windowed catch-up (\cref{sec:design-windowed}) and the auditor's fork check both
 build on. The $m=0$ case is accepted as the local trust-on-first-use convention.
@@ -169,7 +169,7 @@ warning slot is genuinely empty rather than merely unreported.
 key-transparency service: raw-label writes are write-once, \textsf{CommitEpoch} appends the prefix
 root to the log and signs the head (binding epoch, size, root, timestamp, and the policy
 commitment), and \textsf{Search} answers with the value plus the full proof chain a verifier needs.
-\textsf{SearchByUserId} adds the VRF step that derives global labels privately.
+\textsf{SearchByUserId} adds the VRF step (ECVRF, RFC~9381~\cite{rfc9381}) that derives global labels privately.
 \begin{algorithm}[H]
 \caption{Key Transparency Server}\label{alg:server}
 \KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$}
@@ -211,7 +211,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 
 \clearpage
 \paragraph{Dual-index labels and warnings (Algorithm~\ref{alg:dualindex}).} The per-conversation
-label layer of \cref{sec:design-dual}: from each conversation's shared secret, HKDF derives the two
+label layer of \cref{sec:design-dual}: from each conversation's shared secret, HKDF~\cite{rfc5869} derives the two
 participant lookup labels and the canonically ordered shared warning label. \textsf{WriteWarning}
 publishes a MAC-authenticated alert and trusts neither an apparent success nor a write-once
 conflict, confirming publication by a verified read-back; \textsf{CheckWarning} raises
@@ -453,7 +453,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
 
 \clearpage
 \paragraph{Continuous mode (Algorithm~\ref{alg:cea}).} CEA authenticates the Double Ratchet epoch by
-epoch, following the ACKA CEA construction. It folds each epoch's secret into a chained key $k$ and
+epoch, following the ACKA CEA construction~\cite{dowling2023acka}. It folds each epoch's secret into a chained key $k$ and
 publishes a directional fingerprint over the new ratchet public key, which the receiver recomputes and
 compares. A mismatch shows that the committed fingerprint is inconsistent with the receiver's chained state and
 authenticated ratchet public key $T_t$; the verifier reports this as a fork without attributing the

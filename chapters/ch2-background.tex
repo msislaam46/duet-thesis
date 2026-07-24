@@ -63,8 +63,8 @@ including WhatsApp~\cite{whatsapp2023whitepaper}.
 
 Signal is not a single cryptographic primitive but a protocol stack. Session
 establishment is performed using the Extended Triple Diffie--Hellman (X3DH) key
-agreement protocol, while ongoing communication is protected using the Double
-Ratchet algorithm. Together these mechanisms provide strong confidentiality
+agreement protocol~\cite{x3dh}, while ongoing communication is protected using the Double
+Ratchet algorithm~\cite{doubleratchet}. Together these mechanisms provide strong confidentiality
 guarantees against passive adversaries and support recovery from compromise
 through continuous key evolution.
 
@@ -249,7 +249,7 @@ $\sharedS$ from three Diffie--Hellman values, or four when Bob's bundle contains
 a one-time pre-key, and sends an initial message
 carrying her identity key $\xIK{A}$ and ephemeral key $\xEK{A}$. Bob can process
 it and derive the same shared secret when he next comes online (simplified; server-fetch and verification internals are described in the text), even though he was
-offline when Alice initiated the session.}
+offline when Alice initiated the session. Schematic based on the X3DH specification~\cite{x3dh}.}
 \label{fig:bg-x3dh}
 \end{figure}
 
@@ -478,7 +478,7 @@ illustrates an inclusion proof and the copath a verifier recomputes from.
 \input{figures/tikz/fig-bg-merkle}
 \caption[A Merkle log tree and inclusion proof.]{A Merkle log tree on four records. An inclusion proof for $d_2$ is the
 shaded copath $\{h_3, h_{01}\}$, from which the verifier recomputes the root
-$h_0$ and checks it against the published tree head.}
+$h_0$ and checks it against the published tree head. Based on the RFC~9162 log-tree construction~\cite{rfc9162}.}
 \label{fig:bg-merkle}
 \end{figure}
 
@@ -531,7 +531,7 @@ under predictable labels such as usernames or simple hashes of usernames, an
 adversary could enumerate the directory by generating candidate names and
 checking whether they exist. KT systems therefore require labels that are
 deterministic yet unpredictable. This is achieved via verifiable random
-functions (VRF), standardized in RFC~9381. A VRF is a keyed function whose
+functions (VRF), standardized in RFC~9381~\cite{rfc9381}. A VRF is a keyed function whose
 outputs appear pseudorandom to anyone without the secret key while
 simultaneously producing publicly verifiable proofs of correct evaluation. The
 directory operator, holding the VRF secret key, maps a username to a
@@ -622,7 +622,7 @@ achieving them unspecified~\cite{ietf-keytrans-protocol}. This open question is
 the efficiency problem this thesis returns to in later chapters.
 
 The signed tree head is where this work
-hardens the standard design. The server signs each head with Ed25519 over the
+hardens the standard design. The server signs each head with Ed25519~\cite{rfc8032} over the
 epoch number, the tree size, the log root and a timestamp. Earlier systems such
 as CONIKS instead published a \emph{linear hash chain} of signed roots, each
 committing to the previous one by including the hash of its predecessor. That
@@ -1198,7 +1198,7 @@ of ACKA composed as a pipeline. CKA supplies each epoch's public ratchet key
 $T_t$ (which CEA authenticates) and secret input $I_t$ ($=ck_t$ in ACKA's Signal mapping, which updates the
 fingerprint) to CEA/CEAsec, which posts a per-epoch label and fingerprint to
 Logsec and later queries them. The dashed LOG box represents ACKA's abstract Logsec interface.
-\cref{ch:design} implements it as DUET's auditable directory.}
+\cref{ch:design} implements it as DUET's auditable directory. Composition based on Dowling and Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
 
@@ -1237,7 +1237,7 @@ This section draws the surveyed systems of \cref{sec:bg-vkd} together and
 identifies the common design patterns and remaining gaps that emerge across the
 literature. The comparison identifies the capabilities that remain
 unsupported across the surveyed systems. Those recurring gaps motivate the open problems of
-\cref{sec:bg-open}. This section presents the comparison as a table, followed by five
+\cref{sec:bg-open}. \Cref{tab:bg-compare} presents the comparison, followed by five
 cross-cutting findings, keeping it descriptive, with references to the
 proposed scheme kept to forward references; its full treatment is deferred to
 \cref{sec:bg-contrib} and \cref{ch:design}.
@@ -1252,32 +1252,32 @@ and figures are cited in \cref{sec:bg-vkd} and in the findings below.}
 \label{tab:bg-compare}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.6cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{2.6cm}@{}}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}p{1.4cm}>{\raggedright\arraybackslash}p{2.1cm}>{\raggedright\arraybackslash}p{2.5cm}@{}}
 \toprule
 System & What it logs & Primary detection mechanism & In-band peer warning &
   Offline protection & Consistency / fork resistance \\
 \midrule
-CONIKS & username $\to$ key binding & self-monitoring & No & linear, $\Theta(\ell)$ catch-up &
+CONIKS~\cite{melara2015coniks} & username $\to$ key binding & self-monitoring & No & linear, $\Theta(\ell)$ catch-up &
   auditor STR cross-gossip (clients and providers audit; a client-to-client protocol is future work) \\
-SEEMless & identity key (versioned) & self-monitoring (client history checks) & No & per-update
+SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & per-update
   history & $\ge$1 honest auditor per epoch; globally consistent commitment distribution assumed \\
-Parakeet & identity key & self-monitoring & No & bounded: check before compaction & $2f{+}1$ signatures from $3f{+}1$
+Parakeet~\cite{malvai2023parakeet} & identity key & self-monitoring & No & bounded: check before compaction & $2f{+}1$ signatures from $3f{+}1$
   witnesses \\
-ELEKTRA & multi-device keychains & self-monitoring & reset only & per-update &
+ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & reset only & per-update &
   external auditor \\
-OPTIKS & identity key (+ devices) & self-monitoring (single proof, common case) & No & bounded:
+OPTIKS~\cite{optiks2024} & identity key (+ devices) & self-monitoring (single proof, common case) & No & bounded:
   verify before old periods are deleted & $\ge$1 auditor + bulletin board \\
-PRISM & account keys & whole-directory verification & No (commitments only) &
+PRISM~\cite{pusch2025prism} & account keys & whole-directory verification & No (commitments only) &
   constant-size proof & zk-rollup on a data-availability layer \\
-WhatsApp (AKD) & identity key & infrastructure audit (self-monitoring off, 2023 whitepaper) & No & n/a
+WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & infrastructure audit (self-monitoring off, 2023 whitepaper) & No & n/a
   (self-monitoring off, 2023 whitepaper) & signed root + public write-once (WORM) audit log \\
-Signal KT & ACI $\to$ identity key; E.164 and username-hash mappings & self-monitoring + audit interfaces; optional user-triggered AKV & No &
+Signal KT~\cite{signal-kt-server,signal-akv} & ACI $\to$ identity key; E.164 and username-hash mappings & self-monitoring + audit interfaces; optional user-triggered AKV & No &
   n/a & signed head; public audit endpoints (operator not documented) \\
-Proton KT & email $\to$ SKL fingerprints & self-audit + external audit & No &
+Proton KT~\cite{goebel2023proton} & email $\to$ SKL fingerprints & self-audit + external audit & No &
   self-audit within 90 days & CT logs + External Audit \\
-Google KT & account keys & self-monitoring (experimental; archived 2024) & No & n/a & CONIKS map in a CT log \\
-Apple CKV & account + device keys + opt-in state & automatic device verification + E2E-encrypted CloudKit
+Google KT~\cite{google-kt} & account keys & self-monitoring (experimental; archived 2024) & No & n/a & CONIKS map in a CT log \\
+Apple CKV~\cite{apple-ckv} & account + device keys + opt-in state & automatic device verification + E2E-encrypted CloudKit
   cross-check & No & n/a & on-device consistency + encrypted log-hash gossip + internal audit \\
 \bottomrule
 \end{tabular}

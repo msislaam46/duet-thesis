@@ -11,8 +11,9 @@ directory and the key-transparency control that answers it.
 % ----------------------------------------------------------------------------
 \section{MITRE ATT\&CK Technique-to-Mitigation Matrix}\label{sec:sec-mitre}
 
-The adversary techniques relevant to a messaging key directory are mapped to their
-key-transparency mitigations in \cref{tab:sec-mitre}.
+The adversary techniques relevant to a messaging key directory are mapped, using the MITRE
+ATT\&CK enterprise matrix~\cite{mitre-attack}, to their key-transparency mitigations in
+\cref{tab:sec-mitre}.
 
 \begin{table}[ht]
 \centering
@@ -20,6 +21,7 @@ key-transparency mitigations in \cref{tab:sec-mitre}.
 technique families are mitigated: T1557 (with sub-technique T1557.004) and T1565 (with
 sub-technique T1565.002); T1552.004 is the explicit endpoint-compromise boundary (X1).}
 \label{tab:sec-mitre}
+\setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.7cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{4.5cm}l@{}}
 \toprule
@@ -68,6 +70,7 @@ are limitations of rows that are counted addressed.
 \centering
 \caption{Spoofing (4/4 addressed).}
 \label{tab:stride-s}
+\setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
@@ -85,6 +88,7 @@ Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \centering
 \caption{Tampering (3/3 addressed).}
 \label{tab:stride-t}
+\setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
@@ -101,6 +105,7 @@ Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (c
 \centering
 \caption{Repudiation (3/3 addressed).}
 \label{tab:stride-r}
+\setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
@@ -117,6 +122,7 @@ Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under
 \centering
 \caption{Information Disclosure (2/3, 1 residual).}
 \label{tab:stride-i}
+\setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
@@ -133,6 +139,7 @@ Leak the shared secret from a label & HKDF-Expand (dual-index labels) and ECVRF 
 \centering
 \caption{Denial of Service (1/4, 3 residual).}
 \label{tab:stride-d}
+\setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
@@ -150,6 +157,7 @@ Flood with fake registrations & deployment-level rate limiting & \emph{not imple
 \centering
 \caption{Elevation of Privilege (3/3 addressed).}
 \label{tab:stride-e}
+\setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
