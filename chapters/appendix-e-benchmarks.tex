@@ -80,11 +80,11 @@ sits at depth~23 (913\,B). The distribution median over \num{1000} random lookup
 
 \begin{table}[ht]
 \centering
-\caption[M4: catch-up consistency-path hash bytes.]{M4: catch-up, raw consistency-path hash bytes (serialized bandwidth not measured):
-synthetic current-head-anchored sequential baseline versus windowed; identical across
-$N\in\{10^3,10^4,10^5\}$ because the windowed proof is taken over the epoch log (one leaf per
-committed epoch) and its size depends on the window $W$ through the epoch-log endpoints, not on
-the directory's user count $N$ (\cref{lem:windowed-size}).}
+\caption[M4: catch-up consistency-path hash bytes.]{M4 raw consistency-path hash bytes for offline
+catch-up. The table compares the synthetic current-head-anchored sequential baseline with the
+windowed proof. Because the proof covers the epoch log, its size follows the window endpoints.
+The values are therefore unchanged across $N\in\{10^3,10^4,10^5\}$
+(\cref{lem:windowed-size}). The metric excludes serialization and transport overhead.}
 \label{tab:bench-m4}
 \small
 \begin{tabular}{@{}rrrr@{}}
@@ -151,9 +151,9 @@ distribution, not one label's path (\cref{ssec:eval-detection}).}
 
 \begin{table}[ht]
 \centering
-\caption[M5: marginal warning-slot lookup cost.]{M5: marginal warning-slot lookup cost, an unverified read (distribution over \num{1000}
-sampled conversations). This row measures only the marginal warning-slot read; detector behaviour is
-evaluated in \cref{ssec:eval-detection}.}
+\caption[M5: marginal warning-slot lookup cost.]{M5 marginal warning-slot lookup cost. The
+distribution covers \num{1000} sampled conversations and measures one unverified warning-slot read.
+\Cref{ssec:eval-detection} evaluates detector behaviour separately.}
 \label{tab:bench-detection}
 \small
 \begin{tabular}{@{}llrrr@{}}

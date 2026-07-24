@@ -55,7 +55,7 @@ behind account-layer authorization. \Cref{tab:apiref-admin} lists them.
 
 \begin{table}[ht]
 \centering
-\caption{Privileged testing endpoints (internal only).}
+\caption{Privileged testing endpoints for internal use.}
 \label{tab:apiref-admin}
 \setlength{\extrarowheight}{2pt}
 \small
@@ -158,8 +158,9 @@ equivocation in \cref{fig:demo-equivocation}.
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/ui-baseline-self.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/ui-baseline-contact.png}
-\caption[Honest baseline (scenario A0).]{Honest baseline (scenario A0): the two linked Signal Desktop clients with no warning banner,
-verifying keys against a clean directory. Every later detection is measured against this state.}
+\caption[Honest baseline (scenario A0).]{Honest baseline for scenario A0. Two linked Signal Desktop
+clients verify keys against a clean directory and display no warning banner. This state provides the
+reference for the later attack captures.}
 \label{fig:demo-baseline}
 \end{figure}
 
@@ -167,17 +168,18 @@ verifying keys against a clean directory. Every later detection is measured agai
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/cmd-dualindex.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/cmd-vrf.png}
-\caption[Attacker terminals staging the two substitutions.]{Attacker terminals. Left: the dual-index substitution (\texttt{attack.mjs --label <hex>})
-overwriting the per-conversation lookup slot. Right: the global-slot substitution
-(\texttt{attack.mjs} with the target user-id) overwriting the VRF-derived identity entry.}
+\caption[Attacker terminals staging the two substitutions.]{Attacker terminals staging two
+substitutions. The left capture shows \texttt{attack.mjs --label <hex>} overwriting the
+per-conversation lookup slot. The right capture shows \texttt{attack.mjs} with a target user ID
+overwriting the VRF-derived identity entry.}
 \label{fig:demo-cmd}
 \end{figure}
 
 \begin{figure}[ht]
 \centering
 \screenshotplaceholder{0.62\textwidth}{figures/cmd-equivocation.png}
-\caption[Staging an equivocation (scenario A4).]{Staging an equivocation (scenario A4): the privileged testing endpoint signs a second,
-divergent tree head at one epoch, which the cross-vantage auditor then detects
-(\cref{fig:impl-auditor}, right).}
+\caption[Staging an equivocation (scenario A4).]{Staging an equivocation in scenario A4. The
+privileged testing endpoint signs a second, divergent tree head at the same epoch. The
+cross-vantage auditor detects the divergence (\cref{fig:impl-auditor}, right).}
 \label{fig:demo-equivocation}
 \end{figure}

@@ -89,10 +89,11 @@ overcome end to end.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-overview}
-\caption[The implemented system.]{The implemented system. The TypeScript client verifies keys against the Rust
-reference implementation (directory server plus reference client constructions) over HTTP. An independent auditor retrieves the signed tree head, epoch deltas, and
-consistency proofs. Shared test vectors require byte-for-byte agreement for the covered operations
-and inputs. \Cref{app:apiref} specifies the HTTP API.}
+\caption[The implemented system.]{The implemented system. The TypeScript client communicates over
+HTTP with the Rust directory server and uses the reference client constructions to verify keys.
+An independent auditor retrieves signed tree heads, epoch deltas, and consistency proofs. Shared
+test vectors require byte-for-byte agreement for the covered operations and inputs.
+\Cref{app:apiref} specifies the HTTP API.}
 \label{fig:impl-overview}
 \end{figure}
 
@@ -137,11 +138,11 @@ crate from the bottom up: its state, the cryptography over it, and the binaries 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-modules}
-\caption[Rust reference architecture by ownership.]{Internal architecture of the Rust reference
-implementation, grouped by ownership: the HTTP server core (\texttt{KTServer} over the prefix tree,
-Merkle log, ECVRF, Ed25519, and SHA-256), the client/reference components that call the server API,
-and an independent auditor that reaches the server only over HTTP and keeps its own replica. Module
-names and specifications are in \cref{tab:impl-modules}.}
+\caption[Rust reference architecture by ownership.]{Rust reference architecture grouped by
+ownership. The HTTP server core contains \texttt{KTServer}, the prefix tree, Merkle log, ECVRF,
+Ed25519, and SHA-256 components. Client and reference components call the server API. The independent
+auditor reaches the server only over HTTP and maintains its own replica. \Cref{tab:impl-modules}
+lists the modules and their specifications.}
 \label{fig:impl-modules}
 \end{figure}
 
@@ -236,11 +237,11 @@ storage, networked operation, and abuse controls.
 \begin{figure}[htbp]
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
-\caption[Transition-audit state flow.]{The networked auditor first classifies the head
-(\cref{alg:auditor}) and then replays the declared transitions transactionally. Both checks must pass
-before the state updates atomically. When a valid second-vantage head is available, it provides an
-additional fork check; if it is unavailable, no G4 (fork-detection) verdict is reached and the primary commit is not
-blocked.}
+\caption[Transition-audit state flow.]{Transition-audit state flow. The networked auditor first
+classifies the head and then replays the declared transitions transactionally
+(\cref{alg:auditor}). Both checks must pass before the state updates atomically. A valid
+second-vantage head enables the additional G4 fork check. When no valid second-vantage head is
+available, the primary result determines the commit and G4 remains unevaluated.}
 \label{fig:impl-transition-audit}
 \end{figure}
 \FloatBarrier
@@ -307,10 +308,11 @@ networked stack.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-signal}
-\caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript KT client verifies keys at three
-lifecycle hooks and reports verdicts to the badge and banner, communicating over HTTP with the Rust
-directory server. An independent auditor polls that server, while the scripted attacker uses its
-privileged testing interface. Hook functions and verdict-event names are listed in \cref{app:apiref}.}
+\caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript
+KT client communicates over HTTP with the Rust directory server. It verifies keys at three lifecycle
+hooks and reports verdicts to the badge and banner. An independent auditor polls the server. The
+scripted attacker uses a privileged testing interface. \Cref{app:apiref} lists the hook functions
+and verdict-event names.}
 \label{fig:impl-signal}
 \end{figure}
 
@@ -367,9 +369,9 @@ verification error through the advisory user interface (\cref{ssec:impl-demo}).
 \centering
 \input{figures/tikz/fig-impl-verify}
 \caption[Owner-slot and warning-slot verification.]{Matching branch of
-\texttt{RemoteKTClient.detectMitm}. The client verifies its own dual-index slot against a signed and
-append-only-anchored head. Only a match proceeds to the proof-verified warning-slot lookup. The
-method's outcomes and the separate live-monitor responsibilities are described in the text.}
+\texttt{RemoteKTClient.detectMitm}. The client verifies its own dual-index slot against a signed
+head anchored to the append-only log. Only a matching owner-slot value proceeds to the proof-verified
+warning-slot lookup. The live monitor handles registration and warning publication separately.}
 \label{fig:impl-verify}
 \end{figure}
 
@@ -390,10 +392,9 @@ exercises it inside the real interface.
 \begin{figure}[p]
 \centering
 \input{figures/tikz/fig-impl-e2e}
-\caption[Normal and A1b attack paths across the four roles.]{Normal and A1b attack paths across the
-client, directory, and auditor roles. The lower panel separates the client-side warning propagation
-(Alice's own-slot mismatch, her warning write, and Bob's warning read) from the auditor's rejection of
-the immutable-slot rotation.}
+\caption[Normal and A1b attack paths across the four roles.]{Normal and A1b attack paths across
+the two clients, directory, and auditor. In the lower panel, Alice detects an own-slot mismatch and
+writes a warning that Bob later reads. The auditor separately rejects the immutable-slot rotation.}
 \label{fig:impl-e2e}
 \end{figure}
 
@@ -424,8 +425,9 @@ the two client instances.
 \centering
 \screenshotplaceholder{\textwidth}{figures/ui-dualindex-self.png}\\[8pt]
 \screenshotplaceholder{\textwidth}{figures/ui-dualindex-contact.png}
-\caption[Dual-index warning on both clients (A1b).]{The dual-index warning firing across two real, linked Signal Desktop clients (scenario A1b).
-\emph{Top:} the victim; \emph{bottom:} the peer, both raising the red Key Transparency banner.}
+\caption[Dual-index warning on both clients (A1b).]{Dual-index warning across two linked Signal
+Desktop clients in scenario A1b. The top capture shows the victim and the bottom capture shows the
+peer. Both display the red Key Transparency banner.}
 \label{fig:impl-screens}
 \end{figure}
 
@@ -433,10 +435,11 @@ the two client instances.
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/ui-vrf.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/ui-cea.png}
-\caption[Global-VRF and CEA detection paths.]{Global-VRF and CEA detection paths. Left: an account-wide monitor detects
-replacement of the VRF-derived identity entry (scenario A1a, global VRF slot; console: \emph{the server replaced it
-(MitM, attack A1a)}). Right: continuous (CEA) mode detects a conflicting per-epoch fingerprint after
-ratchet-key injection. Both paths raise the red warning banner.}
+\caption[Global-VRF and CEA detection paths.]{Global-VRF and CEA detection paths. The left capture
+shows the account-wide monitor detecting replacement of the VRF-derived identity entry in scenario
+A1a. Its console reports \emph{the server replaced it (MitM, attack A1a)}. The right capture shows
+continuous CEA mode detecting a conflicting per-epoch fingerprint after ratchet-key injection.
+Both paths raise the red warning banner.}
 \label{fig:impl-screens-fronts}
 \end{figure}
 
@@ -444,11 +447,10 @@ ratchet-key injection. Both paths raise the red warning banner.}
 \centering
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-rotations.png}\hfill
 \screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
-\caption[Auditor outputs: legal rotation, illegal rotation, and equivocation.]{The auditor's outputs
-by slot and attack. \emph{Left:} the global-slot substitution A1a is a legal declared rotation (the
-identity slot is \textsc{mutable}), so the auditor logs \textsc{consistent} and detection rests on
-the client self-check. The same capture shows the immutable-slot overwrite A1b tripping the
-transition audit (\textsc{ImmutableRotation}). \emph{Right:} an equivocation A4 raises
+\caption[Auditor outputs for A1a, A1b, and A4.]{Auditor outputs for three attacks. In the left
+capture, A1a is a permitted declared rotation of a \textsc{mutable} identity slot, so the auditor
+reports \textsc{consistent} and the client self-check provides detection. The same capture shows
+A1b causing an \textsc{ImmutableRotation} transition-audit failure. In the right capture, A4 raises
 \textsc{alarm: fork}.}
 \label{fig:impl-auditor}
 \end{figure}
@@ -495,10 +497,10 @@ benchmarks.
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-testing}
-\caption[The evidence classes.]{The evidence classes: specification conformance against published vectors, per-module
-unit and invariant tests, cross-language equivalence vectors, end-to-end adversarial scenarios,
-and the performance benchmarks of \cref{ch:eval}, each an independent line of support; the first four
-support correctness, the benchmarks support the cost claims of \cref{ch:eval}.}
+\caption[The evidence classes.]{Five independent evidence classes support the implementation and
+evaluation. Published vectors test specification conformance. Unit, invariant, cross-language, and
+adversarial tests support the correctness claims. The benchmarks support the cost claims of
+\cref{ch:eval}.}
 \label{fig:impl-testing}
 \end{figure}
 
@@ -541,7 +543,10 @@ test catalogue.
 
 \begin{table}[ht]
 \centering
-\caption[Representative correctness tests and the requirement each protects.]{Representative correctness tests and the requirement each protects. Goals cited (\cref{sec:threat-goals}): G1 key-substitution detection, G3 directory privacy, G4 fork detection.}
+\caption[Representative correctness tests and the requirement each protects.]{Representative
+correctness tests and the requirement each protects. The cited goals are G1
+(Key-Substitution Detection), G3 (Directory Privacy), and G4 (Fork Detection)
+(\cref{sec:threat-goals}).}
 \label{tab:impl-t5a}
 \footnotesize
 \renewcommand{\arraystretch}{1.1}
@@ -565,9 +570,12 @@ key-fetch status integrity & hook (TS) & only a proof-verified match emits \text
 
 \begin{table}[ht]
 \centering
-\caption[Adversarial scenarios and verdicts.]{Adversarial scenarios and their verdicts (Rust \texttt{tests/adversarial.rs}). All eight
-pass; A1 is exercised as two variants (global VRF slot and dual-index session slot), and A5 is a
-first-class asserted test. The detection points follow the scripted one-action-per-epoch demonstration schedule (\cref{ssec:eval-timeline}); end-to-end detection latency is not measured (\cref{ch:eval}).}
+\caption[Adversarial scenarios and verdicts.]{Adversarial scenarios and their verdicts from the
+Rust \texttt{tests/adversarial.rs} suite. All eight scenarios pass. A1 is exercised through the
+global VRF slot and the dual-index session slot, while A5 has its own asserted test. The reported
+detection points follow the scripted one-action-per-epoch schedule
+(\cref{ssec:eval-timeline}). The evaluation treats these as schedule positions and measures
+individual component latencies separately (\cref{ch:eval}).}
 \label{tab:impl-t5b}
 \footnotesize
 \renewcommand{\arraystretch}{1.1}
