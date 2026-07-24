@@ -1,25 +1,56 @@
 \chapter{Introduction}\label{ch:intro}
 
-This chapter introduces the public-key authentication problem that motivates the thesis and explains
-why it matters for Signal's end-to-end security. It first shows how a substituted public key can
-undermine an otherwise secure encrypted channel, then states the research questions and
-contributions developed in the remainder of the thesis.
+This chapter explains why trustworthy private messaging matters, introduces the public-key
+authentication problem that motivates the thesis, and states the research questions and
+contributions developed in the chapters that follow.
 
 \section{Motivation}\label{sec:intro-motivation}
 
-End-to-end encryption protects a message in transit, but its guarantee is only as strong as the public keys the two parties believe they are using. In asynchronous messaging systems such as Signal, clients normally obtain this key material from provider-operated infrastructure and trust that what they receive is genuine. That trust is a weak point. If that infrastructure substitutes an attacker's key for the recipient's, the protocol may establish an encrypted channel to the attacker rather than to the intended recipient. This is a key-substitution, or ``fake-key,'' attack, and it is invisible to the cryptography itself.
+Private messaging is now part of everyday personal, professional, and civic communication.
+Signal~\cite{signal-home} is an end-to-end encrypted messaging system, and its cryptographic design
+has influenced messaging systems beyond the Signal application~\cite{signal-protocol-impact}. The
+cryptographic suite that provides its end-to-end encryption is known as the Signal Protocol and is
+introduced in \cref{sec:bg-signal}. Its wider adoption makes Signal an important setting in which to
+study improvements to key authentication for asynchronous private messaging.
 
-The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. The comparison is sound when completed, but users rarely complete it without guidance. In one study, only about 14\% of unguided pair--application trials succeeded, and just two of twelve pairs completed the comparison in any of the apps tested~\cite{vaziripour2017}. Even a successful comparison is a one-off check that says nothing about whether a key changes later. \emph{Key
-transparency} (publishing the directory as a verifiable, append-only log so that clients can check their keys against a public, consistent record) is one response to this problem, and production systems now deploy it, including Signal's optional Automatic Key Verification~\cite{signal-akv}.
+Accessible private messaging is especially important for journalists, activists, abuse survivors, and
+others whose safety may depend on confidential communication. For
+these users, encryption alone is not sufficient. A message must be encrypted under the intended
+recipient's authentic key. A silent key substitution defeats that guarantee while leaving the
+conversation looking secure. An attacker may then read or alter communications without giving either
+participant an immediate indication that the channel has been compromised. Detecting such substitution
+is therefore particularly important where a loss of confidentiality could cause serious harm.
+
+That protection depends on authentic public keys. End-to-end encryption keeps an intermediary from
+reading message content only when each participant encrypts to the intended recipient's genuine key.
+In asynchronous messengers such as Signal, clients obtain that key material from provider-operated
+infrastructure and trust that what they receive is genuine. That trust is the weak point: if the
+infrastructure substitutes an attacker's key for the recipient's, the protocol may build an encrypted
+channel to the attacker rather than the intended recipient. This is a key-substitution, or
+``fake-key,'' attack, and it is invisible to the cryptography itself.
+
+The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. The comparison is sound when completed, but users rarely complete it without guidance. In one study, only about 14\% of unguided pair--application trials succeeded, and just two of twelve pairs completed the comparison in any of the apps tested~\cite{vaziripour2017}. Even a successful comparison is a one-off check that says nothing about whether a key changes later.
+
+\emph{Key transparency} addresses this limitation by publishing the directory as a verifiable, append-only log, so that clients can check their keys against a public, consistent record. Production systems now deploy it, including Signal's optional Automatic Key Verification~\cite{signal-akv}.
 
 However, the deployed and proposed key-transparency systems surveyed in \cref{ch:background} still leave two critical gaps. \emph{First}, detection is reduced entirely to \emph{self-monitoring}. While a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. \emph{Second}, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
 
-This thesis directly addresses both limitations. It asks whether key substitution can be made \emph{automatically} detectable, \emph{in band}, and at low measured component cost, so that the \textbf{messaging client verifies the keys in the background}, rather than relying on users to perform manual ceremonies. The scheme it develops in answer, DUET (\emph{DU}al-index, \emph{E}poch-windowed \emph{T}ransparency), is demonstrated through an integration into the Signal Desktop client. Its session mode requires a semi-trusted key directory and a shared conversation secret. Its continuous mode additionally requires a public ratchet key and a secret epoch input.
+Since users may not complete a manual comparison and either participant may be offline, key
+verification in an asynchronous messenger must operate automatically. It must allow both parties to
+detect a substitution inside the client when they next perform the required checks, and must reject a
+missing or invalid proof rather than silently accepting the key. A returning client must also be able
+to check the history it missed without downloading one proof for every missed epoch. Finally, the
+mechanism must keep to practical proof sizes and local verification costs.
 
-DUET does not prevent a malicious provider from denying service. Its goal is narrower: a substituted
-key, an invalid or missing proof, or an inconsistent directory history must cause verification to
-fail rather than allowing the client to accept the attacker's key silently. \Cref{ch:threat}
-formalizes this distinction between detectable interference and availability.
+These requirements motivate DUET (\emph{DU}al-index, \emph{E}poch-windowed \emph{T}ransparency). The
+design combines an in-band warning scheme with windowed consistency verification and integrates the
+verifier into a Signal Desktop prototype. \Cref{ch:design} defines its session-level and continuous
+ratchet-level modes, and \cref{ch:impl} describes their implementation.
+
+DUET provides detection, not prevention: a malicious provider can still refuse service or substitute a
+key, but under the threat-model assumptions and once monitoring begins, a substitution cannot remain
+silent. That distinction, between an availability failure and detectable interference, is formalized
+in \cref{ch:threat}.
 
 \section{Aims and Objectives}\label{sec:intro-aims}
 
@@ -67,8 +98,9 @@ authenticated alert. For an honestly established and monitored conversation, a m
 pre-position that slot before the label is first used. Before the warning commits, a censored write is
 detected through a key mismatch alongside a proof-verified empty slot. After it commits, any
 disappearance is exposed as deletion or tampering. The resulting signal allows both parties to detect
-the substitution automatically and in band (\cref{sec:design-dual}). Separately, the thesis
-instantiates the abstract append-only-log component of the Authenticated Continuous Key Agreement
+the substitution automatically and in band (\cref{sec:design-dual}).
+
+Separately, the thesis instantiates the abstract append-only-log component of the Authenticated Continuous Key Agreement
 (ACKA) framework~\cite{dowling2023acka} as the concrete DUET directory. The thesis evaluates the directory's proof sizes and the local costs of
 its cryptographic components, and defines the dual-index scheme's guarantee as detection over a
 semi-trusted directory rather than prevention. The
