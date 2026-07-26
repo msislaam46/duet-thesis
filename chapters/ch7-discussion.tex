@@ -207,8 +207,8 @@ its labels are derived from a hybrid post-quantum handshake.
 supply one component of multi-device support. Device-scoped labels, warning propagation, and reset
 handling would also be required.
 
-\paragraph{Deployment Route.} One deployment route would extend Signal's existing key-transparency
-service~\cite{signal-kt-server} rather than operate a parallel log. This would
+\paragraph{Building on Signal's Key-Transparency Service.} DUET could build on Signal's existing
+key-transparency service~\cite{signal-kt-server} rather than operate a parallel log. This would
 require immutable raw-label writes, the associated proof and transition-audit data, client
 integration hooks, authenticated write ownership, and an independent fork-detection vantage. A real
 auditor-gossip system would also require a federation model and incentives for auditors to remain
@@ -242,3 +242,10 @@ transfer directly. A sensitivity analysis should vary the epoch cadence and the 
 Separate measurements on mobile devices should report client CPU use, energy consumption, and network
 overhead. These experiments would provide the evidence needed to assess the system's production
 feasibility.
+
+\paragraph{Extending Beyond Private Messaging.} Future work could evaluate the same
+key-authentication and warning approach in security-critical systems that distribute public keys
+asynchronously. Relevant settings include clinical messaging and connected medical-device
+management, emergency-response communications, and command channels for industrial systems. Each
+domain would require its own identity model, device-enrolment and revocation process, availability
+requirements, and regulatory controls.
