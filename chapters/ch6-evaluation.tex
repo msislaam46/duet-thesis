@@ -77,10 +77,10 @@ M4  & Offline catch-up bandwidth vs.\ $W$      & synthetic vs windowed & \cref{s
 M5  & Marginal warning-slot lookup cost        & raw warning (unverified)   & \cref{ssec:eval-detection} \\
 M6  & Clean-session false-positive rate        & None                       & \cref{ssec:eval-detection} \\
 M7  & Size + verify at scale ($10^6,10^7$)    & VRF-indexed, windowed      & \cref{ssec:eval-scale} \\
-M8  & Latency-derived single-thread operation rate & VRF-indexed                & \cref{ssec:eval-throughput} \\
+M8  & Latency-derived single-thread operation rate & VRF-indexed                & \cref{app:benchmarks} \\
 M9  & Key rotation + epoch-commit cost         & VRF-indexed, windowed      & \cref{ssec:eval-throughput} \\
-M10 & VRF prove/verify in isolation            & None                       & \cref{ssec:eval-throughput} \\
-M11 & KT lookup-verification cost at the handshake hook & vs no-KT floor             & \cref{ssec:eval-throughput} \\
+M10 & VRF prove/verify in isolation            & None                       & \cref{app:benchmarks} \\
+M11 & KT lookup-verification cost at the handshake hook & vs no-KT floor             & \cref{app:benchmarks} \\
 M12 & Local signature/consistency kernel + one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
 M13 & Session vs continuous mode               & session vs continuous      & \cref{ssec:eval-modes} \\
 M14 & Proof size + verification vs history depth & single-epoch (M1, M3)    & \cref{ssec:eval-sizes} \\
@@ -452,49 +452,53 @@ could carry a depth-driven increase, the prefix walk and the directory-size-inde
 across the same range, so the residual is not a tree-depth effect. The experiment does not isolate its
 source; possible contributors include the larger proof representation and differences between the two
 measurement contexts (\cref{sec:eval-method}). The claim the data supports is that the check grows far
-more slowly than the directory, not that it is invariant. The build-time and memory rows expose the single-machine limit: constructing a $10^7$-label
-tree takes about 26 minutes and leaves a \SI{20.8}{\giga\byte} resident set, which is why a production
-deployment would move to the persistent, sharded storage this prototype deliberately does not model.
+more slowly than the directory, not that it is invariant. The build-time and \SI{20.8}{\giga\byte}
+memory rows of this scale run are read as a prototype limit in \cref{ssec:eval-throughput}.
 
-\subsection{Operation Rates, Rotation, and Epoch Commit (M8--M11)}\label{ssec:eval-throughput}
+\subsection{Maintenance Cost and Prototype Limits (M9)}\label{ssec:eval-throughput}
 
-Server-side maintenance costs decide how large a deployment one machine can sustain.
-\Cref{tab:eval-server} summarizes them. The median latencies correspond to estimated single-thread rates of about \num{8360} lookups and
-\num{6630} updates per second at $N=10^4$. Key rotation (overwriting an existing binding) costs
-\SI{150.2}{\micro\second} at $10^3$ and \SI{164.0}{\micro\second} at $10^4$: approximately unchanged over the measured range, for the same reason proof
-generation is flat (\cref{ssec:eval-latency}), and dominated by the per-rotation VRF evaluation of
-the unchanged user identifier, which a production server would cache, leaving only tens of
-microseconds of tree work. The verifiable random function, measured in isolation, is independent of directory size
-to prove and to verify, confirming its $N$-independence; its isolated rows in \cref{app:benchmarks}
-differ from the in-path figures by a few percent in either direction, the benchmark-context and
-run-order sensitivity noted in \cref{sec:eval-method}. M11 measures, in the Rust harness, the local CPU cost of one complete signed-head KT lookup verification of the kind the handshake hook invokes,
-$\approx$\SI{128}{\micro\second} against a no-KT floor of a single hash. It excludes
-network transfer, X3DH/PQXDH, session establishment, and the remainder of the messaging-client
-handshake, so it is a Rust component measurement corresponding to the verification operation, not the full deployment overhead.
+Three further families size the server's steady-state and hook costs and are reported in full in
+\cref{app:benchmarks}: latency-derived single-thread operation rates (M8), the VRF prove/verify pair
+measured in isolation (M10), and the local CPU cost of one complete signed-head lookup verification of
+the kind the handshake hook invokes (M11). In brief, the single-thread rates are about \num{8360}
+lookups and \num{6630} updates per second at $N=10^4$; the VRF is independent of directory size to
+prove and to verify, its isolated rows differing from the in-path figures by a few percent in either
+direction (the benchmark-context sensitivity of \cref{sec:eval-method}); and the handshake-hook
+verification is the same $\approx$\SI{128}{\micro\second} full check of \cref{ssec:eval-latency},
+measured against a synthetic no-KT floor of a single hash and excluding network transfer, X3DH/PQXDH,
+and session establishment. This subsection keeps the two maintenance costs that bound the
+single-machine prototype and are load-bearing for the deployment discussion (\cref{sec:eval-deploy})
+and the copy-on-write future work (\cref{ch:discussion}): the epoch-commit growth and the memory
+footprint at scale.
 
 \begin{table}[ht]
 \centering
-\caption{Server-side maintenance costs and latency-derived operation rates (median).}
+\caption{Server-side maintenance costs (M9): key rotation and epoch commit (median).}
 \label{tab:eval-server}
 \small
 \begin{tabular}{@{}lrr@{}}
 \toprule
 Operation & $N=10^3$ & $N=10^4$ \\
 \midrule
-Latency-derived lookup rate & & $\approx$8{,}360 op/s (\SI{119.6}{\micro\second}) \\
-Latency-derived update rate & & $\approx$6{,}630 op/s (\SI{150.9}{\micro\second}) \\
 Key rotation & \SI{150.2}{\micro\second} & \SI{164.0}{\micro\second} \\
 Epoch commit & \SI{464.0}{\micro\second} & \SI{5.92}{\milli\second} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The one cost that does grow with $N$ is the epoch commit (\SI{464.0}{\micro\second} at $10^3$ rising to
-\SI{5.92}{\milli\second} at $10^4$, a $\approx$$13\times$ increase for a $10\times$ growth, i.e.\ roughly
-$O(N)$). This is caused by the deep-clone snapshot the current server takes on every commit. The snapshot also
-copies each leaf's chain memo, the deliberate space-for-time trade that keeps reads flat
-(\cref{sec:impl-modules}); a copy-on-write
-tree would reduce it to $O(\lg N)$ per modified label ($O(k \lg N)$ for an epoch's $k$ updates), and this is noted as future work in \cref{ch:discussion}.
+Key rotation (overwriting an existing binding) is approximately unchanged over the measured range, for
+the same reason proof generation is flat (\cref{ssec:eval-latency}): it is dominated by the
+per-rotation VRF evaluation of the unchanged user identifier, which a production server would cache,
+leaving only tens of microseconds of tree work. The one cost that grows with $N$ is the epoch commit
+(\SI{464.0}{\micro\second} at $10^3$ rising to \SI{5.92}{\milli\second} at $10^4$, a
+$\approx$$13\times$ increase for a $10\times$ growth, i.e.\ roughly $O(N)$), caused by the deep-clone
+snapshot the current server takes on every commit. The snapshot also copies each leaf's chain memo,
+the deliberate space-for-time trade that keeps reads flat (\cref{sec:impl-modules}); a copy-on-write
+tree would reduce it to $O(\lg N)$ per modified label ($O(k \lg N)$ for an epoch's $k$ updates), noted
+as future work in \cref{ch:discussion}. The same single-machine limit shows in memory: constructing
+the $10^7$-label tree takes about 26 minutes and leaves a \SI{20.8}{\giga\byte} resident set
+(\cref{tab:bench-scale}), which is why a production deployment would move to the persistent, sharded
+storage this prototype deliberately does not model.
 
 \subsection{Auditor Cost (M12)}\label{ssec:eval-auditor}
 
