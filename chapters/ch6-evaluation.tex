@@ -92,20 +92,21 @@ M17 & Clean-session verdict coverage           & None                       & \c
 \end{table}
 
 Baselines are referred to by name throughout this chapter, and each name denotes the same
-configuration wherever it appears: the \emph{no-KT floor} (a synthetic identity-hash comparison
-standing in for session setup without key transparency), the
-\emph{single-index} path (log-inclusion only), the \emph{dual-index} path (the prefix-tree lookup that
-carries the warning slot), and the \emph{windowed} full scheme (dual-index plus windowed consistency
-proofs). These are benchmark configurations rather than a full mechanism-level ablation: the no-KT
-floor is a synthetic local comparison only, single-index is a plain log inclusion, dual-index
-is the prefix-tree lookup, and windowed adds windowed consistency. In the size, latency, and rotation
+configuration wherever it appears: the \emph{single-index} path (log-inclusion only), the
+\emph{dual-index} path (the prefix-tree lookup that carries the warning slot), and the \emph{windowed}
+full scheme (dual-index plus windowed consistency proofs). These are benchmark configurations rather
+than a full mechanism-level ablation: single-index is a plain log inclusion, dual-index is the
+prefix-tree lookup, and windowed adds windowed consistency. One further reference point, the
+\emph{no-KT floor} (a synthetic identity-hash comparison standing in for session setup without key
+transparency), is used only by the handshake-hook microbenchmark M11 (\cref{ssec:eval-throughput}) and
+is a synthetic local comparison, not a mechanism-level baseline. In the size, latency, and rotation
 families the dual-index configuration is measured through the \emph{VRF-indexed}
 \texttt{search\_by\_user\_id} lookup the client actually runs (recorded under the harness's historical
 label \texttt{dual\_index}), which carries an \num{80}-byte VRF proof that the raw
 \texttt{search(label)} path omits; the tables therefore report it as the VRF-indexed lookup, the
 like-for-like counterpart to CONIKS. This configuration measures the identity-lookup proof, not the
-raw dual-index warning path: the warning mechanism's own marginal cost is exercised separately by the
-warning-slot read (M5), and the session-versus-continuous write trade by M13. The configurations thus
+raw dual-index warning path: the warning mechanism's own detector cost is exercised separately by the
+detector-branch benchmark (M16), and the session-versus-continuous write trade by M13 and M15. The configurations thus
 bound each cost rather than attributing a clean mechanism-level contribution.
 
 Timings are collected two ways. Criterion provides bootstrap confidence intervals and regression
@@ -665,14 +666,17 @@ stated parameterization it is over three orders of magnitude larger than the win
 Finally, full client verification stays below \SI{150}{\micro\second} through $10^7$ labels. CONIKS
 reports \SI{159}{\micro\second} to verify the authentication path at $N = 10^7$ and approximately
 \SI{400}{\micro\second} to verify the signed-tree-root signature, and reports no VRF-verification
-time~\cite[\S5.3]{melara2015coniks}; the total of \SI{559}{\micro\second} is the sum, computed here,
-of their two published figures. The comparison must be taken at matched scale, so it is the $10^7$
-median of \SI{147.1}{\micro\second} that belongs beside it, not the $\approx$\SI{128}{\micro\second}
-measured at $N \le 10^4$: the DUET figure is therefore about $3.8\times$ lower while additionally
-performing the VRF verification that CONIKS's figures omit, on top of the
-signature verification that both totals include. Because the two measurements come from different
-hardware (CONIKS's 2015 2\,GHz laptop CPU against the 2022 mobile CPU used here; see the comparability note),
-the $3.8\times$ factor is indicative only; the claim that stands on this hardware alone is the
+time~\cite[\S5.3]{melara2015coniks}. The comparison must be taken at matched scale, so it is the $10^7$
+median of \SI{147.1}{\micro\second} that belongs beside CONIKS's published figures, not the
+$\approx$\SI{128}{\micro\second} measured at $N \le 10^4$. At that scale DUET's measured value is lower
+than the published CONIKS figure while additionally performing the VRF verification CONIKS omits;
+differing hardware (CONIKS's 2015 2\,GHz laptop CPU against the 2022 mobile CPU used here; see the
+comparability note) and methodology prevent a direct performance comparison, so no ratio is offered in
+the body.\footnote{For reference, the published CONIKS total is \SI{559}{\micro\second}, the sum
+computed here of its \SI{159}{\micro\second} authentication-path and $\approx$\SI{400}{\micro\second}
+signature figures, so the \SI{147.1}{\micro\second} DUET median is roughly $3.8\times$ lower; the
+quotient is kept to this note because a cross-hardware, cross-methodology comparison is indicative
+only.} The claim that stands on this hardware alone is the
 sub-\SI{150}{\micro\second} median cost of full client verification across the whole measured range.
 
 \begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different hardware (a 2015

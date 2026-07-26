@@ -33,14 +33,12 @@ Median full client verification is \SI{147.1}{\micro\second} at $10^7$ labels, s
 larger per-lookup verification time at matched scale, on different hardware and excluding the VRF check
 DUET includes, so the comparison is indicative only. A month-long offline catch-up is one distant-head consistency proof rather than $W$
 of them, a few hundred raw path bytes against the hundreds of kilobytes a synthetic baseline that
-re-fetches a current-head-anchored proof for each missed epoch would instead spend. The marginal server-side warning-slot read (M5) costs \SI{1.62}{\micro\second} on the clean path and
-\SI{1.72}{\micro\second} on the attacked path. An isolated in-process \texttt{KTClient.detectMitm} check performs one or two
-raw-label, proof-verified lookups; a full monitor pass performs additional checks. M3 provides a conservative upper proxy for the local verification
-work of one lookup, and their combined latency was not measured. No false
-alarms were observed over a thousand clean deterministic sessions (M6). The cross-vantage auditor's
-one-head fork check has a median local cost of \SI{27.9}{\micro\second} (p95
-\SI{34.2}{\micro\second}). The system produced the expected detection verdict in every enumerated substitution and equivocation
-scenario. The STRIDE analysis identifies four residual risks. One is the label-to-user mapping
+re-fetches a current-head-anchored proof for each missed epoch would instead spend. An isolated
+in-process \texttt{KTClient.detectMitm} check performs one or two raw-label, proof-verified lookups,
+each timed as a verified operation in \cref{ch:eval}; a full monitor pass performs additional checks,
+and end-to-end detection latency was not measured. Every enumerated clean-session workflow produced the
+expected non-alarm verdict, and the system produced the expected detection verdict in every enumerated
+substitution and equivocation scenario. The STRIDE analysis identifies four residual risks. One is the label-to-user mapping
 inherent to a semi-trusted directory. The other three concern availability functions not implemented
 by the prototype.
 
