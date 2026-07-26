@@ -297,6 +297,26 @@ DH output, so the figure captures the transparency-layer cost of an epoch, not t
 agreement.
 
 % ----------------------------------------------------------------------------
+\FloatBarrier
+\section{History Depth, Ratchet Depth, and Detector Branches (M14--M17)}\label{sec:bench-newfamilies}
+
+The four round-two families extend the microbenchmarks with the two axes and the two costs the
+single-epoch measurements above set aside. The tables in this section are \emph{generated} directly
+from the benchmark CSVs by a helper script in the benchmark tooling, so they cannot drift from the
+corpus. \Cref{tab:bench-m14} is the M14 history-depth sweep: at each directory size the log-inclusion
+sibling count tracks $\lceil\lg E\rceil$ and the serialized proof grows by $32$ bytes per sibling, the
+history term the single-epoch rows report as zero. \Cref{tab:bench-m15} is the M15 deep-chain
+experiment, whose depth-attributable delta against the same-server session baseline stays within the
+timer resolution through $K=720$ ratchet epochs; \cref{tab:bench-m15-writes} is the companion analytic
+write-amplification grid. \Cref{tab:bench-m16} is the M16 detector-branch cost, each branch timed as
+the verified operation the detector actually performs. The M17 clean-session coverage is functional
+rather than tabular: every enumerated honest state is asserted to produce the expected non-alarm
+verdict by the test file \texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}).
+
+\input{chapters/appendix-e-v2-tables}
+
+% ----------------------------------------------------------------------------
+\FloatBarrier
 \section{Reproducing Each Metric}\label{sec:bench-repro}
 
 \Cref{tab:bench-repro} maps every metric family to the Criterion benchmark group that times it and the
