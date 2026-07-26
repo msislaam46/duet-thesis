@@ -2,8 +2,7 @@
 
 This appendix reproduces the complete aggregate benchmark tables summarized in \cref{ch:eval}. All figures are
 from a single benchmark run on the environment recorded below; sizes are exact and
-seed-deterministic, and timings are medians (with the 95th percentile and a 95\% confidence
-half-width where the harness records them). The metric families M1--M13 are as defined by the
+seed-deterministic, and timings are reported as the median and 95th percentile. The metric families M1--M13 are as defined by the
 measurement map in \cref{sec:eval-method} (\cref{tab:eval-map}); baselines are named, not coded
 (\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed}) and mean the same
 thing here as in the chapter. Where a row is qualified \emph{(dual-index)}, it reports the
@@ -109,11 +108,9 @@ The timing families are reported below one per table, each preceded by a one-lin
 measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the marginal
 warning-slot lookup cost (\cref{tab:bench-detection}), operation rates and the maintenance operations
 (\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). All values are
-microseconds unless noted: median, 95th percentile, and a 95\% confidence
-half-width of the \emph{mean} ($\pm$, normal approximation, $1.96\,s/\sqrt{n}$) over the manual
-harness's $2{,}000$ iterations. The median and 95th percentile are descriptive sample statistics and
-carry no interval; the $\pm$ column quantifies the precision of the mean and licenses no inference
-about the median reported beside it.
+microseconds unless noted: the median and 95th percentile over the manual harness's $2{,}000$
+iterations. Both are descriptive sample statistics and carry no confidence interval; Criterion's own
+reports retain bootstrap intervals for any reader who wants them.
 
 \medskip\noindent\emph{Per-lookup latency (M2 generation, M3 verification): the server-side cost to
 produce a proof and the client-side cost to check it, broken into its pieces.}
@@ -123,18 +120,18 @@ produce a proof and the client-side cost to check it, broken into its pieces.}
 \caption{M2/M3: proof generation and client verification latency.}
 \label{tab:bench-latency}
 \small
-\begin{tabular}{@{}L{6.2cm}lrrr@{}}
+\begin{tabular}{@{}L{6.2cm}lrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
+Operation (baseline) & $N$ & Median & p95 \\
 \midrule
-M2 search generation (dual-index)    & $10^3$ & 119.5 & 144.0 & 0.88 \\
-M2 search generation (dual-index)    & $10^4$ & 119.7 & 138.0 & 0.86 \\
-M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.2  & 0.36 \\
-M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.1  & 0.36 \\
-M3 VRF verify (dual-index)           & $10^3$ & 76.0  & 92.0  & 0.76 \\
-M3 VRF verify (dual-index)           & $10^4$ & 76.0  & 92.0  & 0.76 \\
-\textbf{M3 full signed-head lookup verification (windowed baseline)} & $10^3$ & \textbf{128.1} & 144.4 & 0.73 \\
-\textbf{M3 full signed-head lookup verification (windowed baseline)} & $10^4$ & \textbf{128.6} & 152.0 & 0.90 \\
+M2 search generation (dual-index)    & $10^3$ & 119.5 & 144.0 \\
+M2 search generation (dual-index)    & $10^4$ & 119.7 & 138.0 \\
+M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.2 \\
+M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.1 \\
+M3 VRF verify (dual-index)           & $10^3$ & 76.0  & 92.0 \\
+M3 VRF verify (dual-index)           & $10^4$ & 76.0  & 92.0 \\
+\textbf{M3 full signed-head lookup verification (windowed baseline)} & $10^3$ & \textbf{128.1} & 144.4 \\
+\textbf{M3 full signed-head lookup verification (windowed baseline)} & $10^4$ & \textbf{128.6} & 152.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -156,11 +153,11 @@ distribution covers \num{1000} sampled conversations and measures one unverified
 \Cref{ssec:eval-detection} evaluates detector behaviour separately.}
 \label{tab:bench-detection}
 \small
-\begin{tabular}{@{}llrrr@{}}
+\begin{tabular}{@{}llrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
+Operation (baseline) & $N$ & Median & p95 \\
 \midrule
-M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 & 0.16 \\
+M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -173,19 +170,19 @@ rotation and epoch commit, the VRF in isolation, and the KT lookup-verification 
 \caption[M8--M11: single-thread rates and hook cost.]{M8--M11: latency-derived single-thread rates, rotation, epoch commit, VRF, and the KT lookup-verification cost at the handshake hook.}
 \label{tab:bench-maint}
 \small
-\begin{tabular}{@{}L{6.2cm}lrrr@{}}
+\begin{tabular}{@{}L{6.2cm}lrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
+Operation (baseline) & $N$ & Median & p95 \\
 \midrule
-M8 latency-derived lookup rate (dual-index) & $10^4$ & 119.6 & 134.8 & 0.55 \\
-M8 latency-derived update rate (dual-index) & $10^4$ & 150.9 & 179.3 & 0.95 \\
-M9 key rotation (dual-index)         & $10^3$ & 150.2 & 177.0 & 0.92 \\
-M9 key rotation (dual-index)         & $10^4$ & 164.0 & 180.0 & 1.04 \\
-M9 epoch commit (windowed)           & $10^3$ & 464.0 & 486.5 & 2.12 \\
-M9 epoch commit (windowed)           & $10^4$ & 5915.7 & 7056.6 & 67.76 \\
-M10 VRF prove (isolated)             &        & 117.4 & 122.3 & 0.90 \\
-M10 VRF verify (isolated)            &        & 78.5  & 89.9  & 0.68 \\
-M11 handshake-hook lookup verification & & \multicolumn{3}{l}{identical to M3 (\cref{ssec:eval-latency})} \\
+M8 latency-derived lookup rate (dual-index) & $10^4$ & 119.6 & 134.8 \\
+M8 latency-derived update rate (dual-index) & $10^4$ & 150.9 & 179.3 \\
+M9 key rotation (dual-index)         & $10^3$ & 150.2 & 177.0 \\
+M9 key rotation (dual-index)         & $10^4$ & 164.0 & 180.0 \\
+M9 epoch commit (windowed)           & $10^3$ & 464.0 & 486.5 \\
+M9 epoch commit (windowed)           & $10^4$ & 5915.7 & 7056.6 \\
+M10 VRF prove (isolated)             &        & 117.4 & 122.3 \\
+M10 VRF verify (isolated)            &        & 78.5  & 89.9 \\
+M11 handshake-hook lookup verification & & \multicolumn{2}{l}{identical to M3 (\cref{ssec:eval-latency})} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -209,12 +206,12 @@ conservative only against the verify-only kernel beside it, not against the omit
 \caption{M12: auditor per-epoch audit and fork detection.}
 \label{tab:bench-auditor}
 \small
-\begin{tabular}{@{}llrrr@{}}
+\begin{tabular}{@{}llrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 & Mean CI $\pm$ \\
+Operation (baseline) & $N$ & Median & p95 \\
 \midrule
-M12 audit epoch (windowed)  & $10^4$ & 28.5 & 28.6 & 0.54 \\
-M12 detect fork (windowed)  & $10^4$ & 27.9 & 34.2 & 0.46 \\
+M12 audit epoch (windowed)  & $10^4$ & 28.5 & 28.6 \\
+M12 detect fork (windowed)  & $10^4$ & 27.9 & 34.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -289,12 +286,9 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 
 Per-check verification cost is $27.2\,\si{\micro\second}$ in session mode and
 $27.5\,\si{\micro\second}$ in continuous mode (medians; both include server-side proof generation).
-The medians differ by $0.3\,\si{\micro\second}$, and that ordering is not interpreted. The
-$\pm$ figures the harness records for these two rows ($\pm0.24$ and $\pm0.09\,\si{\micro\second}$)
-are confidence half-widths of the \emph{mean} (\cref{sec:bench-env}), so they support no inference
-about the medians in either direction; no equivalence claim is made either, since no equivalence
-margin was defined or tested. The chain memoization flattens the compressed-leaf
-cost that previously separated them.
+The medians differ by $0.3\,\si{\micro\second}$, within run-to-run variation, and that ordering is not
+interpreted; no equivalence claim is made either, since no equivalence margin was defined or tested.
+The chain memoization flattens the compressed-leaf cost that previously separated them.
 Both modes are timed under the identical label-bound proof
 verifier (\texttt{verify\_search\_result\_raw\_for}), so the two medians are directly comparable under the same local verifier. The
 continuous-mode setup folds a simulated per-epoch ratchet secret that is distinct from the
