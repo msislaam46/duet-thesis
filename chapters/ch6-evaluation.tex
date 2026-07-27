@@ -61,7 +61,7 @@ family they build on (M14 with proof size, M15 with the mode trade, M16 and M17 
 same metric numbering, so each metric family reported here can be traced directly to the harness
 group of the same name.}
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \caption{Measurement map: the seventeen metric families, what each measures, and where it is reported. M1--M13 are the core set; M14--M17 extend it, each reported beside the family it builds on.}
 \label{tab:eval-map}
@@ -74,8 +74,8 @@ M1  & Lookup proof size vs.\ $N$              & single- vs VRF-indexed     & \cr
 M2  & Proof generation latency (server)        & VRF-indexed                & \cref{ssec:eval-latency} \\
 M3  & Full signed-head lookup verification latency & VRF-indexed, windowed      & \cref{ssec:eval-latency} \\
 M4  & Offline catch-up bandwidth vs.\ $W$      & synthetic vs windowed & \cref{ssec:eval-catchup} \\
-M5  & Marginal warning-slot lookup cost        & raw warning (unverified)   & \cref{ssec:eval-detection} \\
-M6  & Clean-session false-positive rate        & None                       & \cref{ssec:eval-detection} \\
+M5  & Marginal warning-slot read (superseded by M16) & raw warning (unverified)   & \cref{app:benchmarks} \\
+M6  & Clean-session sanity check (superseded by M17) & None                       & \cref{app:benchmarks} \\
 M7  & Size + verify at scale ($10^6,10^7$)    & VRF-indexed, windowed      & \cref{ssec:eval-scale} \\
 M8  & Latency-derived single-thread operation rate & VRF-indexed                & \cref{app:benchmarks} \\
 M9  & Key rotation + epoch-commit cost         & VRF-indexed, windowed      & \cref{ssec:eval-throughput} \\
@@ -227,8 +227,8 @@ check is a second lookup of the same shape, not a larger proof).
 The history term $32\,h_{\mathrm{log}}$ of \cref{eq:eval-proofsize}, zero on the single-epoch
 microbenchmark log, is measured directly by the history-depth sweep (M14). Holding the directory at
 $N$ and growing the committed log through $E\in\{1,16,256,1024\}$ epochs, the observed log-inclusion
-path is $h_{\mathrm{log}}=\{0,4,8,10\}$ hashes---exactly $\lceil\lg E\rceil$ at these powers of two,
-where $\mathrm{popcount}(E-1)$ attains its maximum---so the serialized proof grows by
+path is $h_{\mathrm{log}}=\{0,4,8,10\}$ hashes, exactly $\lceil\lg E\rceil$ at these powers of two
+(where $\mathrm{popcount}(E-1)$ attains its maximum), so the serialized proof grows by
 $\{0,128,256,320\}$\,bytes on top of the directory-path component. The sweep runs at both $N=10^3$ and
 $N=10^4$ and the two axes add independently (\cref{app:benchmarks}), so proof size grows
 logarithmically in both directory size and history depth, now measured rather than derived from
@@ -346,15 +346,17 @@ an open extension.
 \subsection{Detector-Branch Latency and Clean-Session Coverage (M16, M17)}\label{ssec:eval-detection}
 
 Finally, the evaluation measures the cost of the detector itself and confirms that it does not fire on
-honest sessions. The isolated in-process \texttt{KTClient.detectMitm} helper (\cref{sec:impl-signal})
-takes one of two branches, and M16 times each as the security-bearing \emph{verified} operation, using
-the raw-label verifier (the prefix-tree and log path checked \emph{without} the VRF component, since
-the VRF-indexed path is what M3 already times). On the \emph{early-return} branch a present owner slot
-already shows a substituted key, so one verified owner-slot lookup settles the verdict, at a median
-\SI{27.8}{\micro\second} (95th percentile \SI{28.8}{\micro\second}) at $N=10^4$. On the
-\emph{clean-matching} branch the owner slot verifies against the client's key and the check proceeds to
-a verified \emph{non-inclusion} of the warning slot---an unproven ``empty'' would let the server censor
-the warning---costing a median \SI{31.1}{\micro\second} (95th percentile \SI{32.7}{\micro\second}) for
+honest sessions. M16 times synthetic Rust component bodies corresponding to the two branches of the
+isolated \texttt{KTClient.detectMitm} helper (\cref{sec:impl-signal}): the same verified operations
+(raw-label search, proof verification, and value comparison), reconstructed in the Rust harness rather
+than timed through the TypeScript runtime, using the raw-label verifier (the prefix-tree and log path
+checked \emph{without} the VRF component, since the VRF-indexed path is what M3 already times). On the
+\emph{early-return} branch the comparison finds a mismatching owner value, so one verified owner-slot
+lookup settles the verdict, at a median \SI{27.8}{\micro\second} (95th percentile
+\SI{28.8}{\micro\second}) at $N=10^4$. On the \emph{clean-matching} branch the owner slot verifies
+against the client's key and the check proceeds to a verified \emph{non-inclusion} of the warning slot
+(an unproven ``empty'' would let the server censor the warning), costing a median
+\SI{31.1}{\micro\second} (95th percentile \SI{32.7}{\micro\second}) for
 the two verified lookups. These are local, in-process component costs: they exclude the TypeScript
 runtime, HTTP transport, background polling, and registration, and they exclude the network round-trips
 a deployment adds, so this thesis does not report an end-to-end detection latency.
@@ -376,15 +378,17 @@ verified lookups and the substituted path one. This count does not describe the 
 background-monitor pass, which performs registration and additional catch-up, owner-, peer-, and
 warning-slot checks separately.
 
-M17 turns the former clean-session false-positive rate into functional coverage. Every enumerated
-honest state---a first registration into an empty owner slot, an established session with the expected
-key, a proven-empty warning slot, repeated re-verification of a valid state, valid log growth under a
-correct consistency proof, multiple honest continuous-mode epochs, and agreeing cross-vantage
-heads---is asserted to produce the expected non-alarm verdict, rather than sampled for a rate. The
-result is therefore a coverage statement: every enumerated clean workflow produced the expected
-non-alarm verdict. This replaces the earlier ``zero false positives over \num{1000} sessions'' figure,
-whose statistical framing added nothing a coverage check does not, a spurious collision at a
-\num{256}-bit HKDF-derived warning label being cryptographically negligible in any case.
+M17 turns the former clean-session false-positive rate into functional coverage. Each enumerated
+honest workflow (a first registration into an empty owner slot, an established session with the
+expected key, a proven-empty warning slot, repeated re-verification of a valid state, valid log growth
+under a correct consistency proof, multiple honest continuous-mode epochs, and agreeing cross-vantage
+heads) is asserted by a named test in its source suite (\cref{app:tests}) to produce the expected
+non-alarm verdict, rather than sampled for a rate. Two of these cases are new to the clean-path suite;
+the rest consolidate assertions that already existed elsewhere in the suite. The result is therefore a
+coverage statement: every enumerated clean workflow produced the expected non-alarm verdict. This
+replaces the earlier ``zero false positives over \num{1000} sessions'' figure, whose statistical
+framing added nothing a coverage check does not, a spurious collision at a \num{256}-bit HKDF-derived
+warning label being cryptographically negligible in any case.
 
 Detection runs automatically and requires no manual safety-number comparison, in contrast to the
 ceremony it is designed to replace, which most users fail to complete without
@@ -536,15 +540,15 @@ leaf per registered epoch (here $K$ epochs) whereas session mode commits once, s
 log-inclusion proof is over a marginally deeper log; the effect is within the reported precision,
 leaving the two modes' per-check verification costs effectively equal. This depth-independence is
 measured directly by the deep-chain experiment (M15), which isolates it from the directory-growth
-confound: evolving a conversation through $K\in\{1,10,100,720\}$ ratchet epochs and timing the
-final-epoch transparency check against a session-mode raw lookup on the \emph{same} log---so both paths
-see the identical log depth and directory size---the two medians track each other to within
+confound. Evolving a conversation through $K\in\{1,10,100,720\}$ ratchet epochs and timing the
+final-epoch transparency check against a session-mode raw lookup on the \emph{same} log (so both series
+see the identical log depth and directory size), the two series each remain flat across the sweep:
+continuous-mode verification does not grow with $K$, and neither does the session baseline on the same
+log. The pointwise difference between them, the cost of the added fingerprint comparison, stays within
 \SI{0.1}{\micro\second} at every $K$, through the full sweep to $K=720$ ratchet epochs on a log that
-grows past ten thousand committed entries. The
-component attributable to chain depth is therefore below the timer resolution: continuous-mode
-verification stays flat through \num{720} ratchet epochs, because the CEA chain state is a
-constant-size fold that adds no per-epoch verification work. What continuous mode does add is directory
-writes, quantified next. Neither figure includes a VRF step, because the
+grows past ten thousand committed entries. Continuous-mode verification therefore stays flat through
+\num{720} ratchet epochs, because the CEA chain state is a constant-size fold that adds no per-epoch
+verification work. What continuous mode does add is directory writes, quantified next. Neither figure includes a VRF step, because the
 dual-index and CEA paths use client-derived rather than VRF-derived labels
 (\cref{ssec:design-verify}), and neither includes the signed-tree-head signature verification that
 the full specified check of \cref{app:algorithms} performs; \cref{ssec:eval-latency} shows that the
@@ -833,11 +837,11 @@ schedule. Protocol-wide detection latency is outside the scope of this timeline.
 \FloatBarrier
 \subsection{Residual Risks and Security Position}\label{ssec:eval-posture}
 
-The overall security position follows from the design guarantees of \cref{ch:design}, the adversarial evidence of this section, and the component measurements above. The marginal in-memory warning-slot read (M5)
-costs on the order of a microsecond of server-side work (\SI{1.62}{\micro\second} clean,
-\SI{1.72}{\micro\second} attacked); end-to-end detection latency, which additionally requires the one
-or two verified lookups, network transport, monitor polling, and epoch timing that M5 does not measure, was
-not quantified. No false alarms were observed over \num{1000} clean deterministic sessions (M6). The
+The overall security position follows from the design guarantees of \cref{ch:design}, the adversarial evidence of this section, and the component measurements above. The verified detector branches cost
+\SI{27.8}{\micro\second} (early return) and \SI{31.1}{\micro\second} (owner inclusion plus warning
+non-inclusion) of local component work (M16); end-to-end detection latency, which additionally requires
+network transport, monitor polling, and epoch timing that M16 does not measure, was not quantified.
+Every enumerated clean workflow produced the expected non-alarm verdict (M17). The
 residual risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the
 label$\leftrightarrow$user mapping, outside what any transparency layer removes) and three availability
 functions left to a production deployment. These results should be considered against current

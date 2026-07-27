@@ -32,14 +32,16 @@ $10^{4}$ & 1 & 0 & 625 & 127.9 / 144.7 \\
 \centering
 \caption[M15: continuous-mode verification versus ratchet depth.]{M15 deep-chain
 experiment: the final-epoch transparency check after $K$ ratchet epochs, timed
-against a session-mode raw lookup on the \emph{same} deep server so both paths see
-the identical log depth and directory size. The depth-attributable component is the
-delta, which stays within the timer resolution across the whole sweep.}
+against a session-mode raw lookup on the \emph{same} deep server so both series see
+the identical log depth and directory size. Each series is flat across $K$ (depth
+independence); the $\Delta$ column isolates the added fingerprint-comparison cost.
+Times in \si{\micro\second}, log depth in epochs.}
 \label{tab:bench-m15}
 \small
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
-$K$ & CEA verify med. / p95 (\si{\micro\second}) & Session baseline med. (\si{\micro\second}) & Depth delta (\si{\micro\second}) & Log depth (epochs) \\
+$K$ & CEA med.\,/\,p95 & Session med. & $\Delta$ & Log depth \\
 \midrule
 1 & 27.1 / 28.1 & 27.0 & 0.1 & 18 \\
 10 & 27.2 / 27.7 & 27.1 & 0.1 & 162 \\
@@ -74,9 +76,11 @@ $K$ (ratchet epochs) & $R{=}60$ & $R{=}168$ & $R{=}720$ & $R{=}2880$ \\
 \begin{table}[ht]
 \centering
 \caption[M16: verified detector-branch latency.]{M16 detector-branch cost at
-$N=10^4$, each branch timed as the security-bearing verified operation using the
-raw-label verifier (no VRF component). Local, in-process component costs; excludes
-the TypeScript runtime, HTTP transport, polling, and registration.}
+$N=10^4$: synthetic Rust reconstructions of the two branches of the isolated
+\texttt{KTClient.detectMitm} helper, timing the same verified operations (raw-label
+search, proof verification, and value comparison) rather than the TypeScript
+runtime. Local, in-process component costs, excluding HTTP transport, polling, and
+registration.}
 \label{tab:bench-m16}
 \small
 \begin{tabular}{@{}lrr@{}}

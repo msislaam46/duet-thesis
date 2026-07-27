@@ -7,7 +7,8 @@ nine modules, the \num{8}-scenario adversarial integration suite, and \num{25} t
 five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-failure test, and twelve
 \texttt{PollStatus} tests covering every poll verdict, including the missing, unparseable, and failing
 consistency-proof cases that return \textsc{ConsistencyUnverified}, and the exact status-line
-mapping), \num{130} tests in total, run under \texttt{cargo test}. The TypeScript
+mapping), and \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
+(\cref{ssec:eval-detection}), \num{134} tests in total, run under \texttt{cargo test}. The TypeScript
 client is covered by \num{106} Jest tests in eight suites,
 and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs. The
 representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}. The unit,

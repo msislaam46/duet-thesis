@@ -1,8 +1,9 @@
 \chapter{Full Benchmark Results}\label{app:benchmarks}
 
 This appendix reproduces the complete aggregate benchmark tables summarized in \cref{ch:eval}. All figures are
-from a single benchmark run on the environment recorded below; sizes are exact and
-seed-deterministic, and timings are reported as the median and 95th percentile. The metric families M1--M13 are as defined by the
+from recorded runs on the single environment below: the authoritative $10^7$ run supplies the timing
+corpus and M7, and the validated full-grid run supplies the M14--M16 families; sizes are exact and
+seed-deterministic, and timings are reported as the median and 95th percentile. The metric families M1--M17 are as defined by the
 measurement map in \cref{sec:eval-method} (\cref{tab:eval-map}); baselines are named, not coded
 (\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed}) and mean the same
 thing here as in the chapter. Where a row is qualified \emph{(dual-index)}, it reports the
@@ -38,8 +39,9 @@ Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
 \end{table}
 
 Several methodology caveats were recorded with the run. The server is in-memory, with no network and
-no database. Proof sizes are measured on a single-epoch log, so a deployed $E$-epoch log adds up to
-$32\lceil\lg E\rceil$ bytes to each lookup proof. Memory is resident set size after build, not peak.
+no database. Proof sizes in the M1 and M7 families are measured on a single-epoch log, so a deployed
+$E$-epoch log adds up to $32\lceil\lg E\rceil$ bytes to each lookup proof; the M14 sweep measures that
+multi-epoch term directly (\cref{sec:bench-newfamilies}). Memory is resident set size after build, not peak.
 The operation-rate figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
 portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to
 the hardware instruction at run time, so a host without it takes a software path for every hash, and
@@ -98,8 +100,10 @@ $W$ (epochs) & synthetic sequential (bytes) & windowed (bytes) & Ratio \\
 \end{tabular}
 \end{table}
 
-The M6 false-positive rate is $0$ over $1{,}000$ clean sessions (a sanity check; a spurious collision
-at a 256-bit HKDF-derived warning label is cryptographically negligible).
+M6, retained as superseded provenance, recorded $0$ alarms over $1{,}000$ clean deterministic
+sessions; the current clean-path evidence is the M17 coverage map in \cref{sec:bench-newfamilies}
+(a spurious collision at a 256-bit HKDF-derived warning label is cryptographically negligible in any
+case).
 
 % ----------------------------------------------------------------------------
 \section{Latency, Operation Rates, and Maintenance (M2, M3, M5, M8--M12)}\label{sec:bench-timings}
@@ -300,18 +304,42 @@ agreement.
 \FloatBarrier
 \section{History Depth, Ratchet Depth, and Detector Branches (M14--M17)}\label{sec:bench-newfamilies}
 
-The four round-two families extend the microbenchmarks with the two axes and the two costs the
+The four families M14--M17 extend the microbenchmarks with the two axes and the two costs the
 single-epoch measurements above set aside. The tables in this section are \emph{generated} directly
 from the benchmark CSVs by a helper script in the benchmark tooling, so they cannot drift from the
 corpus. \Cref{tab:bench-m14} is the M14 history-depth sweep: at each directory size the log-inclusion
 sibling count tracks $\lceil\lg E\rceil$ and the serialized proof grows by $32$ bytes per sibling, the
 history term the single-epoch rows report as zero. \Cref{tab:bench-m15} is the M15 deep-chain
-experiment, whose depth-attributable delta against the same-server session baseline stays within the
-timer resolution through $K=720$ ratchet epochs; \cref{tab:bench-m15-writes} is the companion analytic
-write-amplification grid. \Cref{tab:bench-m16} is the M16 detector-branch cost, each branch timed as
-the verified operation the detector actually performs. The M17 clean-session coverage is functional
-rather than tabular: every enumerated honest state is asserted to produce the expected non-alarm
-verdict by the test file \texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}).
+experiment: each series stays flat as $K$ grows, and the delta between them isolates the added
+fingerprint-comparison cost, within the timer resolution through $K=720$ ratchet epochs;
+\cref{tab:bench-m15-writes} is the companion analytic write-amplification grid. \Cref{tab:bench-m16} is
+the M16 detector-branch cost, each branch a synthetic Rust reconstruction of the corresponding
+detector branch.
+
+M17 is functional coverage rather than a timed family. \Cref{tab:bench-m17} maps each enumerated honest
+state to the test that asserts its expected non-alarm verdict. The clean-path predicate exercised by
+the two new cases is a Rust reimplementation of the detector's clean-path logic, not the production
+TypeScript detector.
+
+\begin{table}[ht]
+\centering
+\caption{M17 clean-session verdict coverage: each honest state and the test source that asserts its non-alarm verdict.}
+\label{tab:bench-m17}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.9cm}>{\raggedright\arraybackslash}p{7.1cm}@{}}
+\toprule
+Honest state & Test source \\
+\midrule
+First registration, empty owner slot & \texttt{clean\_path\_coverage.rs} (new case) \\
+Repeated re-verification of a valid state & \texttt{clean\_path\_coverage.rs} (new case) \\
+Established session, expected key & \texttt{clean\_path\_coverage.rs}; adversarial A0 \\
+Empty warning slot (proven absent) & \texttt{clean\_path\_coverage.rs}; M16 clean-match \\
+Valid log growth + consistency proof & \texttt{kt\_auditor}: \texttt{classify\_growth\_requires\_consistency\_proof} \\
+Multiple honest continuous-mode epochs & \texttt{cea}: \texttt{honest\_parties\_agree\_each\_epoch} \\
+Agreeing cross-vantage heads & \texttt{auditor}: \texttt{detect\_fork\_accepts\_consistent\_head} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \input{chapters/appendix-e-v2-tables}
 
@@ -356,6 +384,10 @@ M10 & \texttt{M10\_vrf\_isolation}     & \texttt{rust\_benchmark\_timings.csv} (
 M11 & \texttt{M11\_handshake\_overhead}& \texttt{rust\_benchmark\_timings.csv} (\texttt{M11\_handshake\_overhead}) \\
 M12 & \texttt{M12\_auditor}            & \texttt{rust\_benchmark\_timings.csv} (\texttt{M12\_audit\_epoch}, \texttt{M12\_detect\_fork}) \\
 M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (write counts); \texttt{rust\_benchmark\_timings.csv} (\texttt{M13\_session\_verify}, \texttt{M13\_continuous\_verify}) \\
+M14 & \texttt{M14\_history\_depth}      & \texttt{rust\_benchmark\_m14.csv} \\
+M15 & \texttt{M15\_deep\_chain}         & \texttt{rust\_benchmark\_m15.csv}; \texttt{rust\_benchmark\_m15\_writes.csv} (write-count grid) \\
+M16 & \texttt{M16\_detector\_branches}  & \texttt{rust\_benchmark\_m16.csv} \\
+M17 & \texttt{cargo test -{}-test clean\_path\_coverage} & (functional; no CSV) \\
 \bottomrule
 \end{tabular}
 \end{table}

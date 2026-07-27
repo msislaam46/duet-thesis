@@ -80,6 +80,10 @@
 
 \begin{document}
 \onehalfspacing              % 1.5 line spacing throughout the body
+% Front matter: the titlepage environment resets the page counter, so page
+% anchors would collide (duplicate destination page.1). Suppress page anchors
+% until the mainmatter, where they resume for cross-referencing.
+\hypersetup{pageanchor=false}
 
 % ===================== TITLE PAGE =====================
 \begin{titlepage}
@@ -199,6 +203,7 @@ $\concat$ & byte-string concatenation \\
 \endgroup
 
 % ===================== CHAPTERS =====================
+\hypersetup{pageanchor=true} % resume page anchors for the mainmatter
 \include{chapters/ch1-introduction}
 \include{chapters/ch2-background}
 \include{chapters/ch3-threat-model}
