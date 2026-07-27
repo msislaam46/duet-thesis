@@ -310,9 +310,9 @@ from the benchmark CSVs by a helper script in the benchmark tooling, so they can
 corpus. \Cref{tab:bench-m14} is the M14 history-depth sweep: at each directory size the log-inclusion
 sibling count tracks $\lceil\lg E\rceil$ and the serialized proof grows by $32$ bytes per sibling, the
 history term the single-epoch rows report as zero. \Cref{tab:bench-m15} is the M15 deep-chain
-experiment: each series stays flat as $K$ grows, and the delta between them isolates the added
-fingerprint-comparison cost, within the timer resolution through $K=720$ ratchet epochs;
-\cref{tab:bench-m15-writes} is the companion analytic write-amplification grid. \Cref{tab:bench-m16} is
+experiment: each series stays flat as $K$ grows, and their pointwise difference stays within the timer
+resolution through $K=720$ ratchet epochs, not interpreted as a distinct mechanism cost.
+\Cref{tab:bench-m15-writes} is the companion analytic write-amplification grid. \Cref{tab:bench-m16} is
 the M16 detector-branch cost, each branch a synthetic Rust reconstruction of the corresponding
 detector branch.
 

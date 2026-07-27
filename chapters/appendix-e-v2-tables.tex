@@ -34,7 +34,7 @@ $10^{4}$ & 1 & 0 & 625 & 127.9 / 144.7 \\
 experiment: the final-epoch transparency check after $K$ ratchet epochs, timed
 against a session-mode raw lookup on the \emph{same} deep server so both series see
 the identical log depth and directory size. Each series is flat across $K$ (depth
-independence); the $\Delta$ column is their pointwise difference, within the timer
+independence). The $\Delta$ column is their pointwise difference, within the timer
 resolution and not interpreted as a distinct mechanism cost.
 Times in \si{\micro\second}, log depth in epochs.}
 \label{tab:bench-m15}
@@ -57,7 +57,7 @@ $K$ & CEA med.\,/\,p95 & Session med. & $\Delta$ & Log depth \\
 \caption[M15: write-amplification over ratchet depth and rotation period.]{M15
 write-amplification (analytic): continuous mode writes $K$ entries over $K$ ratchet
 epochs, session mode writes $\lceil K/R\rceil$, so the ratio is
-$K/\lceil K/R\rceil$. No grid point models a specific real conversation; the grid
+$K/\lceil K/R\rceil$. No grid point models a specific real conversation. The grid
 shows how the ceiling depends on the rotation period $R$ (ratchet epochs per
 signed-pre-key rotation).}
 \label{tab:bench-m15-writes}

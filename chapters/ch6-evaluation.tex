@@ -345,8 +345,8 @@ an open extension.
 
 \subsection{Detector-Branch Latency and Clean-Session Coverage (M16, M17)}\label{ssec:eval-detection}
 
-Finally, the evaluation measures the cost of the detector itself and confirms that it does not fire on
-honest sessions. M16 times synthetic Rust component bodies corresponding to the two branches of the
+Finally, the evaluation measures the cost of the detector itself and confirms that it produces the
+expected non-alarm verdict for honest sessions. M16 times synthetic Rust component bodies corresponding to the two branches of the
 isolated \texttt{KTClient.detectMitm} helper (\cref{sec:impl-signal}): the same verified operations
 (raw-label search, proof verification, and value comparison), reconstructed in the Rust harness rather
 than timed through the TypeScript runtime, using the raw-label verifier (the prefix-tree and log path
