@@ -324,24 +324,16 @@ substitute them, the server must be made accountable for what it hands out. Key
 transparency meets this demand with one organizing idea, that the server should
 be forced to publish an irrevocable, public record of the keys it serves, so
 that handing Alice a forged key for Bob becomes an act the server can be caught
-having committed in writing. This section develops the data structures that make
-such a record possible, in the order a reader needs them: the cryptographic
-notion of a commitment and the Merkle tree that implements it
-(\cref{ssec:bg-merkle}); the origin of these structures in Certificate
-Transparency, and the two changes required to carry them into messaging
-(\cref{ssec:bg-ct2kt}), and the architecture the IETF is now standardizing
-around them (\cref{ssec:bg-keytrans}).
+having committed in writing.
 
 \subsection{Commitments and Merkle Log Trees}\label{ssec:bg-merkle}
 
-The transparency systems examined throughout this chapter are built from a small
-hierarchy of cryptographic abstractions. At the foundation is a
-collision-resistant hash function. Hash functions enable commitments: compact
+The transparency systems examined throughout this chapter are built from a
+collision-resistant hash function, which enables commitments: compact
 values that bind a publisher to a larger body of data. Merkle trees then
 organize many such commitments into a structure that supports efficient
-verification. Transparency logs, in turn, use Merkle trees to make server
-behaviour publicly auditable. Since each layer depends on the one beneath it,
-the notion of a commitment comes first.
+verification, and transparency logs use Merkle trees to make server
+behaviour publicly auditable. The notion of a commitment therefore comes first.
 
 A commitment is a short fingerprint of a body of data: small enough to publish
 or repeat widely, yet so tightly bound to the data that altering any part of it
@@ -418,34 +410,16 @@ missed epochs. This distinction between per-proof efficiency and long-term
 monitoring cost becomes important later, when discussing mobile clients and the
 monitoring mechanisms used by key-transparency systems.
 
-\subsection{From Certificate Transparency to Key Transparency}\label{ssec:bg-ct2kt}
+\subsection{Key Transparency Requirements}\label{ssec:bg-ct2kt}
 
-Data structures such as Merkle trees were not invented for messaging. They were
-first deployed at scale by Certificate Transparency (CT), the system that holds
-the web's certificate authorities accountable. CT requires that every
-certificate a CA issues be appended to a public, append-only Merkle log, so that
-independent monitors and auditors can watch the logs and cross-check their tree
-heads; a CA that issues a fraudulent certificate can no longer hide it, because
-browsers that enforce a CT policy reject certificates lacking the required evidence of logging (signed certificate timestamps),
-and a logged certificate is visible to the domain it falsely
-names~\cite{rfc6962,rfc9162}. RFC~6962 specified the original design and
-RFC~9162 its current revision, and both are built from exactly the Merkle log
-tree, inclusion proof, and consistency proof of the previous subsection.
+Key transparency (KT) adapts the append-only Merkle log of Certificate
+Transparency~\cite{rfc6962,rfc9162} from public certificates to user identity bindings: a server
+should be unable to present different keys to different users without leaving cryptographic evidence.
+The general framework of transparency overlays formalizes this reuse across
+applications~\cite{chase2016overlays}. Moving from certificates to messaging introduces two
+requirements that Certificate Transparency was never designed to satisfy.
 
-The success of Certificate Transparency suggests applying the same accountability mechanism to
-public-key distribution in messaging systems. The general framework of transparency overlays formalizes this
-reuse across applications~\cite{chase2016overlays}. Key Transparency (KT) answers this question by adapting
-transparency logs from certificates to user identity bindings.
-
-The core idea remains unchanged. A server should be unable to present different
-keys to different users without leaving cryptographic evidence of that
-behaviour. However, moving from certificates to messaging introduces
-requirements that Certificate Transparency was never designed to satisfy. In
-particular, messaging systems must protect the privacy of their users and
-prevent adversaries from enumerating the contents of the directory.
-
-Two challenges set the messaging setting apart and shape the systems discussed
-in this chapter. The first challenge is privacy. Certificate Transparency logs
+The first requirement is privacy. Certificate Transparency logs
 are intentionally public because certificates are public objects. A messaging
 directory, by contrast, contains user identities and associated public keys. A
 transparency mechanism that exposed the entire directory would reveal
@@ -453,7 +427,7 @@ information about who uses the service and potentially who communicates with
 whom. KT systems therefore require proofs that reveal information only about the
 queried entry rather than the directory as a whole~\cite[p.~2]{melara2015coniks}.
 
-The second challenge follows directly from the first. If entries were stored
+The second requirement follows directly from the first. If entries were stored
 under predictable labels such as usernames or simple hashes of usernames, an
 adversary could enumerate the directory by generating candidate names and
 checking whether they exist. KT systems therefore require labels that are
@@ -511,69 +485,34 @@ consistency proof. A missing or invalid proof produces the verdict \emph{consist
 
 \subsection{The IETF KeyTrans Architecture}\label{ssec:bg-keytrans}
 
-By the early 2020s, numerous academic and industrial key-transparency systems
-had emerged. Although these systems differed in implementation details, most
-relied on the same underlying ingredients: append-only logs, authenticated
-directory structures, verifiable random functions, and independent auditing.
+The IETF's Key Transparency (KEYTRANS) working group provides a common reference model for
+key-transparency systems, though several deployments predate or diverge from
+it~\cite{ietf-keytrans-protocol}. It assembles three pieces already introduced: an append-only Merkle
+log tree records the directory's history; a per-epoch prefix tree, a sparse Merkle tree whose leaves
+are the VRF-derived labels, represents the directory's state at one epoch (one published snapshot); and
+the VRF maps identities to their labels in that tree. Around these the draft defines a small interface
+(update, search, monitor, and audit) and a role for third-party auditors who cross-check tree heads to
+catch the forks of the previous subsection. Signal's production server implements this draft ``with
+some modifications''~\cite{signal-kt-server}.
 
-Following a Birds-of-a-Feather session at IETF~116 in March 2023, the IETF
-chartered the Key Transparency (KEYTRANS) working group later in 2023 to
-standardize a common architecture for key-transparency systems. The resulting
-architecture provides a common reference model for describing and evaluating key-transparency systems;
-several deployments predate it or diverge from it.
+The construction grounds each primitive in its specification: the Merkle log and its inclusion and
+consistency proofs are those of RFC~6962 and RFC~9162~\cite{rfc6962,rfc9162}, the verifiable random
+function is that of RFC~9381~\cite{rfc9381}, and the later label derivation from a session secret uses
+HKDF, RFC~5869~\cite{rfc5869}. The draft leaves one question open: it calls for ``reasonable monitoring
+windows'' so that intermittently connected clients need not replay every missed update, but leaves the
+mechanism unspecified~\cite{ietf-keytrans-protocol}. That efficiency gap is what this thesis's windowed
+consistency proof addresses.
 
-It is assembled from three pieces already introduced. An append-only Merkle log
-tree records the directory's history over time. A per-epoch prefix tree, a
-sparse Merkle tree whose leaves are the VRF-derived labels, represents the
-directory's state at a single moment, an epoch being one published snapshot of
-the directory. And the VRF maps identities to the labels at which they sit in
-that prefix tree. Around these structures the draft defines a small interface
-(update, search, monitor, and audit) and a role for third-party auditors
-who cross-check tree heads to catch exactly the forks of the previous
-subsection~\cite{ietf-keytrans-protocol}. Signal's production key-transparency
-server implements this draft, ``with some modifications''~\cite{signal-kt-server},
-using an elliptic-curve VRF from the family the standard recommends.
-
-The later construction uses the following standardized primitives. The Merkle log
-tree and its inclusion and consistency proofs are those of RFC~6962 and
-RFC~9162~\cite{rfc6962,rfc9162}; the verifiable random function is that of
-RFC~9381~\cite{rfc9381}, and the key-derivation step used later, when a label is
-derived from a session secret, is HKDF, the HMAC-based extract-and-expand
-key-derivation function of RFC~5869~\cite{rfc5869}. Grounding each construction
-in its specification fixes the exact algorithm rather than an informal sketch of
-it. The draft leaves one question open: it calls for
-``reasonable monitoring windows'' so that intermittently connected mobile
-clients need not replay every missed update, but leaves the mechanism for
-achieving them unspecified~\cite{ietf-keytrans-protocol}. This open question is
-the efficiency problem this thesis returns to in later chapters.
-
-The signed tree head is where this work
-hardens the standard design. The server signs each head with Ed25519~\cite{rfc8032} over the
-epoch number, the tree size, the log root and a timestamp. Earlier systems such
-as CONIKS instead published a \emph{linear hash chain} of signed roots, each
-committing to the previous one by including the hash of its predecessor. That
-chain is their mechanism for verifying append-only growth. The Merkle-log design used here
-obtains that property differently: the log root already commits to every
-prior epoch's root, and a single consistency proof certifies append-only growth against one earlier
-head in $O(\log n)$, whereas walking the hash chain costs one step per missed epoch. Neither a hash
-chain nor a consistency proof, on its own, catches equivocation: both certify a single client's view
-as append-only, but a server can still sign two divergent histories and show each to a different
-client (the split-view attack of \cref{fig:bg-splitview}). Detecting that requires comparing heads
-observed from a second vantage, which is the cross-vantage auditor's job (\cref{sec:design-acka}).
-This work keeps the Merkle-log history but borrows one element of CONIKS's signed
-root that a bare tree head omits: a commitment to the provider's \emph{policy}.
-The signed message additionally binds a hash of the configuration (the VRF
-public key, the signing key, the ciphersuite, the protocol version and the epoch
-cadence) so that a malicious server cannot silently substitute any of these
-parameters between epochs, or serve different ones to different clients, without
-detection. The head remains validly signed, but its signed configuration hash no longer matches the
-parameters the client expects, so the client rejects it; and different signed configurations served to
-different clients are themselves evidence of equivocation, exposed by the same cross-vantage comparison
-as divergent roots.
-
-The KeyTrans architecture therefore provides a useful bridge between the
-Signal-specific discussion of \cref{sec:bg-signal} and the more general
-verifiable key directory constructions surveyed in \cref{sec:bg-vkd}.
+This work hardens the standard head in one respect. The server signs each head with
+Ed25519~\cite{rfc8032} over the epoch number, tree size, log root, and a timestamp, so a single
+consistency proof certifies append-only growth against an earlier head in $O(\log n)$. Because neither
+a signed head nor a consistency proof catches equivocation on its own, a second vantage compares heads
+to expose the split-view attack of \cref{fig:bg-splitview}, which is the cross-vantage auditor's job
+(\cref{sec:design-acka}). Borrowing one element of CONIKS's signed root that a bare head omits, the
+signed message additionally binds a hash of the provider's \emph{policy} (the VRF public key, the
+signing key, the ciphersuite, the protocol version, and the epoch cadence), so a malicious server
+cannot silently substitute these parameters between epochs, or serve different ones to different
+clients, without detection.
 
 % ============================================================================
 \section{Verifiable Key Directories for Key Transparency}\label{sec:bg-vkd}
