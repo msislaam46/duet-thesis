@@ -1,11 +1,5 @@
 \chapter{Introduction}\label{ch:intro}
 
-This chapter explains why trustworthy private messaging matters, introduces the public-key
-authentication problem that motivates the thesis, and states the research questions and
-contributions developed in the chapters that follow.
-
-\section{Motivation}\label{sec:intro-motivation}
-
 Private messaging is now part of everyday personal, professional, and civic communication.
 Signal~\cite{signal-home} is an end-to-end encrypted messaging system, and its cryptographic design
 has influenced messaging systems beyond the Signal application~\cite{signal-protocol-impact}. The
@@ -31,9 +25,9 @@ channel to the attacker rather than the intended recipient. This is a key-substi
 
 The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. The comparison is sound when completed, but users rarely complete it without guidance. In one study, only about 14\% of unguided pair--application trials succeeded, and just two of twelve pairs completed the comparison in any of the apps tested~\cite{vaziripour2017}. Even a successful comparison is a one-off check that says nothing about whether a key changes later.
 
-\emph{Key transparency} addresses this limitation by publishing the directory as a verifiable, append-only log, so that clients can check their keys against a public, consistent record. Production systems now deploy it, including Signal's optional Automatic Key Verification~\cite{signal-akv}.
+A messaging service's public-key directory maps user identities to their public identity keys. \emph{Key transparency} addresses this limitation by publishing authenticated commitments to this directory through a verifiable, append-only history, so that clients can check their keys against a public, consistent record. Production systems now deploy it, including Signal's optional Automatic Key Verification~\cite{signal-akv}.
 
-However, the deployed and proposed key-transparency systems surveyed in \cref{ch:background} still leave two critical gaps. \emph{First}, detection is reduced entirely to \emph{self-monitoring}. While a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. \emph{Second}, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
+However, the deployed and proposed key-transparency systems surveyed in \cref{ch:background} still leave gaps. Detection is reduced entirely to \emph{self-monitoring}: while a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. Also, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
 
 Since users may not complete a manual comparison and either participant may be offline, key
 verification in an asynchronous messenger must operate automatically. It must allow both parties to
@@ -54,47 +48,19 @@ in \cref{ch:threat}.
 
 \section{Aims and Objectives}\label{sec:intro-aims}
 
-This section defines what the thesis sets out to achieve and how its success is judged. It states the
-central claim the dissertation defends, then decomposes that claim into four research questions, each
-paired later with the evidence that answers it and the criterion by which it could have been
-falsified.
-
-\paragraph{Thesis Statement.} The central claim this dissertation defends is that automatic, in-band
-detection of key substitution can be added to a messaging key-directory architecture without a manual
-user ceremony. The detection does not change the format or asymptotic complexity of an individual
-lookup proof, though it adds label-bound lookups and writes. The windowed consistency mechanism also
-replaces one proof per missed epoch with a single proof whose size grows logarithmically in the
-endpoint log sizes.
-
-\paragraph{Research Questions.} The work is organized around four research questions, each answered by
-a specific later chapter:
-
-\begin{description}
-  \item[RQ1 (detection).] For an honestly established, subsequently monitored conversation, can key
-  substitution over a semi-trusted directory be detected automatically and in band, by both the
-  victim and the peer, without an out-of-band user ceremony? \emph{(Answered by the design of \cref{ch:design} and the security evaluation of
-  \cref{sec:eval-security}.)}
-  \item[RQ2 (cost).] What do the measured proof sizes and the measured detector-branch costs (M16)
-  indicate about the component cost of such detection, and how do they compare with existing
-  key-transparency systems? \emph{(Answered by \cref{sec:eval-micro,ssec:eval-detection,sec:eval-compare}.)}
-  \item[RQ3 (offline).] Can a client that has been offline for an arbitrarily long window
-  re-synchronize with the log in a single proof, at a cost that grows logarithmically in the
-  endpoint log sizes rather than linearly in the epochs missed? \emph{(Answered by the
-  windowed consistency proof of \cref{sec:design-windowed} and its measurement in
-  \cref{ssec:eval-catchup}.)}
-  \item[RQ4 (client-integration feasibility).] Can the verifier be integrated into the control flow of
-  a real messaging-client codebase (Signal Desktop), rather than only into a standalone model? \emph{(Answered by the Signal Desktop
-  integration of \cref{ch:impl} and the deployment analysis of \cref{sec:eval-deploy}.)}
-\end{description}
+We propose DUET, a mechanism for automatic, in-band detection of key substitution over a messaging key
+directory. It removes the need for a separate manual comparison and does not change the format or
+asymptotic complexity of an individual lookup proof, although the complete mechanism performs
+additional label-bound lookups and writes. The windowed consistency mechanism further replaces one
+proof per missed epoch with a single proof whose size grows logarithmically in the endpoint log sizes.
 
 \section{Contributions}\label{sec:intro-contributions}
 
 This thesis makes four principal contributions:
 
-\paragraph{Conceptual.} The conceptual contribution is a \emph{dual-index warning scheme}. In it, the
-HMAC-based Extract-and-Expand Key Derivation Function (HKDF) turns a conversation's shared secret
-into two directional lookup labels and one shared warning slot to which either party can write an
-authenticated alert. For an honestly established and monitored conversation, a malicious server cannot predict and
+\paragraph{Conceptual.} The conceptual contribution is a \emph{dual-index warning scheme}. In it, we
+derive two participant-specific lookup labels and a shared warning label from the conversation secret.
+The warning label names one shared slot to which either party can write an authenticated alert. For an honestly established and monitored conversation, a malicious server cannot predict and
 pre-position that slot before the label is first used. Before the warning commits, a censored write is
 detected through a key mismatch alongside a proof-verified empty slot. After it commits, any
 disappearance is exposed as deletion or tampering. The resulting signal allows both parties to detect
@@ -131,17 +97,14 @@ distinguishing detected scenarios from residual risks (\cref{ch:eval}).
 
 \section{Thesis Roadmap}\label{sec:intro-roadmap}
 
-\Cref{ch:background} surveys the Signal protocol stack, transparency logs, verifiable key directories,
-and the ACKA framework, and identifies the research gap. \Cref{ch:threat} fixes the threat model,
-attack taxonomy, and security goals. \Cref{ch:design} presents the design (the combined-tree
-architecture, the dual-index warning scheme, and windowed consistency proofs) and instantiates
-ACKA. \Cref{ch:impl} describes the two-layer implementation and its integration into Signal Desktop.
-\Cref{ch:eval} evaluates the system empirically and against the threat model, and draws out the
-implications for deployment. \Cref{ch:discussion} discusses the results, limitations, and future work.
-\Cref{ch:lsepi} considers the legal, social, ethical, and professional dimensions.
-\Cref{ch:conclusion} concludes the thesis. Supporting material is provided in the appendices: formal
-definitions (\cref{app:definitions}), algorithms (\cref{app:algorithms}), the implementation and
-API reference (\cref{app:apiref}), the test catalogue (\cref{app:tests}), the full benchmark
-results (\cref{app:benchmarks}), the security-analysis tables (\cref{app:security}), a traceability
-matrix linking each claim to its mechanism, test, and evidence (\cref{app:traceability}), and a
-glossary of terms (\cref{app:glossary}).
+\Cref{ch:background} surveys the Signal stack, transparency logs, verifiable key directories, and the
+ACKA framework, and identifies the research gap. \Cref{ch:threat} fixes the threat model and security
+goals; \cref{ch:design} presents the design and instantiates ACKA; \cref{ch:impl} describes the
+two-layer implementation and its Signal Desktop integration; and \cref{ch:eval} evaluates the system
+empirically and against the threat model. \Cref{ch:discussion,ch:lsepi,ch:conclusion} then cover the
+discussion and future work, the legal, social, ethical, and professional dimensions, and the
+conclusion. Eight appendices provide supporting material: formal definitions~(\cref{app:definitions}),
+algorithms~(\cref{app:algorithms}), the API reference~(\cref{app:apiref}), the test
+catalogue~(\cref{app:tests}), benchmark results~(\cref{app:benchmarks}), security-analysis
+tables~(\cref{app:security}), the traceability matrix~(\cref{app:traceability}), and a
+glossary~(\cref{app:glossary}).
