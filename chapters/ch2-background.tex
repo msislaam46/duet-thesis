@@ -106,8 +106,7 @@ subsequent communication keys are generated.
 
 \subsection{The Extended Triple Diffie--Hellman (X3DH) Protocol}\label{ssec:bg-x3dh}
 
-Having introduced the public key material that Signal users publish, the section now
-turns to how that material is used during session establishment. The Extended
+The Extended
 Triple Diffie--Hellman (X3DH) protocol allows Alice to derive a shared secret
 (denoted by $\sharedS$) with Bob even when Bob is offline, by combining Alice's
 keys with the identity, signed pre-key, and one-time pre-key material published
@@ -303,7 +302,7 @@ automate the process of discovering another person's key without relying on a
 single trusted party, while also providing non-equivocation so that key servers
 cannot deceive users''~\cite[p.~40]{vaziripour2017}.
 
-In conclusion, these findings reveal a persistent authentication gap. The public
+These findings reveal a persistent authentication gap. The public
 keys used during session establishment are distributed by a party that could
 substitute them. Verification mechanisms remain dependent on assumptions about
 the consistency of directory views and the availability of auditing
@@ -312,9 +311,9 @@ evolving protocol state, and manual user verification remains uncommon in
 practice. The remainder of this chapter examines the principal approaches
 proposed to address these limitations, beginning with key transparency and
 verifiable key directories before turning to the complementary perspective
-offered by the Authenticated Continuous Key Agreement (ACKA) framework, and
-finally to the contributions of this thesis, which propose a unified system
-bridging the KT and ACKA frameworks.
+offered by the Authenticated Continuous Key Agreement (ACKA) framework and the
+comparative analysis that fixes the requirements for the design of
+\cref{ch:design}.
 
 % ============================================================================
 \section{Secure Transparency Logs}\label{sec:bg-logs}
@@ -691,8 +690,8 @@ architecture (VRF-derived labels, an authenticated directory supporting membersh
 proofs, an append-only history, and verifiable auditing). Most consequentially for this thesis,
 \emph{detection remains external to the conversation}: almost every system relies on the user, an
 auditor, or a witness set to notice a malicious directory, and none provides an in-band channel by
-which one participant could warn the other that a substitution has occurred. This is the gap the
-contributions of this thesis address.
+which one participant could warn the other that a substitution has occurred. This is the gap this
+thesis addresses.
 
 \subsection{Deployed VKDs in Production Systems}\label{ssec:bg-vkd-deployed}
 
