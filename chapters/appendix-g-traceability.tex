@@ -7,7 +7,7 @@ and what the measured proof sizes and local component timings indicate about the
 detection. RQ3 asks whether offline catch-up is bounded independently of the number of missed epochs.
 RQ4 asks whether the client verifier can integrate into a real messaging-client codebase.
 \Cref{tab:trace-rq} links each question to the corresponding design claim, mechanism, tests,
-benchmarks, and evidence; \cref{tab:trace-contrib} organizes the same evidence by the four
+benchmarks, and evidence. \Cref{tab:trace-contrib} organizes the same evidence by the four
 contributions of \cref{sec:intro-contributions}.
 
 \begin{landscape}
@@ -15,7 +15,9 @@ contributions of \cref{sec:intro-contributions}.
 \centering
 \caption[Research-question traceability.]{Research question $\to$ claim $\to$ mechanism $\to$ test $\to$ benchmark $\to$ evidence.}
 \label{tab:trace-rq}
-\setlength{\extrarowheight}{1.5pt}
+\setlength{\extrarowheight}{0pt}
+\renewcommand{\arraystretch}{0.9}
+\setstretch{1}
 \footnotesize
 \begin{tabular}{@{}L{1.6cm}L{4.3cm}L{3.7cm}L{5.4cm}L{1.7cm}L{5.4cm}@{}}
 \toprule
@@ -28,7 +30,7 @@ M17 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M17 assert
 RQ2 & detection does not enlarge an individual per-lookup proof; verification stays below the latency target and grows far more slowly than $N$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
 prefix-tree, VRF, Merkle-log tests (\cref{app:tests}) &
-M1--M3, M7, M11, M16 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; verify \SI{139.2}{\micro\second} at $10^7$; synthetic Rust reconstructions of the one- and two-lookup detector-branch operations, \SI{27.8}{} and \SI{31.1}{\micro\second} (M16); a Rust component measurement of one signed-head lookup verification, the operation invoked at the handshake hook (M11, \cref{sec:eval-deploy}) \\
+M1--M3, M7, M11, M16 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; verify \SI{139.2}{\micro\second} at $10^7$; \SI{27.8}{} and \SI{31.1}{\micro\second} for synthetic Rust reconstructions of the one- and two-lookup detector branches (M16); one signed-head lookup verification (the hook operation) timed as a Rust component (M11, \cref{sec:eval-deploy}) \\
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 Merkle-log exhaustive-consistency and windowed-consistency tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
@@ -36,7 +38,7 @@ M4 & \cref{ssec:eval-catchup}: 320\,B @ $W{=}720$, ratio $\approx W$ against the
 RQ4 & the client verifier integrates into a real messaging-client codebase (Signal Desktop) as a prototype (advisory hook) &
 TypeScript verifier + lifecycle hooks (\cref{sec:impl-signal}) &
 Jest wire-parity and unit suites (\cref{sec:tests-ts}); live demonstration (\cref{ssec:impl-demo}) &
-Not applicable & \cref{sec:impl-signal,ssec:impl-demo}: the verifier runs inside a fork of Signal Desktop with lifecycle hooks, and the live two-client demonstration establishes client integration (its measured local cost is reported under RQ2) \\
+Not applicable & \cref{sec:impl-signal,ssec:impl-demo}: the verifier runs inside a fork of Signal Desktop with lifecycle hooks, and the live two-client demonstration establishes client integration (cost under RQ2) \\
 \midrule
 Supporting & equivocation (split-view) is caught from a second vantage &
 cross-vantage auditor (\cref{sec:design-acka}) &
@@ -65,10 +67,10 @@ None & \cref{sec:eval-security}: post-commit deletion is tampering (not A2 censo
 \toprule
 Contribution & Output & Primary evidence \\
 \midrule
-Conceptual & dual-index warning scheme; ACKA-log instantiation (\cref{sec:design-dual,sec:design-acka}) & automatic bidirectional detection, full adversarial suite passes (\cref{sec:eval-security}) \\
+Conceptual & dual-index warning scheme; ACKA-log instantiation (\cref{sec:design-dual,sec:design-acka}) & expected in-band warning raised in the enumerated dual-index warning cases (\cref{sec:eval-security}) \\
 Cryptographic & windowed consistency proof: RFC~9162 distant-head proof applied to offline monitoring, size bound (\cref{lem:windowed-size}); dual-index same-head consistency lemma as supporting analysis (\cref{lem:dualindex-consistency}) & same-head label consistency shown from proof soundness and collision resistance; full detection reduction future work; \num{320}\,B raw path bytes at $W{=}720$, one proof rather than $W$, size logarithmic in endpoint log sizes (\cref{ssec:eval-catchup}) \\
 Systems & Rust \texttt{duet} crate, directory-server process, and independent auditor; TypeScript verifier in Signal Desktop (\cref{ch:impl}) & agreement with the Rust reference on the shared cross-language test vectors; live cross-process demonstration (\cref{ssec:impl-demo}) \\
-Empirical & benchmark evaluation M1--M17; STRIDE/MITRE evaluation (\cref{ch:eval,app:security}) & per-lookup proof not enlarged by detection (the warning check reuses the same prefix-tree and log-proof structure without the VRF component); median verify below \SI{150}{\micro\second} (\cref{sec:eval-micro}) \\
+Empirical & benchmark evaluation M1--M17; STRIDE/MITRE evaluation (\cref{ch:eval,app:security}) & per-lookup proof not enlarged by detection (the warning check reuses the same prefix-tree and log-proof structure without the VRF component); median verify below \SI{150}{\micro\second} (\cref{sec:eval-micro}); at system level, the expected detection verdict across the full adversarial suite A1--A5, which draws on the additional divergent-label/VRF, re-fetch, cross-signature, and cross-vantage controls (\cref{sec:eval-security}) \\
 \bottomrule
 \end{tabular}
 \end{table}

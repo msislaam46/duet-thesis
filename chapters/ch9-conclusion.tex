@@ -47,12 +47,12 @@ contribution, the dual-index warning scheme instantiated over the ACKA logging c
 by the expected in-band warning in the enumerated dual-index warning cases. The \emph{cryptographic}
 contribution, the windowed consistency proof, is evidenced by the single distant-head catch-up proof
 bounded by the endpoint log sizes rather than the window length. The \emph{systems} contribution is
-evidenced by the verifier running inside a fork of the real Signal Desktop client---a prototype with an
-advisory hook rather than enforced session blocking---with the Rust and TypeScript builds cross-checked
-on shared test vectors. The \emph{empirical} contribution is evidenced by the benchmark suite
-(M1--M17) and the STRIDE analysis reported above. The remaining scenarios use their own controls: local
-divergent-label and global-VRF comparison for A3, identity re-fetch and predecessor cross-signature for
-A5, and the cross-vantage auditor for A4. These results support the thesis statement for the measured
+evidenced by the verifier running inside a fork of the real Signal Desktop client. The integration
+remains an advisory prototype rather than enforcing session blocking. Shared test vectors cross-check
+the Rust and TypeScript builds. The \emph{empirical} contribution is evidenced by the benchmark suite
+(M1--M17) and the STRIDE analysis reported above. The system-level evaluation additionally covers the
+remaining scenarios through their own controls: local divergent-label and global-VRF comparison for A3,
+identity re-fetch and predecessor cross-signature for A5, and the cross-vantage auditor for A4. These results support the thesis statement for the measured
 prototype properties listed above, subject to the limitations of \cref{ch:discussion}. The traceability
 matrix links each contribution, and the four evaluation questions used to structure it, to its
 supporting evidence (\cref{app:traceability}, \cref{tab:trace-rq,tab:trace-contrib}).
