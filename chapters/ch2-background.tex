@@ -380,11 +380,9 @@ The general framework of transparency overlays formalizes this reuse across
 applications~\cite{chase2016overlays}. Moving from certificates to messaging introduces two
 requirements that Certificate Transparency was never designed to satisfy.
 
-The first requirement is privacy. Certificate Transparency logs
-are intentionally public because certificates are public objects. A messaging
-directory, by contrast, contains user identities and associated public keys. A
-transparency mechanism that exposed the entire directory would reveal
-information about who uses the service and potentially who communicates with
+The first requirement is privacy. A messaging directory contains user identities
+and their public keys, so a transparency mechanism that exposed the entire
+directory would reveal who uses the service and potentially who communicates with
 whom. KT systems therefore require proofs that reveal information only about the
 queried entry rather than the directory as a whole~\cite[p.~2]{melara2015coniks}.
 
@@ -780,10 +778,7 @@ does not specify its malicious-server-resistant implementation. The construction
 pre-shared state that must be shared and globally unique across honest pairwise
 sessions, though not secret, which the authors equate with a correctly assumed
 trust-on-first-use scenario~\cite[p.~6]{dowling2023acka}, a caveat any
-construction built on ACKA inherits. CEAsec itself reduces to the
-collision-resistance of the hash function~\cite[p.~26]{dowling2023acka}, precisely
-because the adversary is assumed to hold all secret keys, so that collision
-resistance must extend to the keying material itself~\cite[p.~23]{dowling2023acka}.
+construction built on ACKA inherits.
 
 \begin{figure}[H]
 \centering
@@ -797,12 +792,11 @@ Based on Dowling and Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
 
-ACKA acknowledges this openness: it asks whether a second channel the adversary cannot fully control
-could enable detection, and leaves that channel abstract as its Logsec-secure
-log~\cite[p.~2]{dowling2023acka}. Implementing such a log against an \emph{untrusted} server is exactly
-the problem practical messaging faces, since the servers distributing keys are themselves targets of
-compromise (\cref{sec:bg-vkd}). ACKA's own construction also carries three limitations this thesis
-addresses in \cref{ch:design}: detection is one-sided, since only the receiver detects a forgery and
+ACKA's open question is whether a second channel the adversary cannot fully control could enable
+detection~\cite[p.~2]{dowling2023acka}; implementing that channel as a log secure against an
+\emph{untrusted} server is the problem practical messaging faces, since the servers distributing keys
+are themselves targets of compromise (\cref{sec:bg-vkd}). ACKA's own construction carries three
+limitations this thesis addresses in \cref{ch:design}: detection is one-sided, since only the receiver detects a forgery and
 there is no channel to warn the peer~\cite[p.~21]{dowling2023acka}; verification is sequential every
 epoch, with no windowed catch-up; and the consistency mechanism, though defined, is left unused for
 third-party auditing. Answering the framework's own question about a second vantage, this thesis
