@@ -181,8 +181,8 @@ benchmarked in \cref{ch:eval} is the complete six-step chain.
 % ============================================================================
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}
 
-The dual-index scheme closes Problem~1 of \cref{sec:bg-open} (the absence of
-an in-band peer-warning channel) and so achieves Goal~G1 (Key-Substitution Detection) against the substitution
+The dual-index scheme meets the in-band peer-warning requirement of \cref{ssec:bg-implications} (the
+first requirement, the absence of an in-band peer-warning channel across the surveyed systems) and so achieves Goal~G1 (Key-Substitution Detection) against the substitution
 attacks A1, A3, and A5 of \cref{ch:threat} through complementary mechanisms. An in-band warning
 channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5). The
 secret-derived dual-index labels detect a network man-in-the-middle (A3): an attacker with a
@@ -253,7 +253,10 @@ first use the operator can associate the three labels of a conversation with the
 them. What the scheme relies on is therefore unpredictability \emph{before} first use (the server
 cannot pre-position a value on a slot whose label it cannot compute), while the consequences of
 what the server learns \emph{after} first use are addressed by the write-once policy, the transition
-audit, and the persistence check of \cref{ssec:design-detection}.
+audit, and the persistence check of \cref{ssec:design-detection}. The closest related design, KTACA,
+reaches client-side detection through \emph{anonymous} lookups~\cite{yadav2020poster,yadav2022fakekey},
+a cost Parakeet explicitly objects to~\cite[p.~14]{malvai2023parakeet}; the derived, pre-use
+unpredictable labels used here obtain the same peer-facing detection without anonymity infrastructure.
 
 \paragraph{Scope of the Warning Channel.} The bidirectional warning defends a conversation
 \emph{after} its X3DH/PQXDH handshake has completed honestly, so that Alice and Bob hold a genuine
@@ -452,6 +455,38 @@ and a party re-registers only when its signed pre-key rotates. Session mode dete
 handshake-time attacks (server substitution (A1) and network man-in-the-middle (A3))
 at the cost of one log write per pre-key rotation.
 
+The directory logs the long-term identity key; the remaining X3DH secrets contribute to the shared
+secret $\sharedS$ from which the labels derive after honest establishment, rather than being logged as
+individual objects. \Cref{tab:design-x3dh-coverage} sets this coverage against Signal's manual Safety
+Number.
+
+\begin{table}[H]
+\centering
+\caption[X3DH key-material coverage: Signal versus this thesis.]{Coverage of X3DH key material by
+Signal's Safety Number and the scheme proposed in this thesis. The Signal column describes the Safety
+Number; optional AKV is discussed in \cref{ssec:bg-gap}.}
+\label{tab:design-x3dh-coverage}
+\small
+\renewcommand{\arraystretch}{1.4}
+\vspace{4pt}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Cryptographic material & Signal's Safety Number & Proposed scheme (this work) \\
+\midrule
+Long-term identity key ($\pkid{}$) & Yes, by manual out-of-band comparison & Yes:
+  automatically logged and checked by a background monitor \\
+Signed pre-key ($\spk{}$) & No & Not logged individually; a signed-pre-key
+  rotation triggers re-registration of the identity-key binding; the signed pre-key itself is not a
+  logged object, its authenticity resting on its X3DH signature under the verified identity key \\
+One-time pre-key ($\opk{}{i}$) & No & Not logged individually (single-use);
+  contributes to $\sharedS$ \\
+Ephemeral key ($\ek{}$) & No & Not independently logged; contributes to $\sharedS$, from which the
+  conversation's labels derive after honest establishment \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\FloatBarrier
+
 Alongside it, the system implements a \emph{continuous mode} that binds authentication to
 the \emph{entire} continuous key agreement, following ACKA's example CEA construction
 (\cref{sec:bg-acka}). Each ratchet epoch carries a \emph{public} ratchet key $T_t$ and a \emph{secret} epoch key
@@ -554,7 +589,7 @@ vectors verify byte-for-byte agreement of the Rust and TypeScript CEA constructi
 \FloatBarrier
 \section{Windowed Consistency Proofs}\label{sec:design-windowed}
 
-The windowed consistency proof closes Problem~2 of \cref{sec:bg-open}, the linear cost
+The windowed consistency proof meets the catch-up requirement of \cref{ssec:bg-implications}, removing the linear cost
 of offline catch-up, and so achieves Goal~G2 (Consistency Across Offline Windows).
 
 \subsection{The Catch-Up Problem and the Bound}\label{ssec:design-catchup}
@@ -662,7 +697,7 @@ The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:
 
 The three mechanisms of this chapter, together with the cross-vantage auditor, form the
 concrete instantiation of ACKA's abstract logging component
-($\Logsec$) claimed in \cref{sec:bg-contrib} (\cref{sec:bg-acka}). The contribution is to
+($\Logsec$) introduced in \cref{sec:bg-acka}. The contribution is to
 instantiate the component ACKA leaves abstract, $\Logsec$, with a concrete,
 malicious-server-resistant verifiable key directory built on the IETF Key Transparency
 specification~\cite{ietf-keytrans-protocol} and the lineage of Meta's

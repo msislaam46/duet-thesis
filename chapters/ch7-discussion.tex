@@ -47,8 +47,8 @@ behaviour.
 directory and a conversation secret from which the labels can be derived. Continuous mode
 additionally requires a public ratchet key $T_t$ to authenticate and a secret epoch input $I_t$ from
 the messenger's ratchet. The work
-also instantiates and measures ACKA's~\cite{dowling2023acka} abstract append-only-log component. The
-scope of this contribution is defined in \cref{sec:bg-contrib}. The instantiation uses a
+also instantiates and measures ACKA's~\cite{dowling2023acka} abstract append-only-log component
+(\cref{sec:bg-acka}). The instantiation uses a
 Merkle log, sparse prefix tree, and ECVRF following the IETF KeyTrans
 draft~\cite{ietf-keytrans-protocol}. The construction is described in \cref{sec:design-acka}, and its
 costs are evaluated in \cref{ch:eval}. The dual-index warning \emph{extends} ACKA's continuous-authentication
