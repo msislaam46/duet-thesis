@@ -1,12 +1,12 @@
 \chapter{Traceability Matrix}\label{app:traceability}
 
-This appendix traces every claim in the thesis from motivation to evidence. The evaluation answers
-four questions implicit in the aims of \cref{ch:intro}: (RQ1) is a key substitution detected, in band,
-once monitoring begins? (RQ2) does adding that detection avoid enlarging an individual lookup proof or
-its verification cost? (RQ3) is offline catch-up bounded independently of the number of missed epochs?
-and (RQ4) can the client verifier integrate into a real messaging-client codebase at a measured local
-cost? Each is linked below to the design claim it makes, the mechanism that delivers it, the test or
-scenario that checks it, and the benchmark that measures it. \Cref{tab:trace-rq} traces each question
+This appendix traces every claim in the thesis from motivation to evidence. To structure that trace,
+the evaluation is organized around four questions: (RQ1) is a key substitution detected, in band,
+once monitoring begins? (RQ2) does adding that detection avoid enlarging an individual lookup proof,
+and what is its verification cost? (RQ3) is offline catch-up bounded independently of the number of
+missed epochs? and (RQ4) can the client verifier integrate into a real messaging-client codebase? Each
+is linked below to the design claim it makes, the mechanism that delivers it, the test or scenario that
+checks it, and the benchmark that measures it. \Cref{tab:trace-rq} traces each question
 from its design claim to the supporting evidence; \cref{tab:trace-contrib} organizes the same evidence
 by the four contributions of \cref{sec:intro-contributions}.
 
@@ -28,15 +28,15 @@ M17 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M17 assert
 RQ2 & detection does not enlarge an individual per-lookup proof; verification stays below the latency target and grows far more slowly than $N$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
 prefix-tree, VRF, Merkle-log tests (\cref{app:tests}) &
-M1--M3, M7, M16 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; verify \SI{139.2}{\micro\second} at $10^7$; detector branches \SI{27.8}{} and \SI{31.1}{\micro\second} (M16) \\
+M1--M3, M7, M11, M16 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; verify \SI{139.2}{\micro\second} at $10^7$; detector branches \SI{27.8}{} and \SI{31.1}{\micro\second} (M16); KT lookup-verification at the handshake hook measured per invocation (M11, \cref{sec:eval-deploy}) \\
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 Merkle-log exhaustive-consistency and windowed-consistency tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
 M4 & \cref{ssec:eval-catchup}: 320\,B @ $W{=}720$, ratio $\approx W$ against the synthetic current-head-anchored sequential baseline \\
-RQ4 & the client verifier integrates into a real messaging-client codebase (Signal Desktop) as a prototype (advisory hook), at a measured local cost &
+RQ4 & the client verifier integrates into a real messaging-client codebase (Signal Desktop) as a prototype (advisory hook) &
 TypeScript verifier + lifecycle hooks (\cref{sec:impl-signal}) &
 Jest wire-parity and unit suites (\cref{sec:tests-ts}); live demonstration (\cref{ssec:impl-demo}) &
-M11 & \cref{sec:eval-deploy}: Rust microbenchmark of the KT lookup-verification at the handshake hook (microseconds per verification invocation); the live demonstration (\cref{ssec:impl-demo}) establishes client integration separately \\
+--- & \cref{sec:impl-signal,ssec:impl-demo}: the verifier runs inside a fork of Signal Desktop with lifecycle hooks, and the live two-client demonstration establishes client integration (its measured local cost is reported under RQ2) \\
 \midrule
 Supporting & equivocation (split-view) is caught from a second vantage &
 cross-vantage auditor (\cref{sec:design-acka}) &

@@ -7,9 +7,8 @@ cryptographic suite that provides its end-to-end encryption is known as the Sign
 introduced in \cref{sec:bg-signal}. Its wider adoption makes Signal an important setting in which to
 study improvements to key authentication for asynchronous private messaging.
 
-Accessible private messaging is especially important for journalists, activists, abuse survivors, and
-others whose safety may depend on confidential communication. For
-these users, encryption alone is not sufficient. A message must be encrypted under the intended
+For journalists, activists, abuse survivors, and others whose safety may depend on confidential
+communication, encryption alone is not sufficient. A message must be encrypted under the intended
 recipient's authentic key. A silent key substitution defeats that guarantee while leaving the
 conversation looking secure. An attacker may then read or alter communications without giving either
 participant an immediate indication that the channel has been compromised. Detecting such substitution
@@ -27,7 +26,7 @@ The traditional defence is a manual \emph{safety-number} comparison where the tw
 
 A messaging service's public-key directory maps user identities to their public identity keys. \emph{Key transparency} addresses this limitation by publishing authenticated commitments to this directory through a verifiable, append-only history, so that clients can check their keys against a public, consistent record. Production systems now deploy it, including Signal's optional Automatic Key Verification~\cite{signal-akv}.
 
-However, the deployed and proposed key-transparency systems surveyed in \cref{ch:background} still leave gaps. Detection is reduced entirely to \emph{self-monitoring}: while a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. Also, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
+However, the deployed and proposed key-transparency systems surveyed in \cref{ch:background} still leave gaps. For key-substitution detection, however, these systems still rely on the account holder \emph{monitoring their own directory entry}: while a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. Also, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
 
 Since users may not complete a manual comparison and either participant may be offline, key
 verification in an asynchronous messenger must operate automatically. It must allow both parties to
@@ -46,25 +45,26 @@ key, but under the threat-model assumptions and once monitoring begins, a substi
 silent. That distinction, between an availability failure and detectable interference, is formalized
 in \cref{ch:threat}.
 
-\section{Aims and Objectives}\label{sec:intro-aims}
+\section{Aim and Approach}\label{sec:intro-aims}
 
 We propose DUET, a mechanism for automatic, in-band detection of key substitution over a messaging key
-directory. It removes the need for a separate manual comparison and does not change the format or
-asymptotic complexity of an individual lookup proof, although the complete mechanism performs
-additional label-bound lookups and writes. The windowed consistency mechanism further replaces one
+directory. It allows the in-scope checks to run automatically without a separate manual comparison, and
+does not change the format or asymptotic complexity of an individual lookup proof, although the
+complete mechanism performs additional label-bound lookups and writes. The windowed consistency mechanism further replaces one
 proof per missed epoch with a single proof whose size grows logarithmically in the endpoint log sizes.
 
 \section{Contributions}\label{sec:intro-contributions}
 
 This thesis makes four principal contributions:
 
-\paragraph{Conceptual.} The conceptual contribution is a \emph{dual-index warning scheme}. In it, we
+\paragraph{Conceptual.} The conceptual contribution is a \emph{dual-index warning scheme}. We
 derive two participant-specific lookup labels and a shared warning label from the conversation secret.
-The warning label names one shared slot to which either party can write an authenticated alert. For an honestly established and monitored conversation, a malicious server cannot predict and
+The warning label identifies one shared slot to which either party can write an authenticated alert. For an honestly established and monitored conversation, a malicious server cannot predict and
 pre-position that slot before the label is first used. Before the warning commits, a censored write is
-detected through a key mismatch alongside a proof-verified empty slot. After it commits, any
-disappearance is exposed as deletion or tampering. The resulting signal allows both parties to detect
-the substitution automatically and in band (\cref{sec:design-dual}).
+detected through a key mismatch alongside a proof-verified empty slot. After the warning commits,
+removing it violates the permitted directory transition and is detected by the transition audit. The
+resulting signal allows both parties to detect the substitution automatically and in band
+(\cref{sec:design-dual}).
 
 Separately, the thesis instantiates the abstract append-only-log component of the Authenticated Continuous Key Agreement
 (ACKA) framework~\cite{dowling2023acka} as the concrete DUET directory. The thesis evaluates the directory's proof sizes and the local costs of
@@ -91,9 +91,9 @@ implemented VRF-indexed lookup proof is at rough size parity with CONIKS, with t
 CONIKS lacks obtained through additional same-shape lookups rather than a larger proof. The median
 full-client verification time remains below \SI{150}{\micro\second} throughout the measured range, up
 to $10^7$ labels, and grows far more slowly than $N$. A month-long offline catch-up costs a few
-hundred bytes against the hundreds of kilobytes that per-epoch re-fetching would spend. A security
-evaluation applies STRIDE and the MITRE ATT\&CK knowledge base to the implemented system,
-distinguishing detected scenarios from residual risks (\cref{ch:eval}).
+hundred bytes against the hundreds of kilobytes that per-epoch re-fetching would spend. A STRIDE and
+MITRE ATT\&CK security evaluation separates the attack scenarios the implemented system detects from
+the residual risks that remain (\cref{ch:eval}).
 
 \section{Thesis Roadmap}\label{sec:intro-roadmap}
 
@@ -103,8 +103,6 @@ goals; \cref{ch:design} presents the design and instantiates ACKA; \cref{ch:impl
 two-layer implementation and its Signal Desktop integration; and \cref{ch:eval} evaluates the system
 empirically and against the threat model. \Cref{ch:discussion,ch:lsepi,ch:conclusion} then cover the
 discussion and future work, the legal, social, ethical, and professional dimensions, and the
-conclusion. Eight appendices provide supporting material: formal definitions~(\cref{app:definitions}),
-algorithms~(\cref{app:algorithms}), the API reference~(\cref{app:apiref}), the test
-catalogue~(\cref{app:tests}), benchmark results~(\cref{app:benchmarks}), security-analysis
-tables~(\cref{app:security}), the traceability matrix~(\cref{app:traceability}), and a
-glossary~(\cref{app:glossary}).
+conclusion. Eight appendices collect the supporting material referenced throughout, from the formal
+definitions and algorithms to the benchmark and security-analysis tables, the traceability matrix, and
+a glossary.

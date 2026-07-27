@@ -42,22 +42,23 @@ substitution and equivocation scenario. The STRIDE analysis identifies four resi
 inherent to a semi-trusted directory. The other three concern availability functions not implemented
 by the prototype.
 
-Read against the four evaluation questions set out in \cref{app:traceability}, each is answered by a
-specific evidence type. RQ1 (in-band detection) is answered by the implemented system producing the expected verdict
-across the enumerated adversarial scenarios, including the dual-index warning cases. Every enumerated
-clean workflow produced the expected non-alarm verdict (M17). RQ2 (cost) is answered at component level: an
-individual lookup proof is unchanged in size, an isolated in-process \texttt{KTClient.detectMitm} check performs one or two raw-label lookups,
-and M16 measures the local cost of those one-lookup and two-lookup detector branches directly; only
-the networked end-to-end detection latency was not measured.
-RQ3 (offline) is answered by the single windowed catch-up proof, whose size is bounded
-by the endpoint log sizes rather than the window's length. RQ4 (client-integration feasibility) is
-answered by the verifier running inside a fork of the real Signal Desktop client, which establishes
-hook placement and execution of the TypeScript verifier path. The integration is a prototype with an
-advisory hook and deterministic stand-ins rather than enforced session blocking. The Rust harness
-separately measures the corresponding cryptographic operations. These results support the thesis statement for the
+Read against the four contributions of \cref{sec:intro-contributions}, each is supported by a specific
+evidence type. The \emph{conceptual} contribution, the dual-index warning scheme instantiated over the
+ACKA logging component, is supported by the implemented system producing the expected detection
+verdict across the enumerated adversarial scenarios, including the dual-index warning cases, while
+every enumerated clean workflow produced the expected non-alarm verdict (M17). The \emph{cryptographic}
+contribution, the windowed consistency proof, is supported by the single catch-up proof whose size is
+bounded by the endpoint log sizes rather than the window's length. The \emph{systems} contribution is
+supported by the verifier running inside a fork of the real Signal Desktop client, which establishes
+hook placement and execution of the TypeScript verifier path, with the Rust and TypeScript builds
+cross-checked on shared test vectors; the integration is a prototype with an advisory hook and
+deterministic stand-ins rather than enforced session blocking. The \emph{empirical} contribution is
+supported at component level: an individual lookup proof is unchanged in size, and M16 measures the
+local cost of the one-lookup and two-lookup detector branches directly, though the networked
+end-to-end detection latency was not measured. These results support the thesis statement for the
 measured prototype properties listed above, subject to the limitations of \cref{ch:discussion}. The
-traceability matrix links each research question and contribution to its supporting evidence
-(\cref{app:traceability}, \cref{tab:trace-rq,tab:trace-contrib}).
+traceability matrix links each contribution, and the four evaluation questions used to structure it, to
+its supporting evidence (\cref{app:traceability}, \cref{tab:trace-rq,tab:trace-contrib}).
 
 For an honestly established and monitored conversation, DUET detects key substitution rather than
 preventing it. A malicious server may still replace a key, but the substitution cannot remain silent.
