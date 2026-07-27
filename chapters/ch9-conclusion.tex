@@ -42,26 +42,20 @@ substitution and equivocation scenario. The STRIDE analysis identifies four resi
 inherent to a semi-trusted directory. The other three concern availability functions not implemented
 by the prototype.
 
-The evidence supports the four contributions of \cref{sec:intro-contributions}, each through a specific
-evidence type. The \emph{conceptual} contribution, the dual-index warning scheme instantiated over the
-ACKA logging component, is supported by the implemented system raising the expected in-band warning in
-the enumerated dual-index warning cases. The \emph{cryptographic} contribution, the windowed
-consistency proof, is supported by the single catch-up proof whose size is bounded by the endpoint log
-sizes rather than the window's length. The \emph{systems} contribution is supported by the verifier
-running inside a fork of the real Signal Desktop client, which establishes hook placement and execution
-of the TypeScript verifier path, with the Rust and TypeScript builds cross-checked on shared test
-vectors. The integration is a prototype with an advisory hook and deterministic stand-ins rather than
-enforced session blocking. The \emph{empirical} contribution is supported at component level: an
-individual lookup proof is unchanged in size, and M16 times synthetic Rust reconstructions of the one-
-and two-lookup detector-branch operations rather than the TypeScript branches directly, while the
-networked end-to-end detection latency was not measured. At the system level, the security evaluation
-adds the wider evidence: the implemented system produced the expected detection verdict across the full
-adversarial suite (A1--A5), which also relies on the identity re-fetch, predecessor cross-signature, and
-cross-vantage controls, and every enumerated clean workflow produced the expected non-alarm verdict
-(M17). These results support the thesis statement for the measured prototype properties listed above,
-subject to the limitations of \cref{ch:discussion}. The
-traceability matrix links each contribution, and the four evaluation questions used to structure it, to
-its supporting evidence (\cref{app:traceability}, \cref{tab:trace-rq,tab:trace-contrib}).
+The evidence supports the four contributions of \cref{sec:intro-contributions}. The \emph{conceptual}
+contribution, the dual-index warning scheme instantiated over the ACKA logging component, is evidenced
+by the expected in-band warning in the enumerated dual-index warning cases. The \emph{cryptographic}
+contribution, the windowed consistency proof, is evidenced by the single distant-head catch-up proof
+bounded by the endpoint log sizes rather than the window length. The \emph{systems} contribution is
+evidenced by the verifier running inside a fork of the real Signal Desktop client---a prototype with an
+advisory hook rather than enforced session blocking---with the Rust and TypeScript builds cross-checked
+on shared test vectors. The \emph{empirical} contribution is evidenced by the benchmark suite
+(M1--M17) and the STRIDE analysis reported above. The remaining scenarios use their own controls: local
+divergent-label and global-VRF comparison for A3, identity re-fetch and predecessor cross-signature for
+A5, and the cross-vantage auditor for A4. These results support the thesis statement for the measured
+prototype properties listed above, subject to the limitations of \cref{ch:discussion}. The traceability
+matrix links each contribution, and the four evaluation questions used to structure it, to its
+supporting evidence (\cref{app:traceability}, \cref{tab:trace-rq,tab:trace-contrib}).
 
 For an honestly established and monitored conversation, DUET detects key substitution rather than
 preventing it. A malicious server may still replace a key, but the substitution cannot remain silent.
