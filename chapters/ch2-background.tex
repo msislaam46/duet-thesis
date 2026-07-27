@@ -1,12 +1,5 @@
 \chapter{Background}\label{ch:background}
 
-This chapter introduces the building blocks the rest of the thesis assembles and places the work among
-existing systems. Key transparency and verifiable key directories authenticate what a directory
-serves; the Authenticated Continuous Key Agreement (ACKA) framework~\cite{dowling2023acka} models
-continuous authentication assuming a logging scheme that meets its Logsec security definition while
-leaving its implementation open. This thesis composes the two, implementing the log ACKA assumes as a
-directory designed for a malicious operator.
-
 % ============================================================================
 \section{The Signal Protocol Stack}\label{sec:bg-signal}
 
@@ -72,33 +65,6 @@ specific keys actually combined in a given handshake are never checked together.
 This per-session gap, rather than a mere shortfall in the number of keys
 fingerprinted, is what the remainder of the thesis addresses.
 
-\Cref{tab:bg-coverage} summarizes the scope of Signal's Safety Number verification over the X3DH key
-material.
-
-\begin{table}[H]
-\centering
-\caption{Coverage of Signal's Safety Number over the X3DH key material.}
-\label{tab:bg-coverage}
-\small
-\begin{tabular}{@{}p{5.5cm}p{8cm}@{}}
-\toprule
-Cryptographic material & Authenticated by Signal's Safety Number \\
-\midrule
-Long-term identity key ($\pkid{}$) & Yes: via manual, out-of-band comparison. \\
-Signed pre-key ($\spk{}$) & Not directly, but bound to the identity key by
-its signature $\sig{\spk{}}$, which is verified during X3DH.$^{\dagger}$ \\
-One-time pre-key ($\opk{}{i}$) & No, unsigned. \\
-Ephemeral key ($\ek{}$) & No: generated fresh per session and never fingerprinted. \\
-\bottomrule
-\end{tabular}
-
-\smallskip
-\footnotesize $^{\dagger}$ A signed pre-key is therefore authentic relative to
-an authentic identity key, but is not covered by the Safety Number itself.
-The signature binds the signed pre-key to the identity key, but no mechanism checks the specific
-combination of keys used in a given session.
-\end{table}
-
 The key material described above is consumed directly by Signal's
 session-establishment protocol. The next step, therefore, is to examine how the X3DH
 protocol combines these keys to derive the initial shared secret from which all
@@ -115,8 +81,8 @@ by Bob.
 Following the notation used in the X3DH specification~\cite[\S2.4]{x3dh}, this thesis
 denotes identity keys by $\xIK{}$, signed pre-keys by $\xSPK{}$, one-time
 pre-keys by $\xOPK{}$, and ephemeral keys by $\xEK{}$. Hence $\xIK{U}$ denotes a
-user's identity key, $\xEK{A}$ for Alice's ephemeral key, $\xSPK{U}$ for a
-signed pre-key, and $\xOPK{U}$ for a one-time pre-key, each a public key with a
+user's identity key, $\xEK{A}$ denotes Alice's ephemeral key, $\xSPK{U}$ denotes a
+signed pre-key, and $\xOPK{U}$ denotes a one-time pre-key, each a public key with a
 corresponding private key held by its owner, so that $\xIK{U}=\pkid{U}$,
 $\xSPK{U}=\spk{U}$, and $\xOPK{U}=\opk{U}{i}$. Alice generates an ephemeral key
 $\xEK{A}$ and computes four Diffie--Hellman values:
@@ -197,13 +163,12 @@ is responsible for maintaining confidentiality throughout the remainder of the
 conversation. It combines a Diffie--Hellman ``ratchet'', in which the parties
 periodically exchange new ephemeral public keys, with symmetric key-derivation
 chains that advance a root key into per-message keys~\cite{doubleratchet}. This
-gives two properties: forward secrecy, meaning that compromise of a current key
-does not expose past messages, because the chain only moves forward, and
-post-compromise security, meaning that the session can heal after a compromise
-once the attacker stops interfering, because a fresh Diffie--Hellman ratchet
-step re-randomizes the state. Post-compromise security, however, is guaranteed
-only against an adversary who becomes passive after the compromise. It offers no
-guarantee against one who remains active. This active-adversary
+gives two properties. \emph{Forward secrecy} means that compromise of a current key
+does not expose past messages, because the chain only moves forward. \emph{Post-compromise
+security} means that the session can heal after a compromise once the attacker stops
+interfering, because a fresh Diffie--Hellman ratchet step re-randomizes the state. This
+healing is guaranteed only against an adversary who becomes passive after the compromise;
+it offers no guarantee against one who remains active. This active-adversary
 setting returns in \cref{sec:bg-acka}. \Cref{fig:bg-ratchet} shows how the Diffie--Hellman
 ratchet and the symmetric-key chains interact.
 
@@ -308,12 +273,9 @@ substitute them. Verification mechanisms remain dependent on assumptions about
 the consistency of directory views and the availability of auditing
 infrastructure. Authentication is tied primarily to key bindings rather than the
 evolving protocol state, and manual user verification remains uncommon in
-practice. The remainder of this chapter examines the principal approaches
-proposed to address these limitations, beginning with key transparency and
-verifiable key directories before turning to the complementary perspective
-offered by the Authenticated Continuous Key Agreement (ACKA) framework and the
-comparative analysis that fixes the requirements for the design of
-\cref{ch:design}.
+practice. The remainder of this chapter surveys the approaches that address them:
+key transparency and verifiable key directories, the ACKA framework, and a
+comparative analysis that fixes the requirements for the design of \cref{ch:design}.
 
 % ============================================================================
 \section{Secure Transparency Logs}\label{sec:bg-logs}
@@ -502,23 +464,12 @@ windows'' so that intermittently connected clients need not replay every missed 
 mechanism unspecified~\cite{ietf-keytrans-protocol}. That efficiency gap is what this thesis's windowed
 consistency proof addresses.
 
-This work hardens the standard head in one respect. The server signs each head with
-Ed25519~\cite{rfc8032} over the epoch number, tree size, log root, and a timestamp, so a single
-consistency proof certifies append-only growth against an earlier head in $O(\log n)$. Because neither
-a signed head nor a consistency proof catches equivocation on its own, a second vantage compares heads
-to expose the split-view attack of \cref{fig:bg-splitview}, which is the cross-vantage auditor's job
-(\cref{sec:design-acka}). Borrowing one element of CONIKS's signed root that a bare head omits, the
-signed message additionally binds a hash of the provider's \emph{policy} (the VRF public key, the
-signing key, the ciphersuite, the protocol version, and the epoch cadence), so a malicious server
-cannot silently substitute these parameters between epochs, or serve different ones to different
-clients, without detection.
-
 % ============================================================================
 \section{Verifiable Key Directories for Key Transparency}\label{sec:bg-vkd}
 
-This section surveys the verifiable key directories built on transparency logs: the context in which
-this thesis sits and the benchmark against which its contributions are assessed. The limitations that
-recur across these systems motivate the designs of \cref{ch:design}.
+Verifiable key directories built on transparency logs are the context in which this thesis sits and
+the benchmark against which its design is assessed. The limitations that recur across these systems
+motivate \cref{ch:design}.
 
 \subsection{The Verifiable Key Directory (VKD) Abstraction}\label{ssec:bg-vkd-abstraction}
 
@@ -606,9 +557,9 @@ epoch (under 20\,kB per day even for a provider with billions of
 users~\cite[p.~1]{melara2015coniks}) and checking that the key bound to its name
 is the one it expects. Its security contribution is twofold. Lookups are
 privacy-preserving, revealing nothing about which other users exist, and the
-hash-chained STRs provide \emph{non-equivocation}, since to show two clients
+hash-chained STRs support \emph{non-equivocation} once views are compared: to show two clients
 different directories a provider would have to maintain two divergent STR chains
-indefinitely, and any auditor comparing STRs would then obtain publicly verifiable
+indefinitely, so any auditor or client that compares STRs obtains publicly verifiable
 evidence of the fork, attributable to the provider's signing key~\cite[p.~3]{melara2015coniks}. The directory records
 identity-key bindings and their evolution across epochs, and nothing more. Three
 limitations are significant. First, monitoring is linear in the offline period: a
@@ -686,12 +637,10 @@ substrate can be optimized for very different objectives once privacy is not a f
 
 \medskip\noindent
 Despite substantial differences in implementation, these constructions converge on a common
-architecture (VRF-derived labels, an authenticated directory supporting membership and non-membership
-proofs, an append-only history, and verifiable auditing). Most consequentially for this thesis,
-\emph{detection remains external to the conversation}: almost every system relies on the user, an
-auditor, or a witness set to notice a malicious directory, and none provides an in-band channel by
-which one participant could warn the other that a substitution has occurred. This is the gap this
-thesis addresses.
+architecture: VRF-derived labels, an authenticated directory supporting membership and non-membership
+proofs, an append-only history, and verifiable auditing. Across all of them, \emph{detection remains
+external to the conversation}, resting on the user, an auditor, or a witness set rather than an in-band
+channel to the peer.
 
 \subsection{Deployed VKDs in Production Systems}\label{ssec:bg-vkd-deployed}
 
@@ -706,7 +655,7 @@ adapted from Parakeet~\cite[p.~4]{whatsapp2023whitepaper}. It hashes with Blake3
 publishes an epoch every five minutes, derives leaf positions from a VRF over the
 phone number, key version, and a latest-key flag, tombstones removed devices in
 production, and signs each directory root with a key whose public half ships
-inside the WhatsApp client binary, a deployed signed tree head that hardens
+inside the WhatsApp client binary. This deployed signed tree head hardens the directory
 against split views~\cite[pp.~4, 7, 8, 12]{whatsapp2023whitepaper}. Audit proofs
 are published on Amazon S3 under a write-once retention policy of five years,
 allowing independent parties to audit the directory
@@ -726,11 +675,11 @@ separate from the Meta engineering blog~\cite{lawlor2023whatsapp}, the actual
 source of the throughput and third-party-auditor figures.)
 
 \subsubsection{Signal Key Transparency}
-Signal's deployment is notable because it closely tracks the emerging IETF Key
-Transparency standard: its \texttt{key-transparency-server} implements the draft
+Signal's deployment closely tracks the emerging IETF Key
+Transparency standard. Its \texttt{key-transparency-server} implements the draft
 with some modifications, exposing Search and Monitor endpoints, public audit
 endpoints, and auditor interoperability test vectors (the auditor's deployment
-operator is not documented), and it keys the directory
+operator is not documented). It keys the directory
 with an elliptic-curve VRF (ECVRF) from the suite family the standard
 recommends~\cite{signal-kt-server}. It stores three lookup keys: an identity key
 indexed by the account identifier (ACI), which is the per-account identity Signal
@@ -767,21 +716,16 @@ since 2014, is the deployed multi-device-keychain ancestor, but it targets no
 user-key privacy. ELEKTRA later added precisely that privacy
 mechanism~\cite[p.~2]{len2023elektra}.
 
-Despite substantial differences in architecture, consistency mechanisms, and
-deployment environments, the deployed systems converge on a common operational
-model. Detection rests on self-monitoring, auditor verification, or consistency
-checking. None provides a general in-band mechanism through which one user can
-automatically warn another about a suspected key substitution. This is the gap
-that the remainder of the chapter takes up.
+The deployed systems converge on the same operational model: detection rests on
+self-monitoring, auditor verification, or consistency checking, none of it reaching
+the peer in band. \Cref{sec:bg-compare} sets these systems side by side.
 
 % ============================================================================
 \section{The ACKA (Authenticated Continuous Key Agreement) Framework}\label{sec:bg-acka}
 
-This section introduces the ACKA framework of Dowling and
-Hale~\cite{dowling2023acka}, the culmination of a line of work arguing that
-authentication must itself be ratcheted alongside the key
-agreement~\cite{dowling2020nocompromise}, and makes precise how this work bridges it to key
-transparency. This matters because ACKA is not another verifiable key directory
+The ACKA framework of Dowling and Hale~\cite{dowling2023acka} is the culmination of a line of work
+arguing that authentication must itself be ratcheted alongside the key
+agreement~\cite{dowling2020nocompromise}. It is not another verifiable key directory
 to be slotted into the comparison of \cref{sec:bg-vkd}: it works in a
 \emph{different model}, against a \emph{different adversary}, and it contributes
 the continuous-authentication component that a complete solution needs while
@@ -813,13 +757,10 @@ under a label the impersonated party never generates, which that party detects o
 lookup~\cite[p.~7]{dowling2023acka} (\cref{fig:bg-acka} summarizes the
 composition).
 
-The framework's treatment of Logsec needs care. It is left
-\emph{deliberately abstract}: ACKA notes that the logging scheme could use a blockchain or another
-distributed-ledger protocol and therefore specifies the interface generically~\cite[p.~10]{dowling2023acka}.
-ACKA specifies what
-the secure log must guarantee, append-only immutability, without committing
-to how those guarantees are implemented, leaving the construction of Logsec
-deliberately open.
+ACKA leaves the Logsec scheme \emph{deliberately abstract}: it specifies what the secure log must
+guarantee, append-only immutability, but not how, noting only that the log could be a blockchain or
+another distributed-ledger protocol and specifying the interface
+generically~\cite[p.~10]{dowling2023acka}.
 
 The adversary ACKA defends against is different from, and along its own axis
 stronger than, the malicious-server adversary of the VKD line, and that
@@ -877,13 +818,10 @@ synthesis proposed in this thesis.
 % ============================================================================
 \section{Comparative Analysis of Existing Systems}\label{sec:bg-compare}
 
-This section draws the surveyed systems of \cref{sec:bg-vkd} together and
-identifies the common design patterns and remaining gaps that emerge across the
-literature. \Cref{tab:bg-compare} presents the comparison; the capabilities that
-remain unsupported across the surveyed systems then fix the design requirements of
-\cref{ssec:bg-implications}. The treatment here is descriptive, with references to the
-proposed scheme kept to forward references and its full development deferred to
-\cref{ch:design}.
+\Cref{tab:bg-compare} draws the surveyed systems of \cref{sec:bg-vkd} together, and the capabilities
+that remain unsupported across them fix the design requirements of \cref{ssec:bg-implications}. The
+treatment here is descriptive, with references to the proposed scheme kept to forward references and
+its full development deferred to \cref{ch:design}.
 
 \begin{table}[t]
 \centering
@@ -936,17 +874,13 @@ secure-log abstraction rather than defining a directory (\cref{sec:bg-acka}).\pa
 \end{table}
 \FloatBarrier
 
-One pattern holds across \cref{tab:bg-compare}: every system entrusts the discovery of a substitution
-to the key owner or an external auditor, and none propagates that evidence in band to the
-communicating peer.
-
 \subsection{Implications for the Design}\label{ssec:bg-implications}
 
 The survey and the ACKA framework together fix three requirements for a key-authentication mechanism
 in asynchronous messaging.
 
 First, detection must reach the peer. Every surveyed system entrusts discovery of a substitution to the
-key owner or an external auditor (\cref{tab:bg-compare}); ELEKTRA's warning fires only on a full
+key owner or an external auditor (\cref{tab:bg-compare}); ELEKTRA produces a warning only on a full
 account reset~\cite[p.~2]{len2023elektra}, and the largest deployment ships with self-monitoring
 disabled and a manual fallback~\cite[pp.~5, 10]{whatsapp2023whitepaper}. This motivates a requirement
 for an in-band peer signal that remains available even when one participant is offline.
