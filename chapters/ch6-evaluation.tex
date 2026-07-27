@@ -449,8 +449,8 @@ verification is not quite as flat: its median reads \SI{133.6}{\micro\second} at
 distribution recorded to the CSV, whose proof shape varies with the sampled label; the fixed-target
 Criterion group, which repeatedly times a single fixed lookup path, is exploratory and is not the
 reported scale figure. Against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at
-$N\le10^4$ (\cref{tab:eval-latency}), the full check rises by roughly \num{15}\,\%
-(about \SI{19}{\micro\second}) while $N$ grows by four orders of magnitude. The two components that
+$N\le10^4$ (\cref{tab:eval-latency}), the full check rises by roughly \num{8.2}\,\%
+(about \SI{10.5}{\micro\second}) while $N$ grows by four orders of magnitude. The two components that
 could carry a depth-driven increase, the prefix walk and the directory-size-independent VRF, are themselves flat
 across the same range, so the residual is not a tree-depth effect. The experiment does not isolate its
 source; possible contributors include the larger proof representation and differences between the two
@@ -494,8 +494,8 @@ the same reason proof generation is flat (\cref{ssec:eval-latency}): it is domin
 per-rotation VRF evaluation of the unchanged user identifier, which a production server would cache,
 leaving only tens of microseconds of tree work. The one cost that grows with $N$ is the epoch commit
 (\SI{451.0}{\micro\second} at $10^3$ rising to \SI{6.73}{\milli\second} at $10^4$, a
-$\approx$$13\times$ increase for a $10\times$ growth, i.e.\ roughly $O(N)$), caused by the deep-clone
-snapshot the current server takes on every commit. The snapshot also copies each leaf's chain memo,
+$\approx$$15\times$ increase for a $10\times$ growth), consistent with the roughly linear cost of the
+deep-clone snapshot the current server takes on every commit. The snapshot also copies each leaf's chain memo,
 the deliberate space-for-time trade that keeps reads flat (\cref{sec:impl-modules}); a copy-on-write
 tree would reduce it to $O(\lg N)$ per modified label ($O(k \lg N)$ for an epoch's $k$ updates), noted
 as future work in \cref{ch:discussion}. The same single-machine limit shows in memory: constructing
@@ -681,7 +681,7 @@ differing hardware (CONIKS's 2015 2\,GHz laptop CPU against the 2022 mobile CPU 
 comparability note) and methodology prevent a direct performance comparison, so no ratio is offered in
 the body.\footnote{For reference, the published CONIKS total is \SI{559}{\micro\second}, the sum
 computed here of its \SI{159}{\micro\second} authentication-path and $\approx$\SI{400}{\micro\second}
-signature figures, so the \SI{139.2}{\micro\second} DUET median is roughly $3.8\times$ lower; the
+signature figures, so the \SI{139.2}{\micro\second} DUET median is roughly $4.0\times$ lower; the
 quotient is kept to this note because a cross-hardware, cross-methodology comparison is indicative
 only.} The claim that stands on this hardware alone is the
 sub-\SI{150}{\micro\second} median cost of full client verification across the whole measured range.
