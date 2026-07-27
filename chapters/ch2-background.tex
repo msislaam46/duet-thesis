@@ -5,16 +5,16 @@
 
 \subsection{What Signal Is and Why It Matters}\label{ssec:bg-whatis}
 
-Signal is an end-to-end encrypted messaging protocol designed to provide
-confidentiality, authentication, forward secrecy, and post-compromise security
-for asynchronous communication. Unlike traditional secure channels, where both
+Signal is a widely used end-to-end encrypted messenger. Its cryptographic stack,
+known as the Signal Protocol, provides confidentiality, authentication, forward
+secrecy, and post-compromise security for asynchronous communication. Unlike traditional secure channels, where both
 parties must be online simultaneously, Signal allows users to initiate
 conversations while recipients are offline through the use of server-hosted
 pre-keys. The protocol has become influential well beyond the Signal
 application itself: variants of its design have been adopted by large-scale messaging platforms,
 including WhatsApp~\cite{whatsapp2023whitepaper}.
 
-Signal is not a single cryptographic primitive but a protocol stack. Session
+The Signal Protocol is not a single cryptographic primitive but a protocol stack. Session
 establishment is performed using the Extended Triple Diffie--Hellman (X3DH) key
 agreement protocol~\cite{x3dh}, while ongoing communication is protected using the Double
 Ratchet algorithm~\cite{doubleratchet}. Together these mechanisms provide strong confidentiality
@@ -136,10 +136,8 @@ message.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-x3dh}
-\caption[X3DH message sequence.]{X3DH message sequence: Bob publishes a pre-key bundle, and Alice
-verifies the signed pre-key, derives the shared secret $\sharedS$, and sends an initial message from
-which Bob derives the same secret when he next comes online. The diagram is simplified, with the
-omitted server-fetch and verification details described in the text. Based on the X3DH
+\caption[X3DH message sequence.]{X3DH message sequence. Alice verifies Bob's signed pre-key, derives
+the shared secret $\sharedS$, and sends the initial message. Simplified from the X3DH
 specification~\cite{x3dh}.}
 \label{fig:bg-x3dh}
 \end{figure}
@@ -167,8 +165,8 @@ gives two properties. \emph{Forward secrecy} means that compromise of a current 
 does not expose past messages, because the chain only moves forward. \emph{Post-compromise
 security} means that the session can heal after a compromise once the attacker stops
 interfering, because a fresh Diffie--Hellman ratchet step re-randomizes the state. This
-healing is guaranteed only against an adversary who becomes passive after the compromise;
-it offers no guarantee against one who remains active. This active-adversary
+healing is guaranteed only against an adversary who becomes passive after the compromise. It
+offers no guarantee against one who remains active. This active-adversary
 setting returns in \cref{sec:bg-acka}. \Cref{fig:bg-ratchet} shows how the Diffie--Hellman
 ratchet and the symmetric-key chains interact.
 
@@ -273,9 +271,7 @@ substitute them. Verification mechanisms remain dependent on assumptions about
 the consistency of directory views and the availability of auditing
 infrastructure. Authentication is tied primarily to key bindings rather than the
 evolving protocol state, and manual user verification remains uncommon in
-practice. The remainder of this chapter surveys the approaches that address them:
-key transparency and verifiable key directories, the ACKA framework, and a
-comparative analysis that fixes the requirements for the design of \cref{ch:design}.
+practice.
 
 % ============================================================================
 \section{Secure Transparency Logs}\label{sec:bg-logs}
@@ -530,11 +526,7 @@ verification. Parakeet improved storage efficiency and deployability, a design l
 since deployed at scale by WhatsApp and independently reviewed~\cite{nccgroup2023akd}. ELEKTRA
 extended the model to multi-device accounts and added privacy recovery after
 server compromise, and OPTIKS, PRISM, and Merkle\textsuperscript{2} explored
-alternative trade-offs between monitoring cost, auditing, and scalability. We
-review the systems in roughly the order they appeared, in each case identifying
-the problem the system set out to solve, its main construction, its security
-contribution, and the limitations that remained: a reading that makes the
-residual, common gap visible.
+alternative trade-offs between monitoring cost, auditing, and scalability.
 
 \subsubsection{CONIKS}
 CONIKS introduced the transparency-based key-verification design that the subsequent literature builds
@@ -792,17 +784,13 @@ Based on Dowling and Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
 
-ACKA's open question is whether a second channel the adversary cannot fully control could enable
-detection~\cite[p.~2]{dowling2023acka}; implementing that channel as a log secure against an
-\emph{untrusted} server is the problem practical messaging faces, since the servers distributing keys
-are themselves targets of compromise (\cref{sec:bg-vkd}). ACKA's own construction carries three
-limitations this thesis addresses in \cref{ch:design}: detection is one-sided, since only the receiver detects a forgery and
-there is no channel to warn the peer~\cite[p.~21]{dowling2023acka}; verification is sequential every
-epoch, with no windowed catch-up; and the consistency mechanism, though defined, is left unused for
-third-party auditing. Answering the framework's own question about a second vantage, this thesis
-supplies that vantage as part of its systems contribution: a cross-vantage auditor that compares signed
-heads to expose split views (\cref{sec:design-acka}), reusing gossip and split-view detection from
-prior work rather than claiming them as new primitives.
+ACKA leaves its secure log abstract, and implementing that log against an \emph{untrusted} server is
+the gap this thesis fills, since the servers distributing keys are themselves targets of compromise
+(\cref{sec:bg-vkd}). ACKA's own construction carries three limitations addressed in \cref{ch:design}:
+detection is one-sided, warning the receiver but not the peer~\cite[p.~21]{dowling2023acka};
+verification is sequential every epoch, with no windowed catch-up; and its consistency mechanism,
+though defined, is left unused for third-party auditing, a gap met by a standard cross-vantage
+comparison rather than a new primitive (\cref{sec:design-acka}).
 
 ACKA and key transparency address complementary adversaries. ACKA assumes a secure log and provides
 continuous authentication against an active channel adversary even after key compromise. Key
@@ -813,9 +801,7 @@ synthesis proposed in this thesis.
 \section{Comparative Analysis of Existing Systems}\label{sec:bg-compare}
 
 \Cref{tab:bg-compare} draws the surveyed systems of \cref{sec:bg-vkd} together, and the capabilities
-that remain unsupported across them fix the design requirements of \cref{ssec:bg-implications}. The
-treatment here is descriptive, with references to the proposed scheme kept to forward references and
-its full development deferred to \cref{ch:design}.
+that remain unsupported across them fix the design requirements of \cref{ssec:bg-implications}.
 
 \begin{table}[t]
 \centering
