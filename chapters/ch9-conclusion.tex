@@ -28,7 +28,7 @@ The evaluation (\cref{ch:eval}) shows that this detection is added without chang
 complexity of the lookup proof, using additional lookups of the shape the client already verifies. The
 implemented (VRF-indexed) lookup proof is at rough size parity with CONIKS, while the scheme adds a warning
 channel CONIKS lacks.
-Median full client verification is \SI{147.1}{\micro\second} at $10^7$ labels, stays below
+Median full client verification is \SI{139.2}{\micro\second} at $10^7$ labels, stays below
 \SI{150}{\micro\second} across the measured range, and grows far more slowly than $N$. CONIKS reports a
 larger per-lookup verification time at matched scale, on different hardware and excluding the VRF check
 DUET includes, so the comparison is indicative only. A month-long offline catch-up is one distant-head consistency proof rather than $W$

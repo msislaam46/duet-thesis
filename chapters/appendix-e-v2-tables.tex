@@ -15,15 +15,15 @@ by $32$ bytes per sibling on top of the directory-path component.}
 \toprule
 $N$ & $E$ & Log siblings & Proof bytes (median) & Full verify median / p95 (\si{\micro\second}) \\
 \midrule
-$10^{3}$ & 1 & 0 & 497 & 138.1 / 160.2 \\
- & 16 & 4 & 625 & 134.6 / 155.4 \\
- & 256 & 8 & 753 & 135.6 / 185.5 \\
- & 1024 & 10 & 817 & 134.8 / 162.3 \\
+$10^{3}$ & 1 & 0 & 497 & 127.6 / 142.8 \\
+ & 16 & 4 & 625 & 128.4 / 147.1 \\
+ & 256 & 8 & 753 & 128.7 / 149.1 \\
+ & 1024 & 10 & 817 & 129.3 / 147.3 \\
 \midrule
-$10^{4}$ & 1 & 0 & 625 & 134.3 / 152.9 \\
- & 16 & 4 & 753 & 142.7 / 162.4 \\
- & 256 & 8 & 881 & 148.1 / 176.9 \\
- & 1024 & 10 & 945 & 134.6 / 186.4 \\
+$10^{4}$ & 1 & 0 & 625 & 127.9 / 144.7 \\
+ & 16 & 4 & 753 & 128.4 / 151.1 \\
+ & 256 & 8 & 881 & 128.6 / 146.5 \\
+ & 1024 & 10 & 945 & 143.2 / 159.4 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -41,10 +41,10 @@ delta, which stays within the timer resolution across the whole sweep.}
 \toprule
 $K$ & CEA verify med. / p95 (\si{\micro\second}) & Session baseline med. (\si{\micro\second}) & Depth delta (\si{\micro\second}) & Log depth (epochs) \\
 \midrule
-1 & 27.1 / 28.4 & 27.1 & 0.0 & 18 \\
-10 & 27.3 / 29.9 & 27.2 & 0.1 & 162 \\
-100 & 27.4 / 29.1 & 27.3 & 0.1 & 1{,}602 \\
-720 & 27.6 / 29.0 & 27.6 & 0.0 & 11{,}522 \\
+1 & 27.1 / 28.1 & 27.0 & 0.1 & 18 \\
+10 & 27.2 / 27.7 & 27.1 & 0.1 & 162 \\
+100 & 27.3 / 27.9 & 27.3 & 0.0 & 1{,}602 \\
+720 & 27.5 / 28.2 & 27.5 & 0.0 & 11{,}522 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -83,8 +83,8 @@ the TypeScript runtime, HTTP transport, polling, and registration.}
 \toprule
 Detector branch (baseline: raw-label, no VRF) & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
-Early return (owner mismatch): one verified lookup & 28.3 & 30.2 \\
-Clean match: verified owner inclusion + warning non-inclusion & 31.9 & 39.1 \\
+Early return (owner mismatch): one verified lookup & 27.8 & 28.8 \\
+Clean match: verified owner inclusion + warning non-inclusion & 31.1 & 32.7 \\
 \bottomrule
 \end{tabular}
 \end{table}
