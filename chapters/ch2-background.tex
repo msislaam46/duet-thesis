@@ -271,7 +271,9 @@ substitute them. Verification mechanisms remain dependent on assumptions about
 the consistency of directory views and the availability of auditing
 infrastructure. Authentication is tied primarily to key bindings rather than the
 evolving protocol state, and manual user verification remains uncommon in
-practice.
+practice. The following sections examine secure transparency logs and verifiable
+key directories before turning to ACKA and the requirements summarized in
+\cref{ssec:bg-implications}.
 
 % ============================================================================
 \section{Secure Transparency Logs}\label{sec:bg-logs}
@@ -526,7 +528,9 @@ verification. Parakeet improved storage efficiency and deployability, a design l
 since deployed at scale by WhatsApp and independently reviewed~\cite{nccgroup2023akd}. ELEKTRA
 extended the model to multi-device accounts and added privacy recovery after
 server compromise, and OPTIKS, PRISM, and Merkle\textsuperscript{2} explored
-alternative trade-offs between monitoring cost, auditing, and scalability.
+alternative trade-offs between monitoring cost, auditing, and scalability. The
+comparison focuses on the limitation each construction addresses and the
+trade-off it leaves unresolved.
 
 \subsubsection{CONIKS}
 CONIKS introduced the transparency-based key-verification design that the subsequent literature builds
@@ -784,13 +788,13 @@ Based on Dowling and Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
 
-ACKA leaves its secure log abstract, and implementing that log against an \emph{untrusted} server is
-the gap this thesis fills, since the servers distributing keys are themselves targets of compromise
-(\cref{sec:bg-vkd}). ACKA's own construction carries three limitations addressed in \cref{ch:design}:
-detection is one-sided, warning the receiver but not the peer~\cite[p.~21]{dowling2023acka};
-verification is sequential every epoch, with no windowed catch-up; and its consistency mechanism,
-though defined, is left unused for third-party auditing, a gap met by a standard cross-vantage
-comparison rather than a new primitive (\cref{sec:design-acka}).
+Implementing ACKA's abstract log against an untrusted server is the component developed in
+\cref{ch:design}, since the servers distributing keys are themselves targets of compromise
+(\cref{sec:bg-vkd}). Three limitations remain in ACKA's construction. Only the receiver detects a
+forgery, so no signal reaches the peer~\cite[p.~21]{dowling2023acka}. Verification proceeds
+sequentially each epoch and provides no windowed catch-up. Its consistency mechanism is not used for
+third-party auditing, which can instead be provided through the standard cross-vantage comparison in
+\cref{sec:design-acka}.
 
 ACKA and key transparency address complementary adversaries. ACKA assumes a secure log and provides
 continuous authentication against an active channel adversary even after key compromise. Key
