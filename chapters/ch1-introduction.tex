@@ -26,7 +26,7 @@ The traditional defence is a manual \emph{safety-number} comparison where the tw
 
 A messaging service's public-key directory maps user identities to their public identity keys. \emph{Key transparency} addresses this limitation by publishing authenticated commitments to this directory through a verifiable, append-only history, so that clients can check their keys against a public, consistent record. Production systems now deploy it, including Signal's optional Automatic Key Verification~\cite{signal-akv}.
 
-However, the deployed and proposed key-transparency systems surveyed in \cref{ch:background} still leave gaps. For key-substitution detection, however, these systems still rely on the account holder \emph{monitoring their own directory entry}: while a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. Also, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
+However, the deployed and proposed key-transparency systems surveyed in \cref{ch:background} still leave gaps. For key-substitution detection, these systems still rely on the account holder \emph{monitoring their own directory entry}: while a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. Also, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
 
 Since users may not complete a manual comparison and either participant may be offline, key
 verification in an asynchronous messenger must operate automatically. It must allow both parties to
@@ -61,10 +61,9 @@ This thesis makes four principal contributions:
 derive two participant-specific lookup labels and a shared warning label from the conversation secret.
 The warning label identifies one shared slot to which either party can write an authenticated alert. For an honestly established and monitored conversation, a malicious server cannot predict and
 pre-position that slot before the label is first used. Before the warning commits, a censored write is
-detected through a key mismatch alongside a proof-verified empty slot. After the warning commits,
-removing it violates the permitted directory transition and is detected by the transition audit. The
-resulting signal allows both parties to detect the substitution automatically and in band
-(\cref{sec:design-dual}).
+detected through a key mismatch alongside a proof-verified empty slot. After the warning commits, the
+transition audit detects any removal as an invalid directory transition. The resulting signal allows
+both parties to detect the substitution automatically and in band (\cref{sec:design-dual}).
 
 Separately, the thesis instantiates the abstract append-only-log component of the Authenticated Continuous Key Agreement
 (ACKA) framework~\cite{dowling2023acka} as the concrete DUET directory. The thesis evaluates the directory's proof sizes and the local costs of
@@ -103,6 +102,6 @@ goals; \cref{ch:design} presents the design and instantiates ACKA; \cref{ch:impl
 two-layer implementation and its Signal Desktop integration; and \cref{ch:eval} evaluates the system
 empirically and against the threat model. \Cref{ch:discussion,ch:lsepi,ch:conclusion} then cover the
 discussion and future work, the legal, social, ethical, and professional dimensions, and the
-conclusion. Eight appendices collect the supporting material referenced throughout, from the formal
+conclusion. Eight appendices provide the supporting material referenced throughout, from the formal
 definitions and algorithms to the benchmark and security-analysis tables, the traceability matrix, and
 a glossary.
