@@ -34,7 +34,8 @@ $10^{4}$ & 1 & 0 & 625 & 127.9 / 144.7 \\
 experiment: the final-epoch transparency check after $K$ ratchet epochs, timed
 against a session-mode raw lookup on the \emph{same} deep server so both series see
 the identical log depth and directory size. Each series is flat across $K$ (depth
-independence); the $\Delta$ column isolates the added fingerprint-comparison cost.
+independence); the $\Delta$ column is their pointwise difference, within the timer
+resolution and not interpreted as a distinct mechanism cost.
 Times in \si{\micro\second}, log depth in epochs.}
 \label{tab:bench-m15}
 \small

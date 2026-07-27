@@ -321,12 +321,14 @@ state to the test that asserts its expected non-alarm verdict. The clean-path pr
 the two new cases is a Rust reimplementation of the detector's clean-path logic, not the production
 TypeScript detector.
 
+\input{chapters/appendix-e-v2-tables}
+
 \begin{table}[ht]
 \centering
 \caption{M17 clean-session verdict coverage: each honest state and the test source that asserts its non-alarm verdict.}
 \label{tab:bench-m17}
-\small
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.9cm}>{\raggedright\arraybackslash}p{7.1cm}@{}}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.4cm}>{\raggedright\arraybackslash}p{7.6cm}@{}}
 \toprule
 Honest state & Test source \\
 \midrule
@@ -334,14 +336,12 @@ First registration, empty owner slot & \texttt{clean\_path\_coverage.rs} (new ca
 Repeated re-verification of a valid state & \texttt{clean\_path\_coverage.rs} (new case) \\
 Established session, expected key & \texttt{clean\_path\_coverage.rs}; adversarial A0 \\
 Empty warning slot (proven absent) & \texttt{clean\_path\_coverage.rs}; M16 clean-match \\
-Valid log growth + consistency proof & \texttt{kt\_auditor}: \texttt{classify\_growth\_requires\_consistency\_proof} \\
-Multiple honest continuous-mode epochs & \texttt{cea}: \texttt{honest\_parties\_agree\_each\_epoch} \\
-Agreeing cross-vantage heads & \texttt{auditor}: \texttt{detect\_fork\_accepts\_consistent\_head} \\
+Valid log growth + consistency proof & \texttt{auditor}:\newline \texttt{honest\_server\_audits\_clean\_across\_epochs} \\
+Multiple honest continuous-mode epochs & \texttt{cea}:\newline \texttt{honest\_parties\_agree\_each\_epoch} \\
+Agreeing cross-vantage heads & \texttt{auditor}:\newline \texttt{detect\_fork\_accepts\_consistent\_head} \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\input{chapters/appendix-e-v2-tables}
 
 % ----------------------------------------------------------------------------
 \FloatBarrier
@@ -387,7 +387,7 @@ M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (writ
 M14 & \texttt{M14\_history\_depth}      & \texttt{rust\_benchmark\_m14.csv} \\
 M15 & \texttt{M15\_deep\_chain}         & \texttt{rust\_benchmark\_m15.csv}; \texttt{rust\_benchmark\_m15\_writes.csv} (write-count grid) \\
 M16 & \texttt{M16\_detector\_branches}  & \texttt{rust\_benchmark\_m16.csv} \\
-M17 & \texttt{cargo test -{}-test clean\_path\_coverage} & (functional; no CSV) \\
+M17 & (test) & \texttt{cargo test -{}-test clean\_path\_coverage} (functional; no CSV) \\
 \bottomrule
 \end{tabular}
 \end{table}

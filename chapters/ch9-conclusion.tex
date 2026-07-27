@@ -47,8 +47,8 @@ type. RQ1 (in-band detection) is answered by the implemented system producing th
 across the enumerated adversarial scenarios, including the dual-index warning cases. Every enumerated
 clean workflow produced the expected non-alarm verdict (M17). RQ2 (cost) is answered at component level: an
 individual lookup proof is unchanged in size, an isolated in-process \texttt{KTClient.detectMitm} check performs one or two raw-label lookups,
-M3 provides a conservative upper proxy for the local verification work of one such lookup, and the
-combined detector cost was not measured.
+and M16 measures the local cost of those one-lookup and two-lookup detector branches directly; only
+the networked end-to-end detection latency was not measured.
 RQ3 (offline) is answered by the single windowed catch-up proof, whose size is bounded
 by the endpoint log sizes rather than the window's length. RQ4 (client-integration feasibility) is
 answered by the verifier running inside a fork of the real Signal Desktop client, which establishes

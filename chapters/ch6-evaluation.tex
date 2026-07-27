@@ -544,9 +544,9 @@ confound. Evolving a conversation through $K\in\{1,10,100,720\}$ ratchet epochs 
 final-epoch transparency check against a session-mode raw lookup on the \emph{same} log (so both series
 see the identical log depth and directory size), the two series each remain flat across the sweep:
 continuous-mode verification does not grow with $K$, and neither does the session baseline on the same
-log. The pointwise difference between them, the cost of the added fingerprint comparison, stays within
-\SI{0.1}{\micro\second} at every $K$, through the full sweep to $K=720$ ratchet epochs on a log that
-grows past ten thousand committed entries. Continuous-mode verification therefore stays flat through
+log. Their pointwise difference is at most \SI{0.1}{\micro\second} at every $K$, through the full sweep
+to $K=720$ ratchet epochs on a log that grows past ten thousand committed entries, and is not
+interpreted as a distinct mechanism cost. Continuous-mode verification therefore stays flat through
 \num{720} ratchet epochs, because the CEA chain state is a constant-size fold that adds no per-epoch
 verification work. What continuous mode does add is directory writes, quantified next. Neither figure includes a VRF step, because the
 dual-index and CEA paths use client-derived rather than VRF-derived labels

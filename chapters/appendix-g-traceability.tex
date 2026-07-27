@@ -20,11 +20,11 @@ RQ & Design claim & Mechanism & Test / scenario & Benchmark & Evidence \\
 RQ1 & substitution is detected, in band (bidirectional for A1/A5 after honest establishment; local divergent-label plus global VRF comparison for A3) &
 dual-index warning scheme for A1; local divergent-label detection and the global VRF-anchored entry for A3 (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
 scenarios A1--A5 (\cref{tab:tests-adversarial}); dual-index derivation tests (\cref{tab:tests-rust-prim}) &
-M16, M17 & \cref{sec:eval-security}: M16 times the verified detector branches (component cost); M17 asserts the non-alarm verdict on every enumerated clean workflow; scenarios A1--A5 establish detection \\
+M16, M17 & \cref{sec:eval-security}: M16 times the verified detector branches; M17 asserts non-alarm on every clean workflow; A1--A5 establish detection \\
 RQ2 & detection does not enlarge an individual per-lookup proof; verification stays below the latency target and grows far more slowly than $N$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
-prefix-tree, VRF, and Merkle-log tests; cross-language vectors (\cref{app:tests}) &
-M1--M3, M7 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; \SIrange{128.7}{128.9}{\micro\second} at $10^3$--$10^4$, rising to \SI{139.2}{\micro\second} at $10^7$ \\
+prefix-tree, VRF, Merkle-log tests (\cref{app:tests}) &
+M1--M3, M7, M16 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; verify \SI{139.2}{\micro\second} at $10^7$; detector branches \SI{27.8}{} and \SI{31.1}{\micro\second} (M16) \\
 RQ3 & offline catch-up costs one proof, logarithmic rather than linear in the window &
 windowed consistency proof (\cref{sec:design-windowed}, \cref{lem:windowed-size}) &
 Merkle-log exhaustive-consistency and windowed-consistency tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
@@ -37,7 +37,7 @@ M11 & \cref{sec:eval-deploy}: Rust microbenchmark of the KT lookup-verification 
 Supporting & equivocation (split-view) is caught from a second vantage &
 cross-vantage auditor (\cref{sec:design-acka}) &
 scenario A4; auditor equivocation tests (\cref{sec:tests-rust}) &
-M12 & \cref{ssec:eval-auditor}: \SI{27.9}{\micro\second}/check (median; local one-head fork check) \\
+M12 & \cref{ssec:eval-auditor}: \SI{27.1}{\micro\second}/check (median; local one-head fork check) \\
 Supporting & continuous mode trades write volume for finer detection &
 CEA continuous mode (\cref{ssec:design-modes}) &
 M13 mode benchmark (\cref{sec:bench-modes}) &

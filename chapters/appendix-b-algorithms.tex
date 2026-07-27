@@ -426,9 +426,9 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
 
 \begin{algorithm}[H]
 \addtocounter{algocf}{-1}%
-% Unique hyperref anchor for the continuation so it does not collide with the
-% first block's algocf.7 destination; the displayed number stays "Algorithm 7".
-\renewcommand{\theHalgocf}{\arabic{algocf}.cont}%
+% Suppress the duplicate hyperref destination for this continuation (it re-uses
+% Algorithm 7's counter value); scoped to this float, rendering unchanged.
+\makeatletter\let\Hy@raisedlink\@gobble\makeatother
 \caption{Networked auditor, continued (\textsf{AuditTransition} and \textsf{DetectFork})}
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{candidate},e,\mathit{delta}_e,r_{\mathrm{head}},\mathit{size}_{\mathrm{head}}$)}{
   $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
