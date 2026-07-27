@@ -1,54 +1,14 @@
-\chapter{Background and Related Work}\label{ch:background}
+\chapter{Background}\label{ch:background}
 
-This chapter introduces the building blocks that the remainder of the
-thesis assembles and places this work in the context of existing research. It
-begins with the Signal protocol stack and the precise sense in which it leaves
-public keys unverified (\cref{sec:bg-signal}). It then introduces transparency
-logs, the mechanism used by the key-transparency literature to make a key server
-accountable (\cref{sec:bg-logs}), before examining the verifiable key directory
-(VKD) abstraction and the academic and deployed systems against which this work
-is compared (\cref{sec:bg-vkd}). Next comes the Authenticated Continuous
-Key Agreement (ACKA) framework, which addresses a complementary threat model
-concerned with maintaining authentication guarantees throughout long-lived
-asynchronous communication (\cref{sec:bg-acka}). Finally, the chapter synthesizes the
-findings of the literature (\cref{sec:bg-compare}), identifies the open problems
-that remain for key transparency in asynchronous messaging
-(\cref{sec:bg-open}), and positions the contributions of this thesis against
-those gaps (\cref{sec:bg-contrib}).
-
-The two questions that motivate this chapter are simple to state but difficult
-to answer in practice. First, how do Alice and Bob know that the public keys
-returned by a messaging service genuinely belong to one another rather than
-being substituted by a malicious or compromised server? Second, how can Alice
-and Bob obtain continuous cryptographic assurance that the keys used throughout
-an asynchronous conversation remain authentic, even when devices are
-compromised, messages are delayed, or supporting infrastructure behaves
-maliciously? The first question motivates the study of key transparency and
-verifiable key directories, which authenticate what a directory serves. The second is captured
-formally by the Authenticated Continuous Key Agreement (ACKA) framework, which models continuous
-authentication assuming a logging scheme that satisfies its Logsec security definition while leaving
-its implementation open. This thesis composes the two, so that the logging scheme ACKA
-assumes is implemented by a directory designed for a malicious operator.
+This chapter introduces the building blocks the rest of the thesis assembles and places the work among
+existing systems. Key transparency and verifiable key directories authenticate what a directory
+serves; the Authenticated Continuous Key Agreement (ACKA) framework~\cite{dowling2023acka} models
+continuous authentication assuming a logging scheme that meets its Logsec security definition while
+leaving its implementation open. This thesis composes the two, implementing the log ACKA assumes as a
+directory designed for a malicious operator.
 
 % ============================================================================
 \section{The Signal Protocol Stack}\label{sec:bg-signal}
-
-This section introduces the cryptographic protocol that secures the
-conversations this thesis is concerned with, and isolates the exact weakness
-it leaves open.
-
-In end-to-end encrypted (E2EE) messaging, each user holds a secret key that
-never leaves their device and a corresponding public key that peers use in key agreement and
-signature verification. To start a conversation, Alice
-must obtain Bob's public key from somewhere, and in the mainstream deployed messengers
-that ``somewhere'' is a server the provider operates. The arrangement is, in
-effect, a phonebook that the operator controls. Alice looks up ``Bob'' and
-trusts the number written next to the name. If the operator writes its own key
-next to Bob's name, it can read everything Alice sends while both parties
-believe the channel is secure. Authentic public-key retrieval is therefore one critical external
-assumption of the whole construction: if the service substitutes attacker-controlled identity
-material, Alice establishes a compromised session while the interface still appears secure. It is the
-assumption this thesis is about.
 
 \subsection{What Signal Is and Why It Matters}\label{ssec:bg-whatis}
 
@@ -68,17 +28,11 @@ Ratchet algorithm~\cite{doubleratchet}. Together these mechanisms provide strong
 guarantees against passive adversaries and support recovery from compromise
 through continuous key evolution.
 
-The security of the entire construction, however, depends on one assumption
-external to the cryptographic protocols themselves: that users receive authentic
-public keys when initiating communication. Signal's server distributes the
-public keys required for X3DH~\cite{signaldocs}, and although the protocol provides a manual
-verification mechanism known as the Safety Number, it does not, on its own,
-guarantee that the keys supplied by the server are authentic. Understanding
-precisely where this assumption enters the protocol stack is therefore necessary
-before examining the key transparency mechanisms introduced later in this
-chapter. Signal therefore is both a case study and the deployment context
-through which this thesis examines the broader problem of public-key
-verification in secure messaging.
+As \cref{ch:intro} argues, the security of this construction depends on one assumption external to the
+cryptographic protocols: that users receive authentic public keys when initiating communication.
+Signal's server distributes those keys for X3DH~\cite{signaldocs}, and the manual Safety Number does
+not on its own guarantee they are authentic. Signal is thus both the case study and the deployment
+context for this thesis.
 
 \subsection{Key Material, Safety Numbers, and What They Cover}\label{ssec:bg-keymat}
 
@@ -116,35 +70,10 @@ parties. What no part of
 this mechanism provides is authentication of the particular \emph{session}: the
 specific keys actually combined in a given handshake are never checked together.
 This per-session gap, rather than a mere shortfall in the number of keys
-fingerprinted, is what the remainder of the thesis addresses. \Cref{tab:bg-keymat}
-summarizes the key material each party holds.
+fingerprinted, is what the remainder of the thesis addresses.
 
-\begin{table}[H]
-\centering
-\caption[Signal key material.]{Signal key material. Following the X3DH specification, each public key
-has a corresponding private key held by its owner. The identity secret key
-$\skid{}$ also signs the signed pre-key.}
-\label{tab:bg-keymat}
-\small
-\begin{tabular}{@{}lll@{}}
-\toprule
-Key material & Public key & Lifetime \\
-\midrule
-Identity key pair (ik) & $\pkid{}$ & Long-term \\
-Signed pre-key pair & $\spk{}$ & Medium-term \\
-One-time pre-key pair & $\opk{}{i}$ & Single-use \\
-Ephemeral key pair & $\ek{}$ & Session-specific \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\Cref{tab:bg-coverage} summarizes the scope of Signal's Safety Number
-verification mechanism. As shown, only the long-term identity keys are
-authenticated by the Safety Number itself. The signed pre-key is bound to the
-identity key by its signature, and the one-time pre-keys remain outside any
-authentication. What matters for the remainder of the chapter is that none
-of these mechanisms authenticates the evolving, per-session state, which is
-exactly what the constructions surveyed later seek to strengthen.
+\Cref{tab:bg-coverage} summarizes the scope of Signal's Safety Number verification over the X3DH key
+material.
 
 \begin{table}[H]
 \centering
@@ -242,13 +171,10 @@ message.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-x3dh}
-\caption[X3DH message sequence.]{X3DH message sequence. Bob publishes a pre-key bundle containing his
-identity key, signed pre-key, and signature. The bundle may also contain a one-time pre-key.
-Alice verifies the signed-pre-key signature, samples an ephemeral key $\xEK{A}$, and derives
-$\sharedS$ from three Diffie--Hellman values. A fourth value is included when the bundle contains
-a one-time pre-key. Alice then sends an initial message containing $\xIK{A}$ and $\xEK{A}$.
-Bob derives the same shared secret when he next comes online. The diagram is simplified. The text
-describes the omitted server-fetch and verification details. Based on the X3DH
+\caption[X3DH message sequence.]{X3DH message sequence: Bob publishes a pre-key bundle, and Alice
+verifies the signed pre-key, derives the shared secret $\sharedS$, and sends an initial message from
+which Bob derives the same secret when he next comes online. The diagram is simplified, with the
+omitted server-fetch and verification details described in the text. Based on the X3DH
 specification~\cite{x3dh}.}
 \label{fig:bg-x3dh}
 \end{figure}
