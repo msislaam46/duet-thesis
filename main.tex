@@ -130,12 +130,12 @@ proof between the last trusted and current tree heads, so a client requests and 
 rather than one for each of the $W$ missed epochs, with size logarithmic in the endpoint log sizes
 rather than linear in the epochs it missed.
 
-The evaluation reports component measurements. The lookup proof is at rough size parity with a
-comparable VRF-indexed directory design. Full client verification remains below
-\SI{150}{\micro\second} through ten million labels, and a month of missed epochs is covered by one
-short proof rather than one per epoch. A two-client Signal Desktop prototype demonstrates the advisory
-client path, while an independent auditor checks directory consistency. The verifier runs automatically
-in the background and raises substitution warnings in band.
+Benchmark results show that DUET's lookup proof is comparable in size to the corresponding proof in
+CONIKS. Full client verification remains below \SI{150}{\micro\second} through ten million labels, and
+a month of missed epochs is covered by one short proof rather than one per epoch. A two-client Signal
+Desktop prototype runs verification automatically in the background and raises key-substitution
+warnings in band. An independent auditor checks the public-key directory for invalid changes and
+conflicting signed views.
 \end{abstract}
 
 \chapter*{Acknowledgements}
