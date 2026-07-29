@@ -339,9 +339,9 @@ therefore where the verifier is invoked.
 The client attaches to three lifecycle points of the Signal client: the key-upload path, the
 peer-key-retrieval path, and session establishment. The
 peer-key-retrieval hook is the security-critical one: it runs the full verification chain
-(\cref{ssec:design-verify}) on a peer's key at the retrieval boundary and reports the verdict. The
-hook is advisory; blocking session establishment on a rejecting verdict remains deployment-policy work
-(\cref{ssec:impl-demo}, \cref{ch:discussion}). On the Rust side, a
+(\cref{ssec:design-verify}) on a peer's key at the retrieval boundary and reports the verdict. It
+does not block session establishment. Blocking on a rejecting verdict remains a deployment-policy
+decision (\cref{ssec:impl-demo}, \cref{ch:discussion}). On the Rust side, a
 hook in libsignal's pre-key-bundle processing marks the point at which the live X3DH secret is
 available: the place where the production binding of the real shared secret would attach, and
 where the prototype instead substitutes its deterministic stand-in. Verdicts appear in the user
@@ -363,7 +363,7 @@ clean verdict from a warning. The helper returns \texttt{null} when both lookups
 A proof or head-anchoring failure causes the helper to throw. The live background monitor does not call
 this helper directly: it implements the corresponding checks in \texttt{monitorConversation}
 (\cref{alg:detect}), publishes warnings when required, and reports its own \texttt{MonitorVerdict} or
-verification error through the advisory user interface (\cref{ssec:impl-demo}).
+verification error through the client warning interface (\cref{ssec:impl-demo}).
 
 \begin{figure}[H]
 \centering

@@ -1,15 +1,13 @@
 \chapter{Evaluation}\label{ch:eval}
 
 This chapter evaluates the system implemented in \cref{ch:impl} against the goals and threats of
-\cref{ch:threat}. It sets out the measurement methodology and baselines (\cref{sec:eval-method}),
-reports the microbenchmarks for proof size, verification latency, catch-up bandwidth, and detection
-(\cref{sec:eval-micro}), examines behaviour at scale together with the session-versus-continuous
-mode trade (\cref{sec:eval-scale}), places the results beside prior key-transparency systems
-(\cref{sec:eval-compare}), and finally evaluates the security of the system against the attack
-taxonomy (\cref{sec:eval-security}). The principal findings are four. First, the implemented VRF-indexed lookup proof is
+\cref{ch:threat}. It first defines the methodology and baselines, then reports proof size,
+verification latency, catch-up bandwidth, and detector measurements. It also evaluates behaviour at
+scale, compares session and continuous mode, places the results beside prior systems, and tests the
+security controls against the attack taxonomy. The principal findings are four. First, the implemented VRF-indexed lookup proof is
 at rough size parity with CONIKS. Second, detection is obtained through additional lookups
 of the same shape rather than any enlargement of that proof. Third, offline catch-up needs one proof
-rather than $W$ (\num{695}-fold fewer raw path-hash bytes at a one-month window against this
+rather than $W$ (about \num{700}-fold fewer raw path-hash bytes at a one-month window against this
 chapter's synthetic baseline). Finally, median full client verification stays below
 \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
 
@@ -21,49 +19,35 @@ that every number that follows can be read against a fixed reference. This matte
 value of a transparency system is not any single cost but the trade between proof size, verification
 time, and the bandwidth a client must spend to stay synchronized.
 
-The evaluation is organized around four questions, one per design claim, each stated so that it could
-be tested. \emph{Does detection change individual proof size?} This separates into three claims.
-\emph{Structurally}, the warning check is a separate lookup that reuses the same prefix-tree and
-log-proof structure as a key lookup (without the VRF component), so enabling detection changes neither
-the format nor the size of any single lookup proof; falsified if turning detection on enlarged or
-restructured an individual proof. \emph{Empirically}, the measured VRF-indexed lookup is close in size
-to the like-for-like VRF-indexed baseline (CONIKS), \num{817} against \num{768} derived bytes at
-$N=10^6$ (a \num{6.4}\% difference), rather than to a non-VRF single-index log, which is necessarily
-smaller by the VRF proof; this cross-paper comparison (\cref{sec:eval-compare}; \cref{ssec:eval-sizes}
-separates the single-index and VRF-indexed components of the proof size) is descriptive, not a falsification criterion.
-\emph{Operationally}, detection's cost is in requests and writes, not proof bytes. The request count
-is source-verified from the isolated in-process \texttt{KTClient.detectMitm} helper: every check
-performs one label-bound owner-slot lookup and, only when that slot verifies (matching the client's
-key, or verifiably empty on first registration), a second label-bound warning-slot lookup, so a check
-costs one or two raw-label lookups (two on the clean, first-registration, and warning-carrying paths,
-one when the owner slot already shows substitution), plus one directory write per ratchet epoch in
-continuous mode. The latency of those verified lookups is measured directly by the detector-branch
-benchmark (M16, \cref{ssec:eval-detection}), which times each branch as the security-bearing verified
-operation rather than the earlier unverified read; the continuous-mode write and per-epoch
-verification trade is measured by M13 and M15. \emph{Does client verification remain inexpensive as
-the directory grows?} Falsified if full client verification grew in
-proportion to $N$, or exceeded the sub-millisecond target (\cref{ssec:eval-latency,ssec:eval-scale}).
-\emph{Can an offline client re-synchronize in a single proof, rather than one per missed epoch?}
-Falsified if the windowed client still had to fetch a proof per epoch, or if that single proof's size
-grew linearly with $W$ (\cref{ssec:eval-catchup}). \emph{Is substitution detected?} Falsified by any
-missed attack in the enumerated adversarial suite; separately, every enumerated clean-session workflow
-is checked to produce the expected non-alarm verdict (M17, a coverage check rather than a rate)
-(\cref{ssec:eval-detection,sec:eval-security}). Each question is answered against the baselines below.
+The evaluation is organized around four questions, one per design claim.
 
-Measurements are grouped into seventeen metric families, \emph{M1}--\emph{M17}. Rather than define
-them in prose, \cref{tab:eval-map} is the measurement map for the whole chapter: it states what each
-metric measures, the baseline it is read against, and where it is reported. The reader can consult it
-once and refer back, instead of holding the definitions in mind. M1--M13 are numbered in the
-order this chapter presents them (size, then latency, then bandwidth, then detection, then scale,
-maintenance, and modes), which is the order in which the questions above are answered, not the order of the
-benchmark harness that produces them; M14--M17 extend that set and are each reported beside the earlier
-family they build on (M14 with proof size, M15 with the mode trade, M16 and M17 with detection).\footnote{The Rust harness (\cref{app:benchmarks}) emits the
-same metric numbering, so each metric family reported here can be traced directly to the harness
-group of the same name.}
+\emph{Does detection change the size of an individual proof?} The warning check is an additional
+raw-label lookup that reuses the prefix-tree and log-proof structures of a key lookup. The claim would
+fail if enabling detection enlarged or restructured an individual proof
+(\cref{ssec:eval-sizes,ssec:eval-detection}).
+
+\emph{Does client verification remain inexpensive as the directory grows?} The claim would fail if
+full client verification grew in proportion to $N$ or exceeded the sub-millisecond target
+(\cref{ssec:eval-latency,ssec:eval-scale}).
+
+\emph{Can an offline client re-synchronize with one proof rather than one per missed epoch?} The claim
+would fail if the client still had to fetch a proof per epoch or if the windowed proof grew linearly
+with the missed-epoch count $W$ (\cref{ssec:eval-catchup}).
+
+\emph{Are the evaluated substitution attacks detected without alarms on the enumerated clean workflows?} A
+missed attack in the adversarial suite would refute the detection claim. M17 separately checks that
+every enumerated clean workflow produces the expected non-alarm verdict
+(\cref{ssec:eval-detection,sec:eval-security}).
+
+Measurements are grouped into seventeen metric families, \emph{M1}--\emph{M17}.
+\Cref{tab:eval-map} defines each family, its baseline, and where its result is reported. M1--M13 follow
+the chapter's progression from proof size to operating modes. M14--M17 extend the earlier families and
+are reported with the result they strengthen.\footnote{The Rust harness uses the same numbering, so
+each family can be traced to the corresponding benchmark group in \cref{app:benchmarks}.}
 
 \begin{table}[H]
 \centering
-\caption{Measurement map: the seventeen metric families, what each measures, and where it is reported. M1--M13 are the core set; M14--M17 extend it, each reported beside the family it builds on.}
+\caption{Metric families used in the evaluation.}
 \label{tab:eval-map}
 \footnotesize
 \begin{tabular}{@{}llll@{}}
@@ -91,77 +75,55 @@ M17 & Clean-session verdict coverage           & None                       & \c
 \end{tabular}
 \end{table}
 
-Baselines are referred to by name throughout this chapter, and each name denotes the same
-configuration wherever it appears: the \emph{single-index} path (log-inclusion only), the
-\emph{dual-index} path (the prefix-tree lookup that carries the warning slot), and the \emph{windowed}
-full scheme (dual-index plus windowed consistency proofs). These are benchmark configurations rather
-than a full mechanism-level ablation: single-index is a plain log inclusion, dual-index is the
-prefix-tree lookup, and windowed adds windowed consistency. One further reference point, the
-\emph{no-KT floor} (a synthetic identity-hash comparison standing in for session setup without key
-transparency), is used only by the handshake-hook microbenchmark M11 (\cref{ssec:eval-throughput}) and
-is a synthetic local comparison, not a mechanism-level baseline. In the size, latency, and rotation
-families the dual-index configuration is measured through the \emph{VRF-indexed}
-\texttt{search\_by\_user\_id} lookup the client actually runs (recorded under the harness's historical
-label \texttt{dual\_index}), which carries an \num{80}-byte VRF proof that the raw
-\texttt{search(label)} path omits; the tables therefore report it as the VRF-indexed lookup, the
-like-for-like counterpart to CONIKS. This configuration measures the identity-lookup proof, not the
-raw dual-index warning path: the warning mechanism's own detector cost is exercised separately by the
-detector-branch benchmark (M16), and the session-versus-continuous write trade by M13 and M15. The configurations thus
-bound each cost rather than attributing a clean mechanism-level contribution.
+Three configurations recur throughout the chapter. The \emph{single-index} reference is a plain
+log-inclusion proof. The \emph{VRF-indexed} configuration is the identity lookup performed through
+\texttt{search\_by\_user\_id}. The harness records it under the historical identifier
+\texttt{dual\_index}. The \emph{windowed} configuration adds windowed consistency verification.
+These are benchmark configurations rather than a complete mechanism-level ablation.
 
-Timings are collected two ways. Criterion provides bootstrap confidence intervals and regression
-plots in its own reports; in parallel, a manual harness of \num{2000} timed iterations per operation
-records the median and the 95th percentile, from sequential in-process iterations (no randomized
-interleaving), to \texttt{results/rust\_benchmark\_timings.csv}. The thesis reports the median and,
-where the tail matters, the 95th percentile; both are descriptive sample statistics, quoted without a
-confidence interval, and no inference about the precision of a mean is drawn from them. Where a timing
-falls near the platform's timer resolution (the sub-microsecond M4 windowed generation figures,
-\SIrange{0.1}{0.3}{\micro\second}), it is a coarse hot-path observation and is treated as one. Proof
-sizes are computed exactly and are seed-deterministic; the scale figures (M7) are distributions over
-\num{1000} random lookups per $N$. All runs use fixed cryptographic and sampling seeds and are reproducible by
-the procedure of \cref{sec:impl-repro}; the full per-parameter tables, at the resolution the CSVs
-record, are reported in \cref{app:benchmarks}
-(\cref{tab:bench-env,tab:bench-m1,tab:bench-m4,tab:bench-latency,tab:bench-detection,tab:bench-maint,tab:bench-auditor,tab:bench-scale,tab:bench-modes,tab:bench-repro}). Timing medians are quoted in the body to one decimal
-place ($0.1\,\si{\micro\second}$): finer precision would be spurious for a wall-clock median, and
-sub-microsecond digits vary between runs (for example, the VRF-verify median reads
-\SI{75.0}{\micro\second} in \cref{tab:eval-latency} and \SI{84.0}{\micro\second} in the separate
-scale run of \cref{tab:eval-scale}). The isolated VRF rows of \cref{app:benchmarks} show the same
-sensitivity: isolated verify reads
-\SI{73.5}{\micro\second} against an in-path \SI{75.0}{\micro\second}, and isolated prove reads
-\SI{110.0}{\micro\second} against a prove-inclusive in-path generation of
-\SI{111.2}{\micro\second}. Measuring the same primitive in a different benchmark context, and at a different point in
-the run order, therefore shifts it by a few percent; the harness records
-execution times but no clock-frequency, power, or temperature telemetry, so this is reported as
-context and run-order sensitivity without attributing it to a mechanism. The in-path figures are the
-ones this chapter quotes, since they are the cost a client actually pays.
+The raw dual-index warning path instead calls \texttt{search(label)} and omits the \num{80}-byte VRF
+proof. M16 measures its verified detector branches, while M13 and M15 measure the
+session-versus-continuous trade. M11 alone uses the \emph{no-KT floor}, a synthetic identity-hash
+comparison rather than a mechanism-level baseline (\cref{ssec:eval-throughput}). The measurements
+therefore bound the relevant costs without treating a configuration label as an isolated mechanism.
+
+Timings are recorded in Criterion reports and by a manual harness. The manual harness records the
+median and 95th percentile from \num{2000} sequential in-process iterations per operation. The thesis
+uses these as descriptive sample statistics and does not infer a confidence interval for a mean.
+Measurements near the platform's timer resolution, including the
+\SIrange{0.1}{0.3}{\micro\second} M4 windowed-generation values, are treated as coarse hot-path
+observations.
+
+Proof sizes are exact and seed-deterministic. M7 instead reports distributions over \num{1000} random
+lookups per $N$. Fixed cryptographic and sampling seeds support the reproduction procedure in
+\cref{sec:impl-repro}. The benchmark host, software versions, and complete reproduction commands are
+reported in \cref{app:benchmarks}. Body timings are
+rounded to $0.1\,\si{\micro\second}$. Separate benchmark contexts shift some component medians by a few
+percent, so the chapter quotes the in-path figures and does not attribute those small differences to
+the mechanism.
 
 Three limitations bound the interpretation of the numbers. First, the server is in-memory and
-single-machine, so absolute latencies exclude the database and network costs a distributed
-deployment would add. Second, the single-epoch microbenchmarks of \cref{sec:eval-micro} carry a
-\num{0}-byte log-inclusion component by construction; the history-depth sweep (M14,
-\cref{ssec:eval-sizes}) measures how a deployed log of $E$ epochs adds its log-inclusion path,
-confirming the $32\lceil\lg E\rceil$-byte growth the single-epoch figures would otherwise only
-predict. Third, the operation-rate figures are single-thread per-operation costs, not parallel
-scaling. Cross-system numbers in \cref{sec:eval-compare} come from different hardware, scales, and
-storage models and are treated as order-of-magnitude only.
+single-machine, so the absolute latencies exclude database and network costs. Second, the
+single-epoch microbenchmarks carry no log-inclusion path. M14 measures the additional history term and
+confirms its $32\lceil\lg E\rceil$-byte bound (\cref{ssec:eval-sizes}). Third, the operation-rate
+figures are single-thread per-operation costs rather than parallel scaling. Cross-system timings in
+\cref{sec:eval-compare} come from different hardware, scales, and storage models and are treated as
+order-of-magnitude only.
 
 % ============================================================================
 \section{Microbenchmarks}\label{sec:eval-micro}
 
-This section reports the core per-lookup costs on a directory of up to $10^6$ labels: how large
-a proof is, how long it takes to produce and to check, how much bandwidth an offline client must
-spend to catch up, and how quickly and reliably an attack is detected.
+This section reports the core per-lookup costs on a directory of up to $10^6$ labels. It measures
+proof size, generation and verification time, offline catch-up bandwidth, the local cost of the two
+detector branches, and the expected verdicts for enumerated clean workflows.
 
 \subsection{Lookup Proof Size and History Depth (M1, M14)}\label{ssec:eval-sizes}
 
-The size of a lookup proof determines the bandwidth cost of every key fetch, so it is the first
-quantity to pin down. \Cref{tab:eval-sizes} reports two measured objects as the directory grows: the
-implemented (VRF-indexed) DUET lookup proof, which bundles a prefix proof, an 80-byte VRF proof, and a
-log-inclusion component, and, as a reference point, a dense Merkle-log inclusion proof over $N$ user
-entries. The table therefore compares the implemented VRF-indexed lookup against a plain log
-inclusion at the same $N$; it is not a measurement of the raw dual-index path (which calls
-\texttt{search(label)} and carries no VRF proof) and it does not isolate a like-for-like single-
-versus dual-index directory overhead. Each row is one seed-deterministic path; M7
+Lookup-proof size determines the bandwidth added to a key fetch. \Cref{tab:eval-sizes} reports the
+implemented VRF-indexed lookup and a dense Merkle-log inclusion proof over the same number of user
+entries. The DUET proof contains a prefix proof, an \num{80}-byte VRF proof, and log inclusion. The
+reference contains only the dense-log path. This is not a measurement of the raw dual-index warning
+lookup, which carries no VRF proof. Each row is one seed-deterministic path. M7
 (\cref{ssec:eval-scale}) supplies the sampled distribution. A prefix proof carries one hash per
 non-empty sibling on the label's path, whose number $h$ has expected value $\approx\lceil\lg N\rceil$,
 so both objects grow logarithmically in $N$ as the sparse-tree design predicts
@@ -170,8 +132,7 @@ so both objects grow logarithmically in $N$ as the sparse-tree design predicts
 \begin{table}[ht]
 \centering
 \caption[Lookup proof size versus directory size.]{Lookup proof size versus directory size $N$
-for a seed-deterministic, single-epoch log. The harness records the VRF-indexed lookup under the
-historical benchmark identifier \texttt{dual\_index} (\cref{app:benchmarks}).}
+for a seed-deterministic, single-epoch log.}
 \label{tab:eval-sizes}
 \small
 \begin{tabular}{@{}rrrrr@{}}
@@ -190,56 +151,47 @@ $10^6$ & 20 & 640 & 23 & 913 \\
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-sizes-plot}
-\caption[Lookup proof size versus directory size.]{Lookup proof size versus directory size $N$
-on a logarithmic horizontal axis. Both paths grow as $\sim\lg N$. The VRF-indexed path adds a
-fixed \num{177}-byte VRF-and-metadata component to the single-index reference path. At $10^6$,
-the sampled VRF leaf also has \num{23} prefix siblings, compared with \num{20} for the
-single-index leaf (\cref{tab:eval-sizes}).}
+\caption[Lookup proof size versus directory size.]{Lookup proof size versus directory size $N$.
+Both paths grow logarithmically. The VRF-indexed path adds a fixed \num{177}-byte component, and
+the sampled $10^6$ row contains \num{23} prefix siblings against \num{20} for the reference
+(\cref{tab:eval-sizes}).}
 \label{fig:eval-sizes-plot}
 \end{figure}
 
-The VRF-indexed lookup proof decomposes as a fixed \num{177}\,byte constant (an \num{80}\,byte
-ECVRF proof (RFC~9381)~\cite{rfc9381} plus \num{97}\,bytes of metadata: a \num{32}\,byte label, a
-\num{32}\,byte value, a \num{1}\,byte leaf-kind commitment (\cref{ssec:design-detection}), and a
-\num{32}\,byte sibling bitmap) on
-top of $32$ bytes per prefix hash, giving
+The VRF-indexed lookup has a fixed \num{177}-byte component. This consists of the
+\num{80}-byte ECVRF proof defined by RFC~9381~\cite{rfc9381}, a \num{32}-byte label, a
+\num{32}-byte value, a one-byte leaf-kind commitment, and a \num{32}-byte sibling bitmap. Each
+prefix or log hash adds \num{32} bytes, giving
 \begin{equation}\label{eq:eval-proofsize}
   |\pi| \;=\; 32h \;+\; 32h_{\mathrm{log}} \;+\; 177 \ \text{bytes},
   \qquad \mathbb{E}[h]\approx\lceil\lg N\rceil,\quad h_{\mathrm{log}}\le\lceil\lg E\rceil,
 \end{equation}
-where $h$ is the number of non-empty siblings on the queried label's path (the ``VRF prefix
-hashes'' column of \cref{tab:eval-sizes}) and $h_{\mathrm{log}}$ is the length of the current root's
-log-inclusion path. Because the current directory root is always the \emph{last} log leaf (the
-currency pin, \cref{ssec:design-verify}), $h_{\mathrm{log}}$ is the number of complete subtrees to its
-left: $\mathrm{popcount}(E-1)$, at most $\lceil\lg E\rceil$ and often smaller (one hash at $E=5$,
-not three). Raw-label warning responses omit the \num{80}-byte VRF component, and their value field
-varies with the stored warning-payload length, so this fixed constant applies to the key-lookup shape,
-not to every response. The $O(\lg N + \lg E)$ scaling of \cref{eq:eval-proofsize} is plotted in
+where $h$ is the number of non-empty siblings on the queried label's path and
+$h_{\mathrm{log}}$ is the current root's log-inclusion path length. The current directory root is
+the final log leaf (\cref{ssec:design-verify}), so
+$h_{\mathrm{log}}=\mathrm{popcount}(E-1)$. It is at most $\lceil\lg E\rceil$ and can be smaller.
+Raw-label warning responses omit the VRF component and may carry a differently sized value. The
+fixed constant therefore describes the VRF-indexed key lookup, not every response. The
+$O(\lg N + \lg E)$ scaling of
+\cref{eq:eval-proofsize} is plotted in
 \cref{fig:eval-sizes-plot}. The $10^6$ row reads \num{913}\,bytes because the single seeded leaf's
-path carries $h=\num{23}$ non-empty siblings; the distribution median over \num{1000} random lookups
+path carries $h=\num{23}$ non-empty siblings. The distribution median over \num{1000} random lookups
 at $10^6$ is \num{817}\,bytes (\cref{ssec:eval-scale}). The distribution median is
 therefore reported in the remainder of this chapter, since it reflects the
 proof size a typical lookup incurs rather than the depth of one particular seeded leaf. The
-ECVRF proof and the warning slot add nothing beyond this
-formula: \emph{the dual-index detection mechanism does not enlarge the per-lookup proof} (a warning
-check is a second lookup of the same shape, not a larger proof).
+dual-index mechanism adds no fields to the key-lookup proof. Its warning check is a separate
+raw-label lookup with its own response shape, not an enlargement of the identity proof.
 
-The history term $32\,h_{\mathrm{log}}$ of \cref{eq:eval-proofsize}, zero on the single-epoch
-microbenchmark log, is measured directly by the history-depth sweep (M14). Holding the directory at
-$N$ and growing the committed log through $E\in\{1,16,256,1024\}$ epochs, the observed log-inclusion
-path is $h_{\mathrm{log}}=\{0,4,8,10\}$ hashes, exactly $\lceil\lg E\rceil$ at these powers of two
-(where $\mathrm{popcount}(E-1)$ attains its maximum), so the serialized proof grows by
-$\{0,128,256,320\}$\,bytes on top of the directory-path component. The sweep runs at both $N=10^3$ and
-$N=10^4$ and the two axes add independently (\cref{app:benchmarks}), so proof size grows
-logarithmically in both directory size and history depth, now measured rather than derived from
-\cref{eq:eval-proofsize}. The single-epoch convention used for the CONIKS size comparison
-(\cref{sec:eval-compare}) is unchanged; M14 supplies the deployed history term that the convention sets
-aside, and does not replace the convention-matched headline figure.
+M14 measures the history term that is absent from the single-epoch rows. It grows the committed log
+through $E\in\{1,16,256,1024\}$ epochs at $N=10^3$ and $N=10^4$. The observed paths contain
+$\{0,4,8,10\}$ hashes, adding $\{0,128,256,320\}$ bytes. These values match the RFC~9162
+Merkle-log bound~\cite{rfc9162}. Directory size and history depth contribute independently
+(\cref{app:benchmarks}), which confirms the $O(\lg N+\lg E)$ proof-size claim. The CONIKS comparison
+continues to use the convention-matched single-epoch proof and reports the history term separately.
 
 \subsection{Generation and Verification Latency (M2, M3)}\label{ssec:eval-latency}
 
-A proof that is small is of little use if it is slow to check on the client. \Cref{tab:eval-latency}
-reports the server-side generation cost and the client-side verification cost, broken into the
+\Cref{tab:eval-latency} reports server-side proof generation and client-side verification, broken into the
 prefix-root recompute, the VRF verify, and full client verification (\cref{ssec:design-verify}).
 
 \begin{table}[ht]
@@ -260,44 +212,41 @@ VRF proof verify (client) & \SI{75.0}{\micro\second} & \SI{75.0}{\micro\second} 
 \end{table}
 
 M3, the last row, measures the complete signed-head lookup-verification path, also called full
-client verification: VRF label binding, value binding, prefix-root recomputation, log inclusion, and
-verification of the Ed25519-signed tree head. Its median cost is about
+client verification. It includes VRF label binding, value binding, prefix-root recomputation, log
+inclusion, and verification of the Ed25519-signed tree head. Its median cost is about
 \SI{128}{\micro\second} over the measured $10^3$--$10^4$ range and grows only weakly with the
-directory (\cref{ssec:eval-scale}): its dominant cost centre, the VRF verify (\SI{75.0}{\micro\second}),
-is an elliptic-curve operation whose cost is independent of directory size, and the prefix recompute (\SI{25.9}{\micro\second}) grows
-only with proof depth ($\sim\lg N$). The system therefore meets its sub-millisecond client-verify target with
-roughly sevenfold headroom, and does so while including the VRF verification that comparable systems
-exclude from their reported figures. The server-side full search is likewise near-flat over this
-range, and this is a direct consequence of the compressed-leaf chain memo (\cref{sec:impl-modules}).
-Before that optimization, proof generation grew with directory depth (from \SI{107}{\micro\second} to
-\SI{159}{\micro\second} across $N=10^3$--$10^4$) because each non-inclusion co-path recomputed a
-compressed leaf's \num{256}-level hash chain. Memoizing that chain top removes the $N$-dependent
-component, leaving generation dominated by the fixed-cost VRF prove: it reads \SI{111.2}{\micro\second}
-at $N=10^3$ and \SI{111.6}{\micro\second} at $N=10^4$, while the scale run's search median reads
+directory (\cref{ssec:eval-scale}). Its dominant cost, the \SI{75.0}{\micro\second} VRF verification,
+is independent of directory size. The \SI{25.9}{\micro\second} prefix recomputation grows only with
+proof depth. The complete check is therefore well below the sub-millisecond target and includes the
+VRF step that CONIKS does not include in its published timing.
+
+The server-side full search is also near-flat over this range because the compressed-leaf chain is
+memoized (\cref{sec:impl-modules}). It reads \SI{111.2}{\micro\second}
+at $N=10^3$ and \SI{111.6}{\micro\second} at $N=10^4$. The scale run's search median reads
 \SI{132.7}{\micro\second} at $N=10^6$ and \SI{441.7}{\micro\second} at $N=10^7$
-(\cref{ssec:eval-scale}): flat through $10^6$, then rising at $10^7$. Verification shows the same
-shape. Two factors sit behind the rise, the wider proof at larger $N$ and the change of measurement
-context between the moderate-scale and scale-up harnesses.
+(\cref{ssec:eval-scale}). The median is approximately flat through $10^6$ and then rises at $10^7$.
+Possible contributors are the wider proof and the different measurement context of the scale-up
+harness. The experiment does not isolate their effects.
 
 \subsection{Offline Catch-Up Bandwidth (M4)}\label{ssec:eval-catchup}
 
 The bandwidth a client spends after being offline is where the windowed-consistency policy of
 \cref{ssec:design-catchup} yields its largest saving over a repeated-proof workload. The baseline
-here is synthetic: it re-fetches one current-head-anchored consistency proof for each of the $W$
+here is synthetic. It re-fetches one current-head-anchored consistency proof for each of the $W$
 missed epochs. The windowed client instead verifies a single distant-head proof spanning the whole
-gap, which standard RFC~9162 already supports directly; the saving is therefore in the number of
+gap, which RFC~9162 supports directly~\cite{rfc9162}. The saving is therefore in the number of
 proofs a monitoring policy chooses to fetch, not a cost RFC~9162 forces on an offline client.
 \Cref{tab:eval-catchup} reports both as the offline window $W$ grows. Because catch-up proofs are
 taken over the epoch log, one leaf per epoch, their size is independent of the number of users
-$N$; the table therefore holds for every $N$ measured.
+$N$. The table therefore holds for every $N$ measured.
 
-Two properties of the comparison bound what the ratio means. First, the baseline is \emph{synthetic}: the harness issues $W$ current-head-anchored
-consistency proofs, which models a client that re-fetches a fresh proof against the latest head on
-each of $W$ occasions.\footnote{It is one baseline among several, not the cost of generic sequential
-catch-up. A client verifying adjacent $e \to e+1$ transitions is an equally reasonable naïve
-strategy, and its per-proof size is smaller, so the \num{695}-fold constant is specific to this
-construction. What does not depend on the choice is the proof \emph{count}: $O(1)$ against $O(W)$.}
-Second, the byte figures are \emph{raw consistency-path hash bytes}: the harness counts path
+Two properties bound the interpretation of the ratio. First, the baseline is synthetic. The harness
+issues $W$ current-head-anchored consistency proofs, modelling a client that re-fetches a proof
+against the latest head on each of $W$ occasions.\footnote{It is one baseline among several, not the
+cost of generic sequential catch-up. A client verifying adjacent $e \to e+1$ transitions is another
+reasonable strategy and would use smaller individual proofs. The exact ratio is therefore specific
+to this baseline. The proof-count comparison, $O(1)$ against $O(W)$, does not depend on that choice.}
+Second, the byte figures are \emph{raw consistency-path hash bytes}. The harness counts path
 length times the \num{32}-byte hash size. A deployment serializes these (the reference server sends
 hex-encoded JSON with framing and length fields), so serialized network bandwidth was not measured
 and would be larger on both sides of the comparison.
@@ -311,7 +260,7 @@ whereas the windowed approach uses one proof.}
 \small
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-$W$ (epochs offline) & synthetic sequential (bytes) & windowed (bytes) & Ratio \\
+$W$ (epochs offline) & current-head baseline (bytes) & windowed (bytes) & Ratio \\
 \midrule
 1 (1 hour)   & 96      & 96  & $1.0\times$ \\
 24 (1 day)   & 4{,}416   & 192 & $23.0\times$ \\
@@ -331,76 +280,52 @@ proof remains a few hundred bytes and grows logarithmically (\cref{tab:eval-catc
 \label{fig:eval-catchup-plot}
 \end{figure}
 
-The saving grows approximately linearly with the window (measured $\approx 0.97\,W$), as \cref{fig:eval-catchup-plot}
-makes visible on a log axis. A client offline for a month
-sends a \num{320}\,byte proof in place of \num{222528}\,bytes, a \num{695}-fold reduction, and the
-generation-time counterpart is similar in magnitude (\SI{0.3}{\micro\second} windowed versus
-\SI{197.0}{\micro\second} sequential at $W=720$: medians over the log alone, which the prefix-tree
-memoization does not touch). The two ratios are separate measurements.
-The \num{695}-fold figure is a computed count of raw path-hash bytes, whereas the generation-time figure is timed,
-and the windowed median sits at the \SI{0.1}{\micro\second} resolution this chapter quotes to, so
-their quotient is good to only a couple of significant figures ($\approx$\num{600}-fold). One windowed
-proof thus replaces the $W$ per-epoch proofs, directly addressing the monitoring-bandwidth problem that CONIKS lists as
-an open extension.
+The byte saving grows approximately linearly with the window, measured as $\approx0.97W$
+(\cref{fig:eval-catchup-plot}). At $W=720$, the windowed path carries \num{320} bytes instead of
+\num{222528} bytes. The exact ratio is \num{695.4}, reported in prose as roughly \num{700}-fold
+because it is specific to the synthetic baseline.
+
+The generation body has a median of \SI{0.3}{\micro\second} for the windowed proof and
+\SI{197.0}{\micro\second} for the repeated baseline. This is a separate timing result and its quotient
+is only approximate because the windowed value is close to the reporting resolution. Together, the
+measurements confirm that one windowed proof replaces $W$ repeated proofs. This addresses the
+monitoring-bandwidth extension identified by CONIKS~\cite{melara2015coniks}.
 
 \subsection{Detector-Branch Latency and Clean-Session Coverage (M16, M17)}\label{ssec:eval-detection}
 
-Finally, the evaluation measures the cost of the detector itself and confirms that it produces the
-expected non-alarm verdict for honest sessions. M16 times synthetic Rust component bodies corresponding to the two branches of the
-isolated \texttt{KTClient.detectMitm} helper (\cref{sec:impl-signal}): the same verified operations
-(raw-label search, proof verification, and value comparison), reconstructed in the Rust harness rather
-than timed through the TypeScript runtime, using the raw-label verifier (the prefix-tree and log path
-checked \emph{without} the VRF component, since the VRF-indexed path is what M3 already times). On the
-\emph{early-return} branch the comparison finds a mismatching owner value, so one verified owner-slot
-lookup settles the verdict, at a median \SI{27.8}{\micro\second} (95th percentile
-\SI{28.8}{\micro\second}) at $N=10^4$. On the \emph{clean-matching} branch the owner slot verifies
-against the client's key and the check proceeds to a verified \emph{non-inclusion} of the warning slot
-(an unproven ``empty'' would let the server censor the warning), costing a median
-\SI{31.1}{\micro\second} (95th percentile \SI{32.7}{\micro\second}) for
-the two verified lookups. These are local, in-process component costs: they exclude the TypeScript
-runtime, HTTP transport, background polling, and registration, and they exclude the network round-trips
-a deployment adds, so this thesis does not report an end-to-end detection latency.
+M16 reconstructs in Rust the verified operations performed by two branches of the isolated
+\texttt{KTClient.detectMitm} helper (\cref{sec:impl-signal}). The timed body performs raw-label
+search, proof verification, and value comparison without the VRF step measured by M3. It does not
+time the TypeScript implementation directly.
 
-Measuring the verified branch directly retires an earlier scoping caveat. The superseded M5 figure
-timed only one \emph{unverified} warning-slot read (a median \SI{1.6}{\micro\second}), a
-verification-free lower bound that was explicitly not a detector-latency measurement; that row is
-retained in \cref{app:benchmarks} for provenance but no longer carries a headline. The warning-slot
-step is the same non-inclusion co-path whose cost is data-dependent: it almost always meets a
-compressed leaf whose subtree hash is a chain of up to \num{256} evaluations, memoized per leaf
-(\cref{sec:impl-modules}), so the benchmark samples \num{1000} conversations and reports the
-distribution rather than one label's path.\footnote{An earlier revision timed one fixed conversation
-and, before the chain memo, read \SI{1.4}{\micro\second} or ${\sim}$\SI{40}{\micro\second} depending on
-where that one label sat; a single-label figure is not robust, because re-seeding the directory
-relocates every label.} The request count is source-verified from the same helper: a present owner-slot
-mismatch returns after the first lookup, while a matching or verifiably empty owner slot proceeds to
-the warning-slot lookup, so the clean, first-registration, and warning-carrying paths perform two
-verified lookups and the substituted path one. This count does not describe the complete networked
-background-monitor pass, which performs registration and additional catch-up, owner-, peer-, and
-warning-slot checks separately.
+On the early-return branch, a mismatching owner value settles the verdict after one verified lookup.
+The median is \SI{27.8}{\micro\second}, with a 95th percentile of
+\SI{28.8}{\micro\second}, at $N=10^4$. On the clean-matching branch, the owner slot contains the
+expected key and the helper also verifies that the warning slot is empty. This two-lookup branch has a
+median of \SI{31.1}{\micro\second} and a 95th percentile of
+\SI{32.7}{\micro\second}. The empty warning result must be proof-verified, because accepting an
+unproven empty response would let the server conceal a committed warning.
 
-M17 turns the former clean-session false-positive rate into functional coverage. Each enumerated
-honest workflow (a first registration into an empty owner slot, an established session with the
-expected key, a proven-empty warning slot, repeated re-verification of a valid state, valid log growth
-under a correct consistency proof, multiple honest continuous-mode epochs, and agreeing cross-vantage
-heads) is asserted by a named test in its source suite (\cref{app:tests}) to produce the expected
-non-alarm verdict, rather than sampled for a rate. Two of these cases are new to the clean-path suite;
-the rest consolidate assertions that already existed elsewhere in the suite. The result is therefore a
-coverage statement: every enumerated clean workflow produced the expected non-alarm verdict. This
-replaces the earlier ``zero false positives over \num{1000} sessions'' figure, whose statistical
-framing added nothing a coverage check does not, a spurious collision at a \num{256}-bit HKDF-derived
-warning label being cryptographically negligible in any case.
+These figures are local component costs. They exclude the TypeScript runtime, HTTP transport,
+background polling, registration, and network round trips. They therefore do not measure
+end-to-end detection latency. A matching or verifiably empty owner slot proceeds to the warning-slot
+lookup, whereas an owner-slot mismatch returns after the first lookup. The complete networked
+background monitor performs additional catch-up, owner-, peer-, and warning-slot checks. M16
+supersedes the earlier M5 warning-read microbenchmark, which remains in
+\cref{app:benchmarks} only for provenance.
 
-Detection runs automatically and requires no manual safety-number comparison, in contrast to the
-ceremony it is designed to replace, which most users fail to complete without
-guidance~\cite{vaziripour2017}. When it reports a problem, the prototype's advisory hook surfaces a
-warning, although it does not yet block session establishment.
+M17 checks the expected non-alarm behaviour of seven honest workflows: first registration, an
+established session with the expected key, a proven-empty warning slot, repeated verification of a
+valid state, valid log growth under a correct consistency proof, multiple honest continuous-mode
+epochs, and agreeing cross-vantage heads. Named tests in the relevant suites assert each outcome
+(\cref{app:tests}). M17 is therefore functional coverage of the enumerated clean workflows, not an
+estimate of a population-wide false-alarm rate.
 
 % ============================================================================
 \section{Scalability and the Mode Trade}\label{sec:eval-scale}
 
-Having established per-lookup costs at moderate size, the evaluation now pushes the directory to
-production scale, measures server-side operation rates and maintenance costs, and quantifies the
-price of the continuous operating mode.
+This section evaluates larger directories, server-side maintenance, auditor computation, and the
+write-frequency difference between session and continuous mode.
 
 \subsection{Scale to CONIKS Size (M7)}\label{ssec:eval-scale}
 
@@ -430,53 +355,40 @@ Build time / RSS after build & 150\,s / 2.81\,GB & 1{,}558\,s / 21.3\,GB \\
 \end{tabular}
 \begin{tablenotes}
 \footnotesize
-\item[$\dagger$] The $10^7$ full-search 95th percentile of \SI{4581.9}{\micro\second} (an order of
-magnitude above its \SI{441.7}{\micro\second} median) shows that a small fraction of lookups are far
-slower than the typical one. The proof structure does not account for it: the client-side steps that
-consume the proof (prefix and VRF verify) show no comparable tail. The harness records no paging or
-memory-pressure counters, so the source of the tail was not instrumented; a \SI{21.3}{\giga\byte}
-resident set on a \SI{31.7}{\giga\byte} machine makes memory pressure a plausible candidate, but that
-is a conjecture the data here does not test. The median is the figure quoted in the surrounding text.
+\item[$\dagger$] The $10^7$ full-search 95th percentile is much larger than its median. The
+client-side prefix and VRF checks show no comparable tail. The harness did not record paging or
+memory-pressure counters, so it cannot identify the cause. Memory pressure is plausible given the
+\SI{21.3}{\giga\byte} resident set, but remains untested. The surrounding discussion therefore uses
+the median.
 \end{tablenotes}
 \end{threeparttable}
 \end{table}
 
-The measured constancy of prefix verification from $10^3$ to $10^7$,
-\SI{25.9}{\micro\second} at $10^3$ and \SI{26.4}{\micro\second} at $10^7$, is strong empirical
-evidence that the tree walk is bounded by the fixed \num{256}-level height rather than by $N$. Full client
-verification is not quite as flat: its median reads \SI{133.6}{\micro\second} at $10^6$ and
-\SI{139.2}{\micro\second} at $10^7$. These size-and-verify-at-scale figures (M7) are medians of the randomized \num{1000}-lookup
-distribution recorded to the CSV, whose proof shape varies with the sampled label; the fixed-target
-Criterion group, which repeatedly times a single fixed lookup path, is exploratory and is not the
-reported scale figure. Against the manual-harness M3 figure of $\approx$\SI{128}{\micro\second} at
-$N\le10^4$ (\cref{tab:eval-latency}), the full check rises by roughly \num{8.2}\,\%
-(about \SI{10.5}{\micro\second}) while $N$ grows by four orders of magnitude. The two components that
-could carry a depth-driven increase, the prefix walk and the directory-size-independent VRF, are themselves flat
-across the same range, so the residual is not a tree-depth effect. The experiment does not isolate its
-source; possible contributors include the larger proof representation and differences between the two
-measurement contexts (\cref{sec:eval-method}). The claim the data supports is that the check grows far
-more slowly than the directory, not that it is invariant. The build-time and \SI{21.3}{\giga\byte}
-memory rows of this scale run are read as a prototype limit in \cref{ssec:eval-throughput}.
+Prefix verification changes from \SI{25.9}{\micro\second} at $10^3$ to
+\SI{26.4}{\micro\second} at $10^7$. This is consistent with a tree walk bounded by the fixed
+\num{256}-level height. Full client verification has a median of
+\SI{133.6}{\micro\second} at $10^6$ and \SI{139.2}{\micro\second} at $10^7$.
+
+M7 reports medians from \num{1000} random lookups per directory size. Compared with the
+approximately \SI{128}{\micro\second} M3 result at $N\le10^4$, the $10^7$ median is about
+\SI{10.5}{\micro\second} higher, an increase of \num{8.2}\,\% while $N$ grows by four orders of
+magnitude. The prefix and VRF components show no comparable increase. The experiment does not
+isolate the remaining difference, which may reflect proof representation or the different
+measurement context. The supported conclusion is that verification grows far more slowly than the
+directory, not that it is invariant.
 
 \subsection{Maintenance Cost and Prototype Limits (M9)}\label{ssec:eval-throughput}
 
-Three further families size the server's steady-state and hook costs and are reported in full in
-\cref{app:benchmarks}: latency-derived single-thread operation rates (M8), the VRF prove/verify pair
-measured in isolation (M10), and the local CPU cost of one complete signed-head lookup verification of
-the kind the handshake hook invokes (M11). In brief, the single-thread rates are about \num{8940}
-lookups and \num{7150} updates per second at $N=10^4$; the VRF is independent of directory size to
-prove and to verify, its isolated rows differing from the in-path figures by a few percent in either
-direction (the benchmark-context sensitivity of \cref{sec:eval-method}); and the handshake-hook
-verification is the same $\approx$\SI{128}{\micro\second} full check of \cref{ssec:eval-latency},
-measured against a synthetic no-KT floor of a single hash and excluding network transfer, X3DH/PQXDH,
-and session establishment. This subsection keeps the two maintenance costs that bound the
-single-machine prototype and are load-bearing for the deployment discussion (\cref{sec:eval-deploy})
-and the copy-on-write future work (\cref{ch:discussion}): the epoch-commit growth and the memory
-footprint at scale.
+Three related metric families are reported in \cref{app:benchmarks}. M8 derives single-thread
+operation rates of approximately \num{8940} lookups and \num{7150} updates per second at $N=10^4$.
+M10 measures VRF proof generation and verification in isolation. M11 measures one complete
+signed-head lookup verification against a synthetic one-hash floor. It excludes transport,
+X3DH/PQXDH, and session establishment. This subsection focuses on the maintenance costs that limit
+the single-machine prototype.
 
 \begin{table}[ht]
 \centering
-\caption{Server-side maintenance costs (M9): key rotation and epoch commit (median).}
+\caption{Median server-side key-rotation and epoch-commit costs (M9).}
 \label{tab:eval-server}
 \small
 \begin{tabular}{@{}lrr@{}}
@@ -489,77 +401,67 @@ Epoch commit & \SI{451.0}{\micro\second} & \SI{6.73}{\milli\second} \\
 \end{tabular}
 \end{table}
 
-Key rotation (overwriting an existing binding) is approximately unchanged over the measured range, for
-the same reason proof generation is flat (\cref{ssec:eval-latency}): it is dominated by the
-per-rotation VRF evaluation of the unchanged user identifier, which a production server would cache,
-leaving only tens of microseconds of tree work. The one cost that grows with $N$ is the epoch commit
-(\SI{451.0}{\micro\second} at $10^3$ rising to \SI{6.73}{\milli\second} at $10^4$, a
-$\approx$$15\times$ increase for a $10\times$ growth), consistent with the roughly linear cost of the
-deep-clone snapshot the current server takes on every commit. The snapshot also copies each leaf's chain memo,
-the deliberate space-for-time trade that keeps reads flat (\cref{sec:impl-modules}); a copy-on-write
-tree would reduce it to $O(\lg N)$ per modified label ($O(k \lg N)$ for an epoch's $k$ updates), noted
-as future work in \cref{ch:discussion}. The same single-machine limit shows in memory: constructing
-the $10^7$-label tree takes about 26 minutes and leaves a \SI{21.3}{\giga\byte} resident set
-(\cref{tab:bench-scale}), which is why a production deployment would move to the persistent, sharded
-storage this prototype deliberately does not model.
+Key rotation is approximately unchanged over the measured range. Its
+\SIrange{138.7}{140.3}{\micro\second} cost is consistent with the fixed-cost VRF evaluation
+dominating the operation. A server could cache the stable identity label, but that optimization is
+not measured here.
+
+Epoch commit rises from \SI{451.0}{\micro\second} at $10^3$ to
+\SI{6.73}{\milli\second} at $10^4$. The implementation deep-clones the committed tree and its chain
+memos, so the operation is linear in the stored snapshot. The two measured points illustrate that
+cost but do not by themselves establish the asymptotic result. \Cref{ch:discussion} proposes
+persistent tree updates to target $O(\lg N)$ work per modified label, or $O(k\lg N)$ for $k$
+updates.
+
+The scale run exposes the corresponding memory limit. Building the $10^7$-label tree takes about
+26 minutes and leaves a \SI{21.3}{\giga\byte} resident set (\cref{tab:bench-scale}). Persistent and
+distributed storage remain outside this in-memory evaluation.
 
 \subsection{Auditor Cost (M12)}\label{ssec:eval-auditor}
 
-The cross-vantage auditor (\cref{sec:design-acka}) that detects split-view equivocation must be
-cheap enough to run continuously. M12 measures only the auditor's \emph{local} append-only
-verification kernel: an STH signature check, consistency-proof generation and verification, and a
-fork check against \emph{one} observed head. The per-epoch audit costs \SI{28.6}{\micro\second}
-median at $N=10^4$, and the fork check \SI{27.1}{\micro\second} median (p95 \SI{33.1}{\micro\second}),
-so the kernel is cheap per epoch in local computation. Because the benchmark times proof generation
-and verification together, it provides a conservative upper bound on verification alone. It excludes
-network transfer, epoch-delta retrieval, committed-root inclusion verification, and the full
-\texttt{audit\_epoch} transition replay, which re-applies every disclosed update into a candidate
-replica rather than checking a signature and a consistency proof. The reported fork-check cost is
-also specific to one observed head: \texttt{detect\_fork} scans every retained head, so its cost
-grows with the number of observations. The benchmark seeds exactly one, so \SI{27.1}{\micro\second}
-is the one-head case, not the steady-state cost of a mature auditor holding many vantages over a long
-log.
+M12 measures a local signature-and-consistency kernel rather than the complete networked audit. It
+times an STH signature check, consistency-proof generation and verification, and a fork check against
+one observed head. The first body has a median of \SI{28.6}{\micro\second} at $N=10^4$. The
+one-head fork check has a median of \SI{27.1}{\micro\second} and a 95th percentile of
+\SI{33.1}{\micro\second}. Since proof generation and verification are timed together, the first
+figure is a conservative upper proxy for verification alone.
+
+The measurement excludes network transfer, epoch-delta retrieval, committed-root inclusion
+verification, and the full \texttt{audit\_epoch} transition replay. That replay applies each
+disclosed update to a candidate replica. The fork-check figure also does not represent a mature
+auditor with a long observation history. The implemented \texttt{detect\_fork} scans the retained
+heads, whereas M12 seeds exactly one.
 
 \subsection{Session versus Continuous Mode (M13, M15)}\label{ssec:eval-modes}
 
-The design offers two operating modes (\cref{ssec:design-modes}): session mode writes one directory
-entry per signed-pre-key rotation, and continuous mode writes one per ratchet epoch for finer-grained,
-ACKA CEA-style detection. The two modes have effectively indistinguishable per-check verification
-costs; their difference is in write frequency. A per-check operation
-costs \SI{27.3}{\micro\second} in session mode and \SI{27.7}{\micro\second} in continuous mode (medians, \cref{app:benchmarks}; both include
-server-side proof generation). The two medians differ by \SI{0.4}{\micro\second}, within run-to-run
-variation, and no ordering conclusion is drawn from that gap; the medians are reported as descriptive
-statistics. The chain memoization flattens the compressed-leaf cost that previously
-separated the two modes. Both
-figures require a precise statement of what they measure: each benchmarked check comprises the
-server-side proof generation and the client-side verification of the value, prefix-root, and
-log-inclusion steps, both under the same label-bound verifier. Client-side label derivation (a fixed
-sub-microsecond HKDF/hash) is performed once in setup and excluded from both timed bodies, so the two
-medians compare like for like. One residual asymmetry is disclosed: continuous mode appends one log
-leaf per registered epoch (here $K$ epochs) whereas session mode commits once, so the continuous
-log-inclusion proof is over a marginally deeper log; the effect is within the reported precision,
-leaving the two modes' per-check verification costs effectively equal. This depth-independence is
-measured directly by the deep-chain experiment (M15), which isolates it from the directory-growth
-confound. Evolving a conversation through $K\in\{1,10,100,720\}$ ratchet epochs and timing the
-final-epoch transparency check against a session-mode raw lookup on the \emph{same} log (so both series
-see the identical log depth and directory size), the two series each remain flat across the sweep:
-continuous-mode verification does not grow with $K$, and neither does the session baseline on the same
-log. Their pointwise difference is at most \SI{0.1}{\micro\second} at every $K$, through the full sweep
-to $K=720$ ratchet epochs on a log that grows past ten thousand committed entries, and is not
-interpreted as a distinct mechanism cost. Continuous-mode verification therefore stays flat through
-\num{720} ratchet epochs, because the CEA chain state is a constant-size fold that adds no per-epoch
-verification work. What continuous mode does add is directory writes, quantified next. Neither figure includes a VRF step, because the
-dual-index and CEA paths use client-derived rather than VRF-derived labels
-(\cref{ssec:design-verify}), and neither includes the signed-tree-head signature verification that
-the full specified check of \cref{app:algorithms} performs; \cref{ssec:eval-latency} shows that the
-full client verification, including that signature, costs $\approx$\SI{128}{\micro\second}. The modes
-differ instead in the number of directory writes. \Cref{tab:eval-modes} reports the write
-counts over a conversation of $E$ hourly epochs, with a signed-pre-key rotation every 30 days
-($R=720$).
+Session mode writes one directory entry per signed-pre-key rotation. Continuous mode writes one per
+ratchet epoch to provide the finer-grained CEA check (\cref{ssec:design-modes}). M13 measures a
+single label-bound proof generation and verification in each mode. The medians are
+\SI{27.3}{\micro\second} for session mode and \SI{27.7}{\micro\second} for continuous mode
+(\cref{app:benchmarks}). Their \SI{0.4}{\micro\second} difference is within run-to-run variation, so
+no ordering is inferred.
+
+Both M13 bodies include server-side proof generation and client-side verification of the value,
+prefix root, and log inclusion. They exclude label derivation, the VRF step that these
+client-derived-label paths do not use, and the signed-tree-head signature check included in M3. The
+comparison therefore isolates the corresponding label-bound proof operation rather than a complete
+client lookup.
+
+M15 tests whether a longer continuous-mode history changes that operation. It evolves a conversation
+through $K\in\{1,10,100,720\}$ ratchet epochs, then compares the final-epoch CEA check with a
+session-mode raw lookup on the same log. Each series remains flat as $K$ grows, which establishes
+depth independence. Their pointwise difference is at most \SI{0.1}{\micro\second}, including at $K=720$
+on a log with more than ten thousand committed entries. That delta bounds the additional
+fingerprint-comparison work and is not evidence of a history-depth cost. The full
+$K$-by-rotation-cadence grid is reported in \cref{app:benchmarks}.
+
+The material difference between the modes is therefore write frequency. \Cref{tab:eval-modes}
+reports the writes over a conversation of $E$ hourly epochs, assuming one signed-pre-key rotation
+every 30 days ($R=720$).
 
 \begin{table}[ht]
 \centering
-\caption{Directory writes over a conversation: session versus continuous mode ($R=720$).}
+\caption{Directory writes in session and continuous mode under the $R=720$ cadence model.}
 \label{tab:eval-modes}
 \small
 \begin{tabular}{@{}lrrr@{}}
@@ -574,28 +476,22 @@ $E$ (epochs) & Continuous (one/epoch) & Session (one/rotation) & Ratio \\
 \end{tabular}
 \end{table}
 
-The write ratio grows linearly in $E$ up to the rotation period and then plateaus at $720\times$ under
-this benchmark's cadence model: once a conversation spans several rotations, session-mode writes tick
-up in proportion, so continuous mode costs about $720\times$ more directory writes for per-epoch
-rather than per-rotation detection. The plateau is a property of the assumed hourly cadence (one
-ratchet epoch per hour, a 720-hour rotation), not a deployment bound: with real message-driven
-ratcheting the ratio is the number of ratchet epochs per signed-pre-key rotation, which has no fixed
-cap. Two limitations follow from this. First, because real ratchet cadence is
-message-driven rather than hourly, the continuous-mode write counts here are an under-count for a
-chatty conversation and an over-count for a quiet one; the governing ratio is ratchet epochs per
-signed-pre-key rotation. Second, the continuous-mode timing benchmark folds a \emph{simulated} per-epoch
-ratchet secret (a fixed stand-in that is distinct from the authenticated public ratchet key, not a
-live Double-Ratchet DH output), so it measures the transparency-layer cost of a ratchet epoch, not
-the ratchet's own key agreement. To keep the two medians honestly comparable, both modes are timed
-under the \emph{same} label-bound proof verifier (\texttt{verify\_search\_result\_raw\_for}), so
-neither path gains an artificial edge from skipping the label-binding check.
+Under this model, the ratio grows with $E$ until the first rotation and then settles at
+$720\times$. This plateau follows from the assumed hourly epoch and 720-hour rotation. It is not a
+deployment bound. In a live Double Ratchet, the governing quantity is the number of ratchet epochs
+per signed-pre-key rotation, which varies with message activity.
+
+The benchmark uses a simulated per-epoch secret rather than a live Double-Ratchet output. It measures
+the transparency-layer work associated with each epoch, not the ratchet's key agreement. Both modes
+use the same label-bound verifier, so the comparison does not favour either path by omitting the
+label-binding check.
 
 % ============================================================================
 \section{Comparison with Prior Systems}\label{sec:eval-compare}
 
 This section places the measured results beside the key-transparency systems surveyed in
 \cref{ch:background}. \Cref{tab:eval-compare} compares the systems on the dimensions most relevant
-to assessing a messaging deployment; the published figures are drawn from each system's paper or
+to assessing a messaging deployment. The published figures are drawn from each system's paper or
 repository. Byte figures are compared after convention alignment and stated to the precision that
 alignment supports, while cross-hardware timing ratios are order-of-magnitude and illustrative only
 (see the comparability note below).
@@ -609,10 +505,10 @@ alignment supports, while cross-hardware timing ratios are order-of-magnitude an
 \toprule
 Dimension & \textbf{DUET (measured)} & CONIKS~\cite{melara2015coniks} & Signal KT~\cite{signal-kt-server} \\
 \midrule
-Lookup proof size & \textbf{817\,B median @ $10^6$} (max 945; prefix\,+\,VRF, excl.\ STH) & 1{,}216\,B @ $2^{32}$; 768--832\,B @ $10^6$ derived (proof\,$\pm$\,sig) & 8{,}192\,B fixed sibling copath only (256$\times$32, no VRF) \\
-Client lookup verify & \textbf{$\approx$\SI{128}{\micro\second} @ $10^3$--$10^4$; \SI{139.2}{\micro\second} @ $10^7$} (incl.\ VRF + STH sig) & \SI{159}{\micro\second} path @ $10^7$ $+\sim$\SI{400}{\micro\second} sig $=$ \SI{559}{\micro\second} (derived); excl.\ VRF & not published \\
-Catch-up @ $W{=}720$ & \textbf{320\,B} (1 windowed proof) & $\Theta(W)$; $\sim$530\,kB, derived & Monitor endpoint \\
-MitM detection & \textbf{automatic: in-band peer warning (established pairs); divergent labels + VRF anchor (first contact)} & manual SN + self-monitor & lookup check (AKV) + self-monitor; no peer warning \\
+Lookup proof size & \textbf{817\,B median @ $10^6$} (max 945, prefix\,+\,VRF, excl.\ STH) & 1{,}216\,B @ $2^{32}$, 768--832\,B @ $10^6$ derived (proof\,$\pm$\,sig) & 8{,}192\,B fixed sibling copath only (256$\times$32, no VRF) \\
+Client lookup verify & \textbf{$\approx$\SI{128}{\micro\second} @ $10^3$--$10^4$, \SI{139.2}{\micro\second} @ $10^7$} (incl.\ VRF + STH sig) & \SI{159}{\micro\second} path @ $10^7$ $+\sim$\SI{400}{\micro\second} sig $=$ \SI{559}{\micro\second} (derived), excl.\ VRF & not published \\
+Catch-up @ $W{=}720$ & \textbf{320\,B} (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB derived & Monitor endpoint \\
+MitM detection & \textbf{automatic in-band peer warning (established pairs)\newline divergent labels + VRF anchor (first contact)} & manual SN + self-monitor & lookup check (AKV) + self-monitor, no peer warning \\
 Key coverage & identity \textbf{+ per-session labels} (+ per-epoch CEA entries in continuous mode) & identity only & ACI, E164, username \\
 Query privacy (operator) & No & No & No \\
 Directory privacy (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF) \\
@@ -620,27 +516,27 @@ Directory privacy (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF)
 \end{tabular}
 \end{table}
 
-Four claims follow from the comparison; for each cross-system figure, the text states explicitly
+Four claims follow from the comparison. For each cross-system figure, the text states explicitly
 whether it is published or derived, and from what.
 
 First, the implemented (VRF-indexed) lookup proof is at rough size parity with CONIKS at matched
-directory size, the like-for-like comparison since CONIKS lookups are likewise VRF-indexed; the raw
+directory size, the like-for-like comparison since CONIKS lookups are likewise VRF-indexed. The raw
 dual-index lookup used elsewhere in DUET carries no VRF proof and is correspondingly smaller. The
 measured \num{817}-byte median at $N = 10^6$ (max \num{945}) is the prefix-proof payload plus the
 \num{80}-byte ECVRF proof, measured under a single-epoch log. It excludes the signed tree head, the
 JSON serialization framing, and the epoch-log inclusion path, which is empty at one epoch and grows
 to at most $32\lceil\lg E\rceil$ bytes over $E$ epochs in a deployment. CONIKS publishes \num{1216}\,bytes at
-$N = 2^{32}$; instantiating CONIKS's own per-lookup accounting (one \num{32}-byte hash per tree level
+$N = 2^{32}$. Instantiating CONIKS's own per-lookup accounting (one \num{32}-byte hash per tree level
 plus one, a \num{96}-byte VRF proof, and its \num{64}-byte signed-tree-root
 signature~\cite[\S5.3, Table~1]{melara2015coniks}) at $N = 10^6$ gives $32 \cdot 21 + 96 + 64 =
-832$\,bytes, or \num{768}\,bytes with the signature excluded; the paper itself states no number at
+832$\,bytes, or \num{768}\,bytes with the signature excluded. The paper itself states no number at
 $10^6$. On the same convention as this chapter's measurement, proof and VRF without a signature, DUET's
-\num{817}\,bytes sits within \num{7}\% of CONIKS's \num{768}\,bytes: rough parity, with DUET
+\num{817}\,bytes sits within \num{7}\% of CONIKS's \num{768}\,bytes. This is rough parity, with DUET
 marginally larger on the raw proof. This VRF-indexed identity lookup does not itself carry the
-dual-index warning mechanism; detection is supplied separately through additional raw-label lookups
+dual-index warning mechanism. Detection is supplied separately through additional raw-label lookups
 that reuse the same prefix-tree and log-proof structure without the VRF component (\cref{sec:design-dual}),
 none of which enlarges an individual proof. No
-wire-format advantage is claimed here: a full DUET lookup response also returns the signed tree head \emph{per
+wire-format advantage is claimed here. A full DUET lookup response also returns the signed tree head \emph{per
 lookup} (\cref{sec:impl-signal}), which this proof-body comparison excludes on both sides.
 
 Second, restricted to the prefix-proof sibling representation, DUET's bitmap-compressed proof carries
@@ -649,14 +545,14 @@ sizes. This is a like-for-like comparison of one component, not a whole-response
 Signal's key-transparency server pads every prefix proof to the full \num{256}-sibling copath
 ($256 \times 32 = \num{8192}$\,bytes) with seed-derived stand-in hashes, and its verifier
 (\texttt{evaluateProof} in \texttt{tree/prefix/verify.go}) rejects any proof that does not contain
-exactly \num{256} siblings of \num{32}\,bytes each~\cite{signal-kt-server}; DUET's prefix proof
+exactly \num{256} siblings of \num{32}\,bytes each~\cite{signal-kt-server}. DUET's prefix proof
 instead ships only the non-empty siblings plus a \num{32}-byte bitmap. Taking DUET's \emph{whole}
 lookup proof (prefix payload plus the \num{80}-byte VRF proof) as a conservative upper bound on its
 prefix component gives $8192/945 = 8.7\times$ at the $10^7$ median and $8192/817 = 10.0\times$ at
 $10^6$, so the prefix-only advantage is at least this large. The padding is a deliberate trade of
 bandwidth for the hiding of tree density, which DUET's bitmap instead reveals, so the comparison is
-$\sim$$9\times$ sibling-hash bytes in exchange for $\sim\lceil\lg N\rceil$ bits of density metadata;
-it does not net against the signed tree head, which a full DUET response carries per lookup
+$\sim$$9\times$ sibling-hash bytes in exchange for $\sim\lceil\lg N\rceil$ bits of density metadata.
+It does not net against the signed tree head, which a full DUET response carries per lookup
 (\cref{sec:impl-signal}) and which Signal's \num{8192}-byte copath figure excludes on both sides.
 SEEMless's measured $\approx$8.6\,kB lookup proofs at $10^7$~\cite[p.~12]{chase2019seemless} confirm
 that both deployed-lineage systems ship $\sim$8\,kB prefix proofs.
@@ -666,7 +562,7 @@ CONIKS-style per-epoch monitoring over the same window. The \num{530}\,kB figure
 CONIKS's published per-epoch monitoring proof of $\approx$\num{736}\,bytes~\cite[Table~1]{melara2015coniks}:
 $720 \times 736 = 529{,}920$\,bytes, equivalently thirty times its published \num{17.6}\,kB daily
 cost. The per-epoch figure assumes CONIKS's own parameterization ($\approx 2^{21}$ directory changes
-per epoch at $N \approx 2^{32}$), so the derived total is indicative rather than exact; at CONIKS's
+per epoch at $N \approx 2^{32}$), so the derived total is indicative rather than exact. At CONIKS's
 stated parameterization it is over three orders of magnitude larger than the windowed proof
 ($529{,}920/320 \approx 1{,}656\times$).
 
@@ -675,34 +571,29 @@ reports \SI{159}{\micro\second} to verify the authentication path at $N = 10^7$ 
 \SI{400}{\micro\second} to verify the signed-tree-root signature, and reports no VRF-verification
 time~\cite[\S5.3]{melara2015coniks}. The comparison must be taken at matched scale, so it is the $10^7$
 median of \SI{139.2}{\micro\second} that belongs beside CONIKS's published figures, not the
-$\approx$\SI{128}{\micro\second} measured at $N \le 10^4$. At that scale DUET's measured value is lower
-than the published CONIKS figure while additionally performing the VRF verification CONIKS omits;
-differing hardware (CONIKS's 2015 2\,GHz laptop CPU against the 2022 mobile CPU used here; see the
-comparability note) and methodology prevent a direct performance comparison, so no ratio is offered in
-the body.\footnote{For reference, the published CONIKS total is \SI{559}{\micro\second}, the sum
-computed here of its \SI{159}{\micro\second} authentication-path and $\approx$\SI{400}{\micro\second}
-signature figures, so the \SI{139.2}{\micro\second} DUET median is roughly $4.0\times$ lower; the
-quotient is kept to this note because a cross-hardware, cross-methodology comparison is indicative
-only.} The claim that stands on this hardware alone is the
-sub-\SI{150}{\micro\second} median cost of full client verification across the whole measured range.
+$\approx$\SI{128}{\micro\second} measured at $N \le 10^4$. At that scale DUET's measured value is
+lower than the published CONIKS figure and includes the VRF verification that CONIKS does not report.
+The hardware and methods differ, however, so the values do not support a direct performance ratio.
+The result established on this hardware is the sub-\SI{150}{\micro\second} median cost of full client
+verification across the measured range.
 
-\begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different hardware (a 2015
-Xeon through to 2023 cloud instances), different scales ($10^6$ versus $2^{32}$), and database-backed
-versus in-memory implementations. All cross-system \emph{timing} comparisons are order-of-magnitude, while byte figures are compared after convention alignment; the benchmarks of
-this thesis are single-machine and in-memory (\cref{sec:eval-method}).\end{quote}
+\begin{quote}\small\noindent\textbf{Comparability note.} Published numbers come from different
+hardware, directory scales, and storage models. Cross-system timing comparisons are therefore
+indicative only. Byte figures are compared after aligning the stated proof components. The benchmarks
+in this thesis are single-machine and in-memory (\cref{sec:eval-method}).\end{quote}
 
 % ============================================================================
 \section{Security Evaluation}\label{sec:eval-security}
 
-Finally, the evaluation turns to the attack taxonomy of \cref{ch:threat}. The adversarial
-scenario suite of \cref{sec:impl-tests} drives each attack end to end and asserts both the verdict and
-the epoch of detection; the results are tabulated in \cref{tab:impl-t5b}. The automated Rust suite
+The adversarial scenario suite of \cref{sec:impl-tests} applies the attack taxonomy defined in
+\cref{ch:threat}. It asserts the verdict and scripted detection point for each scenario, with the
+results reported in \cref{tab:impl-t5b}. The automated Rust suite
 covers all eight scenarios: the A0 baseline, the two substitution variants A1a (global VRF slot)
 and A1b (dual-index session slot), the censorship, network, and equivocation attacks A2--A4, the
 key-rotation substitution A5, and the X1 endpoint-compromise boundary, each passing.
 
 \Cref{tab:eval-security} maps each threat to the mechanism that answers it, the evidence that the
-mechanism works, and the outcome; the goals it cites (\cref{sec:threat-goals}) are G1
+mechanism works, and the outcome. The goals it cites (\cref{sec:threat-goals}) are G1
 (key-substitution detection), G3 (directory privacy), and G4 (fork detection), and the epoch counts
 in its Result column are the scripted one-action-per-epoch demonstration schedule
 (\cref{ssec:eval-timeline}), not protocol-wide latency bounds. The one attack deliberately out of
@@ -710,48 +601,40 @@ scope is X1, direct key extraction, which no key-transparency system addresses.
 
 \begin{table}[ht]
 \centering
-\caption[Threats, defending mechanisms, evidence, and outcome.]{Threats, defending mechanisms, evidence, and outcome.}
+\caption{Evaluated threats, detection controls, evidence, and outcomes.}
 \label{tab:eval-security}
-\setlength{\extrarowheight}{2pt}
 \footnotesize
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lp{3.6cm}p{4.4cm}l@{}}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{@{}p{2.0cm}p{3.5cm}X p{2.0cm}@{}}
 \toprule
 Attack & Mechanism (goal) & Evidence & Result \\
 \midrule
-A1/A3/A5 key substitution & proof-chain verification; identity re-fetch / predecessor cross-signature; dual-index self-check + warning (G1) & A1 self-check + warning; A3 divergent secret-derived label plus comparison against the global VRF-bound identity entry; A5 predecessor cross-signature rejection; scenario suite (\cref{tab:impl-t5b}) & detected; scripted point varies by scenario \\
-A2 warning censorship & self-check key mismatch + proof-verified warning absence (extension of G1) & compound signal: key mismatch and proven non-inclusion of the warning; scenario A2 & detected \\
-A4 split-view equivocation & cross-vantage auditor (G4) & local one-head comparison kernel, \SI{27.1}{\micro\second} (M12); equivocation-detection test & detected, 1 epoch \\
-directory enumeration & ECVRF labels (G3) & VRF pseudorandomness assumption; RFC~9381 conformance vectors establish implementation conformance (\cref{sec:impl-tests}) & prevented under the VRF assumption \\
-X1 key extraction & None (out of scope) & no KT system addresses it & n/a \\
+A1/A3/A5 key substitution & A1 self-check and warning. A3 divergent-label and global-VRF identity comparison. A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite exercises each route (\cref{tab:impl-t5b}). & Detected. The scripted point depends on the scenario. \\
+A2 warning censorship & Key mismatch together with proof-verified warning absence (extension of G1). & The A2 scenario exercises the compound signal. & Detected. \\
+A4 split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 one-head local kernel. & Detected at the next scripted comparison. \\
+Directory enumeration & ECVRF-derived identity labels (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{sec:impl-tests}). & Prevented under the VRF assumption. \\
+X1 key extraction & No directory control. & Endpoint compromise lies outside key transparency. & Out of scope. \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabularx}
 \end{table}
 
-As a complementary positioning lens, the scenarios map onto the MITRE ATT\&CK Enterprise
-techniques~\cite{mitre-attack}: server-side substitution onto Transmitted Data
-Manipulation (T1565.002), network interception onto Adversary-in-the-Middle (T1557), and endpoint key
-extraction onto the out-of-scope Private
-Keys (T1552.004), situating the abstract taxonomy against adversary behaviours seen in
-practice. The cryptographic guarantees of \cref{ch:design}, not this mapping, remain the primary
-security argument; the full technique matrix and the per-category STRIDE tables are given in
-\cref{app:security} (\cref{tab:sec-mitre,tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}).
+The scenarios also correspond to MITRE ATT\&CK Enterprise techniques~\cite{mitre-attack}.
+Server-side substitution maps to Transmitted Data Manipulation (T1565.002), network interception to
+Adversary-in-the-Middle (T1557), and the out-of-scope endpoint extraction to Private Keys
+(T1552.004). This mapping provides operational context but is not the cryptographic security
+argument. The full technique matrix and STRIDE tables appear in \cref{app:security}.
 
 \subsection{STRIDE Coverage}\label{ssec:eval-stride}
 
-A STRIDE analysis~\cite{stride} over the three trust domains (the server (Merkle log, prefix tree, signed
-tree head), the client (registration, verification, warning monitor), and the auditor) yields
-twenty distinct threats. \Cref{tab:eval-stride} summarizes the outcome: sixteen are addressed by an
-implemented control (some by cryptographic prevention, the rest by after-the-fact detection through
-the transparency log, the warning channel, or the auditor) and four are residual.
+A STRIDE analysis~\cite{stride} covers the server, client, and auditor trust domains. It identifies
+twenty threats. Implemented controls address sixteen through cryptographic prevention or
+after-the-fact detection. Four remain residual (\cref{tab:eval-stride}).
 
 \begin{table}[ht]
 \centering
 \caption[STRIDE coverage of the key-transparency system.]{STRIDE coverage of the key-transparency
-system. A threat is \emph{addressed} when an implemented control prevents or detects its principal
-outcome. The control column in \cref{app:security} identifies which response applies to each threat.
-A threat is \emph{residual} when no implemented control addresses it.}
+system. Addressed threats have an implemented preventive or detective control. The detailed control
+mapping appears in \cref{app:security}.}
 \label{tab:eval-stride}
 \small
 \begin{tabular}{@{}lccp{6.0cm}@{}}
@@ -762,7 +645,7 @@ Spoofing & 4 & 4 & None \\
 Tampering & 3 & 3 & None (all three addressed by detection) \\
 Repudiation & 3 & 3 & None \\
 Information disclosure & 3 & 2 & operator learns the label$\leftrightarrow$user mapping \\
-Denial of service & 4 & 1 & three threats unaddressed in the PoC: write flooding, epoch staleness, proof omission (their mitigations are deployment-layer) \\
+Denial of service & 4 & 1 & write flooding, epoch staleness, and proof omission \\
 Elevation of privilege & 3 & 3 & None \\
 \midrule
 \textbf{Total} & \textbf{20} & \textbf{16} & \textbf{4} \\
@@ -770,23 +653,24 @@ Elevation of privilege & 3 & 3 & None \\
 \end{tabular}
 \end{table}
 
-The forgery threats under spoofing and elevation of privilege are addressed under the stated
-cryptographic assumptions (\cref{sec:threat-assumptions}: ECVRF
-label binding, SHA-256 and Ed25519, the append-only log, and client-side proof verification), and substitution (tampering, and the impersonation case of spoofing) is
-caught by the owner's self-check and peer warning within one or two epochs. The four residual
-threats are not cryptographic weaknesses. One is inherent to the semi-trusted-server model: the
-operator necessarily learns which label belongs to which user, an information-disclosure residual
-shared by the surveyed key-transparency deployments, including CONIKS~\cite{melara2015coniks}, and not
-addressed by ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather
-than building a distrusted one. The other three are availability functions the proof-of-concept
-does not implement (write rate-limiting, a published-epoch staleness timeout, and a gossip
-transport that would surface proof-omission), each a deployment-layer engineering task
-(\cref{ch:discussion}) rather than a flaw in the construction. (A2's write censorship is, by
-contrast, detected: the compound signal, a key mismatch from the self-check together with a
-proof-verified \emph{absence} of the warning, is a strong indication of compromise. Deleting a
-warning \emph{after} it commits is tampering rather than censorship, and is separately addressed by the
-write-once policy and the per-epoch transition audit, with the writer's persistence evidence available
-as a tested reference component; see \cref{app:algorithms}.)
+The forgery threats are addressed under the assumptions stated in
+\cref{sec:threat-assumptions}. These include ECVRF label binding, SHA-256, Ed25519, the append-only
+log, and client-side proof verification. Key substitution is detected by the controls evaluated
+above.
+
+One residual follows from the semi-trusted-server model. The operator learns the association between
+an account and its VRF-derived identity label. This query-privacy limitation is also present in the
+surveyed key-transparency deployments, including CONIKS~\cite{melara2015coniks}. ACKA does not address
+it because its security model abstracts the log behind the Logsec interface~\cite{dowling2023acka}.
+The other three residuals concern availability. The prototype does not implement write rate
+limiting, a published-epoch staleness timeout, or a gossip transport that exposes proof omission.
+These are deployment tasks discussed in \cref{ch:discussion}.
+
+A2 is different from those residuals. If a warning write is censored before commitment, a key
+mismatch together with proof-verified warning absence raises the compound alarm. If a committed
+warning later disappears, the invalid transition is detected by the transition audit. The separate
+persistence component can retain evidence of that disappearance, although it is not wired into the
+live background monitor (\cref{app:algorithms}).
 
 \subsection{Attack Routes and Detection Controls}\label{ssec:eval-attacktree}
 
@@ -797,13 +681,12 @@ routes can expose message plaintext if the substitution succeeds. Each route is 
 control that detects it.
 
 A2 and A4 instead attempt to conceal an attack. A2 suppresses the shared warning, while A4 presents
-different signed heads to different vantage points. The former is exposed by a key mismatch together
-with the proof-verified absence of the warning; the latter by comparing signed heads from independent
-vantage points.
+different signed heads to different vantage points. A key mismatch together with proof-verified
+warning absence exposes A2. Comparing signed heads from independent vantage points exposes A4.
 
 These guarantees depend on the assumptions of \cref{ch:threat}. The warning-channel cases require
-honest establishment and active monitoring; detecting A4 additionally requires a valid head from an
-honest independent vantage. Under these conditions every in-scope route produces a warning or
+honest establishment and active monitoring. Detecting A4 additionally requires a valid head from an
+honest independent vantage. Under these conditions every attack route covered by the threat model produces a warning or
 rejecting verdict. Endpoint compromise (X1) remains outside the directory threat model.
 
 \begin{figure}[ht]
@@ -811,7 +694,7 @@ rejecting verdict. Endpoint compromise (X1) remains outside the directory threat
 \input{figures/tikz/fig-eval-attacktree}
 \caption[Attack routes and detection controls.]{Attack routes and detection controls. A1, A3,
 and A5 are independent key-substitution routes. A2 attempts to suppress the warning, and A4 uses
-a split view to evade detection. Each in-scope action is paired with its detection control.
+a split view to evade detection. Each evaluated action is paired with its detection control.
 Endpoint compromise X1 lies outside the directory threat model.}
 \label{fig:eval-attacktree}
 \end{figure}
@@ -819,11 +702,11 @@ Endpoint compromise X1 lies outside the directory threat model.}
 \FloatBarrier
 \subsection{Detection Timeline}\label{ssec:eval-timeline}
 
-\Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1) in the scripted
-one-action-per-epoch demonstration: the attack at epoch $E$ is flagged by the victim's self-check at
-$E{+}1$, the warning is committed at $E{+}2$, and the peer's monitor reads it at $E{+}3$. These epoch
-positions describe the demonstration schedule (one action per epoch, monitors polling once per
-epoch), not a protocol-wide latency bound; no user action is required at any step.
+\Cref{fig:eval-timeline} traces the scripted timing of a server-side substitution (A1). The attack
+occurs at epoch $E$. The victim's self-check flags it at $E{+}1$, the warning commits at $E{+}2$,
+and the peer's monitor reads it at $E{+}3$. These positions follow a one-action-per-epoch
+demonstration with monitors polling once per epoch. They are not a protocol-wide latency bound, and
+no user action is required.
 
 \begin{figure}[ht]
 \centering
@@ -837,65 +720,68 @@ schedule. Protocol-wide detection latency is outside the scope of this timeline.
 \FloatBarrier
 \subsection{Residual Risks and Security Position}\label{ssec:eval-posture}
 
-The overall security position follows from the design guarantees of \cref{ch:design}, the adversarial evidence of this section, and the component measurements above. The verified detector branches cost
-\SI{27.8}{\micro\second} (early return) and \SI{31.1}{\micro\second} (owner inclusion plus warning
-non-inclusion) of local component work (M16); end-to-end detection latency, which additionally requires
-network transport, monitor polling, and epoch timing that M16 does not measure, was not quantified.
-Every enumerated clean workflow produced the expected non-alarm verdict (M17). The
-residual risks of \cref{ssec:eval-stride} are one semi-trusted-server limitation (the
-label$\leftrightarrow$user mapping, outside what any transparency layer removes) and three availability
-functions left to a production deployment. These results should be considered against current
-deployment practice: the
-deployed WhatsApp AKD ships with client key-history monitoring not yet enabled and directs the user to
-verify the session \emph{manually} with the contact when an automatic check fails~\cite[pp.~5,
-10]{whatsapp2023whitepaper}, and unprompted users rarely locate and complete such a manual ceremony
-(\cref{ssec:eval-detection}). DUET instead provides automatic, in-band detection that needs no user
-action.
+The adversarial suite produces the expected verdict for every enumerated scenario, and M17 covers
+seven honest workflows without an alarm. Overall, the design guarantees and adversarial results show
+that, for an honestly established and actively monitored conversation, the prototype automatically
+performs the key and proof checks defined by the design. When a check rejects the directory response,
+the client displays a warning. The component measurements quantify the local work of the evaluated
+branches rather than end-to-end detection latency. The current integration does not block session
+establishment.
+
+M16 shows that the two isolated detector branches require \SI{27.8}{\micro\second} and
+\SI{31.1}{\micro\second} of local Rust component work. It does not measure end-to-end detection
+latency, which also depends on transport, polling, and epoch timing. The remaining risks are the
+operator's knowledge of the account-to-label association and three unimplemented availability
+controls. These limitations do not change the demonstrated detection result, but they constrain what
+can be claimed for a production service.
+
+This result improves on a manual-verification fallback. WhatsApp's deployed AKD states that client
+key-history monitoring is not yet enabled and instructs users to verify with the contact when an
+automatic check fails~\cite[pp.~5, 10]{whatsapp2023whitepaper}. The prototype demonstrates how the
+corresponding substitution signal can instead be raised automatically inside the client.
 
 % ============================================================================
 \section{Implications for Deployment}\label{sec:eval-deploy}
 
-The measurements above bear directly on whether a design of this kind could be adopted by a
-production messenger such as Signal, whose own key-transparency server this work was built
-against~\cite{signal-kt-server}. This section draws out those implications as measured comparisons
-with their caveats attached, not as recommendations.
+The measurements identify both feasible client-side components and unresolved server-side work for a
+messenger such as Signal~\cite{signal-kt-server}.
 
-On the client, the cost is small and grows far more slowly than the service. Full verification is
-$\approx$\SI{128}{\micro\second} at $N\le10^4$ and \SI{139.2}{\micro\second} at $10^7$
-(\cref{ssec:eval-latency,ssec:eval-scale}),
-and a lookup proof is \num{817}\,bytes median at $10^6$ labels (\cref{ssec:eval-scale}): at rough size
-parity with CONIKS and, on the prefix-proof sibling representation alone, roughly $9\times$ smaller
-than Signal's fixed \num{256}-sibling copath (\cref{sec:eval-compare}). A client offline for a month catches up in a single \num{320}\,byte proof
-rather than the approximately \num{222}\,kB that the synthetic one-proof-per-epoch baseline costs over the same
-window (\cref{ssec:eval-catchup}); for comparison, CONIKS's published per-epoch monitoring costs
-imply approximately \num{530}\,kB for the same month (\cref{sec:eval-compare}). This matters most for
-the intermittently connected mobile clients a messenger must serve. The measured components are sub-millisecond local
-verification and sub-kilobyte per-lookup proofs; an isolated in-process \texttt{KTClient.detectMitm} check performs one or two such lookups (their combined bandwidth and end-to-end latency were not measured), and a full monitor pass adds the own-identity check and, where applicable, catch-up and continuous-mode verification. In exchange, the design is
-intended to replace a manual ceremony which, as \cref{ssec:eval-detection} discusses, most unprompted
-users never reliably locate and complete.
+For a VRF-indexed identity lookup, full signed-head verification has a median of approximately
+\SI{128}{\micro\second} at $N\le10^4$ and \SI{139.2}{\micro\second} at $10^7$
+(\cref{ssec:eval-latency,ssec:eval-scale}). The corresponding proof has a median size of
+\num{817}\,bytes at $10^6$ labels. It is at rough size parity with the aligned CONIKS proof, while
+DUET's compressed prefix component is much smaller than Signal's fixed \num{256}-sibling copath
+(\cref{sec:eval-compare}).
 
-On the server, the results require more qualification, and those qualifications are exactly what a production
-deployment would have to engineer away. Two costs stand out. First, the epoch commit is the one
-operation that grows with $N$ ($\approx O(N)$, \SI{6.73}{\milli\second} at $10^4$,
-\cref{ssec:eval-throughput}), because the current server deep-clones its committed snapshot; a
-copy-on-write tree would reduce this to $O(\lg N)$ per modified label ($O(k \lg N)$ for an epoch's $k$ updates) and is the single most valuable server-side change.
-Second, the per-lookup and per-rotation VRF prove (\SI{110.0}{\micro\second} measured in isolation,
-\cref{tab:bench-maint}) dominates those
-paths only because the benchmark re-evaluates the VRF for an unchanged identifier; a deployed server
-would cache the label and pay it once. Beyond compute, the scale run exposes the memory limit: a
-$10^7$-label tree leaves a $\approx$\num{21.3}\,GB resident set on one machine (\cref{ssec:eval-scale}), so a real
-deployment must move to the persistent, sharded storage of the SEEMless--Parakeet lineage that this
-in-memory prototype deliberately does not model.
+Offline catch-up has a different cost profile. At a one-month window, the windowed proof is
+\num{320}\,bytes. The synthetic current-head baseline uses approximately \num{222}\,kB, and the
+published CONIKS monitoring cost implies approximately \num{530}\,kB under its own parameterization.
+The one-proof result is particularly relevant to intermittently connected clients.
 
-Finally, the two operating modes bound the deployment choice rather than forcing it. Session mode is
-the lower-write configuration proposed as the deployment default (one directory write per signed-pre-key rotation, at parity with existing
-key-transparency systems) while continuous mode offers finer-grained, ACKA CEA-style detection at a
-write amplification of $\approx 720\times$ under the benchmark model with hourly epochs. The ratio scales
-with ratchet cadence rather than sitting at a fixed cap (\cref{ssec:eval-modes}). The measured
-verification path meets the latency target, but the $O(N)$ epoch commit, the memory footprint,
-persistence, and networked operation remain deployment limitations rather than solved problems.
-Before a design of this kind could ship it would need the engineering work set out in
-\cref{ch:discussion}: authenticated writes on the directory API, persistent sharded storage, and
-narrowing the operator's label$\leftrightarrow$user query-privacy residual (\cref{ssec:eval-stride})
-with a privacy-preserving lookup design (an OPRF hides the queried identity; requester unlinkability additionally needs an anonymizing transport, \cref{ch:discussion}). While those engineering items remain open, the component measurements show the cryptographic
-verification path meets the latency and proof-size targets the chapter set out to test.
+The warning detector uses raw-label lookups rather than the VRF-indexed identity proof. M16 measures
+one- and two-lookup Rust reconstructions of two isolated \texttt{KTClient.detectMitm} branches.
+Their combined bandwidth and end-to-end latency were not measured. A complete background-monitor pass
+also performs owner and peer checks and may perform catch-up or continuous-mode verification.
+
+The server results expose prototype constraints. Epoch commit reaches
+\SI{6.73}{\milli\second} at $10^4$ because the current implementation deep-clones the committed
+snapshot. \Cref{ch:discussion} proposes persistent tree updates as the route to
+$O(\lg N)$ work per modified label, or $O(k\lg N)$ for $k$ updates, but that change is not
+implemented or measured here. The isolated VRF proof costs \SI{110.0}{\micro\second}. Caching a
+stable identity label could avoid repeating this work. At $10^7$ labels, the in-memory tree occupies
+approximately \SI{21.3}{\giga\byte}. Production operation therefore also requires persistent storage,
+distribution, concurrency testing, and networked measurements that this evaluation does not provide.
+
+The two modes expose a separate deployment trade-off. Session mode writes once per signed-pre-key
+rotation. Continuous mode writes once per ratchet epoch and provides finer-grained CEA checking. Under
+the hourly benchmark model, the latter performs about $720\times$ as many writes after the first
+rotation. The ratio is determined by message activity and rotation cadence in a live system, so
+$720\times$ is not a fixed deployment value.
+
+Further work also includes authenticated write ownership and stronger query privacy
+(\cref{ch:discussion}). An OPRF-based design could hide the raw lookup identity from the service
+performing the oblivious evaluation. It would not by itself hide which pseudonymous entry is fetched
+or who issued the request. Those properties require additional private-retrieval and network-anonymity
+mechanisms. The component measurements show that the implemented client-side proof formats and
+cryptographic checks meet the chapter's size and latency targets. Networked operation was not
+measured, and persistent storage is not implemented.

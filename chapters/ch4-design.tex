@@ -527,8 +527,8 @@ sender will also check if the label has already been uploaded to the log with a 
 would indicate an impersonation''~\cite{dowling2023acka}, and the sender advances its chain only
 after its write is confirmed in a committed head. Third, the receiver advances its chain only when a
 verification returns \textsc{Consistent}. A detected fork leaves the chain unadvanced over the
-disputed epoch and reports an advisory in-band warning; the prototype does not block the Signal
-session. A pending lookup (the sender's fingerprint not yet committed) leaves the receiver's state
+disputed epoch and reports an in-band warning. The prototype does not block session establishment in
+Signal. A pending lookup (the sender's fingerprint not yet committed) leaves the receiver's state
 untouched, so the check can be retried without desynchronizing the chain.
 
 The two designs represent a label's history differently. ACKA's log stores a \emph{vector} of
