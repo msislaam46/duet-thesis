@@ -124,7 +124,7 @@ admits, ranging from the honest baseline (A0) through the
 attacks the system is designed to detect (A1--A5) to the boundary case it does not
 address (X1). Each scenario is evaluated experimentally in \cref{ch:eval}.
 
-\begin{table}[t]
+\begin{table}[H]
 \centering
 \caption{Attack scenarios, adversaries, and detection mechanisms.}
 \label{tab:threat-attacks}
@@ -235,9 +235,9 @@ directory can force a hostile network to deliver packets. Its purpose is instead
 compromise into detectable misbehaviour: a censored write, a
 missing epoch, or a proof that fails to verify is observable, whereas a
 substituted key on an unaccountable server is not. The guarantee is therefore
-\textbf{detection, not prevention}. The system does not stop a determined operator from interfering.
-Thus, the guarantee is not availability. A refusal, a missing proof, or an invalid response is
-reported as an unavailable or failed check, not as successful verification.
+\textbf{detection, not prevention}. Thus, the guarantee is not availability. A refusal, a missing
+proof, or an invalid response is reported as an unavailable or failed check, not as successful
+verification.
 
 One limitation remains, inherited from the trust-on-first-use assumption that also
 underlies ACKA. Detection establishes that the key seen now differs from a key

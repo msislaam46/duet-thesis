@@ -181,11 +181,11 @@ ceremony studies that motivated the design~\cite{vaziripour2017}. This would det
 cryptographic detection leads to an appropriate user response.
 
 \paragraph{Evidence-Carrying Alerts and Operational Response.} The prototype displays verifier
-outcomes to users. A production service would add an operator-facing layer that carries the scenario
-class, epoch, and the signed tree heads and proofs constituting the evidence, with interfaces to
-verify a recorded inconsistency and a policy for when to reject a proof, request a key rotation, or
-escalate. Such telemetry must be minimized so that the alerting layer does not itself leak the
-metadata the pseudorandom labels were designed to hide.
+outcomes to users. A production service would attach the scenario class, epoch, signed tree heads, and
+supporting proofs to each alert. Operator and auditor interfaces would verify recorded inconsistencies,
+while a response policy would define when to reject a proof, request a key rotation, or escalate. Such
+telemetry must be minimized so that the alerting layer does not itself leak the metadata the
+pseudorandom labels were designed to hide.
 
 \paragraph{Evaluation Under Deployment Conditions.} A further evaluation should run the service over
 persistent storage under concurrent requests and wide-area network delay, testing whether the
