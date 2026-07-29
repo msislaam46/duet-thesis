@@ -253,7 +253,7 @@ a notion of authenticating that stream continuously.}
 The Authenticated Continuous Key Agreement framework~\cite{dowling2023acka} models a ratcheting
 protocol as a continuous key agreement $\CKA$ producing a sequence of per-epoch keys, and defines a
 continuous entity authentication (CEA) notion, with security game $\CEAsec$, that captures detection of an active adversary who
-injects state mid-session. The framework leaves its append-only log component $\Logsec$ abstract; this
+injects state mid-session. The framework leaves its append-only log component $\Log$ abstract (with security notion $\Logsec$); this
 thesis instantiates that component with the structures of \cref{sec:def-structures} and provides
 continuous authentication through the continuous mode of \cref{ssec:design-modes}. The dual-index
 warning scheme below is an \emph{extension} of this idea (it authenticates by directory

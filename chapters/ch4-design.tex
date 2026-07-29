@@ -692,13 +692,13 @@ The ACKA framework (\cref{sec:bg-acka}) consists of three conceptual components:
   design leaves unmodified; the prototype simulates its epoch input (\cref{ch:impl}).
   \item \textbf{$\CEA$}: a primitive that derives per-epoch fingerprints and labels
   from public keying material and a chained secret state.
-  \item \textbf{$\Logsec$}: ACKA's abstract secure-log interface, implemented here by DUET's append-only directory with consistency and exclusion proofs.
+  \item \textbf{$\Log$}: ACKA's abstract secure-log interface (required to be $\Logsec$-secure), implemented here by DUET's append-only directory with consistency and exclusion proofs.
 \end{itemize}
 
 The three mechanisms of this chapter, together with the cross-vantage auditor, form the
 concrete instantiation of ACKA's abstract logging component
-($\Logsec$) introduced in \cref{sec:bg-acka}. The contribution is to
-instantiate the component ACKA leaves abstract, $\Logsec$, with a concrete,
+($\Log$) introduced in \cref{sec:bg-acka}. The contribution is to
+instantiate the component ACKA leaves abstract, $\Log$, with a concrete,
 malicious-server-resistant verifiable key directory built on the IETF Key Transparency
 specification~\cite{ietf-keytrans-protocol} and the lineage of Meta's
 \texttt{akd} library~\cite{facebook-akd}, and to drive it in continuous mode so that the
@@ -717,12 +717,12 @@ ACKA component & Role in the framework & Instantiation in this work \\
 \midrule
 $\CKA$    & continuous key agreement & Signal's Double Ratchet, unmodified at the design level; simulated in the prototype \\
 $\CEA$ & per-epoch fingerprints / labels & continuous mode: CEA fingerprints and labels (faithful); session mode: dual-index labels and warning channel (an extension beyond ACKA) \\
-$\Logsec$ & abstract append-only secure log (consistency + exclusion) & KT verifiable key directory: prefix tree + Merkle log + signed tree head + cross-vantage auditor \\
+$\Log$ & abstract append-only secure log, required to be $\Logsec$-secure (consistency + exclusion) & KT verifiable key directory: prefix tree + Merkle log + signed tree head + cross-vantage auditor \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-The concrete directory instantiates ACKA's abstract secure-log component ($\Logsec$). On top of that
+The concrete directory instantiates ACKA's abstract secure-log component ($\Log$). On top of that
 instantiation, the implementation makes three deliberate extensions, each addressing one of
 the ACKA limitations identified in \cref{sec:bg-acka}. First, where $\CEA$ authenticates fingerprints, the session-mode scheme
 additionally derives \emph{labels} from the shared secret, adding the in-band
@@ -759,7 +759,7 @@ HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF; PRF security 
 Two-tree (prefix + log) combined stack & one verifiable chain from entry to signed head & IETF KeyTrans draft~\cite{ietf-keytrans-protocol} \\
 Hourly epochs (tunable) & balances proof freshness against commit cost & CONIKS~\cite{melara2015coniks} \\
 Client-tunable window $W$ & lets each client trade catch-up frequency against per-check cost & this work \\
-Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability ACKA's Logsec assumes; makes warning deletion detectable and provable & ACKA~\cite{dowling2023acka}; IETF KeyTrans auditing~\cite{ietf-keytrans-protocol} \\
+Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability ACKA's $\Logsec$ assumes; makes warning deletion detectable and provable & ACKA~\cite{dowling2023acka}; IETF KeyTrans auditing~\cite{ietf-keytrans-protocol} \\
 Truncate VRF output $\beta$ to 32 bytes & 256-bit label space; matches the prefix-tree label width & Signal keytrans~\cite{signal-kt-server} \\
 \bottomrule
 \end{tabular}

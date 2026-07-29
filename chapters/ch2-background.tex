@@ -703,7 +703,7 @@ per-epoch authenticator: each epoch it derives a label and a fingerprint from a
 chained secret state and the new public key-share, so that the two parties can
 check, epoch by epoch, that they are talking to each other and not to an injected
 key~\cite[pp.~13--14, 18]{dowling2023acka}. Finally, the \emph{secure logging
-scheme} (Logsec) is an append-only, immutable log to which fingerprints are
+scheme} ($\Log$), with security notion $\Logsec$, is an append-only, immutable log to which fingerprints are
 posted and from which they are queried~\cite[p.~10]{dowling2023acka}. The
 detection mechanism is then simple to state: an adversary who injects a forged
 key-share must either collide on the honest party's label (producing two
@@ -712,7 +712,7 @@ under a label the impersonated party never generates, which that party detects o
 lookup~\cite[p.~7]{dowling2023acka} (\cref{fig:bg-acka} summarizes the
 composition).
 
-ACKA leaves the Logsec scheme \emph{deliberately abstract}: it specifies what the secure log must
+ACKA leaves the $\Log$ scheme \emph{deliberately abstract}: it specifies what the secure log must
 guarantee, append-only immutability, but not how, noting only that the log could be a blockchain or
 another distributed-ledger protocol and specifying the interface
 generically~\cite[p.~10]{dowling2023acka}.
@@ -723,8 +723,8 @@ the \emph{channel}: it may learn the pre-shared secret state, control the sender
 inject its own forged ratchet key-share, and even hold all long-term authentication secrets, an
 unrestricted adversary~\cite[pp.~5, 19--20, 23]{dowling2023acka}. ACKA treats the log's security as a
 separate, conditional assumption: detection holds only under CEAsec security and a log satisfying its
-Logsec definition~\cite[p.~7]{dowling2023acka}. The malicious, equivocating server the VKD line defends
-against therefore lies \emph{outside} ACKA's detection theorem, which assumes a Logsec-secure log and
+$\Logsec$ definition~\cite[p.~7]{dowling2023acka}. The malicious, equivocating server the VKD line defends
+against therefore lies \emph{outside} ACKA's detection theorem, which assumes a $\Logsec$-secure log and
 does not specify its malicious-server-resistant implementation. The construction also bootstraps from a
 pre-shared state that must be shared and globally unique across honest pairwise sessions, though not
 secret. The authors equate this with a trust-on-first-use scenario~\cite[p.~6]{dowling2023acka}. Any
@@ -734,7 +734,7 @@ construction built on ACKA inherits this assumption.
 \centering
 \input{figures/tikz/fig-bg-acka}
 \caption[ACKA composition]{ACKA composes CKA and CEA with the abstract
-secure-log interface Logsec. Adapted from Dowling and
+secure-log interface $\Log$, whose required security notion is $\Logsec$. Adapted from Dowling and
 Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
