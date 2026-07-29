@@ -310,9 +310,7 @@ These figures are local component costs. They exclude the TypeScript runtime, HT
 background polling, registration, and network round trips. They therefore do not measure
 end-to-end detection latency. A matching or verifiably empty owner slot proceeds to the warning-slot
 lookup, whereas an owner-slot mismatch returns after the first lookup. The complete networked
-background monitor performs additional catch-up, owner-, peer-, and warning-slot checks. M16
-supersedes the earlier M5 warning-read microbenchmark, which remains in
-\cref{app:benchmarks} only for provenance.
+background monitor performs additional catch-up, owner-, peer-, and warning-slot checks.
 
 M17 checks the expected non-alarm behaviour of seven honest workflows: first registration, an
 established session with the expected key, a proven-empty warning slot, repeated verification of a
@@ -728,17 +726,12 @@ the client displays a warning. The component measurements quantify the local wor
 branches rather than end-to-end detection latency. The current integration does not block session
 establishment.
 
-M16 shows that the two isolated detector branches require \SI{27.8}{\micro\second} and
-\SI{31.1}{\micro\second} of local Rust component work. It does not measure end-to-end detection
-latency, which also depends on transport, polling, and epoch timing. The remaining risks are the
+M16 measures the two isolated detector branches as local Rust component work
+(\cref{ssec:eval-detection}). It does not measure end-to-end detection latency, which also depends on
+transport, polling, and epoch timing. The remaining risks are the
 operator's knowledge of the account-to-label association and three unimplemented availability
 controls. These limitations do not change the demonstrated detection result, but they constrain what
 can be claimed for a production service.
-
-This result improves on a manual-verification fallback. WhatsApp's deployed AKD states that client
-key-history monitoring is not yet enabled and instructs users to verify with the contact when an
-automatic check fails~\cite[pp.~5, 10]{whatsapp2023whitepaper}. The prototype demonstrates how the
-corresponding substitution signal can instead be raised automatically inside the client.
 
 % ============================================================================
 \section{Implications for Deployment}\label{sec:eval-deploy}
@@ -746,37 +739,31 @@ corresponding substitution signal can instead be raised automatically inside the
 The measurements identify both feasible client-side components and unresolved server-side work for a
 messenger such as Signal~\cite{signal-kt-server}.
 
-For a VRF-indexed identity lookup, full signed-head verification has a median of approximately
-\SI{128}{\micro\second} at $N\le10^4$ and \SI{139.2}{\micro\second} at $10^7$
-(\cref{ssec:eval-latency,ssec:eval-scale}). The corresponding proof has a median size of
-\num{817}\,bytes at $10^6$ labels. It is at rough size parity with the aligned CONIKS proof, while
-DUET's compressed prefix component is much smaller than Signal's fixed \num{256}-sibling copath
-(\cref{sec:eval-compare}).
+For a VRF-indexed identity lookup, median full verification remains below \SI{150}{\micro\second}
+through $10^7$ labels (\cref{ssec:eval-latency,ssec:eval-scale}), and the proof is sub-kilobyte. It is
+at rough size parity with the aligned CONIKS proof, while DUET's compressed prefix component is much
+smaller than Signal's fixed \num{256}-sibling copath (\cref{sec:eval-compare}).
 
-Offline catch-up has a different cost profile. At a one-month window, the windowed proof is
-\num{320}\,bytes. The synthetic current-head baseline uses approximately \num{222}\,kB, and the
-published CONIKS monitoring cost implies approximately \num{530}\,kB under its own parameterization.
-The one-proof result is particularly relevant to intermittently connected clients.
+Offline catch-up has a different cost profile. The windowed client fetches one proof for the missed
+window rather than one per epoch (\cref{ssec:eval-catchup,sec:eval-compare}). This one-proof result is
+particularly relevant to intermittently connected clients.
 
 The warning detector uses raw-label lookups rather than the VRF-indexed identity proof. M16 measures
 one- and two-lookup Rust reconstructions of two isolated \texttt{KTClient.detectMitm} branches.
 Their combined bandwidth and end-to-end latency were not measured. A complete background-monitor pass
 also performs owner and peer checks and may perform catch-up or continuous-mode verification.
 
-The server results expose prototype constraints. Epoch commit reaches
-\SI{6.73}{\milli\second} at $10^4$ because the current implementation deep-clones the committed
-snapshot. \Cref{ch:discussion} proposes persistent tree updates as the route to
-$O(\lg N)$ work per modified label, or $O(k\lg N)$ for $k$ updates, but that change is not
-implemented or measured here. The isolated VRF proof costs \SI{110.0}{\micro\second}. Caching a
-stable identity label could avoid repeating this work. At $10^7$ labels, the in-memory tree occupies
-approximately \SI{21.3}{\giga\byte}. Production operation therefore also requires persistent storage,
-distribution, concurrency testing, and networked measurements that this evaluation does not provide.
+The server results expose prototype constraints. Epoch commit grows with the stored snapshot because
+the current implementation deep-clones it (\cref{ssec:eval-throughput}). \Cref{ch:discussion} proposes
+persistent tree updates targeting $O(\lg N)$ work per modified label, not implemented or measured here.
+The in-memory tree also grows large at CONIKS scale (\cref{ssec:eval-scale}). Production operation
+therefore requires persistent storage, distribution, concurrency testing, and networked measurements
+that this evaluation does not provide.
 
 The two modes expose a separate deployment trade-off. Session mode writes once per signed-pre-key
-rotation. Continuous mode writes once per ratchet epoch and provides finer-grained CEA checking. Under
-the hourly benchmark model, the latter performs about $720\times$ as many writes after the first
-rotation. The ratio is determined by message activity and rotation cadence in a live system, so
-$720\times$ is not a fixed deployment value.
+rotation, whereas continuous mode writes once per ratchet epoch for finer-grained CEA checking and
+therefore performs substantially more writes (\cref{ssec:eval-modes}). The exact ratio is determined by
+message activity and rotation cadence in a live system, not a fixed deployment value.
 
 Further work also includes authenticated write ownership and stronger query privacy
 (\cref{ch:discussion}). An OPRF-based design could hide the raw lookup identity from the service
