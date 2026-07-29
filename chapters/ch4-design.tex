@@ -759,7 +759,7 @@ HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF; PRF security 
 Two-tree (prefix + log) combined stack & one verifiable chain from entry to signed head & IETF KeyTrans draft~\cite{ietf-keytrans-protocol} \\
 Hourly epochs (tunable) & balances proof freshness against commit cost & CONIKS~\cite{melara2015coniks} \\
 Client-tunable window $W$ & lets each client trade catch-up frequency against per-check cost & this work \\
-Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability ACKA's $\Logsec$ assumes; makes warning deletion detectable and provable & ACKA~\cite{dowling2023acka}; IETF KeyTrans auditing~\cite{ietf-keytrans-protocol} \\
+Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability required by ACKA's $\Logsec$ notion; makes warning deletion detectable and provable & ACKA~\cite{dowling2023acka}; IETF KeyTrans auditing~\cite{ietf-keytrans-protocol} \\
 Truncate VRF output $\beta$ to 32 bytes & 256-bit label space; matches the prefix-tree label width & Signal keytrans~\cite{signal-kt-server} \\
 \bottomrule
 \end{tabular}
