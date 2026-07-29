@@ -1,77 +1,40 @@
 \chapter{Discussion, Limitations and Future Work}\label{ch:discussion}
 
-This chapter interprets the design and evaluation results. It first
-discusses what the measurements establish and how the design sits within the wider key-transparency
-literature (\cref{sec:disc-discussion}), then states the limitations of the prototype
-(\cref{sec:disc-limitations}), and finally identifies the work required for deployment
-(\cref{sec:disc-future}).
+This chapter interprets the results, states the prototype's limitations, and identifies the work
+needed for deployment.
 
 % ============================================================================
 \section{Discussion}\label{sec:disc-discussion}
 
-This section interprets the results of \cref{ch:eval}: what the measurements establish, where the
-detection guarantee comes from, how far the design generalizes beyond Signal, and the
-deployments whose threat model does not match the design's assumptions.
+\paragraph{Detection Without Changing Proof Asymptotics.} DUET adds automatic, in-band
+key-substitution detection without changing the asymptotic size or verification complexity of a
+directory lookup proof. Detection uses additional label-bound lookups and the existing proof
+structures rather than a new proof family. This preserves the directory's proof asymptotics, while
+deployment and operational costs remain subject to the limitations below.
 
-\paragraph{Interpretation: Detection Without Changing Proof Asymptotics.} The central finding of this
-work is that automatic, in-band detection of key substitution can be added to a messaging directory
-without changing the asymptotic size or verification complexity of the proofs the directory already
-serves, although each detector check performs additional label-bound lookups. \Cref{ch:eval} shows the
-implemented VRF-indexed lookup proof at rough size parity with CONIKS. DUET's wider construction
-additionally provides the warning channel that CONIKS lacks. Median full client verification remains
-below \SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$, and an offline
-client catches up in a few hundred bytes where naïve monitoring would spend hundreds of kilobytes.
-The warning mechanism reuses the directory's existing logarithmic proof structures rather than
-introducing a new proof family. The measurements therefore support algorithmic compatibility with an
-existing transparency service, while the deployment and operational costs remain subject to the
-limitations below.
+\paragraph{Basis of the Detection Guarantee.} Detection relies on the label-separation and transition
+rules defined in \cref{ch:design}. Before a warning commits, a key mismatch combined with
+proof-verified warning absence raises the A2 alarm. After a warning commits, its removal violates the
+permitted directory transition and is detected by the transition audit. Under A3, divergent
+conversation secrets produce different lookup labels, while the global VRF-bound identity entry
+independently exposes the substituted key.
 
-\paragraph{Basis of the Detection Guarantee.} The substitution surface is larger than it first
-appears. A malicious server has two slots in which it can place an attacker-controlled key:
-the global VRF-derived slot, which it can both compute and overwrite, and the per-conversation
-dual-index slot, which it cannot derive without the shared secret but can overwrite through the
-registration-metadata link. The scheme does not prevent either overwrite: a server can always
-rewrite its own database. Detection rests on three properties established in \cref{ch:design}. First, the warning label is
-independent of the lookup labels, so knowledge of a lookup label yields no ability to compute the
-warning label. Second, a key mismatch combined with a proof-verified empty warning slot raises the A2
-alarm, which covers a warning write censored before it commits. A refusal to answer is treated as a
-failed check rather than a clean absence. Third, once a warning has committed, any later disappearance
-is treated as deletion or tampering, caught by the live transition audit; the writer's persistence
-check is a specified, unit-tested reference component (\cref{ssec:design-detection}). Under an active network man-in-the-middle, the two parties derive their
-labels from divergent shared secrets. The attacker, lacking the true secret, cannot predict the
-victim's expected warning label and so faces an empty slot it cannot fill with a valid inclusion
-proof. Detection is therefore a property of where the keys must live, not of the server's good
-behaviour.
+\paragraph{Applicability Beyond Signal.} Session mode requires a semi-trusted directory and a
+conversation secret. Continuous mode additionally requires the ratchet inputs $T_t$ and $I_t$.
+Messaging systems with equivalent directory capabilities and secret inputs could use the same
+construction. DUET implements ACKA's abstract log~\cite{dowling2023acka} using the directory of
+\cref{sec:design-acka} and adds the dual-index warning scheme.
 
-\paragraph{Generalizability Beyond Signal.} The session-mode dual-index construction is not tied to Signal. It requires a semi-trusted key
-directory and a conversation secret from which the labels can be derived. Continuous mode
-additionally requires a public ratchet key $T_t$ to authenticate and a secret epoch input $I_t$ from
-the messenger's ratchet. The work
-also instantiates and measures ACKA's~\cite{dowling2023acka} abstract append-only-log component
-(\cref{sec:bg-acka}). The instantiation uses a
-Merkle log, sparse prefix tree, and ECVRF following the IETF KeyTrans
-draft~\cite{ietf-keytrans-protocol}. The construction is described in \cref{sec:design-acka}, and its
-costs are evaluated in \cref{ch:eval}. The dual-index warning \emph{extends} ACKA's continuous-authentication
-construction. ACKA's CEA derives per-epoch labels and fingerprints from ratchet state. DUET retains
-that construction in continuous mode and adds separate dual-index lookup labels and a shared
-warning slot. The contribution beyond ACKA is the dual-index warning scheme.
-
-\paragraph{Deployment Trade-Offs and Applicability Limits.} The design provides detection
-rather than prevention. A server can still substitute a key, but the substitution can no longer
-remain silent. For a service such as Signal, session mode would extend the identity directory
-with conversation-derived lookup labels and warning writes, and continuous mode would additionally
-publish one CEA label and fingerprint per ratchet epoch. Each isolated in-process
-\texttt{KTClient.detectMitm} check performs one or two label-bound lookups; a full monitor pass adds the
-own-identity check, first-contact registration, catch-up, and, in continuous mode, per-epoch CEA
-verification. M3 provides a conservative upper proxy for the local cost of one lookup. The
-combined detector latency was not measured. The trust-on-first-use, endpoint, independent-vantage,
-and messaging-scope limitations are set out in \cref{sec:disc-limitations}.
+\paragraph{Deployment Trade-Offs and Applicability Limits.} The design provides detection rather than
+prevention. A server can still substitute a key, but for an honestly established conversation under
+active monitoring, a substituted key cannot be accepted without one of the defined checks reporting a
+failure. Session mode requires fewer writes and a smaller client integration surface. Continuous mode
+provides per-epoch authentication but requires ratchet-state access and substantially more directory
+writes. The trust-on-first-use, endpoint, independent-vantage, and messaging-scope limitations are set
+out in \cref{sec:disc-limitations}.
 
 % ============================================================================
 \section{Limitations}\label{sec:disc-limitations}
-
-The limits of the work fall into four groups: what the design is scoped to, what it must trust,
-what the prototype does not yet implement, and what has not been proved.
 
 \paragraph{Scope.} The scheme provides detection rather than prevention and retains the
 trust-on-first-use assumption described above. Its present scope is limited to pairwise, single-device
@@ -92,11 +55,11 @@ necessarily learns the label-to-user mapping, because the prototype provides no 
 the operator. The remaining three concern missing availability controls: write rate limiting, a
 staleness timeout for published epochs, and gossip-based detection of proof omission.
 
-\paragraph{Prototype Bounds.} Several gaps separate the measured prototype from a deployable one. The
-benchmarks are single-machine and in-memory, so they characterize the design's algorithmic cost
-rather than the cost of a networked, database-backed service. The epoch commit also deep-clones an
-$O(N)$ snapshot and produces the measured transient memory spike (\cref{ch:eval}). A persistent tree
-with structural sharing is the proposed route to $O(\log N)$ update work.
+\paragraph{Prototype Bounds.} The benchmarks are single-machine and in-memory, so they characterize
+the design's algorithmic cost rather than the cost of a networked, database-backed service. The epoch
+commit also deep-clones an $O(N)$ snapshot and produces the measured transient memory spike
+(\cref{ch:eval}). A persistent tree with structural sharing is the proposed route, developed in
+\cref{sec:disc-future}.
 
 The Signal Desktop integration uses two proof-of-concept stand-ins documented in \cref{ch:impl}.
 First, it derives the per-conversation secret deterministically rather than obtaining the live X3DH
@@ -134,16 +97,12 @@ The reported latency numbers measure components rather than a live end-to-end ex
 lookup-verification cost at the handshake hook and is identical to M3, not a Signal/PQXDH handshake
 benchmark. M12 measures the auditor's local computation rather than the networked proof-carrying audit.
 
-The DUET tests are not part of Signal Desktop's primary automated test suite. The live wire-parity
-test skips when no Rust server is available, and the committed benchmark corpus contains aggregate
-statistics rather than raw Criterion samples. A two-leg adversarial harness, a genuine handshake
-benchmark, and archived raw samples for independent re-analysis are left to future work.
+The committed benchmark corpus contains aggregate statistics rather than raw Criterion samples. A
+two-leg adversarial harness, a genuine handshake benchmark, and archived raw samples for independent
+re-analysis are left to future work.
 
 % ============================================================================
 \section{Future Work}\label{sec:disc-future}
-
-Future work is organized into three areas. The first completes the protocol and security analysis. The
-second addresses deployment and scale. The third extends evaluation, operations, and usability.
 
 \subsection{Completing the Protocol and Security Argument}
 
@@ -167,8 +126,8 @@ persistence check available as a tested reference component (\cref{ch:design,ch:
 \paragraph{A Formal Security Treatment.} A formal treatment should define a combined detection game
 and state the assumptions required by each component, including label derivation, VRF indexing,
 signed tree heads, warning authentication, and append-only-log verification. Establishing the
-required computational reductions, analysing a symbolic model of the protocol in Tamarin or ProVerif,
-and separately verifying the client-side proof-checking implementation all remain future work.
+required computational reductions, analysing a symbolic model of the protocol, and separately
+verifying the client-side proof-checking implementation all remain future work.
 
 \paragraph{Group Messaging.} Extending the scheme to groups requires a new label and warning design.
 Index derivation could draw on explicitly domain-separated exporter secrets associated with the
@@ -176,13 +135,11 @@ relevant group epoch under MLS. The warning mechanism would also need to handle 
 including how joins and removals interact with the warning slot and delivery across multiple devices.
 
 \paragraph{Exploring OPRF-Based Identity Blinding.} An OPRF (RFC~9497~\cite{rfc9497}) could hide the
-raw lookup identity from the service performing the oblivious evaluation. Achieving that property in
-DUET would require redesigning registration and index association and defining how the OPRF role is
-separated or distributed. It would not by itself hide which pseudonymous entry is fetched or who
-issued the request. Those properties require private-retrieval and network-anonymity mechanisms
-respectively. Signal has shipped a distributed OPRF over Ristretto255 in its SVR3
-secure-value-recovery scheme~\cite{libsignal}, which demonstrates practical use of the primitive in
-Signal-managed software. Adapting it to this directory's registration and indexing remains open.
+raw lookup identity from the service performing the oblivious evaluation. It would not by itself hide
+which pseudonymous entry is fetched or who issued the request. Those properties require
+private-retrieval and network-anonymity mechanisms respectively. Achieving identity blinding in DUET
+would require redesigning registration and index association and defining how the OPRF role is
+separated or distributed.
 
 \subsection{Deployment and Scale}
 
@@ -203,9 +160,9 @@ also depends on the messenger's authentication and ratchet mechanisms, which are
 this prototype. The directory therefore remains dependent on classical public-key primitives even when
 its labels are derived from a hybrid post-quantum handshake.
 
-\paragraph{Multi-Device Support.} ELEKTRA-style keychain cross-signing~\cite{len2023elektra} could
-supply one component of multi-device support. Device-scoped labels, warning propagation, and reset
-handling would also be required.
+\paragraph{Multi-Device Support.} ELEKTRA-style keychain cross-signing could strengthen continuity
+across rotations and devices~\cite{len2023elektra}. A complete multi-device design would also require
+device-scoped labels, warning propagation, and reset handling.
 
 \paragraph{Building on Signal's Key-Transparency Service.} DUET could build on Signal's existing
 key-transparency service~\cite{signal-kt-server} rather than operate a parallel log. This would
@@ -223,25 +180,18 @@ presentation is accessible, and whether repeated warnings cause alarm fatigue, c
 ceremony studies that motivated the design~\cite{vaziripour2017}. This would determine whether
 cryptographic detection leads to an appropriate user response.
 
-\paragraph{Evidence-Carrying Alerts and Operational Response.} The prototype's verdicts are
-user-facing events. A production service would add an operator-facing layer with three parts. First,
-a structured alert schema carrying the scenario class, the epoch, and the signed tree heads and proofs
-that constitute the evidence. Second, notification interfaces through which an operator or auditor can
-verify the recorded inconsistency from the attached evidence. Third, an explicit response policy defining when the
-system rejects a proof, requests a key rotation, or escalates to a human. These additions would
-connect the cryptographic verdict to a defined operational response. Any such telemetry must be
-minimized so that the alerting layer does not itself leak the metadata the pseudorandom labels were
-designed to hide.
+\paragraph{Evidence-Carrying Alerts and Operational Response.} The prototype displays verifier
+outcomes to users. A production service would add an operator-facing layer that carries the scenario
+class, epoch, and the signed tree heads and proofs constituting the evidence, with interfaces to
+verify a recorded inconsistency and a policy for when to reject a proof, request a key rotation, or
+escalate. Such telemetry must be minimized so that the alerting layer does not itself leak the
+metadata the pseudorandom labels were designed to hide.
 
-\paragraph{Evaluation Under Deployment Conditions.} The in-memory benchmarks of \cref{ch:eval}
-isolate the costs of the cryptographic operations and authenticated data structures. A further
-evaluation should run the service over persistent storage under concurrent requests and wide-area
-network delay. This would test whether the persistence costs observed in database-backed systems
-(\cref{sec:eval-compare}) also dominate DUET at scale, rather than assuming that their results
-transfer directly. A sensitivity analysis should vary the epoch cadence and the catch-up window.
-Separate measurements on mobile devices should report client CPU use, energy consumption, and network
-overhead. These experiments would provide the evidence needed to assess the system's production
-feasibility.
+\paragraph{Evaluation Under Deployment Conditions.} A further evaluation should run the service over
+persistent storage under concurrent requests and wide-area network delay, testing whether the
+persistence costs observed in database-backed systems (\cref{sec:eval-compare}) also dominate DUET at
+scale. It should vary the epoch cadence and the catch-up window, and report client CPU use, energy
+consumption, and network overhead on mobile devices.
 
 \paragraph{Extending Beyond Private Messaging.} Future work could evaluate the same
 key-authentication and warning approach in security-critical systems that distribute public keys
