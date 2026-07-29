@@ -112,8 +112,8 @@ detector branches, and the expected verdicts for enumerated clean workflows.
 Lookup-proof size determines the bandwidth added to a key fetch. \Cref{tab:eval-sizes} reports the
 implemented VRF-indexed lookup and a dense Merkle-log inclusion proof over the same number of user
 entries. The DUET proof contains a prefix proof, an \num{80}-byte VRF proof, and log inclusion. The
-reference contains only the dense-log path. This is not a measurement of the raw dual-index warning
-lookup, which carries no VRF proof. Each row is one seed-deterministic path. M7
+reference contains only the dense-log path. The table measures VRF-indexed identity lookups. Raw
+dual-index warning lookups carry no VRF proof. Each row is one seed-deterministic path. M7
 (\cref{ssec:eval-scale}) supplies the sampled distribution. A prefix proof carries one hash per
 non-empty sibling on the label's path, whose number $h$ has expected value $\approx\lceil\lg N\rceil$,
 so both objects grow logarithmically in $N$ as the sparse-tree design predicts
@@ -296,9 +296,8 @@ median of \SI{31.1}{\micro\second} and a 95th percentile of
 \SI{32.7}{\micro\second}. The empty warning result must be proof-verified, because accepting an
 unproven empty response would let the server conceal a committed warning.
 
-These figures are local component costs. They exclude the TypeScript runtime, HTTP transport,
-background polling, registration, and network round trips. They therefore do not measure
-end-to-end detection latency. A matching or verifiably empty owner slot proceeds to the warning-slot
+These are local Rust component costs. End-to-end detection additionally includes the TypeScript
+runtime, HTTP transport, background polling, registration, and network round trips. A matching or verifiably empty owner slot proceeds to the warning-slot
 lookup, whereas an owner-slot mismatch returns after the first lookup. The complete networked
 background monitor performs additional catch-up, owner-, peer-, and warning-slot checks.
 
@@ -692,9 +691,8 @@ Endpoint compromise X1 lies outside the directory threat model.}
 
 \Cref{fig:eval-timeline} traces the scripted timing of a server-side substitution (A1). The attack
 occurs at epoch $E$. The victim's self-check flags it at $E{+}1$, the warning commits at $E{+}2$,
-and the peer's monitor reads it at $E{+}3$. These positions follow a one-action-per-epoch
-demonstration with monitors polling once per epoch. They are not a protocol-wide latency bound, and
-no user action is required.
+and the peer's monitor reads it at $E{+}3$. These epochs reflect the scripted polling schedule rather
+than a protocol-wide latency bound. Monitoring itself requires no user action.
 
 \begin{figure}[ht]
 \centering

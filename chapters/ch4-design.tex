@@ -278,10 +278,9 @@ self-monitoring key transparency does not surface to the other party.
 
 \paragraph{Tripwire.} Within that scope, a substituted key implies a different shared secret $\sharedS$,
 hence disjoint labels, so a peer lookup either misses the slot the impersonator never
-wrote to, or a warning write lands in a slot the impersonator could not predict. The guarantee that
-a committed warning then \emph{stays} visible is not automatic. It is supplied by the write-once
-policy, the transition audit, and the persistence check introduced in
-\cref{ssec:design-detection}.
+wrote to, or a warning write lands in a slot the impersonator could not predict. After a warning
+commits, the write-once policy blocks replacement through the honest interface, while the transition
+audit and persistence check expose later removal.
 
 \subsection{Detection and the Bidirectional Warning}\label{ssec:design-detection}
 
@@ -634,9 +633,9 @@ RFC~9162 consistency proof between two distant heads, not a new cryptographic ob
 idea of collapsing unchanged epochs itself new: CONIKS (\S6.3) explicitly \emph{proposes} skipping
 missed epochs when a history structure proves no change, SEEMless makes monitoring cost depend on the
 number of key updates rather than on elapsed epochs, and OPTIKS reduces unchanged-key monitoring to a
-single proof. The contribution here is therefore not the mechanism but its concrete instantiation for
-the \emph{offline-client} monitoring window (one consistency proof from the client's last
-checkpoint to the current head) together with the measured saving in \cref{ch:eval}. Second, the
+single proof. The contribution is a concrete instantiation for \emph{offline-client} monitoring, using
+one consistency proof from the client's last checkpoint to the current head, together with the
+measured saving reported in \cref{ch:eval}. Second, the
 saving is linear in the window: the windowed proof replaces $W$ proofs with one. It is a reduction in
 the number of proofs, not an improvement in the asymptotic complexity of an individual proof.
 
@@ -647,24 +646,17 @@ a false binding at some epoch inside the window and revert it before the client 
 that verifies only the consistency of the two endpoint heads and the current value at its own label
 would miss such a transient substitution, which is why CONIKS concludes that inspecting only the
 latest signed root is unsound (\cref{ssec:bg-vkd-academic}). That objection applies verbatim to any
-windowed check, including this one; the reason it does not defeat this design is therefore stated
-explicitly. A transient in-window substitution is profitable to the adversary only if it is
-\emph{used}: a peer who initiates or continues the conversation during the window performs
-pinned-key lookups at the dual-index slots (\cref{ssec:design-detection}) and, on a mismatch, writes
-to the shared warning slot. Under the write-once policy, transition audit, and persistence check of
-\cref{ssec:design-detection}, that warning outlives the attack, and the returning client's catch-up
-procedure reads the warning slot in the same synchronization workflow, so the transient substitution
-leaves a durable, in-band trace that the windowed client does see. Windowed catch-up therefore
-preserves detection \emph{only when the warning commits}: if a monitoring victim or a pinned peer
-detects the substitution and successfully writes it, the peer-writable, persistent warning channel
-leaves a durable trace that survives the attack; in a directory without such a channel (CONIKS's,
-for instance), the same windowing would weaken detection exactly as CONIKS's authors argue.
-If the server censors that write within the window (the A2 threat of \cref{ch:threat}), the endpoint
-consistency proof still establishes append-only consistency and cuts catch-up bandwidth, but it does
-not by itself exclude every transient in-window substitution; the write-once, transition-audit, and
-persistence-check mechanism protects a warning only once it is committed. The windowed guarantee
-therefore depends on the warning channel, while the warning channel stands alone; the two compose
-rather than being independent optimizations.
+windowed check, including this one. A transient in-window substitution is profitable to the adversary
+only if it is \emph{used}. A peer who initiates or continues the conversation during the window
+performs pinned-key lookups at the dual-index slots (\cref{ssec:design-detection}) and, on a mismatch,
+writes to the shared warning slot. DUET preserves detection only when that warning commits. The
+write-once policy protects the committed slot, while the transition audit and persistence check expose
+later removal, so the warning outlives the attack and the returning client reads it during catch-up.
+If the server censors the write (the A2 threat of \cref{ch:threat}), the distant-head proof still
+establishes append-only consistency but cannot exclude every transient substitution. Windowed catch-up
+therefore relies on the warning channel, although the warning channel does not depend on windowing.
+Without such a channel, as in CONIKS, the same windowing would weaken detection exactly as CONIKS's
+authors argue.
 
 \subsection{Worked Parameterization}\label{ssec:design-param}
 

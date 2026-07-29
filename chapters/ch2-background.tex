@@ -563,8 +563,7 @@ number of changes in that epoch; the authors themselves doubt that a party
 willing to perform this auditing for free will exist in every
 deployment~\cite[p.~12]{melara2015coniks}. Second,
 the client-to-client gossip that would let peers cross-check STRs is left as
-future work~\cite[p.~7]{melara2015coniks}. Third, the guarantee is detective
-rather than preventive: CONIKS exposes an attack but cannot deter a provider
+future work~\cite[p.~7]{melara2015coniks}. Third, CONIKS exposes an attack but cannot deter a provider
 willing to attack its users openly~\cite[p.~2]{melara2015coniks}.
 
 \subsubsection{SEEMless}
@@ -712,10 +711,9 @@ under a label the impersonated party never generates, which that party detects o
 lookup~\cite[p.~7]{dowling2023acka} (\cref{fig:bg-acka} summarizes the
 composition).
 
-ACKA leaves the $\Log$ scheme \emph{deliberately abstract}: it specifies what the secure log must
-guarantee, append-only immutability, but not how, noting only that the log could be a blockchain or
-another distributed-ledger protocol and specifying the interface
-generically~\cite[p.~10]{dowling2023acka}.
+ACKA specifies what the secure log must guarantee, append-only immutability, but leaves the
+construction abstract. It notes only that the log could be a blockchain or another
+distributed-ledger protocol, specifying the interface generically~\cite[p.~10]{dowling2023acka}.
 
 ACKA's adversary is stronger, along its own axis, than the malicious-server adversary of the VKD line,
 and that difference determines how the two compose. It is a full-compromise active man-in-the-middle on

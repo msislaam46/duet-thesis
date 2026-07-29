@@ -203,9 +203,9 @@ the adversarial suite.
 
 \paragraph{X1: Endpoint Compromise (Boundary).} Once the adversary holds the
 victim's own private key, it derives the same shared secret, the same labels, and
-the same proofs, and is indistinguishable from the victim. X1 is included to
-delineate the guarantee: key transparency protects the channel between honest
-endpoints, not the endpoints themselves. The attack--defence structure of these
+the same proofs, and is indistinguishable from the victim. X1 marks the boundary of
+key-transparency protection. Key transparency protects communication between honest
+endpoints but cannot protect a compromised endpoint. The attack--defence structure of these
 scenarios, separating the interposition routes that place an attacker key (A1, A3,
 A5) from the concealment attempts that try to hide it (A2, A4) and from the
 out-of-scope endpoint boundary (X1), is presented with the evaluation in
@@ -227,17 +227,10 @@ show the threat is practical rather than
 hypothetical~\cite{yadav2022fakekey}. Assuming the server may misbehave is therefore a
 conservative and well-precedented modelling choice.
 
-\paragraph{Rejection of the Honest-Routing Assumption.} The model deliberately does not assume
-honest routing. A network adversary that drops messages is a denial-of-service
-adversary, and the model admits message deletion as one of the Dolev--Yao
-capabilities. Key transparency cannot prevent such interference, because no cryptographic
-directory can force a hostile network to deliver packets. Its purpose is instead to convert silent
-compromise into detectable misbehaviour: a censored write, a
-missing epoch, or a proof that fails to verify is observable, whereas a
-substituted key on an unaccountable server is not. The guarantee is therefore
-\textbf{detection, not prevention}. Thus, the guarantee is not availability. A refusal, a missing
-proof, or an invalid response is reported as an unavailable or failed check, not as successful
-verification.
+\paragraph{Rejection of the Honest-Routing Assumption.} The model allows a network adversary to drop
+messages, since no cryptographic directory can force their delivery. DUET makes such interference
+observable. Censored writes, missing epochs, and invalid proofs are reported as failed checks rather
+than successful verification.
 
 One limitation remains, inherited from the trust-on-first-use assumption that also
 underlies ACKA. Detection establishes that the key seen now differs from a key
