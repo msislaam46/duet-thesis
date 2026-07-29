@@ -22,7 +22,7 @@ guarantees against passive adversaries and support recovery from compromise
 through continuous key evolution.
 
 As \cref{ch:intro} argues, the security of this construction depends on one assumption external to the
-cryptographic protocols: that users receive authentic public keys when initiating communication.
+cryptographic protocols: that users receive authentic public keys from the provider when initiating communication.
 Signal's server distributes those keys for X3DH~\cite{signaldocs}, and the manual Safety Number does
 not on its own guarantee they are authentic. Signal is thus both the case study and the deployment
 context for this thesis.
@@ -372,14 +372,12 @@ monitoring mechanisms used by key-transparency systems.
 \subsection{Key Transparency Requirements}\label{ssec:bg-ct2kt}
 
 Key transparency (KT) adapts the append-only Merkle log of Certificate
-Transparency~\cite{rfc6962,rfc9162} from public certificates to user identity bindings: a server
+Transparency~\cite{rfc6962,rfc9162} from public certificates to user identity bindings where a server
 should be unable to present different keys to different users without leaving cryptographic evidence.
-The general framework of transparency overlays formalizes this reuse across
-applications~\cite{chase2016overlays}. Moving from certificates to messaging introduces two
-requirements that Certificate Transparency was never designed to satisfy.
-
+Messaging systems must protect the privacy of their users and prevent adversaries from enumerating the contents of the directory. 
+This leads us to two requirements that constrain the design of a KT system.
 The first requirement is privacy. A messaging directory contains user identities
-and their public keys, so a transparency mechanism that exposed the entire
+and their public keys. A transparency mechanism that exposed the entire
 directory would reveal who uses the service and potentially who communicates with
 whom. KT systems therefore require proofs that reveal information only about the
 queried entry rather than the directory as a whole~\cite[p.~2]{melara2015coniks}.
@@ -442,20 +440,20 @@ consistency proof. A missing or invalid proof produces the verdict \emph{consist
 
 \subsection{The IETF KeyTrans Architecture}\label{ssec:bg-keytrans}
 
-The IETF's Key Transparency (KEYTRANS) working group provides a common reference model for
+The IETF's Key Transparency (KEYTRANS) working group provides a common reference model~\cite{ietf-keytrans-protocol} for
 key-transparency systems, though several deployments predate or diverge from
-it~\cite{ietf-keytrans-protocol}. It assembles three pieces already introduced: an append-only Merkle
+it. It assembles three parts already introduced: an append-only Merkle
 log tree records the directory's history; a per-epoch prefix tree, a sparse Merkle tree whose leaves
 are the VRF-derived labels, represents the directory's state at one epoch (one published snapshot); and
-the VRF maps identities to their labels in that tree. Around these the draft defines a small interface
+the VRF maps identities to their labels in that tree. Based on this architecture, the draft defines a small interface
 (update, search, monitor, and audit) and a role for third-party auditors who cross-check tree heads to
 catch the forks of the previous subsection. Signal's production server implements this draft ``with
 some modifications''~\cite{signal-kt-server}.
 
-The construction grounds each primitive in its specification: the Merkle log and its inclusion and
+The construction grounds each primitive in its specification where the Merkle log and its inclusion and
 consistency proofs are those of RFC~6962 and RFC~9162~\cite{rfc6962,rfc9162}, the verifiable random
 function is that of RFC~9381~\cite{rfc9381}, and the later label derivation from a session secret uses
-HKDF, RFC~5869~\cite{rfc5869}. The draft leaves one question open: it calls for ``reasonable monitoring
+HKDF, RFC~5869~\cite{rfc5869}. However, the draft leaves one question open: it calls for ``reasonable monitoring
 windows'' so that intermittently connected clients need not replay every missed update, but leaves the
 mechanism unspecified~\cite{ietf-keytrans-protocol}. That efficiency gap is what this thesis's windowed
 consistency proof addresses.
@@ -463,15 +461,12 @@ consistency proof addresses.
 % ============================================================================
 \section{Verifiable Key Directories for Key Transparency}\label{sec:bg-vkd}
 
-Verifiable key directories built on transparency logs are the context in which this thesis sits and
-the benchmark against which its design is assessed. The limitations that recur across these systems
-motivate \cref{ch:design}.
 
 \subsection{The Verifiable Key Directory (VKD) Abstraction}\label{ssec:bg-vkd-abstraction}
 
 The systems surveyed here differ substantially in their data structures, privacy guarantees, and
 performance, yet all implement the same abstraction: a \emph{verifiable key directory} (VKD).
-Informally, a VKD is an authenticated key--value directory that lets clients verify the correctness of
+Informally, a VKD is an authenticated key-value directory that lets clients verify the correctness of
 directory responses without trusting the operator: the directory returns each value with a proof that
 it is consistent with a publicly committed state, and by publishing commitments to successive states it
 lets clients and auditors check that the directory evolves according to its update rules. SEEMless
@@ -479,9 +474,12 @@ formalized the abstraction with three security goals~\cite[p.~4]{chase2019seemle
 (honest proofs verify), \emph{soundness} (no two contradictory yet valid answers for one label), and
 \emph{privacy} (formalized by simulation against an explicit leakage function). ELEKTRA later
 generalized it to a \emph{multi-device} VKD, extending the model to device-key histories and
-formalizing the multi-device keychains Keybase had run in production since
-2014~\cite[p.~1, p.~4]{len2023elektra}. The abstraction leaves the implementation unspecified; the
-primitives that recur across constructions are introduced next.
+formalizing the multi-device keychains that Keybase has been running in production since
+2014~\cite[p.~1, p.~4]{len2023elektra}.
+Verifiable key directories built on transparency logs are central to this thesis and provide the
+benchmark against which its design is assessed. Their recurring limitations motivate \cref{ch:design}.
+The primitives common to these constructions are introduced next.
+
 
 \subsection{Cryptographic Building Blocks: Merkle Prefix Trees and Zero-Knowledge Sets}\label{ssec:bg-vkd-blocks}
 
@@ -625,7 +623,7 @@ alternative transparency-log design: it \emph{nests two kinds of Merkle tree}, a
 (as in Certificate Transparency) whose nodes each carry a lexicographic prefix tree (as in CONIKS), so
 that an append costs $O(\log^2 n)$ while a data owner monitors with only polylogarithmic
 download~\cite[pp.~1--2]{hu2021merkle2}. Its emphasis is throughput rather than the directory privacy
-messaging demands; it does not aim for strong key privacy and so leaks update
+messaging demands. It does not aim for strong key privacy and thus leaks update
 patterns~\cite[p.~14]{len2023elektra}. It is therefore evidence that the shared transparency-log
 substrate can be optimized for very different objectives once privacy is not a first-order goal.
 
@@ -643,76 +641,39 @@ practical at scale and which limitations remained after deployment, the constrai
 work is judged.
 
 \subsubsection{WhatsApp Key Transparency (AKD)}
-WhatsApp deploys a VKD at the scale of its user base: an Auditable Key Directory
-(AKD), an open-source Rust implementation inspired by SEEMless with extensions
-adapted from Parakeet~\cite[p.~4]{whatsapp2023whitepaper}. It hashes with Blake3,
-publishes an epoch every five minutes, derives leaf positions from a VRF over the
-phone number, key version, and a latest-key flag, tombstones removed devices in
-production, and signs each directory root with a key whose public half ships
-inside the WhatsApp client binary. This deployed signed tree head hardens the directory
-against split views~\cite[pp.~4, 7, 8, 12]{whatsapp2023whitepaper}. Audit proofs
-are published on Amazon S3 under a write-once retention policy of five years,
-allowing independent parties to audit the directory
-state~\cite[p.~11]{whatsapp2023whitepaper}, and the directory logs identity keys
-only. Two aspects of the deployment are particularly relevant to the problem this
-thesis considers. First, client self-monitoring is not enabled (``key history
-requests are not yet enabled in the current version of WhatsApp's
-clients''~\cite[p.~5]{whatsapp2023whitepaper}), so detection rests on
-infrastructure auditing and the peer-and-self lookups performed when a chat is
-opened, not on continuous monitoring. Second, when a lookup fails the client
-falls back to the manual ceremony rather than an automatic alarm: the session
-``should be verified manually with the contact in
-question''~\cite[p.~10]{whatsapp2023whitepaper}, and the whitepaper frames key
-transparency as a supplement to, not a replacement for, the manual fingerprint
-check~\cite[p.~13]{whatsapp2023whitepaper}. (The whitepaper's claims are kept
-separate from the Meta engineering blog~\cite{lawlor2023whatsapp}, the actual
-source of the throughput and third-party-auditor figures.)
+WhatsApp deploys an Auditable Key Directory at production scale, with signed directory roots and
+retained audit material for independent consistency checking~\cite[pp.~4, 7, 8, 11, 12]{whatsapp2023whitepaper}.
+The cited deployment does not enable client key-history monitoring~\cite[p.~5]{whatsapp2023whitepaper},
+and a failed automatic check directs the user to verify the session manually with the
+contact~\cite[pp.~10, 13]{whatsapp2023whitepaper}. It therefore demonstrates that key transparency and
+public auditing can operate at messaging scale, but it does not provide the automatic in-band peer
+warning targeted by this thesis.
 
 \subsubsection{Signal Key Transparency}
-Signal's deployment closely tracks the emerging IETF Key
-Transparency standard. Its \texttt{key-transparency-server} implements the draft
-with some modifications, exposing Search and Monitor endpoints, public audit
-endpoints, and auditor interoperability test vectors (the auditor's deployment
-operator is not documented). It keys the directory
-with an elliptic-curve VRF (ECVRF) from the suite family the standard
-recommends~\cite{signal-kt-server}. It stores three lookup keys: an identity key
-indexed by the account identifier (ACI), which is the per-account identity Signal
-assigns independently of the phone number, together with the phone number itself and a
-username hash. Its wire format pads every prefix proof to the full 256-sibling
-copath with stand-in hashes, giving a fixed-size 8{,}192-byte proof regardless of
-directory occupancy. As with the other deployed systems reviewed here, detection
-ultimately relies on self-monitoring rather than any peer-warning mechanism.
-Tracking the IETF draft as it does, Signal's deployment also is a useful
-indicator of the direction in which standardized key-transparency deployments are
-heading.
+Signal's key-transparency deployment closely follows the emerging IETF standard and exposes Search,
+Monitor, and public audit interfaces~\cite{signal-kt-server}. Its directory covers the account identity
+key, the phone-number mapping, and a username-hash mapping. Its wire format pads every prefix proof to
+the full 256-sibling copath with stand-in hashes, giving a fixed-size 8{,}192-byte proof regardless of
+directory occupancy, the deployed baseline that \cref{ch:eval} compares against. Detection nevertheless
+relies on account monitoring and optional user-triggered verification rather than a
+conversation-specific warning delivered to the peer.
 
 \subsubsection{Proton Mail Key Transparency}
-ProtonKT is both deployed and formally analysed~\cite{goebel2023proton,proton2023ktdeck}: it is a VKD
-whose values are \emph{Signed Key Lists} and whose consistency reuses Certificate Transparency,
-embedding each epoch's chain hash into a CT-logged TLS certificate rather than a blockchain, gossip, or
-witness quorum~\cite[pp.~35, 37]{goebel2023proton}. It targets email under a different threat model
-and, like the academic constructions, notifies only the key's owner, defining no peer-warning path to
-the conversation partner~\cite[pp.~8, 47, 67]{goebel2023proton}. G\"obel also flags communicating KT
-failures to end users as an open usability problem, since the interface presents a generic
-verification failure without the exportable technical evidence a user would need to
-investigate~\cite[p.~88]{goebel2023proton}.
+ProtonKT applies a verifiable directory to email and reuses Certificate Transparency to support
+consistency checking~\cite[pp.~35, 37]{goebel2023proton}. It supports owner and external auditing but
+does not notify a communication partner when a key is substituted~\cite[pp.~8, 47, 67]{goebel2023proton}.
+Its evaluation also identifies the communication of verification failures to users as an unresolved
+usability problem~\cite[p.~88]{goebel2023proton}.
 
 \subsubsection{Google KT, Apple CKV, and Keybase}
-Three further deployments complete the survey. Google Key Transparency is a CONIKS-derived VKD on Trillian that
-snapshots a CONIKS-style map into a CT-style log and records, per account,
-\emph{who} changed each record, an early precursor of ELEKTRA's device
-cross-signing, but it is a general key-discovery service, self-monitoring, and
-has been archived since October 2024, making it a design precedent rather than a
-live deployment~\cite{google-kt}. Apple Contact Key Verification (iMessage) is a
-CONIKS-style design that keeps verification state
-device-local~\cite[p.~4355]{optiks2024}\cite{apple-ckv}. Keybase, in production
-since 2014, is the deployed multi-device-keychain ancestor, but it targets no
-user-key privacy. ELEKTRA later added precisely that privacy
-mechanism~\cite[p.~2]{len2023elektra}.
+Google KT~\cite{google-kt}, Apple Contact Key Verification~\cite{apple-ckv}, and Keybase illustrate
+further deployment choices: a historical CONIKS-derived transparency service, automatic device-level
+verification, and a multi-device keychain that predates the academic keychain work. Their relevant properties are
+summarized in \cref{sec:bg-compare}.
 
 The deployed systems converge on the same operational model: detection rests on
 self-monitoring, auditor verification, or consistency checking, none of it reaching
-the peer in band. \Cref{sec:bg-compare} sets these systems side by side.
+the peer in band.
 
 % ============================================================================
 \section{The ACKA (Authenticated Continuous Key Agreement) Framework}\label{sec:bg-acka}
@@ -756,35 +717,25 @@ guarantee, append-only immutability, but not how, noting only that the log could
 another distributed-ledger protocol and specifying the interface
 generically~\cite[p.~10]{dowling2023acka}.
 
-The adversary ACKA defends against is different from, and along its own axis
-stronger than, the malicious-server adversary of the VKD line, and that
-difference determines how the two mechanisms compose. ACKA's adversary is a full-compromise
-active man-in-the-middle on the \emph{channel}: it may learn the pre-shared
-secret state, control the sender's randomness, and actively inject its own forged
-ratchet key-share~\cite[pp.~19--20]{dowling2023acka}, and, per Remark~4, may even
-hold all long-term authentication secrets~\cite[p.~23]{dowling2023acka}, so that
-the construction covers not only full compromise but an unrestricted
-adversary~\cite[p.~5]{dowling2023acka}.
-ACKA treats the log's security as a separate, conditional assumption: detection holds only
-under CEAsec security and a log satisfying its Logsec definition~\cite[p.~7]{dowling2023acka}. The malicious, equivocating server that the VKD
-line defends against (one that can substitute keys, censor writes, and serve
-divergent views) therefore lies \emph{outside} ACKA's detection theorem, which assumes a log
-already satisfying its Logsec definition (append-only, with consistency and exclusion proofs) and
+ACKA's adversary is stronger, along its own axis, than the malicious-server adversary of the VKD line,
+and that difference determines how the two compose. It is a full-compromise active man-in-the-middle on
+the \emph{channel}: it may learn the pre-shared secret state, control the sender's randomness, actively
+inject its own forged ratchet key-share, and even hold all long-term authentication secrets, an
+unrestricted adversary~\cite[pp.~5, 19--20, 23]{dowling2023acka}. ACKA treats the log's security as a
+separate, conditional assumption: detection holds only under CEAsec security and a log satisfying its
+Logsec definition~\cite[p.~7]{dowling2023acka}. The malicious, equivocating server the VKD line defends
+against therefore lies \emph{outside} ACKA's detection theorem, which assumes a Logsec-secure log and
 does not specify its malicious-server-resistant implementation. The construction also bootstraps from a
-pre-shared state that must be shared and globally unique across honest pairwise
-sessions, though not secret, which the authors equate with a correctly assumed
-trust-on-first-use scenario~\cite[p.~6]{dowling2023acka}, a caveat any
-construction built on ACKA inherits.
+pre-shared state that must be shared and globally unique across honest pairwise sessions, though not
+secret. The authors equate this with a trust-on-first-use scenario~\cite[p.~6]{dowling2023acka}. Any
+construction built on ACKA inherits this assumption.
 
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-acka}
-\caption[The three ACKA primitives composed as a pipeline]{The three ACKA primitives composed as a
-pipeline. CKA supplies the public ratchet key $T_t$ that CEA authenticates and the secret input
-$I_t$ that updates the fingerprint. In ACKA's Signal mapping, $I_t=ck_t$. CEA/CEAsec posts a
-per-epoch label and fingerprint to Logsec and later queries them. The dashed LOG box represents
-ACKA's abstract Logsec interface, which \cref{ch:design} implements as DUET's auditable directory.
-Based on Dowling and Hale~\cite{dowling2023acka}.}
+\caption[ACKA composition]{ACKA composes CKA and CEA with the abstract
+secure-log interface Logsec. Adapted from Dowling and
+Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
 
@@ -856,7 +807,6 @@ warning under this definition. Merkle\textsuperscript{2} is omitted as a general
 construction rather than a complete identity-to-key directory, and ACKA because it consumes a
 secure-log abstraction rather than defining a directory (\cref{sec:bg-acka}).\par}
 \end{table}
-\FloatBarrier
 
 \subsection{Implications for the Design}\label{ssec:bg-implications}
 
@@ -876,7 +826,7 @@ unspecified~\cite{ietf-keytrans-protocol}, and CONIKS flags the linear cost as a
 extension~\cite[p.~11]{melara2015coniks}. This motivates a requirement for a catch-up cost independent
 of the missed-epoch count.
 
-Third, equivocation must be detectable from outside the session. Append-only is not the same as
+Finally, equivocation must be detectable from outside the session. Append-only is not the same as
 globally consistent: a malicious server can serve Alice and Bob divergent heads, each backed by valid
 consistency proofs, so that neither detects the substitution from local checks alone
 (\cref{ssec:bg-ct2kt}). Exposing this requires an independent vantage that observes the directory from
@@ -889,6 +839,4 @@ transmit only the authentication path actually required~\cite[p.~10]{melara2015c
 places the proposed construction within this space.
 
 These requirements, together with ACKA's continuous authentication under an assumed secure log, define
-the design developed in \cref{ch:design} and the four contributions announced in \cref{ch:intro}. The
-coverage of Signal's X3DH key material by the proposed directory, set against the Safety Number, is
-presented where the design is developed (\cref{ch:design}).
+the design developed in \cref{ch:design} and the four contributions outlined in \cref{ch:intro}.

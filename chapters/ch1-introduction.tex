@@ -4,7 +4,7 @@ Private messaging is now part of everyday personal, professional, and civic comm
 Signal~\cite{signal-home} is an end-to-end encrypted messaging system, and its cryptographic design
 has influenced messaging systems beyond the Signal application~\cite{signal-protocol-impact}. The
 cryptographic suite that provides its end-to-end encryption is known as the Signal Protocol and is
-introduced in \cref{sec:bg-signal}. Its wider adoption makes Signal an important setting in which to
+introduced in \cref{sec:bg-signal}. Its wide adoption makes Signal an important setting in which to
 study improvements to key authentication for asynchronous private messaging.
 
 For journalists, activists, abuse survivors, and others whose safety may depend on confidential
@@ -17,48 +17,47 @@ is therefore particularly important where a loss of confidentiality could cause 
 That protection depends on authentic public keys. End-to-end encryption keeps an intermediary from
 reading message content only when each participant encrypts to the intended recipient's genuine key.
 In asynchronous messengers such as Signal, clients obtain that key material from provider-operated
-infrastructure and trust that what they receive is genuine. That trust is the weak point: if the
+infrastructure and trust that what they receive is genuine. That trust is the weak point. If the
 infrastructure substitutes an attacker's key for the recipient's, the protocol may build an encrypted
-channel to the attacker rather than the intended recipient. This is a key-substitution, or
+channel to the attacker rather than the intended recipient. This is called a key-substitution, or
 ``fake-key,'' attack, and it is invisible to the cryptography itself.
 
-The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. The comparison is sound when completed, but users rarely complete it without guidance. In one study, only about 14\% of unguided pair--application trials succeeded, and just two of twelve pairs completed the comparison in any of the apps tested~\cite{vaziripour2017}. Even a successful comparison is a one-off check that says nothing about whether a key changes later.
+The traditional defence is a manual \emph{safety-number} comparison where the two users read a code to each other out of band and confirm that it matches. 
+The comparison is sound when completed, but users rarely complete it without guidance. In one study, only about 14\% of unguided pair--application trials succeeded, and just two of twelve pairs completed the comparison in any of the apps tested~\cite{vaziripour2017}. 
+Even a successful comparison is a one-off check that says nothing about whether a key changes later.
 
-A messaging service's public-key directory maps user identities to their public identity keys. \emph{Key transparency} addresses this limitation by publishing authenticated commitments to this directory through a verifiable, append-only history, so that clients can check their keys against a public, consistent record. Production systems now deploy it, including Signal's optional Automatic Key Verification~\cite{signal-akv}.
+A messaging service's public-key directory maps user identities to their public identity keys. \emph{Key transparency} (KT) addresses this limitation by publishing authenticated commitments to this directory through a verifiable, append-only history, so that clients can check their keys against a public, consistent record.
+Production systems have started deploying it. An example of a production-grade KT system is Signal's optional Automatic Key Verification~\cite{signal-akv}.
 
-However, the deployed and proposed key-transparency systems surveyed in \cref{ch:background} still leave gaps. For key-substitution detection, these systems still rely on the account holder \emph{monitoring their own directory entry}: while a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. Also, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
+However, for key-substitution detection, these systems still rely on the account holder \emph{monitoring their own directory entry}. While a lookup can confirm that a fetched key matches the log, a key substituted \emph{in the log itself} is noticed only by its owner. 
+There is no automatic, in-band channel to warn the communicating \emph{peer} that the fetched key is not the intended party's authentic key. Also, a returning client that monitors epoch by epoch faces an offline cost that grows linearly with the number of missed epochs.
 
-Since users may not complete a manual comparison and either participant may be offline, key
-verification in an asynchronous messenger must operate automatically. It must allow both parties to
-detect a substitution inside the client when they next perform the required checks, and must reject a
-missing or invalid proof rather than silently accepting the key. A returning client must also be able
-to check the history it missed without downloading one proof for every missed epoch. Finally, the
-mechanism must keep to practical proof sizes and local verification costs.
-
-These requirements motivate DUET (\emph{DU}al-index, \emph{E}poch-windowed \emph{T}ransparency). The
-design combines an in-band warning scheme with windowed consistency verification and integrates the
-verifier into a Signal Desktop prototype. \Cref{ch:design} defines its session-level and continuous
-ratchet-level modes, and \cref{ch:impl} describes their implementation.
-
-DUET provides detection, not prevention: a malicious provider can still refuse service or substitute a
-key, but under the threat-model assumptions and once monitoring begins, a substitution cannot remain
-silent. That distinction, between an availability failure and detectable interference, is formalized
-in \cref{ch:threat}.
+Key verification in an asynchronous messenger should therefore operate automatically, warn both
+parties in band, and reject a missing or invalid proof instead of accepting the key silently. A
+returning client should also be able to verify missed history without downloading one proof for every
+missed epoch, while keeping proof sizes and local verification costs practical.
 
 \section{Aim and Approach}\label{sec:intro-aims}
 
-We propose DUET, a mechanism for automatic, in-band detection of key substitution over a messaging key
-directory. It allows the in-scope checks to run automatically without a separate manual comparison, and
-does not change the format or asymptotic complexity of an individual lookup proof, although the
-complete mechanism performs additional label-bound lookups and writes. The windowed consistency mechanism further replaces one
-proof per missed epoch with a single proof whose size grows logarithmically in the endpoint log sizes.
+We propose DUET (\emph{DU}al-index, \emph{E}poch-windowed \emph{T}ransparency), a mechanism for
+automatic, in-band detection of key substitution without a separate manual comparison, and without
+changing the asymptotic complexity of an individual lookup proof, even though the complete mechanism
+performs additional label-bound lookups and writes. It combines the dual-index warning scheme with
+windowed consistency verification and is integrated into a Signal Desktop prototype (\cref{ch:impl}).
+The windowed consistency mechanism further replaces one proof per missed epoch with a single proof
+whose size grows logarithmically in the endpoint log sizes.
+
+DUET does not prevent a malicious provider from denying service. Its goal is narrower: a
+substituted key, an invalid or missing proof, or an inconsistent directory history must cause
+verification to fail rather than allowing the client to accept the attacker's key silently.
+\cref{ch:threat} formalizes this distinction between detectable interference and availability.
 
 \section{Contributions}\label{sec:intro-contributions}
 
 This thesis makes four principal contributions:
 
 \paragraph{Conceptual.} The conceptual contribution is a \emph{dual-index warning scheme}. We
-derive two participant-specific lookup labels and a shared warning label from the conversation secret.
+derive two participant-specific lookup labels and a shared warning label from the conversation's shared secret.
 The warning label identifies one shared slot to which either party can write an authenticated alert. For an honestly established and monitored conversation, a malicious server cannot predict and
 pre-position that slot before the label is first used. Before the warning commits, a censored write is
 detected through a key mismatch alongside a proof-verified empty slot. After the warning commits, the
