@@ -1,15 +1,9 @@
 \chapter{Evaluation}\label{ch:eval}
 
-This chapter evaluates the system implemented in \cref{ch:impl} against the goals and threats of
-\cref{ch:threat}. It first defines the methodology and baselines, then reports proof size,
-verification latency, catch-up bandwidth, and detector measurements. It also evaluates behaviour at
-scale, compares session and continuous mode, places the results beside prior systems, and tests the
-security controls against the attack taxonomy. The principal findings are four. First, the implemented VRF-indexed lookup proof is
-at rough size parity with CONIKS. Second, detection is obtained through additional lookups
-of the same shape rather than any enlargement of that proof. Third, offline catch-up needs one proof
-rather than $W$ (about \num{700}-fold fewer raw path-hash bytes at a one-month window against this
-chapter's synthetic baseline). Finally, median full client verification stays below
-\SI{150}{\micro\second} through $10^7$ labels and grows far more slowly than $N$.
+This chapter evaluates the implementation described in \cref{ch:impl} against the goals and threats
+defined in \cref{ch:threat}. It examines proof size and verification cost, offline catch-up,
+scalability, the trade-off between session and continuous modes, comparisons with prior systems, and
+the coverage of the security controls.
 
 % ============================================================================
 \section{Methodology}\label{sec:eval-method}
