@@ -1,67 +1,34 @@
 \chapter{Conclusion}\label{ch:conclusion}
 
-The security of end-to-end encryption depends on authentic public keys, and in the messaging systems
-this thesis considers a service-operated directory distributes those keys. The traditional
-defence, manual safety-number comparison, detects a substituted key only when both parties complete
-an out-of-band verification ceremony. A usability study reported a 14\% success rate across unguided
-pair--application trials, with only two of twelve pairs completing the ceremony in any tested
-application~\cite{vaziripour2017}. The key-transparency deployments surveyed in \cref{ch:background}
-automate part of this process (\cref{ssec:bg-gap}) but warn only the key's owner, not the peer. This
-thesis set out to close that gap: to make key substitution automatically detectable, in band, and
-without changing the proof asymptotics the directory already serves.
+End-to-end encrypted messaging depends on authentic public keys, yet manual comparison is rarely
+completed~\cite{vaziripour2017} and the deployed transparency systems surveyed in \cref{ch:background}
+do not warn both peers. For honestly established and monitored conversations, DUET addresses this gap
+through automatic key-substitution checks and an in-band peer-warning channel without changing
+lookup-proof asymptotics.
 
-The work instantiates ACKA's abstract log component as a concrete verifiable directory. It uses an
-append-only Merkle log over a path-compressed sparse prefix tree, with ECVRF-derived labels and an
-Ed25519 signed tree head, following the IETF KeyTrans draft. On top of it, the thesis adds two
-mechanisms. The dual-index warning scheme (\cref{ch:design}) derives, for each conversation, a shared
-warning slot to which either party can write an alert. The server cannot predict the slot before the
-label is first used, cannot censor a warning before it commits without raising the compound A2 signal
-of a key mismatch beside a proof-verified empty slot, and cannot make a committed warning disappear
-without that removal being exposed as deletion or tampering. A silent substitution thereby becomes
-detectable. The windowed consistency proof lets a client that has been offline for a long window catch
-up with a single short proof rather than one per missed epoch. Both were implemented in a standalone
-Rust reference implementation and exercised through a verifier embedded in Signal Desktop
-(\cref{ch:impl}). The dual-index scheme was exercised against the attack taxonomy of \cref{ch:threat},
-while the windowed proof was evaluated for correctness, size, and generation cost.
+DUET instantiates ACKA's abstract log component $\Log$ as a malicious-server-resistant verifiable key
+directory (\cref{ch:design}). It adds a dual-index warning scheme for in-band peer alerts and a
+windowed consistency proof for offline catch-up. Both mechanisms are implemented in the Rust reference
+system, and the client-verification path is exercised through a verifier embedded in Signal Desktop
+(\cref{ch:impl}).
 
-The evaluation (\cref{ch:eval}) shows that this detection is added without changing the asymptotic
-complexity of the lookup proof, using additional lookups of the shape the client already verifies. The
-implemented (VRF-indexed) lookup proof is at rough size parity with CONIKS, while the scheme adds a warning
-channel CONIKS lacks.
-Median full client verification is \SI{139.2}{\micro\second} at $10^7$ labels, stays below
-\SI{150}{\micro\second} across the measured range, and grows far more slowly than $N$. CONIKS reports a
-larger per-lookup verification time at matched scale, on different hardware and excluding the VRF check
-DUET includes, so the comparison is indicative only. A month-long offline catch-up is one distant-head consistency proof rather than $W$
-of them, a few hundred raw path bytes against the hundreds of kilobytes a synthetic baseline that
-re-fetches a current-head-anchored proof for each missed epoch would instead spend. An isolated
-in-process \texttt{KTClient.detectMitm} check performs one or two raw-label, proof-verified lookups,
-each timed as a verified operation in \cref{ch:eval}; a full monitor pass performs additional checks,
-and end-to-end detection latency was not measured. Every enumerated clean-session workflow produced the
-expected non-alarm verdict, and the system produced the expected detection verdict in every enumerated
-substitution and equivocation scenario. The STRIDE analysis identifies four residual risks. One is the label-to-user mapping
-inherent to a semi-trusted directory. The other three concern availability functions not implemented
-by the prototype.
+\Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an
+individual lookup proof. The measured proof remains at rough size parity with CONIKS, and median full
+verification remains below \SI{150}{\micro\second} through $10^7$ labels. Windowed catch-up uses one
+distant-head proof rather than one per missed epoch. These are local component measurements. End-to-end
+monitor latency was not measured. The system produced the expected verdicts across the enumerated
+attack scenarios. The STRIDE analysis identified one privacy residual and three unimplemented
+availability controls.
 
-The evidence supports the four contributions of \cref{sec:intro-contributions}. The \emph{conceptual}
-contribution, the dual-index warning scheme instantiated over the ACKA logging component, is evidenced
-by the expected in-band warning in the enumerated dual-index warning cases. The \emph{cryptographic}
-contribution, the windowed consistency proof, is evidenced by the single distant-head catch-up proof
-bounded by the endpoint log sizes rather than the window length. The \emph{systems} contribution is
-evidenced by the verifier running inside a fork of the real Signal Desktop client. The prototype
-displays warnings but does not block session establishment. Shared test vectors cross-check
-the Rust and TypeScript builds. The \emph{empirical} contribution is evidenced by the benchmark suite
-(M1--M17) and the STRIDE analysis reported above. The system-level evaluation additionally covers the
-remaining scenarios through their own controls: local divergent-label and global-VRF comparison for A3,
-identity re-fetch and predecessor cross-signature for A5, and the cross-vantage auditor for A4. These results support the thesis statement for the measured
-prototype properties listed above, subject to the limitations of \cref{ch:discussion}. The traceability
-matrix links each contribution, and the four evaluation questions used to structure it, to its
-supporting evidence (\cref{app:traceability}, \cref{tab:trace-rq,tab:trace-contrib}).
+These results support the four contributions introduced in \cref{sec:intro-contributions}. The
+dual-index scheme supplies the peer-warning mechanism, while the windowed proof supports offline
+catch-up. The Rust and Signal Desktop implementations establish integration feasibility. The benchmark
+suite and adversarial scenarios provide the empirical evidence. The adversarial evaluation also
+exercises the separate controls used for A3--A5. The traceability matrix (\cref{app:traceability}) maps
+the principal claims to their supporting mechanisms, tests, and measurements.
 
-For an honestly established and monitored conversation, DUET detects key substitution rather than
-preventing it. A malicious server may still replace a key, but the substitution cannot remain silent.
-Integrating the design into a service such as Signal would extend the existing identity directory
-with warning writes and per-session labels. Each isolated in-process \texttt{KTClient.detectMitm} check performs one or two label-bound lookups using
-the directory's existing proof structure. Binding these labels to Signal's live X3DH secret remains
-the next integration step described in \cref{ch:discussion}. Safety-number authentication has
-traditionally required users to verify keys themselves. The prototype demonstrates that the
-corresponding directory and peer-warning checks can instead run automatically in the client.
+Production integration still requires binding the per-session labels to Signal's live X3DH secret and
+defining how failed checks affect session establishment (\cref{ch:discussion}). Under the threat-model
+assumptions of \cref{ch:threat}, the design makes substitution detectable through automatic
+client-side checks and an in-band peer warning. The Signal Desktop prototype demonstrates that this
+control flow can run inside the client.

@@ -1,144 +1,74 @@
 \chapter{Legal, Social, Ethical and Professional Issues}\label{ch:lsepi}
 
-This project develops a security research prototype that integrates with open-source Signal code. Its
-subject matter and integration surface raise legal, social, ethical, and professional considerations.
-This chapter examines how those considerations informed the work. It considers the legal position of the code and the data
-(\cref{sec:lsepi-legal}), the social and ethical implications of strengthening, and of being
-seen to strengthen, end-to-end-encrypted messaging (\cref{sec:lsepi-social}), and the
-professional standards, specifically the BCS Code of Conduct~\cite{bcs-code} and the IET Rules of
-Conduct~\cite{iet-conduct}, against which the work was conducted (\cref{sec:lsepi-prof}).
+Integrating a security research prototype with open-source Signal code raises questions of licensing,
+data protection, user impact, and professional responsibility.
 
 % ============================================================================
 \section{Legal Issues}\label{sec:lsepi-legal}
 
-Intellectual property and licensing are the most immediate legal consideration. The prototype
-extends two Signal codebases, libsignal and Signal Desktop, both licensed under the GNU
+The prototype extends two Signal codebases, libsignal and Signal Desktop, both licensed under the GNU
 Affero General Public License v3 (AGPL-3.0)~\cite{libsignal,signal-desktop}. Conveying modified
 covered code would engage the licence's corresponding-source obligations. If a modified program
 supporting network interaction were offered as a remote service, AGPL~\S13 would additionally require
-its users to be offered the corresponding source. The prototype was not operated as a public network
-service, and the upstream copyright and licence notices are preserved throughout. Whether a
-particular separately developed component forms part of a combined or derivative work depends on the
-facts, the jurisdiction, and the mode of combination and distribution, and is not determined here.
-The independent Rust \texttt{duet} crate depends on permissively licensed libraries, including
-\texttt{sha2} and \texttt{hkdf} (MIT/Apache-2.0) and \texttt{curve25519-dalek} and
-\texttt{ed25519-dalek} (BSD-3-Clause), which are compatible with those obligations. All third-party
-work (specifications, prior systems, and code) is attributed in the references.
+its users to be offered the corresponding source~\cite{agpl3}. The prototype was not operated as a
+public network service, and the upstream copyright and licence notices are preserved throughout.
+Whether a particular separately developed component forms part of a combined or derivative work
+depends on the facts, the jurisdiction, and the mode of combination and distribution, and is not
+determined here.
 
-There is a lawful route by which Signal could evaluate and adopt this work. The Signal Foundation is
-the parent of Signal Messenger, LLC, and supports the development and operation of the messenger.
-Integration of a code contribution would ordinarily be handled through Signal Messenger's software
-projects~\cite{signal-foundation-structure}. The design described in this thesis may be independently
-implemented because copyright protects the expression of software rather than the underlying ideas
-or methods~\cite{uk-software-copyright}. Direct reuse of the implementation requires a separate
-licence analysis. Changes made within the Signal Desktop and libsignal codebases remain subject to
-AGPL-3.0 and its corresponding-source requirements~\cite{agpl3}. An upstream contribution would also
-follow Signal's contributor-licence process, under which a contributor must have authority to grant
-the relevant rights and must identify third-party material~\cite{signal-cla}. The independently
-written Rust crate has no separate project-level licence at the time of submission, so Signal could
-not copy that code merely because it accompanies the thesis. Direct reuse would require an explicit
-licence or written grant from the relevant rights holder after ownership under university policy had
-been confirmed. This could be provided through an AGPL-3.0 release of the original components or a
-direct licence or assignment accepted as part of an upstream contribution. Signal could instead
-implement the published design independently. In either case,
-adoption would still require Signal's own security, privacy, export-control, and deployment review.
-This paragraph identifies a route for lawful evaluation and transfer rather than giving a legal
-opinion.
+The Signal Foundation could evaluate the work through Signal Messenger's software projects, either by
+independently implementing the published design~\cite{uk-software-copyright} or by reviewing an
+upstream code contribution~\cite{signal-foundation-structure}. Reusing the Rust implementation would
+require confirmation of ownership and an explicit licence. Changes contributed to Signal Desktop or
+libsignal would remain subject to AGPL-3.0 and Signal's contributor agreement~\cite{signal-cla}. Any
+adoption would also require Signal's own security, privacy, export-control, and deployment review.
+These are possible routes rather than a legal determination.
 
-A second consideration is export control. Cryptographic software may fall within UK strategic export
-controls depending on its functionality, destination, end use, and the applicable control-list
-provisions. Public source availability and the use of published algorithms do not alone determine
-classification. The contribution composes standardized primitives (the RFC~9381 ECVRF, RFC~5869 HKDF,
-and Ed25519) without introducing a new cryptographic primitive. This thesis therefore makes no
-export-control determination for DUET or its dependencies.
+Cryptographic software may be subject to UK export controls depending on its functionality,
+destination, and end use~\cite{uk-cryptonote}. Public specifications and open-source libraries do not
+by themselves determine classification. No export-control classification is attempted here.
 
-Data protection is the third. Key transparency is, by construction, a data-minimizing design: the
-directory stores public keys and pseudonymous labels, never message content, and the VRF-derived
-global labels (\cref{ssec:design-labels}) deliberately prevent an observer from enumerating which
-users are present. The benchmark corpus used synthetic identifiers and contained no
-intended references to real individuals, so the measurements did not process personal data. A
-production directory would nevertheless process public keys and labels that the service operator may
-be able to associate with accounts. Such pseudonymous information may remain personal data under
-UK GDPR, so a deployment would require a separate data-protection assessment, access controls,
-retention limits, and data-minimized operational logging of warnings and audit events, so that
-the alerting layer does not re-expose the label-to-user metadata the pseudorandom labels are
-designed to hide. Screenshots and operational logs that contain identifiable names or paths would
-require separate review before release.
+DUET's directory stores public keys and pseudonymous labels rather than message content. The
+benchmark inputs were synthetic and were not linked to real people. In production, however, the
+service operator may associate keys and labels with accounts. Such pseudonymised information remains
+personal data for an operator holding the linking information~\cite{ico-pseudonymisation}. A
+deployment would therefore require a data-protection assessment, access controls, retention limits,
+and careful handling of warning logs and screenshots.
 
 % ============================================================================
 \section{Social and Ethical Issues}\label{sec:lsepi-social}
 
-The social value of the work is a direct contribution to public wellbeing and security:
-authenticated key exchange is what makes end-to-end encryption meaningful, and the people who most
-depend on it (journalists, activists, and others at risk) are exactly those whom an
-undetected key substitution would endanger. Strengthening the automatic detection of such attacks,
-and giving both conversation partners an in-band warning, serves the public interest that the BCS
-code places first.
+Undetected key substitution is particularly serious for journalists, activists, and other users who
+rely on confidential messaging. Automatic checks and in-band peer warnings reduce dependence on
+manual verification and support the public-interest duties discussed in \cref{sec:lsepi-prof}.
 
-That same importance imposes a duty of honesty about what the work does and does not achieve,
-because overstating a security guarantee can expose users to risks the system does not address. The thesis is explicit
-about its limitations: the prototype carries two proof-of-concept stand-ins for live protocol state
-(\cref{sec:impl-strategy}), it is a single-machine prototype rather than a distributed deployment,
-and the boundary case of key extraction is out of scope (\cref{ch:threat}). The user-facing design
-embodies the same caution: an unreachable server produces an amber availability warning, while red is
-reserved for integrity-related conditions such as a proof failure, key mismatch, or authenticated
-peer warning (\cref{ssec:impl-verifier}), so that frequent availability
-warnings do not undermine confidence in integrity alerts. The directly implemented ECVRF is checked against the
-RFC~9381 vectors, and reproducible tests exercise the remaining protocol and integration paths
-(\cref{sec:impl-tests}).
+That same importance imposes a duty of honesty about what the work does and does not achieve, because
+overstating a security guarantee can expose users to risks the system does not address. The thesis is
+explicit about its limitations: the prototype carries two proof-of-concept stand-ins for live
+protocol state (\cref{sec:impl-strategy}), it is a single-machine prototype rather than a distributed
+deployment, and the boundary case of key extraction is out of scope (\cref{ch:threat}).
 
-A dual-use dimension is unavoidable: strong messaging security protects everyone, including those
-who would misuse it. This project treats defensive integrity infrastructure of this kind as serving the public good,
-since weakening it to disadvantage bad actors would also weaken protection for the far larger
-population of ordinary and at-risk users; the professional codes cited in \cref{sec:lsepi-prof}
-support this position. Finally, the work followed responsible-disclosure practice. Review of the
-prototype identified and corrected several security-relevant defects, including a gap in binding each
-lookup to its signed tree head (\cref{sec:impl-challenges}). These findings concerned DUET itself; no
-vulnerability in deployed Signal software was identified, and any such vulnerability would require
-private disclosure to Signal before publication.
+Stronger messaging security can also be used by malicious actors, but weakening authentication would
+expose all users to silent key substitution. Review of DUET identified and corrected several
+security-relevant defects, including missing signed-head binding (\cref{sec:impl-challenges}). These
+findings concerned the prototype rather than deployed Signal software. Any future vulnerability
+affecting deployed Signal code should be disclosed privately before publication.
 
-A warning mechanism also has direct effects on the people who see it, which a responsible design must
-weigh. Because the channel can be written by a peer, a malicious or compromised contact can raise a
-spurious warning; at scale, frequent or unexplained alerts risk \emph{warning fatigue}, in which users
-learn to dismiss the very signal meant to protect them (\cref{sec:disc-limitations}). The design
-mitigates this by distinguishing an integrity-related alert (red) from mere unavailability (amber) and
-by deriving the warning from cryptographic evidence rather than heuristics. Red flags an integrity
-condition, such as a proof failure, key mismatch, or authenticated peer warning, without by itself
-identifying the cause or proving that the directory operator attacked the conversation. The wording,
-frequency, and explicability of the alert are a human-factors problem this work does not claim to have
-solved, and getting them wrong could erode trust rather than build it. The stakes are highest for at-risk users:
-in an intimate-partner-abuse setting a key change, or a warning about one, can carry safety
-implications beyond the cryptographic question, and any deployment should treat the accessibility and
-clear explanation of these alerts, and a safe path to seek help, as first-order requirements. On the
-conduct of the research itself, finally, all adversarial functionality was exercised only in an
+Warnings can themselves cause harm when they are frequent, unexplained, or raised by an abusive peer.
+The interface therefore distinguishes unavailable checks from integrity-related conditions and
+authenticated peer warnings. A red warning does not identify the cause or prove an operator attack.
+Production deployment would require usability testing of the wording, accessibility, escalation
+process, and support paths for at-risk users. All adversarial functionality was exercised only in an
 isolated local test harness against synthetic accounts, with no live Signal interception and no real
 users (\cref{ssec:impl-demo}).
 
 % ============================================================================
 \section{Professional Issues and Codes of Conduct}\label{sec:lsepi-prof}
 
-The work was carried out in line with the BCS Code of Conduct~\cite{bcs-code} and the IET Rules of
-Conduct~\cite{iet-conduct}. The following paragraphs relate the implementation and evaluation
-practices to the relevant provisions of both codes.
-
-The BCS code is organized under four principles. \emph{Public interest} (due regard for
-security, privacy, and wellbeing) is the project's subject matter, addressed above.
-\emph{Professional competence and integrity} shaped the technical choices: established
-cryptographic libraries were used in preference to bespoke implementations, and the one primitive
-implemented directly, the ECVRF, was tested against the RFC~9381 vectors
-(\cref{ssec:impl-core-crypto}); claims are held to what the evidence supports. \emph{Duty to the
-relevant authority} was met through honest, regular engagement with the project supervisor and
-adherence to the university's academic-integrity requirements, including full attribution of
-sources and a clear demarcation of the proof-of-concept stand-ins from verified results.
-\emph{Duty to the profession} is served by not overstating the contribution and by documenting the
-design and its limitations for scrutiny.
-
-The IET Rules of Conduct, which adopt the Engineering Council and Royal Academy of Engineering
-Statement of Ethical Principles (Rule~2), impose corresponding obligations. Their emphasis on \emph{accuracy and
-rigour} is reflected in the bounded and invariant-oriented testing and the reproducibility measures
-(\cref{sec:impl-tests,sec:impl-repro}); their requirement to work within one's competence and to
-keep knowledge current (Rules~5--6) is reflected in grounding standard components in named
-specifications and documenting project-specific mechanisms separately, and their insistence that a professional opinion state its limitations clearly
-(Rule~26) is reflected in the explicit scoping of the claims throughout. Above all, both codes
-place the public good first. Protecting the public is therefore a central professional objective of
-this project, which aims to make a widely used private-messaging system harder to attack.
+Relevant obligations arise from the BCS Code of Conduct~\cite{bcs-code} and the IET Rules of
+Conduct~\cite{iet-conduct}. Public-interest and competence duties informed the use of established
+libraries, RFC test vectors, reproducible tests, and explicit prototype limitations. Regular
+supervisory review, source attribution, and qualification of the reported results address duties to
+the relevant authority and profession. The IET requirements concerning accuracy, current competence,
+and qualified professional opinions are reflected in the testing and scoping reported in
+Chapters~\ref{ch:impl}--\ref{ch:discussion}.
