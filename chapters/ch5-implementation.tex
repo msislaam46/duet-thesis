@@ -1,24 +1,14 @@
 \chapter{Implementation}\label{ch:impl}
 
-This chapter describes how the design of \cref{ch:design} was implemented in software. It first
-sets out the architecture and the language boundary between the two layers the system is built
-from (\cref{sec:impl-strategy}). It then describes the cryptographic core, the standalone Rust
-\texttt{duet} crate that holds the transparency log and all server-side components of the prototype
-(\cref{sec:impl-modules}), followed by the client integration into Signal Desktop, written in
-TypeScript (\cref{sec:impl-signal}). It then describes the cross-implementation testing and parity
-that bridge the two independent implementations (\cref{sec:impl-tests}), the system-wide
-engineering challenges resolved along the way (\cref{sec:impl-challenges}), and finally the steps
-taken to make the results reproducible (\cref{sec:impl-repro}). The empirical evaluation of the
-resulting system is deferred to \cref{ch:eval}.
+The implementation combines a Rust cryptographic core and directory with a TypeScript verifier
+embedded in Signal Desktop. This chapter covers their architecture, integration, parity testing,
+engineering constraints, and reproducibility.
 
 % ============================================================================
 \section{Architecture and Language Boundary}\label{sec:impl-strategy}
 
-This section explains why the system is divided into two implementations and where the
-boundary between them lies. This matters because the cryptographic core and the messaging-client
-integration have very different requirements, and keeping them strictly apart is what lets each
-be built, measured, and reasoned about on its own without the reader having to track which
-environment is in view.
+Because the cryptographic core and the Signal Desktop integration have different requirements, they
+are maintained as separate implementations with a defined language boundary.
 
 The cryptographic operations and the transparency log are isolated in a standalone Rust crate,
 while the client-side verification and the user-interface hooks are integrated directly into
@@ -46,7 +36,7 @@ TypeScript implementations produce byte-identical outputs on the shared dual-ind
 warning-MAC, CEA, signed-tree-head, ECVRF, and Merkle test vectors (\cref{sec:impl-tests}); the
 deliberately different external wire formats are excluded.
 
-The scope and limitations of each layer are explicitly bounded. The Rust crate is an in-memory,
+The Rust crate is an in-memory,
 single-machine prototype; it does not model a distributed or database-backed deployment, and the
 consequences of that for the measurements are stated in \cref{ch:eval}. The Signal Desktop
 integration demonstrates feasibility but carries two proof-of-concept stand-ins, both of which are
@@ -71,11 +61,9 @@ aggregate event of probability ${\approx}\,2^{-256}$ under the modeled candidate
 as fatal, aborting rather than degrading gracefully; a production service would report these as
 recoverable errors.
 
-This separation is deliberate. Keeping the cryptographic core independent of the Signal Desktop
-integration lets all measurements be performed on a standalone reference implementation while
-interoperability with a production messaging client is demonstrated at the integration and control-flow level, and it ensures
-that the performance figures of \cref{ch:eval} are not distorted by Electron or user-interface
-overhead. \Cref{fig:impl-overview} maps the implemented components and their communication paths: the TypeScript client
+Separating the cryptographic core from Signal Desktop allows independent measurement of the Rust
+reference implementation, while the client integration demonstrates control-flow feasibility.
+\Cref{fig:impl-overview} maps the implemented components and their communication paths: the TypeScript client
 embedded in Signal Desktop, the Rust reference implementation that houses the directory server (the prefix tree, the Merkle log,
 the signed-tree-head signer, and the ECVRF) together with reference implementations of the
 client-side constructions (the dual-index derivation and the continuous-monitoring layer), reached
@@ -100,9 +88,8 @@ test vectors require byte-for-byte agreement for the covered operations and inpu
 % ============================================================================
 \section{The Rust Cryptographic Core}\label{sec:impl-modules}
 
-This section describes the Rust reference implementation: the standalone \texttt{duet} crate, which
-holds the transparency log and every novel construction of the design, together with the binaries
-built on it. Nothing here depends on Signal Desktop, so the crate can be read, and was measured, in
+The standalone Rust \texttt{duet} crate contains the transparency log, the project-specific
+constructions, and the binaries built on them. Nothing here depends on Signal Desktop, so the crate can be read, and was measured, in
 isolation. It is organized as a small set of modules, each implementing one component of the design and
 each conforming to a named specification. \Cref{tab:impl-modules} lists those modules with the
 specification each implements and the evidence of conformance, and \cref{fig:impl-modules} shows how
@@ -327,8 +314,7 @@ client. On every peer-key retrieval it runs the full verification chain of \cref
 against the head the server returns, refusing any response whose signature, prefix root, or log
 inclusion fails to check.
 
-One behaviour of the verifier is worth drawing out, because it governs what the user sees: the
-client distinguishes unavailability from attack. A server that is merely unreachable must not be
+Client-visible verdicts distinguish unavailability from an integrity failure. A server that is merely unreachable must not be
 mistaken for an attacker, so an unreachable server raises a calm, amber unavailability notice and
 never the red integrity alarm, which is reserved for a proof or key-integrity failure or an
 authenticated peer warning. The next subsection identifies where these checks attach to the messaging client, and
@@ -347,7 +333,7 @@ available: the place where the production binding of the real shared secret woul
 where the prototype instead substitutes its deterministic stand-in. Verdicts appear in the user
 interface through a conversation-header badge (green when verified, red on a warning) and a
 banner, driven by DOM events that signal a warning (a detected key substitution or
-man-in-the-middle) and temporary unavailability. The concrete hook functions and event names are
+man-in-the-middle) and temporary unavailability. The specific hook functions and event names are
 listed in \cref{app:apiref}.
 
 \Cref{fig:impl-verify} illustrates the matching branch of the networked \texttt{RemoteKTClient.detectMitm}
@@ -521,8 +507,8 @@ wire-parity suite runs the client's full verification chain against the live Rus
 confirming multi-entry inclusion, proven non-inclusion, the Ed25519 signed-tree-head check
 (and its rejection of a tampered head), the VRF path, and windowed consistency. Unit suites
 back a test double onto a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle
-log, ECVRF, and Ed25519 signer) so the client runs against concrete cryptographic
-implementations rather than stubs. These unit suites exercise key-substitution detection (the
+log, ECVRF, and Ed25519 signer) so the client runs against the implemented cryptographic
+components rather than stubs. These unit suites exercise key-substitution detection (the
 lookup verdicts \texttt{SAFE}, key mismatch, and proven not-in-log), the own-key self-check
 against a server overwrite, man-in-the-middle detection on a replaced lookup slot, and the
 availability-versus-integrity routing that distinguishes an unreachable server from a detected
@@ -601,10 +587,9 @@ The next section examines the engineering obstacles met on both sides of the HTT
 \FloatBarrier
 \section{System-Wide Engineering Challenges}\label{sec:impl-challenges}
 
-Building the system end to end revealed obstacles at every layer. This section examines the most
-instructive, each with the resolution adopted, grouped by where they arose: the protocol the two
-implementations must agree on, the concurrency of a live multi-client deployment, the Electron
-client integration, and the server's robustness under load.
+Building the system end to end revealed obstacles at every layer. The main engineering challenges
+arose in protocol parity, concurrent multi-client operation, Electron integration, and server
+robustness.
 
 \paragraph{Protocol: Verifiable-Random-Function Divergence.} The first working client computed
 labels with an Ed25519-based stand-in, whereas the Rust implementation used the full ECVRF of
@@ -647,7 +632,7 @@ the user interface: the background monitor emitted on the client's typed event b
 and banner listen for a DOM custom event. The fix was to dispatch both, mapping the verdict onto the
 custom event the badge and banner already listened for.
 
-\paragraph{Deployment: Operational Robustness.} Several issues appeared only in a live deployment. A
+\paragraph{Operational Robustness.} Several issues appeared only when the end-to-end prototype was run. A
 server that generated a fresh signing key on each launch invalidated every cached public key; this
 was fixed by deriving the server's keys deterministically from a seed. A panic on a freshly emptied
 log poisoned the shared mutex, after which the server rejected every subsequent request and brought
