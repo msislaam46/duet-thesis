@@ -52,9 +52,9 @@ censoring writes, and presenting divergent signed views (equivocation).
 
 The STRIDE enumeration covers the server (Merkle log, prefix tree, signed tree head), the client
 (registration, verification, warning monitor), and the auditor. Of twenty threats, sixteen are
-addressed by an implemented control and four are residual. The distinction between prevention and
-after-the-fact detection matters and is stated per row in the control column: forgery of a VRF label,
-a Merkle proof, or a signature is cryptographically prevented, whereas several actions a malicious
+addressed by an implemented control and four are residual. The control column distinguishes attacks
+that are cryptographically prevented from those detected after they are attempted. Forgery of a VRF
+label, a Merkle proof, or a signature is cryptographically prevented, whereas several actions a malicious
 server can still attempt (planting a first-write registration, censoring a warning, or fabricating a
 divergent head) are not prevented but detected by the transparency log, the warning channel, or the
 cross-vantage auditor. The summary is \cref{tab:eval-stride} in \cref{ch:eval}, and

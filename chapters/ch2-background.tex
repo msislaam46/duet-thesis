@@ -45,9 +45,8 @@ account identifiers, that users are expected
 to compare out of band, by scanning a QR code in person, or reading digits
 aloud over a separate channel~\cite{safetynumbers}. More recently, Signal has introduced Automatic
 Key Verification (AKV), a key-transparency-based mechanism discussed in
-\cref{ssec:bg-gap}. Understanding the scope of the Safety Number remains
-important because it illustrates the original authentication model on which much
-of the literature was based.
+\cref{ssec:bg-gap}. The Safety Number is Signal's original out-of-band key-authentication mechanism
+and provides the baseline for the automated approaches discussed below.
 
 The gap that \cref{ssec:bg-gap} develops is one of
 \emph{coverage}. The Safety Number is a function of the identity keys
@@ -206,9 +205,8 @@ public keys it holds for a contact against Signal's transparency log and
 displays an ``Encryption verified'' indicator when that check
 succeeds~\cite{signal-akv}.
 
-The introduction of AKV is significant because it demonstrates that key
-transparency has moved beyond research prototypes and into large-scale
-deployment. Signal's own documentation, however, highlights limitations that are
+Signal's deployment of AKV shows that key transparency has moved beyond research prototypes and into
+messaging-scale operation. Signal's own documentation, however, highlights limitations that are
 directly relevant to this thesis. AKV is unavailable in several situations,
 including chats initiated through usernames, contacts that are not discoverable
 through phone numbers, and cases where a device stores outdated contact
@@ -242,11 +240,8 @@ three-year scenario in which the compromise occurs after the first year, this
 exposes up to two years of communication, against the single (assumed one-hour)
 session that a TLS deployment would expose~\cite[p.~3]{dowling2023acka}.
 
-The human dimension of the problem is equally important because, in the many
-chats where AKV is unavailable, verification still falls back to a manual user
-ceremony. In practice, users rarely
-perform it correctly. In a paired-participant usability study of the
-authentication ceremony across WhatsApp, Viber and Facebook Messenger, only two
+Where AKV is unavailable, users still depend on a manual verification ceremony. A paired-participant
+usability study across WhatsApp, Viber, and Facebook Messenger found that only two
 of twelve pairs located and completed the ceremony when simply
 asked to make sure no one else could read their messages, an overall success
 rate of 14\% across all pairs and applications (pair--application trials)~\cite[p.~30]{vaziripour2017}.
@@ -365,9 +360,8 @@ reasons Merkle trees are practical for scalability across the Internet. However,
 these costs are measured per proof. A client that has been offline for an
 extended period may need to validate a sequence of updates accumulated during
 its absence, causing the total verification cost to grow with the number of
-missed epochs. This distinction between per-proof efficiency and long-term
-monitoring cost becomes important later, when discussing mobile clients and the
-monitoring mechanisms used by key-transparency systems.
+missed epochs. Offline clients accumulate verification work across the epochs they miss, which motivates the
+monitoring mechanisms examined later.
 
 \subsection{Key Transparency Requirements}\label{ssec:bg-ct2kt}
 
@@ -703,17 +697,16 @@ chained secret state and the new public key-share, so that the two parties can
 check, epoch by epoch, that they are talking to each other and not to an injected
 key~\cite[pp.~13--14, 18]{dowling2023acka}. Finally, the \emph{secure logging
 scheme} ($\Log$), with security notion $\Logsec$, is an append-only, immutable log to which fingerprints are
-posted and from which they are queried~\cite[p.~10]{dowling2023acka}. The
-detection mechanism is then simple to state: an adversary who injects a forged
+posted and from which they are queried~\cite[p.~10]{dowling2023acka}. An adversary who injects a forged
 key-share must either collide on the honest party's label (producing two
 fingerprints at one label, which alerts all communicating parties) or post
 under a label the impersonated party never generates, which that party detects on
 lookup~\cite[p.~7]{dowling2023acka} (\cref{fig:bg-acka} summarizes the
 composition).
 
-ACKA specifies what the secure log must guarantee, append-only immutability, but leaves the
-construction abstract. It notes only that the log could be a blockchain or another
-distributed-ledger protocol, specifying the interface generically~\cite[p.~10]{dowling2023acka}.
+ACKA requires append-only immutability but leaves the log construction abstract. It notes that the
+log could be a blockchain or another distributed-ledger protocol and specifies the interface
+generically~\cite[p.~10]{dowling2023acka}.
 
 ACKA's adversary is stronger, along its own axis, than the malicious-server adversary of the VKD line,
 and that difference determines how the two compose. It is a full-compromise active man-in-the-middle on

@@ -112,8 +112,9 @@ detector branches, and the expected verdicts for enumerated clean workflows.
 Lookup-proof size determines the bandwidth added to a key fetch. \Cref{tab:eval-sizes} reports the
 implemented VRF-indexed lookup and a dense Merkle-log inclusion proof over the same number of user
 entries. The DUET proof contains a prefix proof, an \num{80}-byte VRF proof, and log inclusion. The
-reference contains only the dense-log path. The table measures VRF-indexed identity lookups. Raw
-dual-index warning lookups carry no VRF proof. Each row is one seed-deterministic path. M7
+reference contains only the dense-log path. In the DUET rows, identity lookups are VRF-indexed.
+Dual-index warning-slot lookups use raw labels and therefore carry no VRF proof. Each row is one
+seed-deterministic path. M7
 (\cref{ssec:eval-scale}) supplies the sampled distribution. A prefix proof carries one hash per
 non-empty sibling on the label's path, whose number $h$ has expected value $\approx\lceil\lg N\rceil$,
 so both objects grow logarithmically in $N$ as the sparse-tree design predicts
@@ -296,7 +297,7 @@ median of \SI{31.1}{\micro\second} and a 95th percentile of
 \SI{32.7}{\micro\second}. The empty warning result must be proof-verified, because accepting an
 unproven empty response would let the server conceal a committed warning.
 
-These are local Rust component costs. End-to-end detection additionally includes the TypeScript
+These are local Rust component costs. An end-to-end measurement would also include the TypeScript
 runtime, HTTP transport, background polling, registration, and network round trips. A matching or verifiably empty owner slot proceeds to the warning-slot
 lookup, whereas an owner-slot mismatch returns after the first lookup. The complete networked
 background monitor performs additional catch-up, owner-, peer-, and warning-slot checks.
@@ -503,8 +504,8 @@ Directory privacy (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF)
 \end{tabular}
 \end{table}
 
-Four claims follow from the comparison. For each cross-system figure, the text states explicitly
-whether it is published or derived, and from what.
+Published measurements are distinguished from figures derived from source parameters throughout the
+comparison.
 
 First, the implemented (VRF-indexed) lookup proof is at rough size parity with CONIKS at matched
 directory size, the like-for-like comparison since CONIKS lookups are likewise VRF-indexed. The raw
@@ -541,8 +542,8 @@ bandwidth for the hiding of tree density, which DUET's bitmap instead reveals, s
 $\sim$$9\times$ sibling-hash bytes in exchange for $\sim\lceil\lg N\rceil$ bits of density metadata.
 It does not net against the signed tree head, which a full DUET response carries per lookup
 (\cref{sec:impl-signal}) and which Signal's \num{8192}-byte copath figure excludes on both sides.
-SEEMless's measured $\approx$8.6\,kB lookup proofs at $10^7$~\cite[p.~12]{chase2019seemless} confirm
-that both deployed-lineage systems ship $\sim$8\,kB prefix proofs.
+SEEMless reports approximately 8.6\,kB lookup proofs at $10^7$~\cite[p.~12]{chase2019seemless},
+placing its measured proof size near Signal's fixed 8\,kB copath.
 
 Third, offline catch-up at $W = 720$ costs \num{320}\,bytes against approximately \num{530}\,kB for
 CONIKS-style per-epoch monitoring over the same window. The \num{530}\,kB figure is derived from

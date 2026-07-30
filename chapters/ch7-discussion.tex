@@ -25,8 +25,7 @@ Messaging systems with equivalent directory capabilities and secret inputs could
 construction. DUET implements ACKA's abstract log~\cite{dowling2023acka} using the directory of
 \cref{sec:design-acka} and adds the dual-index warning scheme.
 
-\paragraph{Deployment Trade-Offs and Applicability Limits.} The design provides detection rather than
-prevention. A server can still substitute a key, but for an honestly established conversation under
+\paragraph{Deployment Trade-Offs and Applicability Limits.} A server can still substitute a key, but for an honestly established conversation under
 active monitoring, a substituted key cannot be accepted without one of the defined checks reporting a
 failure. Session mode requires fewer writes and a smaller client integration surface. Continuous mode
 provides per-epoch authentication but requires ratchet-state access and substantially more directory
@@ -78,8 +77,7 @@ cross-vantage auditor.
 
 \paragraph{Formal Status.} The security argument is an informal proof sketch supported by explicit
 experiment definitions and the adversarial scenario suite. A complete computational treatment remains
-future work and must state the assumptions required by each component, as set out in
-\cref{sec:disc-future}.
+future work, with the component-specific assumptions identified in \cref{sec:disc-future}.
 
 \paragraph{Warning-Channel Abuse.} A malicious peer can publish spurious
 warnings because it holds the shared secret and can therefore produce valid payload MACs
