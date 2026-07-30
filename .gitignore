@@ -39,3 +39,6 @@ FIX_PLAN_*
 # latexmk error-recovery artifacts
 *-SAVE-ERROR
 _to_delete/
+
+# Local scratch (renders, logs, source captures) — never part of the submission.
+tmp/

@@ -8,9 +8,10 @@ lookup-proof asymptotics.
 
 DUET instantiates ACKA's abstract log component $\Log$ as a malicious-server-resistant verifiable key
 directory (\cref{ch:design}). It adds a dual-index warning scheme for in-band peer alerts and a
-windowed consistency proof for offline catch-up. Both mechanisms are implemented in the Rust reference
-system, and the client-verification path is exercised through a verifier embedded in Signal Desktop
-(\cref{ch:impl}).
+windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
+and compares signed heads obtained from separate vantage points, providing the cross-vantage check
+used to detect equivocation. Both mechanisms are implemented in the Rust reference system, and the
+client-verification path is exercised through a verifier embedded in Signal Desktop (\cref{ch:impl}).
 
 \Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an
 individual lookup proof. The measured proof remains at rough size parity with CONIKS, and median full
@@ -20,15 +21,18 @@ monitor latency was not measured. The system produced the expected verdicts acro
 attack scenarios. The STRIDE analysis identified one privacy residual and three unimplemented
 availability controls.
 
-These results support the four contributions introduced in \cref{sec:intro-contributions}. The
-dual-index scheme supplies the peer-warning mechanism, while the windowed proof supports offline
-catch-up. The Rust and Signal Desktop implementations establish integration feasibility. The benchmark
-suite and adversarial scenarios provide the empirical evidence. The adversarial evaluation also
+These results support the four contributions introduced in \cref{sec:intro-contributions}.
+Conceptually, the dual-index scheme gives both participants access to a shared warning location while
+retaining participant-specific lookup labels. Cryptographically, the windowed consistency proof
+authenticates an offline interval using one proof between distant signed heads. The Rust reference
+system and Signal Desktop verifier establish systems feasibility, while the benchmark suite and
+adversarial scenarios provide the empirical evidence. The adversarial evaluation also
 exercises the separate controls used for A3--A5. The traceability matrix (\cref{app:traceability}) maps
 the principal claims to their supporting mechanisms, tests, and measurements.
 
 Production integration still requires binding the per-session labels to Signal's live X3DH secret and
 defining how failed checks affect session establishment (\cref{ch:discussion}). Under the threat-model
 assumptions of \cref{ch:threat}, the design makes substitution detectable through automatic
-client-side checks and an in-band peer warning. The Signal Desktop prototype demonstrates that this
-control flow can run inside the client.
+client-side checks and an in-band peer warning. The prototype therefore shows that these directory and
+peer-warning checks can run automatically within a messaging client, reducing reliance on a separate
+manual comparison and allowing both participants to be notified when a substitution is detected.

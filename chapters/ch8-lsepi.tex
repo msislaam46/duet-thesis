@@ -65,10 +65,19 @@ users (\cref{ssec:impl-demo}).
 % ============================================================================
 \section{Professional Issues and Codes of Conduct}\label{sec:lsepi-prof}
 
-Relevant obligations arise from the BCS Code of Conduct~\cite{bcs-code} and the IET Rules of
-Conduct~\cite{iet-conduct}. Public-interest and competence duties informed the use of established
-libraries, RFC test vectors, reproducible tests, and explicit prototype limitations. Regular
-supervisory review, source attribution, and qualification of the reported results address duties to
-the relevant authority and profession. The IET requirements concerning accuracy, current competence,
-and qualified professional opinions are reflected in the testing and scoping reported in
-Chapters~\ref{ch:impl}--\ref{ch:discussion}.
+The BCS Code of Conduct identifies four areas of professional responsibility~\cite{bcs-code}. Under
+the public-interest principle, the thesis considers security, privacy, warning-related harm, and users
+who depend on confidential messaging. Consistent with professional competence and integrity, the
+implementation uses established cryptographic libraries where available and tests the ECVRF
+implementation against the RFC~9381 vectors. Regular supervisory review, source attribution, and
+compliance with the university's academic-integrity requirements reflect the duty to the relevant
+authority. Separating measured prototype results from unimplemented production requirements reflects
+the duty to the profession.
+
+The IET Rules of Conduct impose related obligations~\cite{iet-conduct}. Rule~2 incorporates the
+Engineering Council and Royal Academy of Engineering Statement of Ethical Principles, including
+accuracy and rigour. Rules~5 and~6 require members to maintain their knowledge and undertake only work
+they are competent to perform. Rule~26 requires professional opinions to state their limitations and
+qualifications. The adversarial tests, cross-language vectors, reproducibility measures, and explicit
+scope qualifications reported in \cref{ch:impl,ch:eval,ch:discussion} demonstrate how these obligations
+were applied in the project.
