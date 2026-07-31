@@ -516,7 +516,7 @@ JSON serialization framing, and the epoch-log inclusion path, which is empty at 
 to at most $32\lceil\lg E\rceil$ bytes over $E$ epochs in a deployment. CONIKS publishes \num{1216}\,bytes at
 $N = 2^{32}$. Instantiating CONIKS's own per-lookup accounting (one \num{32}-byte hash per tree level
 plus one, a \num{96}-byte VRF proof, and its \num{64}-byte signed-tree-root
-signature~\cite[\S5.3, Table~1]{melara2015coniks}) at $N = 10^6$ gives $32 \cdot 21 + 96 + 64 =
+signature~\cite[Section~5.3, Table~1]{melara2015coniks}) at $N = 10^6$ gives $32 \cdot 21 + 96 + 64 =
 832$\,bytes, or \num{768}\,bytes with the signature excluded. The paper itself states no number at
 $10^6$. On the same convention as this chapter's measurement, proof and VRF without a signature, DUET's
 \num{817}\,bytes sits within \num{7}\% of CONIKS's \num{768}\,bytes. This is rough parity, with DUET
@@ -557,7 +557,7 @@ stated parameterization it is over three orders of magnitude larger than the win
 Finally, full client verification stays below \SI{150}{\micro\second} through $10^7$ labels. CONIKS
 reports \SI{159}{\micro\second} to verify the authentication path at $N = 10^7$ and approximately
 \SI{400}{\micro\second} to verify the signed-tree-root signature, and reports no VRF-verification
-time~\cite[\S5.3]{melara2015coniks}. The comparison must be taken at matched scale, so it is the $10^7$
+time~\cite[Section~5.3]{melara2015coniks}. The comparison must be taken at matched scale, so it is the $10^7$
 median of \SI{139.2}{\micro\second} that belongs beside CONIKS's published figures, not the
 $\approx$\SI{128}{\micro\second} measured at $N \le 10^4$. At that scale DUET's measured value is
 lower than the published CONIKS figure and includes the VRF verification that CONIKS does not report.
@@ -581,7 +581,7 @@ and A1b (dual-index session slot), the censorship, network, and equivocation att
 key-rotation substitution A5, and the X1 endpoint-compromise boundary, each passing.
 
 \Cref{tab:eval-security} maps each threat to the mechanism that answers it, the evidence that the
-mechanism works, and the outcome. The goals it cites (\cref{sec:threat-goals}) are G1
+mechanism works, and the outcome. The requirements it cites (\cref{sec:threat-goals}) are G1
 (key-substitution detection), G3 (directory privacy), and G4 (fork detection), and the epoch counts
 in its Result column are the scripted one-action-per-epoch demonstration schedule
 (\cref{ssec:eval-timeline}), not protocol-wide latency bounds. The one attack deliberately out of

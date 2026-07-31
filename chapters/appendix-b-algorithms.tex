@@ -105,7 +105,7 @@ build on. The $m=0$ case is accepted as the local trust-on-first-use convention.
 \Fn{\normalfont\textsf{ConsistencyProof}($m,n$)}{
   \Req $0\le m\le n$ \tcp*{$m=0$ accepted as the local TOFU convention; RFC 9162 assumes $0<m<n$}
   \lIf{$m=0\vee m=n$}{\KwRet $[\,]$}
-  \KwRet $\textsf{SUBPROOF}(m,D[0{:}n],\mathrm{true})$ \tcp*{\S2.1.4.1}
+  \KwRet $\textsf{SUBPROOF}(m,D[0{:}n],\mathrm{true})$ \tcp*{RFC 9162 Section 2.1.4.1}
 }
 \Fn{\normalfont\textsf{VerifyConsistency}($m,n,\mathit{old\_root},\mathit{new\_root},\mathit{proof}$)}{
   \lIf{$m=n$}{\KwRet $\mathit{old\_root}=\mathit{new\_root}\wedge \mathit{proof}=[\,]$}
@@ -114,7 +114,7 @@ build on. The $m=0$ case is accepted as the local trust-on-first-use convention.
   \lIf{$m$ is a power of two}{$\mathit{proof}\gets \mathit{old\_root}:\mathit{proof}$}
   $\mathit{fn}\gets m-1$;\ \ $\mathit{sn}\gets n-1$\;
   right-shift $\mathit{fn},\mathit{sn}$ while $\mathit{fn}$ odd\;
-  $\mathit{fr}\gets\mathit{proof}[0]$;\ \ $\mathit{sr}\gets\mathit{proof}[0]$ \tcp*{both roots intentionally seed from the same $\mathit{proof}[0]$ (RFC 9162 \S2.1.4.2)}
+  $\mathit{fr}\gets\mathit{proof}[0]$;\ \ $\mathit{sr}\gets\mathit{proof}[0]$ \tcp*{both roots intentionally seed from the same $\mathit{proof}[0]$ (RFC 9162 Section~2.1.4.2)}
   \ForEach{$c\in\mathit{proof}[1{:}]$}{
     \Req $\mathit{sn}\ne 0$\;
     \uIf{$\mathit{fn}$ odd $\vee\ \mathit{fn}=\mathit{sn}$}{

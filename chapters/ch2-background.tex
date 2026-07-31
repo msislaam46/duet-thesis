@@ -79,7 +79,7 @@ Triple Diffie--Hellman (X3DH) protocol allows Alice to derive a shared secret
 keys with the identity, signed pre-key, and one-time pre-key material published
 by Bob.
 
-Following the notation used in the X3DH specification~\cite[\S2.4]{x3dh}, this thesis
+Following the notation used in the X3DH specification~\cite[Section~2.4]{x3dh}, this thesis
 denotes identity keys by $\xIK{}$, signed pre-keys by $\xSPK{}$, one-time
 pre-keys by $\xOPK{}$, and ephemeral keys by $\xEK{}$. Hence $\xIK{U}$ denotes a
 user's identity key, $\xEK{A}$ denotes Alice's ephemeral key, $\xSPK{U}$ denotes a
@@ -115,7 +115,7 @@ key, so that both parties' long-term identities are bound into session
 establishment. $\mathrm{DH3}$ and $\mathrm{DH4}^{*}$ incorporate Bob's signed
 pre-key and one-time pre-key material, contributing forward secrecy, and the
 fourth term is omitted when no one-time pre-key is
-available~\cite[\S3.3]{x3dh}.
+available~\cite[Section~3.3]{x3dh}.
 
 The property that matters for this thesis is that $\sharedS$ depends on all of
 the public key material used during session establishment, not only the identity
@@ -126,7 +126,7 @@ session, but the effect of a substitution depends on which value is replaced.
 Substituting the identity key, together with a signed pre-key valid under that substituted identity,
 can interpose an attacker-controlled key, the case this thesis targets. Substituting only the signed
 pre-key fails Alice's signature verification, since she verifies the signature on Bob's signed pre-key
-$\spk{B}$ under his identity key $\pkid{B}$ and aborts on failure~\cite[\S3.3]{x3dh}. Substituting only
+$\spk{B}$ under his identity key $\pkid{B}$ and aborts on failure~\cite[Section~3.3]{x3dh}. Substituting only
 the one-time pre-key, whose optional DH term both peers must agree on, normally causes Alice and Bob to
 derive different secrets and the session to fail rather than enabling impersonation, and omitting it
 weakens the initial forward-secrecy contribution without enabling impersonation by itself.
@@ -324,7 +324,7 @@ This form of domain separation prevents a leaf from ever being interpreted as an
 internal node and vice versa, eliminating an otherwise subtle class of
 structural ambiguities. This structure, due originally to Merkle, is the backbone
 of Certificate Transparency, discussed in the following section, and of the RFCs
-that specify it, RFC~6962 and its revision RFC~9162.
+that specify it, RFC~6962 and its revision RFC~9162~\cite{rfc6962,rfc9162}.
 
 Merkle trees become useful because they support two verification operations that
 recur throughout the remainder of this chapter: proving that an entry exists and
@@ -335,13 +335,13 @@ leaf up to the root, and the verifier recomputes the root from the record and
 those siblings and compares it against the published tree head. For a tree of
 $N$ leaves that path has length at most $\lceil\log_2 N\rceil$, the exact length depending on the
 leaf's position and the tree size, so the proof is logarithmic in the size of the directory rather
-than linear~\cite[\S2.1.3]{rfc9162}.
+than linear~\cite[Section~2.1.3]{rfc9162}.
 A consistency proof answers a different question (``is the log I see now an
 append-only extension of the one I saw before?'') by revealing the few
 internal nodes that let a verifier confirm that an earlier tree head is
 contained in a later one, with nothing previously committed modified, deleted,
 or reordered. A consistency proof is also logarithmic in the size of the
-log~\cite[\S2.1.4]{rfc9162}. The two proofs serve the client in equally
+log~\cite[Section~2.1.4]{rfc9162}. The two proofs serve the client in equally
 important ways: an inclusion proof convinces a client that its own key is
 recorded correctly now, while a consistency proof convinces it that the server
 has not quietly rewritten the past between visits. \Cref{fig:bg-merkle}
@@ -492,7 +492,7 @@ implementations represent it as a \emph{Merkle prefix tree}, materializing only
 the nodes on paths to existing entries. A label's bits give the path from the
 root to its leaf, so a membership proof is the authentication path to that leaf
 and a non-membership proof is the path to an empty (default) position. CONIKS
-introduced this representation for key transparency~\cite[\S3.1]{melara2015coniks}.
+introduced this representation for key transparency~\cite[Section~3.1]{melara2015coniks}.
 Later systems commonly add \emph{Patricia-style path compression}, collapsing
 chains of single-child internal nodes into a single edge. This preserves the
 tree's authentication properties while reducing storage. The terms \emph{Merkle
@@ -539,7 +539,7 @@ was to automate the key verification that the manual fingerprint ceremonies of
 trusted party. Its construction stores identity bindings in a Merkle prefix tree
 whose leaves sit at VRF-derived labels, and each epoch the provider publishes a
 \emph{Signed Tree Root} (STR): a signed snapshot of the tree root that
-hash-chains to its predecessor~\cite[\S3.3]{melara2015coniks}. A client then
+hash-chains to its predecessor~\cite[Section~3.3]{melara2015coniks}. A client then
 audits only its own entry, downloading a logarithmic-size proof each
 epoch (under 20\,kB per day even for a provider with billions of
 users~\cite[p.~1]{melara2015coniks}) and checking that the key bound to its name
@@ -567,7 +567,7 @@ SEEMless turned CONIKS's design pattern into a formally defined \emph{verifiable
 primitive, with precise completeness, soundness, and simulation-based privacy
 definitions~\cite[p.~2]{chase2019seemless}. Its \emph{append-only zero-knowledge set} (aZKS) stores
 versioned labels so that proving a key is the current version costs only logarithmically in the number
-of epochs, and it makes auditing a public role checkable by any party~\cite[\S4.2]{chase2019seemless}.
+of epochs, and it makes auditing a public role checkable by any party~\cite[Section~4.2]{chase2019seemless}.
 Detection nonetheless remains self-monitoring: through \texttt{KeyHistory} the client retrieves its
 verified key-version history and must reconcile it against the updates it actually made, and commitment
 consistency is deferred to an external gossip or blockchain mechanism~\cite[p.~5]{chase2019seemless}.
@@ -576,10 +576,10 @@ consistency is deferred to an external gossip or blockchain mechanism~\cite[p.~5
 Parakeet addressed SEEMless's storage overhead with an \emph{ordered zero-knowledge set} (oZKS) that
 collapses SEEMless's two trees into one, moves storage onto a persistent backend, and adds
 \emph{compaction} to bound the growth that append-only storage
-implies~\cite[\S\S III--IV]{malvai2023parakeet}. For consistency it replaces blockchains and gossip
+implies~\cite[Sections~III--IV]{malvai2023parakeet}. For consistency it replaces blockchains and gossip
 with a \emph{consensusless} protocol in which a set of $3f+1$ \emph{witnesses} counter-signs each
 epoch commitment, a $2f+1$ quorum proving the provider could not have
-equivocated~\cite[\S V]{malvai2023parakeet}. Its trade-offs are explicit: the witness set is a new,
+equivocated~\cite[Section~V]{malvai2023parakeet}. Its trade-offs are explicit: the witness set is a new,
 professionally operated trust assumption, and detection remains
 self-monitoring~\cite[p.~14]{malvai2023parakeet}.
 
@@ -587,7 +587,7 @@ self-monitoring~\cite[p.~14]{malvai2023parakeet}.
 ELEKTRA extended key transparency to multi-device accounts, representing each account as a
 \emph{keychain} in which device additions and removals are cross-signed by an existing device key, so
 a malicious provider cannot insert a fabricated key without forging a device signature or compromising
-a device~\cite[\S3]{len2023elektra}. Built over a \emph{rotatable zero-knowledge set} (RZKS) that
+a device~\cite[Section~3]{len2023elektra}. Built over a \emph{rotatable zero-knowledge set} (RZKS) that
 periodically rotates the VRF key to restore directory privacy after a server compromise, it formalizes
 a \emph{multi-device VKD}~\cite[pp.~2--3]{len2023elektra}. Its unsuppressible account-reset warning is
 the closest the academic line comes to an in-band peer alarm, but it is raised only on a full account
@@ -606,7 +606,7 @@ run history checks, and it shares the no-in-band-peer-warning gap common to ever
 PRISM departs furthest from per-user monitoring: a \emph{zero-knowledge rollup} (a zkVM over a
 Jellyfish Merkle tree) produces a succinct proof of each epoch's state transition and posts it to a
 data-availability layer, so every user verifies the whole directory through that proof rather than by
-monitoring their own entry~\cite[\S4]{pusch2025prism}. Its diagnostic observation frames this review:
+monitoring their own entry~\cite[Section~4]{pusch2025prism}. Its diagnostic observation frames this review:
 every existing KT system assumes \emph{someone else will check}, whether the user, gossiping clients, a
 blockchain, or third-party auditors~\cite[p.~6]{pusch2025prism}. It is presented as an overview rather
 than a full specification and introduces substantial new trust dependencies in the data-availability

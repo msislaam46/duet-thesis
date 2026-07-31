@@ -155,8 +155,8 @@ probabilistic polynomial-time adversary wins the experiment $\Expt{vrf\text{-}pr
 RFC~9381~\cite{rfc9381} with advantage non-negligible in $\secpar$: the adversary, given
 $\mathit{pk}$ and a $\VRFeval$ oracle, must distinguish the true output $\beta^\star=\VRFeval(\mathit{sk},\alpha^\star)$
 on a fresh challenge $\alpha^\star$ from a uniform string. Uniqueness underlies label integrity
-in the verification chain (Goal~G1); pseudorandomness underlies
-directory privacy (Goal~G3).
+in the verification chain (G1); pseudorandomness underlies
+directory privacy (G3).
 \end{definition}
 
 % ============================================================================
@@ -359,17 +359,17 @@ root would exhibit two verifying openings of one committed label, contradicting 
 the collision resistance of the Merkle construction.
 \end{proof}
 
-\begin{definition}[Same-head label consistency and Goal~G1]\label{def:g1-consistency}
+\begin{definition}[Same-head label consistency and G1]\label{def:g1-consistency}
 \intuition{Under one signed head the peer-lookup label and the owner's self-check label are the same
 slot, so a substituted peer key cannot pass the owner's self-check; full G1 detection then adds the
 warning channel and the auditor, and its quantified reduction is future work.}
-The static core of Goal~G1 (Key-Substitution Detection) is a same-head consistency property
+The static core of G1 (Key-Substitution Detection) is a same-head consistency property
 (\cref{lem:dualindex-consistency}). Fixing a signed head $\STH_t$, the shared label
 $\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$ cannot carry two verifying values, by soundness
 of the prefix and inclusion proofs and collision resistance of $\Hash$ (\cref{def:hash}). This holds
 even if the adversary knows $\sharedS$.
 
-Goal~G1 in the full model of \cref{ch:threat} additionally relies on three properties with distinct
+G1 in the full model of \cref{ch:threat} additionally relies on three properties with distinct
 adversary scopes, each argued separately. The raw dual-index labels must be unpredictable to the
 operator before first use, which needs HKDF (\cref{def:hkdf}) as a PRF keyed by an unknown,
 high-entropy $\sharedS$. Authenticated peer warnings need the unforgeability of the warning-MAC. The
