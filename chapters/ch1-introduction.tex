@@ -93,9 +93,9 @@ The shared protocol operations in the two implementations are checked for byte-f
 using cross-language test vectors.
 
 \paragraph{Empirical.} The benchmark evaluation, covering metrics M1--M17, yields four principal
-findings. The implemented VRF-indexed lookup proof is roughly comparable in size to the corresponding
-CONIKS proof. Detection uses additional label-bound lookups with the same proof format rather than
-enlarging an individual proof. Median full-client verification remains below \SI{150}{\micro\second}
+findings. At a matched directory size, the implemented VRF-indexed lookup proof is roughly comparable
+in size to the corresponding CONIKS proof~\cite{melara2015coniks}. Detection uses additional
+label-bound lookups with the same proof format rather than enlarging an individual proof. Median full-client verification remains below \SI{150}{\micro\second}
 through $10^7$ labels and grows far more slowly than $N$. A month-long offline catch-up uses a few
 hundred raw consistency-path hash bytes, compared with hundreds of kilobytes under the per-epoch
 baseline. Separately, the STRIDE and MITRE ATT\&CK evaluation distinguishes the attacks detected by
