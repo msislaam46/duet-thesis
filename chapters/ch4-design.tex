@@ -220,7 +220,7 @@ This corrects two simplifications that appeared in early descriptions of the sch
 uses HKDF rather than a bare hash of $\sharedS$, and it uses three labels with canonical
 ordering applied to the warning label alone. Cross-implementation test vectors verify the
 byte-for-byte equivalence of the derivation across the Rust and TypeScript implementations on the
-committed cross-language vectors (\cref{app:algorithms}).
+committed cross-language vectors (\cref{sec:tests-xlang}).
 
 \subsection{The Three Security Properties}\label{ssec:design-properties}
 
@@ -493,7 +493,7 @@ is a signed, append-only extension of the state already trusted. The catch-up co
 therefore depends only logarithmically on the sizes of the previously trusted and current
 log states, rather than linearly on the number of missed epochs. The warning-slot lookup is
 performed during the same synchronization workflow and so does not change the asymptotic
-complexity. \Cref{app:algorithms} presents the proof sketch and the \textsf{WindowedCatchUp} procedure,
+complexity. \Cref{lem:windowed-size} states the windowed-proof size, and \cref{app:algorithms} presents the \textsf{WindowedCatchUp} procedure
 alongside the pseudocode for the Merkle log tree, the sparse prefix tree, and
 client verification (\cref{alg:merklelog,alg:prefix,alg:client}); \cref{tab:alg-purpose} maps each of
 the eight algorithms to its purpose.

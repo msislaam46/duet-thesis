@@ -39,7 +39,9 @@ out in \cref{sec:disc-limitations}.
 trust-on-first-use assumption. Its present scope is limited to pairwise, single-device
 conversations. It does not cover group messaging, Sender Keys, or MLS, where a warning would have to
 reach a changing membership. Extending the warning mechanism across a user's devices, in contrast to
-multi-device keychain schemes such as ELEKTRA~\cite{len2023elektra}, also remains open.
+multi-device keychain schemes such as ELEKTRA~\cite{len2023elektra}, also remains open. Endpoint
+compromise is also outside the guarantee because no directory mechanism can protect a client whose
+private state is controlled by the adversary.
 
 \paragraph{Trust Assumptions.} Fork detection requires at least one honest auditor with an
 independent vantage point. Dual-index substitution detection does not require an auditor. The
@@ -75,8 +77,8 @@ not observed by the public-head auditor. A consistent split view remains undetec
 client in isolation when both branches extend a shared prefix. Detecting that case requires the
 cross-vantage auditor.
 
-\paragraph{Formal Status.} The security argument is an informal proof sketch supported by explicit
-experiment definitions and the adversarial scenario suite. A complete computational treatment remains
+\paragraph{Formal Status.} The security argument is an informal proof sketch supported by formal
+definitions, the same-head consistency lemma, and the adversarial scenario suite. A complete computational treatment remains
 future work, with the component-specific assumptions identified in \cref{sec:disc-future}.
 
 \paragraph{Warning-Channel Abuse.} A malicious peer can publish spurious

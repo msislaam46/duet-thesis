@@ -361,8 +361,9 @@ the collision resistance of the Merkle construction.
 
 \begin{definition}[Same-head label consistency and G1]\label{def:g1-consistency}
 \intuition{Under one signed head the peer-lookup label and the owner's self-check label are the same
-slot, so a substituted peer key cannot pass the owner's self-check; full G1 detection then adds the
-warning channel and the auditor, and its quantified reduction is future work.}
+slot, so a substituted peer key cannot pass the owner's self-check. Full G1 detection additionally
+uses the warning channel and the scenario-specific controls summarized in \cref{tab:threat-goals}. A
+quantified reduction remains future work.}
 The static core of G1 (Key-Substitution Detection) is a same-head consistency property
 (\cref{lem:dualindex-consistency}). Fixing a signed head $\STH_t$, the shared label
 $\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$ cannot carry two verifying values, by soundness
