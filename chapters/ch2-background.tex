@@ -83,10 +83,7 @@ Here, $\DH{X}{Y}$ denotes the Diffie--Hellman shared secret derived from the key
 with $X$ and $Y$, following the X3DH specification. The notation omits whether a party uses the
 public or private component of each pair. $\KDF$ denotes a key-derivation function, $\concat$
 denotes byte-string concatenation, and $\sharedS$ is the resulting shared secret. \Cref{ch:design}
-uses this secret as an input to DUET's label derivation. Key authenticity must hold at this point. A
-coordinated substitution of Bob's identity key and a signed pre-key valid under that substituted
-identity causes the shared secret and all downstream keys to be established using
-attacker-controlled key material.
+uses this secret as an input to DUET's label derivation. Key authenticity must hold at this point.
 
 The identity keys enter the shared secret through $\mathrm{DH1}$ and
 $\mathrm{DH2}$: $\mathrm{DH1}$ combines Alice's identity key with Bob's signed
@@ -101,8 +98,9 @@ The resulting $\sharedS$ depends on Alice's identity and ephemeral keys and on B
 signed pre-key, and optional one-time pre-key. A substitution therefore affects the resulting
 session differently depending on which value is replaced.
 
-Substituting Bob's identity key together with a signed pre-key valid under the substituted identity
-can interpose attacker-controlled key material. DUET targets this coordinated substitution.
+When Bob's genuine one-time pre-key is absent or withheld, an attacker who substitutes Bob's identity
+key and a signed pre-key valid under that identity can derive the resulting shared secret and
+impersonate Bob. DUET is designed to detect this coordinated substitution.
 Substituting only the signed pre-key causes Alice's signature check to fail because she verifies
 $\spk{B}$ under $\pkid{B}$ and aborts on failure~\cite[Section~3.3]{x3dh}. Substituting only the
 one-time pre-key normally causes Alice and Bob to derive different secrets, so the session fails
@@ -409,7 +407,7 @@ and zero-knowledge sets (ZKS).
 \paragraph{Merkle Prefix Trees.} Most VKDs store bindings in a sparse
 authenticated dictionary indexed by these labels. Conceptually the structure is
 a sparse binary Merkle tree whose leaves correspond to the whole space of
-possible labels; because only a tiny fraction of labels are occupied,
+possible labels. Because only a tiny fraction of labels are occupied,
 implementations represent it as a \emph{Merkle prefix tree}, materializing only
 the nodes on paths to existing entries. A label's bits give the path from the
 root to its leaf, so a membership proof is the authentication path to that leaf
@@ -453,7 +451,7 @@ on, and it established design principles that later VKDs
 retained~\cite{melara2015coniks}. Although CONIKS predates the formal VKD
 abstraction that SEEMless would later introduce, the VKD constructions that
 follow inherit its core architecture of VRF-derived labels, authenticated
-directory commitments, and auditable epoch-by-epoch evolution; it stands as
+directory commitments, and auditable epoch-by-epoch evolution. It stands as
 the direct precursor of the VKD line rather than a VKD itself. Its motivation
 was to automate the key verification that the manual fingerprint ceremonies of
 \cref{sec:bg-signal} had failed to deliver, without reintroducing a single
@@ -476,7 +474,7 @@ client absent for $\ell$ epochs must perform $\Theta(\ell)$ work, because a
 provider could insert a malicious binding and later revert it, so inspecting only
 the latest STR is unsound. The proposed remedy, a per-leaf version history, would
 require an auditor to perform $\Theta(n)$ work each epoch, where $n$ is the
-number of changes in that epoch; the authors themselves doubt that a party
+number of changes in that epoch. The authors themselves doubt that a party
 willing to perform this auditing for free will exist in every
 deployment~\cite[p.~12]{melara2015coniks}. Second,
 the client-to-client gossip that would let peers cross-check STRs is left as
@@ -680,9 +678,9 @@ System & What it logs & Primary detection mechanism & In-band peer warning &
   Offline protection & Consistency / fork resistance \\
 \midrule
 CONIKS~\cite{melara2015coniks} & username $\to$ key binding & self-monitoring & No & linear, $\Theta(\ell)$ catch-up &
-  auditor STR cross-gossip (clients and providers audit; a client-to-client protocol is future work) \\
+  auditor STR cross-gossip (clients and providers audit, a client-to-client protocol is future work) \\
 SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & per-update
-  history & $\ge$1 honest auditor per epoch; globally consistent commitment distribution assumed \\
+  history & $\ge$1 honest auditor per epoch, with globally consistent commitment distribution assumed \\
 Parakeet~\cite{malvai2023parakeet} & identity key & self-monitoring & No & bounded: check before compaction & $2f{+}1$ signatures from $3f{+}1$
   witnesses \\
 ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & reset only & per-update &
@@ -693,11 +691,11 @@ PRISM~\cite{pusch2025prism} & account keys & whole-directory verification & No (
   constant-size proof & zk-rollup on a data-availability layer \\
 WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & infrastructure audit (self-monitoring off, 2023 whitepaper) & No & n/a
   (self-monitoring off, 2023 whitepaper) & signed root + public write-once (WORM) audit log \\
-Signal KT~\cite{signal-kt-server,signal-akv} & ACI $\to$ identity key; E.164 and username-hash mappings & self-monitoring + audit interfaces; optional user-triggered AKV & No &
-  n/a & signed head; public audit endpoints (operator not documented) \\
+Signal KT~\cite{signal-kt-server,signal-akv} & ACI $\to$ identity key, E.164 and username-hash mappings & self-monitoring + audit interfaces, optional user-triggered AKV & No &
+  n/a & signed head, public audit endpoints (operator not documented) \\
 Proton KT~\cite{goebel2023proton} & email $\to$ SKL fingerprints & self-audit + external audit & No &
   self-audit within 90 days & CT logs + External Audit \\
-Google KT~\cite{google-kt} & account keys & self-monitoring (experimental; archived 2024) & No & n/a & CONIKS map in a CT log \\
+Google KT~\cite{google-kt} & account keys & self-monitoring (experimental, archived 2024) & No & n/a & CONIKS map in a CT log \\
 Apple CKV~\cite{apple-ckv} & account + device keys + opt-in state & automatic device verification + E2E-encrypted CloudKit
   cross-check & No & n/a & on-device consistency + encrypted log-hash gossip + internal audit \\
 \bottomrule
@@ -707,7 +705,7 @@ Apple CKV~\cite{apple-ckv} & account + device keys + opt-in state & automatic de
 {\footnotesize\raggedright \emph{In-band peer warning} denotes a peer-propagated
 substitution warning: evidence written by one party to a
 conversation-specific location that the other party verifies. SEEMless
-self-monitoring assumes the user recalls their own update times; Apple CKV
+self-monitoring assumes the user recalls their own update times. Apple CKV
 propagates in-band \emph{commitment} gossip and PRISM suggests carrying
 \emph{commitments} in encrypted messages, but neither is a peer substitution
 warning under this definition. Merkle\textsuperscript{2} is omitted as a general transparency-log
