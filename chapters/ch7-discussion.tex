@@ -49,7 +49,7 @@ vantage. A production deployment would instead obtain a signed head from an inde
 gossip peer, and would add the required transport, authentication, freshness, and failure-handling
 policies.
 
-The STRIDE analysis (\cref{ssec:eval-stride}) identifies four residual threats. The operator
+The STRIDE analysis (\cref{sec:sec-stride}) identifies four residual threats. The operator
 necessarily learns the label-to-user mapping, because the prototype provides no query privacy from
 the operator. The remaining three concern missing availability controls: write rate limiting, a
 staleness timeout for published epochs, and gossip-based detection of proof omission.
