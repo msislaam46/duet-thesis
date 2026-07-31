@@ -368,9 +368,9 @@ monitoring mechanisms examined later.
 \subsection{Key Transparency Requirements}\label{ssec:bg-ct2kt}
 
 Key transparency (KT) applies the broader transparency-overlay idea~\cite{chase2016overlays} to user
-identity bindings~\cite{melara2015coniks}, adapting the append-only Merkle log of Certificate
-Transparency~\cite{rfc6962,rfc9162} from public certificates to a setting where a server
-should be unable to present different keys to different users without leaving cryptographic evidence.
+identity bindings~\cite{melara2015coniks}. It adapts Certificate Transparency's append-only Merkle
+log~\cite{rfc6962,rfc9162} to a setting where inconsistent key presentation should leave cryptographic
+evidence.
 Messaging systems must protect the privacy of their users and prevent adversaries from enumerating the contents of the directory. 
 This leads us to two requirements that constrain the design of a KT system.
 The first requirement is privacy. A messaging directory contains user identities
