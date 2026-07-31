@@ -521,65 +521,10 @@ adversarial}), the automated suite covers every scenario: the A0 baseline, the t
 substitution variants A1a (global VRF slot) and A1b (dual-index session slot), the censorship,
 network, and equivocation attacks A2--A4, the key-rotation substitution A5 (caught by identity-anchored
 re-fetch and cross-signature), and the X1 endpoint-compromise case asserted as an out-of-scope
-boundary, all eight passing. \Cref{tab:impl-t5a} records, for
-representative correctness tests, the property checked and the threat or correctness
-requirement it protects, and \cref{tab:impl-t5b} records the adversarial scenarios with their
-expected and observed verdicts; the full results are reported in \cref{ch:eval}, and \cref{app:tests} lists the complete
-test catalogue.
-
-\begin{table}[ht]
-\centering
-\caption[Representative correctness tests and the requirement each protects.]{Representative
-correctness tests and the requirement each protects. The cited goals are G1
-(Key-Substitution Detection), G3 (Directory Privacy), and G4 (Fork Detection)
-(\cref{sec:threat-goals}).}
-\label{tab:impl-t5a}
-\footnotesize
-\renewcommand{\arraystretch}{1.1}
-\begin{tabularx}{\textwidth}{@{}Xp{1.9cm}XX@{}}
-\toprule
-Test & Component & Property checked & Why it matters \\
-\midrule
-exhaustive inclusion + forgeries & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a forged or uncommitted response cannot pass verification; detecting A1 then rests on comparing the proven value against the expected key \\
-exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (G2; rollback/rewrite rejection) \\
-RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & directory privacy follows from the VRF assumption (G3); the vectors establish implementation conformance \\
-cross-implementation vectors & \texttt{dual\_index} & Rust and TypeScript derive identical labels & both parties must address one shared warning slot (G1) \\
-STH signature (happy / tamper / wrong-key) & \texttt{server} & only a correctly signed head is accepted & signed-head authenticity, the prerequisite of every downstream verdict \\
-equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\Rightarrow$ fork & split-view detection (A4, G4) \\
-unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
-windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding: a stale or foreign signed head is rejected \\
-availability routing & monitor (TS) & an unreachable server yields amber, not red & distinguishes an unavailable check from an integrity alarm \\
-key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\begin{table}[ht]
-\centering
-\caption[Adversarial scenarios and verdicts.]{Adversarial scenarios and their verdicts from the
-Rust \texttt{tests/adversarial.rs} suite. All eight scenarios pass. A1 is exercised through the
-global VRF slot and the dual-index session slot, while A5 has its own asserted test. The reported
-detection points follow the scripted one-action-per-epoch schedule
-(\cref{ssec:eval-timeline}). The evaluation treats these as schedule positions and measures
-individual component latencies separately (\cref{ch:eval}).}
-\label{tab:impl-t5b}
-\footnotesize
-\renewcommand{\arraystretch}{1.1}
-\begin{tabularx}{\textwidth}{@{}lXXll@{}}
-\toprule
-Scenario & Scripted attack & Detection mechanism & Observed & Scripted detection point \\
-\midrule
-A0 & honest baseline & all checks pass & pass & n/a \\
-A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\
-A1b & substitute a dual-index session slot & self-check + peer warning & pass & 1--2 epochs \\
-A2 & substitute and censor the warning & compound signal & pass & 1--2 epochs \\
-A3 & MitM on the X3DH bundle & label divergence + VRF anchor & pass & next lookup \\
-A4 & equivocate (split-view) & cross-vantage auditor & pass & 1 epoch \\
-A5 & substitute during a key rotation & identity re-fetch + cross-signature & pass & 1--2 epochs \\
-X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
-\bottomrule
-\end{tabularx}
-\end{table}
+boundary, all eight passing. \Cref{tab:impl-t5a} records representative correctness tests and the requirement each protects, and
+\cref{tab:tests-adversarial} records the adversarial scenarios with their expected and observed
+verdicts. Both tables and the complete test catalogue are in \cref{app:tests}, and the measured
+results are reported in \cref{ch:eval}.
 
 The next section examines the engineering obstacles met on both sides of the HTTP boundary.
 

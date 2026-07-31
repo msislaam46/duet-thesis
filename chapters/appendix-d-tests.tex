@@ -10,10 +10,39 @@ consistency-proof cases that return \textsc{ConsistencyUnverified}, and the exac
 mapping), and \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
 (\cref{ssec:eval-detection}), \num{134} tests in total, run under \texttt{cargo test}. The TypeScript
 client is covered by \num{106} Jest tests in eight suites,
-and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs. The
-representative excerpt and the scenario summary are in \cref{tab:impl-t5a,tab:impl-t5b}. The unit,
+and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs.
+\Cref{tab:impl-t5a} lists representative correctness tests and the requirement each protects, and
+\cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
+verdicts. The unit,
 cross-language, and TypeScript tests are catalogued in the tables that follow. The \texttt{kt\_auditor}
 binary tests are summarized by category above rather than listed individually.
+
+\begin{table}[ht]
+\centering
+\caption[Representative correctness tests and the requirement each protects.]{Representative
+correctness tests and the requirement each protects. The cited requirements are G1
+(Key-Substitution Detection), G3 (Directory Privacy), and G4 (Fork Detection)
+(\cref{sec:threat-goals}).}
+\label{tab:impl-t5a}
+\footnotesize
+\renewcommand{\arraystretch}{1.1}
+\begin{tabularx}{\textwidth}{@{}Xp{1.9cm}XX@{}}
+\toprule
+Test & Component & Property checked & Why it matters \\
+\midrule
+exhaustive inclusion + forgeries & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a forged or uncommitted response cannot pass verification; detecting A1 then rests on comparing the proven value against the expected key \\
+exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (G2; rollback/rewrite rejection) \\
+RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & directory privacy follows from the VRF assumption (G3); the vectors establish implementation conformance \\
+cross-implementation vectors & \texttt{dual\_index} & Rust and TypeScript derive identical labels & both parties must address one shared warning slot (G1) \\
+STH signature (happy / tamper / wrong-key) & \texttt{server} & only a correctly signed head is accepted & signed-head authenticity, the prerequisite of every downstream verdict \\
+equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\Rightarrow$ fork & split-view detection (A4, G4) \\
+unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
+windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding: a stale or foreign signed head is rejected \\
+availability routing & monitor (TS) & an unreachable server yields amber, not red & distinguishes an unavailable check from an integrity alarm \\
+key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 % ----------------------------------------------------------------------------
 \section{Rust Unit and Property Tests}\label{sec:tests-rust}
