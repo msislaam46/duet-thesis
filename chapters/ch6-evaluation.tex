@@ -1,7 +1,7 @@
 \chapter{Evaluation}\label{ch:eval}
 
-This chapter evaluates the implementation described in \cref{ch:impl} against the goals and threats
-defined in \cref{ch:threat}. It examines proof size and verification cost, offline catch-up,
+This chapter evaluates the implementation described in \cref{ch:impl} against the requirements and
+threats defined in \cref{ch:threat}. It examines proof size and verification cost, offline catch-up,
 scalability, the trade-off between session and continuous modes, comparisons with prior systems, and
 the coverage of the security controls.
 
@@ -595,7 +595,7 @@ scope is X1, direct key extraction, which no key-transparency system addresses.
 \renewcommand{\arraystretch}{1.15}
 \begin{tabularx}{\textwidth}{@{}p{2.0cm}p{3.5cm}X p{2.0cm}@{}}
 \toprule
-Attack & Mechanism (goal) & Evidence & Result \\
+Attack & Mechanism (requirement) & Evidence & Result \\
 \midrule
 A1/A3/A5 key substitution & A1 self-check and warning. A3 divergent-label and global-VRF identity comparison. A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite exercises each route (\cref{tab:tests-adversarial}). & Detected. The scripted point depends on the scenario. \\
 A2 warning censorship & Key mismatch together with proof-verified warning absence (extension of G1). & The A2 scenario exercises the compound signal. & Detected. \\

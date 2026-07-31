@@ -196,8 +196,7 @@ key-transparency protection. Key transparency protects communication between hon
 endpoints but cannot protect a compromised endpoint. The attack--defence structure of these
 scenarios, separating the interposition routes that place an attacker key (A1, A3,
 A5) from the concealment attempts that try to hide it (A2, A4) and from the
-out-of-scope endpoint boundary (X1), is presented with the evaluation in
-\cref{fig:eval-attacktree}.
+out-of-scope endpoint boundary (X1), is set out in \cref{fig:eval-attacktree}.
 
 % ============================================================================
 \section{Assumptions}\label{sec:threat-assumptions}
@@ -234,7 +233,7 @@ The adversary model and assumptions give four security requirements, denoted G1-
 \paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
 adversary (A3) substitutes a key, an honest party detects it once an honest monitor completes the
 required verified lookups and, where the peer's warning is needed, that warning write commits. For the
-established-pair attacks A1 and A5, G1 provides bidirectional detection through the in-band warning.
+established-pair attacks A1 and A5, detection is bidirectional, so an offline victim remains covered.
 
 \paragraph{G2: Consistency Across Offline Windows.} A client returning after an
 offline period requests one distant-head consistency proof rather than one per missed epoch, and
@@ -255,10 +254,7 @@ assumption (\cref{sec:threat-assumptions}).
 \section{Out of Scope}\label{sec:threat-scope}
 
 The model leaves five boundaries to \cref{ch:discussion}: prevention, endpoint compromise, operator
-query privacy, group messaging, and multi-device keychains. Prevention is not attempted, since a
-determined operator or network can always refuse service. The contribution is that interference
-cannot masquerade as successful verification, because a refusal or drop is reported as an unavailable
-or incomplete check without its cause being attributed. Endpoint compromise (X1) lies outside any
-directory mechanism. Query privacy from the operator is a separate property from the directory privacy
-of requirement~G3. The pairwise design does not extend warning propagation to group messaging or the
-multi-device keychains ELEKTRA targets, both revisited in \cref{ch:discussion}.
+query privacy, group messaging, and multi-device keychains. The load-bearing point is that
+interference cannot masquerade as successful verification, since a refusal or drop is reported as an
+unavailable or incomplete check without its cause being attributed. Each boundary and its future-work
+direction is developed in \cref{ch:discussion}.
