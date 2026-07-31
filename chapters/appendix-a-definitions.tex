@@ -218,6 +218,19 @@ linearly with the $W$ epochs between the two visits, which is the property explo
 \cref{ssec:design-catchup}.
 \end{proof}
 
+\begin{remark}[Relation to prior systems]
+The windowed proof is a \emph{standard} RFC~9162 consistency proof between two distant heads, not a
+new cryptographic object. The idea of collapsing unchanged epochs is not itself new.
+CONIKS~\cite[Section~6.3]{melara2015coniks} explicitly \emph{proposes} skipping missed epochs when a
+history structure proves no change, SEEMless makes monitoring cost depend on the number of key updates
+rather than on elapsed epochs, and OPTIKS reduces unchanged-key monitoring to a single proof. The
+contribution here is an \emph{offline-client} instantiation using one consistency proof from the
+client's last checkpoint to the current head, together with the measured saving reported in
+\cref{ch:eval}. The saving is linear in the window, since the windowed proof replaces $W$ proofs with
+one, a reduction in the number of proofs rather than an improvement in the asymptotic complexity of an
+individual proof.
+\end{remark}
+
 % ============================================================================
 \section{Signal Protocol Primitives}\label{sec:def-signal}
 
@@ -322,6 +335,29 @@ signatures and constitutes publicly verifiable proof, attributable to the operat
 Specified in \cref{ssec:design-detection}; implemented by \textsf{PersistenceCheck}
 (\cref{alg:detect}).
 \end{definition}
+
+\begin{lemma}[Same-head label consistency]\label{lem:dualindex-consistency}
+Fix a signed tree head $\mathit{sth}$. Applying $\textsf{DeriveLabels}$ (\cref{ssec:design-labels})
+from Alice's and Bob's respective viewpoints gives the same lookup label,
+\[
+  \ell^\A_{\mathsf{peer}} = \HKDFexp\!\big(\mathit{PRK},\ \texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},\ 32\big) = \ell^\B_{\mathsf{self}}.
+\]
+Let $\ell$ denote this shared label. If the client verification chain of \cref{ssec:design-verify}
+accepts a value $v_{\mathsf{peer}}$ at $\ell$ under $\mathit{sth}$ (Alice's lookup of Bob's key) and a
+value $v_{\mathsf{self}}$ at $\ell$ under the same $\mathit{sth}$ (Bob's self-check), then
+$v_{\mathsf{peer}}=v_{\mathsf{self}}$, unless the soundness of the prefix or log-inclusion proof, or
+the collision resistance of $\Hash$ (\cref{def:hash}), is violated.
+\end{lemma}
+\begin{proof}[Argument]
+Alice's peer-lookup and Bob's self-lookup resolve to the same label
+$\ell=\HKDFexp(\mathit{PRK},\texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},32)$, the
+directional slot for Bob's key (the canonical $\min/\max$ ordering applies only to
+$\ell_{\mathsf{warn}}$). Under a single $\mathit{sth}$ a verifying inclusion proof binds $\ell$ to
+exactly one committed prefix-tree leaf, whose value is fixed by the log-inclusion proof against the
+one signed root. Two accepted values $v_{\mathsf{peer}}\neq v_{\mathsf{self}}$ at $\ell$ under that
+root would exhibit two verifying openings of one committed label, contradicting proof soundness and
+the collision resistance of the Merkle construction.
+\end{proof}
 
 \begin{definition}[Same-head label consistency and Goal~G1]\label{def:g1-consistency}
 \intuition{Under one signed head the peer-lookup label and the owner's self-check label are the same
