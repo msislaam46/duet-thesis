@@ -232,8 +232,8 @@ The adversary model and assumptions give four security requirements, denoted G1-
 
 \paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
 adversary (A3) substitutes a key, an honest party detects it once an honest monitor completes the
-required verified lookups and, where the peer's warning is needed, that warning write commits. For the
-established-pair attacks A1 and A5, detection is bidirectional, so an offline victim remains covered.
+required verified lookups and, where the peer's warning is needed, that warning write commits. For
+established-pair attacks A1 and A5, either party must be able to detect the substitution.
 
 \paragraph{G2: Consistency Across Offline Windows.} A client returning after an
 offline period requests one distant-head consistency proof rather than one per missed epoch, and
@@ -253,8 +253,7 @@ assumption (\cref{sec:threat-assumptions}).
 \FloatBarrier
 \section{Out of Scope}\label{sec:threat-scope}
 
-The model leaves five boundaries to \cref{ch:discussion}: prevention, endpoint compromise, operator
-query privacy, group messaging, and multi-device keychains. The load-bearing point is that
-interference cannot masquerade as successful verification, since a refusal or drop is reported as an
-unavailable or incomplete check without its cause being attributed. Each boundary and its future-work
-direction is developed in \cref{ch:discussion}.
+The model excludes prevention, endpoint compromise, operator query privacy, group messaging, and
+multi-device keychains. A refusal or dropped response is reported as an unavailable or incomplete
+check rather than successful verification. These boundaries and possible extensions are examined in
+\cref{ch:discussion}.
