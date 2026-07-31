@@ -1,7 +1,30 @@
 \chapter{Legal, Social, Ethical and Professional Issues}\label{ch:lsepi}
 
 Integrating a security research prototype with open-source Signal code raises questions of licensing,
-data protection, user impact, and professional responsibility.
+data protection, user impact, and professional responsibility. \Cref{tab:lsepi-mapping} summarizes the
+instruments and considerations this chapter examines, and the sections that follow develop each in
+turn.
+
+\begin{table}[ht]
+\centering
+\caption{Legal, ethical, and professional instruments, their relevance to the project, and the
+project's response.}
+\label{tab:lsepi-mapping}
+\footnotesize
+\setlength{\extrarowheight}{2pt}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Instrument or consideration & Relevance & Implication & Project response \\
+\midrule
+AGPL-3.0 (libsignal, Signal Desktop) & the prototype extends AGPL-covered Signal code & conveying modified code engages the corresponding-source obligations, and offering it as a remote service would engage AGPL Section~13 & the prototype was not run as a public service and the upstream notices are preserved; contribution routes are noted \\
+UK GDPR (pseudonymised account data) & a production directory would associate keys and labels with accounts & such pseudonymised information remains personal data for an operator holding the linking information & benchmarks used synthetic inputs; production would require a data-protection assessment, restricted access, and retention periods \\
+UK export controls (cryptographic software) & the design composes standard cryptographic primitives & classification depends on functionality, destination, and end use, and public specifications do not by themselves determine it & no export-control classification is attempted \\
+BCS Code of Conduct & public interest, competence, relevant authority, and profession & duties on security and privacy, competence, honesty to the supervisor, and not overstating results & established libraries, RFC test vectors, reproducible tests, supervisory review, and explicit scope \\
+IET Rules of Conduct & accuracy and rigour, working within competence, and qualified opinions & reported results must state their limitations and stay within competence & adversarial tests, cross-language vectors, reproducibility measures, and explicit scope qualifications \\
+Research ethics (synthetic data) & adversarial functionality was exercised in a local test harness & no live interception and no real users & synthetic accounts only, with no personal data processed \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 % ============================================================================
 \section{Legal Issues}\label{sec:lsepi-legal}
