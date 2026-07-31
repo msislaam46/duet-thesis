@@ -1,12 +1,91 @@
-\chapter{Security Analysis Tables}\label{app:security}
+\chapter{Security Analysis}\label{app:security}
 
-This appendix gives the full security-analysis mapping tables summarized in
-\cref{sec:eval-security}: the MITRE ATT\&CK technique-to-mitigation matrix
-(\cref{sec:sec-mitre}) and the complete STRIDE enumeration (\cref{sec:sec-stride}). Both are drawn
-from the attack scenarios of \cref{ch:threat} and the mechanisms of \cref{ch:design}, and both
-correspond to the runnable adversarial suite of \cref{sec:impl-tests}. The identifiers are real
-MITRE ATT\&CK Enterprise technique IDs; the tables map each to how it manifests against a key
-directory and the key-transparency control that answers it.
+This appendix collects the security analysis supporting the main text. \Cref{sec:sec-suppression}
+gives the full warning-suppression argument summarized in \cref{sec:design-dual}.
+\Cref{sec:sec-mitre,sec:sec-stride} give the MITRE ATT\&CK technique-to-mitigation matrix and the
+complete STRIDE enumeration summarized in \cref{sec:eval-security}. All are drawn from the attack
+scenarios of \cref{ch:threat} and the mechanisms of \cref{ch:design}, and correspond to the runnable
+adversarial suite of \cref{sec:impl-tests}. The MITRE identifiers are real ATT\&CK Enterprise
+technique IDs, mapped to how each manifests against a key directory and the key-transparency control
+that answers it.
+
+% ----------------------------------------------------------------------------
+\section{Warning-Suppression Safeguards}\label{sec:sec-suppression}
+
+The append-only log constrains the \emph{history of committed roots} but not the \emph{contents} of
+successive directory states. Within
+any epoch whose tree includes the warning leaf, the server cannot answer a warning-slot query with
+``absent'': non-inclusion must be \emph{proven} (\cref{ssec:design-verify}), and a valid
+non-inclusion proof against a root whose tree contains the leaf would require a hash collision.
+Across epochs, however, nothing in the log alone prevents a malicious server from building the
+\emph{next} epoch's prefix tree without a leaf that the previous epoch's tree contained, and then
+proving that leaf's non-inclusion honestly against the new committed root; every log consistency
+proof would continue to verify, because the log records only that roots were appended, not that the
+directory evolved admissibly between them. Three safeguards close this gap.
+
+\begin{enumerate}
+\item \textbf{Write-once labels.} Dual-index and CEA labels (\cref{ssec:design-modes}) are
+write-once: the server's update interface rejects a write to an occupied label in these families,
+and the honest interface never removes or modifies an occupied label in a subsequent epoch. The policy is bound into
+the signed configuration hash of \cref{eq:design-sth}, so a server that changes it breaks its own
+signature for any client that recomputes the commitment.
+\item \textbf{Transition audit.} The write-once policy binds an honest server; to bind a malicious
+one, the auditor verifies it per epoch. For each committed epoch the server discloses to the auditor
+the epoch's update set together with proofs against the previous committed root; the auditor
+recomputes the previous root, replays the declared operations (insertions of previously absent
+labels and, for key rotation, declared in-place rotations whose disclosed old value must match the
+leaf being replaced), verifies that nothing beyond the declared operations changed (the delta
+format cannot express a deletion), and checks that the result equals the newly committed root.
+Each leaf commits its \emph{kind}, \emph{mutable} (the global-VRF identity slots, which the server
+may rotate) or \emph{immutable} (the raw dual-index, CEA, and warning labels, which are write-once),
+bound into the leaf hash as $\Hash(\mathit{kind} \concat \mathit{label} \concat \mathit{value})$,
+so the kind is authenticated by the very inclusion proof that authenticates the value and the server
+cannot relabel it. The auditor therefore \emph{distinguishes} the two families: it accepts a declared
+in-place rotation only on a mutable leaf, and \textbf{rejects any rotation of an immutable leaf
+outright} (as well as any rotation that misdeclares the leaf's kind). An adversary that has
+compromised the pre-shared state and tries to overwrite a committed CEA fingerprint $F_t$ with one
+over its injected key must route the write through the privileged interface and declare it as a
+rotation; because the target leaf is immutable the transition audit rejects that rotation, so the
+epoch fails the auditor's validation and raises an alarm. Entry immutability is thus enforced
+\emph{as an auditor acceptance condition}: an immutable-leaf rotation is detected and rejected, not merely surfaced. The owner-side self-checks remain as defence
+in depth for the dual-index labels: a replaced lookup slot fails the owner's self-check and a
+replaced warning slot still alerts (any value at the slot alerts). But note the CEA fingerprint
+overwrite is one the receiver's per-epoch verdict alone \emph{cannot} catch under a pre-shared-state
+compromise (the substituted fingerprint matches what the victim recomputes for the injected key), so
+it is the auditor's rejection of the immutable-leaf rotation, and the alarm it raises, that closes it. This is
+the update-validity role the IETF KeyTrans protocol assigns to third-party auditors, whose
+\textsf{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
+proof against the prior tree, so that the auditor can recompute both roots of the
+transition~\cite{ietf-keytrans-protocol}. A deletion or overwrite therefore cannot be committed
+without either failing the auditor's validation and raising its alarm, or presenting the auditor a transition that
+fails to replay.
+\item \textbf{Persistence check.} Independently of any auditor, the writer of a warning retains the
+inclusion proof and signed tree head of the epoch at which its warning committed, and the persistence
+check re-verifies the warning's inclusion on a later head. In the prototype this check is implemented
+and unit-tested as a reference component; it is not wired into the live background monitor
+(\cref{app:algorithms}). If the leaf later disappears,
+the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
+$\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
+constitute publicly verifiable evidence, attributable to the server's signing key, that the server
+deleted a committed leaf, since all three verify against heads the server itself signed.
+\end{enumerate}
+
+The persistence check gives the warning's \emph{writer} evidence of deletion but does not alert a
+\emph{peer} that missed the warning. The transition audit independently detects the deletion during
+epoch validation. With these safeguards in place, the server's only remaining suppression strategy is
+refusal. It can withhold the lookup, the epoch, or the auditor's disclosure, whether for all clients
+or selectively for the one revealed warning label. Either way the refusal is observable, since a
+client treats anything other than a proof-verified response as a failed check rather than a clean
+absence. A refusal therefore never masquerades as a verified absence. The prototype reports it as an
+unavailable check (amber, not red), without attributing its cause. The A2 signal proper is the key
+mismatch together with a \emph{proof-verified} absence of the warning. All three safeguards are
+implemented. The write-once policy and the transition audit run live, the first enforced by the
+server's raw-label update interface, the second by the auditor replaying each epoch's declared update
+set. The persistence check is a tested reference component (\cref{ch:impl}, \cref{app:algorithms}).
+The prototype does not implement account-layer authentication of raw-label writes (proof of raw-label
+ownership). Without it, the write-once policy still binds an honest server and the transition audit
+still binds a malicious one, but a malicious client could pre-emptively occupy a currently empty peer
+slot (\cref{ch:discussion}).
 
 % ----------------------------------------------------------------------------
 \section{MITRE ATT\&CK Technique-to-Mitigation Matrix}\label{sec:sec-mitre}

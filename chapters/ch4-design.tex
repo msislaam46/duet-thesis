@@ -280,80 +280,18 @@ MAC (any value at the slot still raises an alarm), so the MAC only classifies au
 opened payload is an authentic peer warning, and a value that fails to open is flagged as
 unauthenticated (possible operator injection) but still alarms.}
 
-The append-only log constrains the \emph{history of committed roots} but not the \emph{contents} of
-successive directory states. Within
-any epoch whose tree includes the warning leaf, the server cannot answer a warning-slot query with
-``absent'': non-inclusion must be \emph{proven} (\cref{ssec:design-verify}), and a valid
-non-inclusion proof against a root whose tree contains the leaf would require a hash collision.
-Across epochs, however, nothing in the log alone prevents a malicious server from building the
-\emph{next} epoch's prefix tree without a leaf that the previous epoch's tree contained, and then
-proving that leaf's non-inclusion honestly against the new committed root; every log consistency
-proof would continue to verify, because the log records only that roots were appended, not that the
-directory evolved admissibly between them. Three safeguards close this gap.
-
-\begin{enumerate}
-\item \textbf{Write-once labels.} Dual-index and CEA labels (\cref{ssec:design-modes}) are
-write-once: the server's update interface rejects a write to an occupied label in these families,
-and the honest interface never removes or modifies an occupied label in a subsequent epoch. The policy is bound into
-the signed configuration hash of \cref{eq:design-sth}, so a server that changes it breaks its own
-signature for any client that recomputes the commitment.
-\item \textbf{Transition audit.} The write-once policy binds an honest server; to bind a malicious
-one, the auditor verifies it per epoch. For each committed epoch the server discloses to the auditor
-the epoch's update set together with proofs against the previous committed root; the auditor
-recomputes the previous root, replays the declared operations (insertions of previously absent
-labels and, for key rotation, declared in-place rotations whose disclosed old value must match the
-leaf being replaced), verifies that nothing beyond the declared operations changed (the delta
-format cannot express a deletion), and checks that the result equals the newly committed root.
-Each leaf commits its \emph{kind}, \emph{mutable} (the global-VRF identity slots, which the server
-may rotate) or \emph{immutable} (the raw dual-index, CEA, and warning labels, which are write-once),
-bound into the leaf hash as $\Hash(\mathit{kind} \concat \mathit{label} \concat \mathit{value})$,
-so the kind is authenticated by the very inclusion proof that authenticates the value and the server
-cannot relabel it. The auditor therefore \emph{distinguishes} the two families: it accepts a declared
-in-place rotation only on a mutable leaf, and \textbf{rejects any rotation of an immutable leaf
-outright} (as well as any rotation that misdeclares the leaf's kind). An adversary that has
-compromised the pre-shared state and tries to overwrite a committed CEA fingerprint $F_t$ with one
-over its injected key must route the write through the privileged interface and declare it as a
-rotation; because the target leaf is immutable the transition audit rejects that rotation, so the
-epoch fails the auditor's validation and raises an alarm. Entry immutability is thus enforced
-\emph{as an auditor acceptance condition}: an immutable-leaf rotation is detected and rejected, not merely surfaced. The owner-side self-checks remain as defence
-in depth for the dual-index labels: a replaced lookup slot fails the owner's self-check and a
-replaced warning slot still alerts (any value at the slot alerts). But note the CEA fingerprint
-overwrite is one the receiver's per-epoch verdict alone \emph{cannot} catch under a pre-shared-state
-compromise (the substituted fingerprint matches what the victim recomputes for the injected key), so
-it is the auditor's rejection of the immutable-leaf rotation, and the alarm it raises, that closes it. This is
-the update-validity role the IETF KeyTrans protocol assigns to third-party auditors, whose
-\textsf{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
-proof against the prior tree, so that the auditor can recompute both roots of the
-transition~\cite{ietf-keytrans-protocol}. A deletion or overwrite therefore cannot be committed
-without either failing the auditor's validation and raising its alarm, or presenting the auditor a transition that
-fails to replay.
-\item \textbf{Persistence check.} Independently of any auditor, the writer of a warning retains the
-inclusion proof and signed tree head of the epoch at which its warning committed, and the persistence
-check re-verifies the warning's inclusion on a later head. In the prototype this check is implemented
-and unit-tested as a reference component; it is not wired into the live background monitor
-(\cref{app:algorithms}). If the leaf later disappears,
-the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
-$\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
-constitute publicly verifiable evidence, attributable to the server's signing key, that the server
-deleted a committed leaf, since all three verify against heads the server itself signed.
-\end{enumerate}
-
-The persistence check gives the warning's \emph{writer} evidence of deletion but does not alert a
-\emph{peer} that missed the warning. The transition audit independently detects the deletion during
-epoch validation. With these safeguards in place, the server's only remaining suppression strategy is
-refusal. It can withhold the lookup, the epoch, or the auditor's disclosure, whether for all clients
-or selectively for the one revealed warning label. Either way the refusal is observable, since a
-client treats anything other than a proof-verified response as a failed check rather than a clean
-absence. A refusal therefore never masquerades as a verified absence. The prototype reports it as an
-unavailable check (amber, not red), without attributing its cause. The A2 signal proper is the key
-mismatch together with a \emph{proof-verified} absence of the warning. All three safeguards are
-implemented. The write-once policy and the transition audit run live, the first enforced by the
-server's raw-label update interface, the second by the auditor replaying each epoch's declared update
-set. The persistence check is a tested reference component (\cref{ch:impl}, \cref{app:algorithms}).
-The prototype does not implement account-layer authentication of raw-label writes (proof of raw-label
-ownership). Without it, the write-once policy still binds an honest server and the transition audit
-still binds a malicious one, but a malicious client could pre-emptively occupy a currently empty peer
-slot (\cref{ch:discussion}).
+The append-only log constrains the history of committed roots but not the contents of successive
+directory states, so nothing in the log alone prevents a malicious server from dropping a committed
+leaf across an epoch boundary and proving its non-inclusion honestly against the new root. Three
+safeguards close this gap. Write-once labels stop the honest interface from removing or replacing an
+occupied dual-index, CEA, or warning slot. The per-epoch transition audit binds a malicious server,
+rejecting any rotation of an immutable leaf and any epoch whose declared update set does not replay to
+the committed root. The persistence check lets a warning's writer prove, from proofs the server itself
+signed, that a committed leaf was later deleted. The A2 signal proper is a key mismatch together with
+a proof-verified absence of the warning, and a refusal never masquerades as a verified absence,
+because the client reports anything other than a proof-verified response as a failed check.
+\Cref{sec:sec-suppression} gives the full argument, including the auditor's immutable-leaf rejection
+and the prototype's implementation status.
 
 Detection is bidirectional, which matters for the offline case. The victim's own-key
 self-check publishes the warning when the victim notices the wrong key under its own
@@ -716,3 +654,24 @@ history, leaving append-only violations undetectable. The log supplies exactly t
 consistency proofs that windowed catch-up (\cref{sec:design-windowed}) and the
 cross-vantage auditor Goal~G4 (Fork Detection) depend on. The cost is one extra log-inclusion path per
 lookup, up to $32\lceil\lg E\rceil$ bytes, quantified in \cref{ch:eval}.
+
+\Cref{tab:threat-goals} maps the four security requirements of \cref{sec:threat-goals} to their
+associated threats and the mechanisms developed in this chapter.
+
+\begin{table}[H]
+\centering
+\caption{Security requirements, associated threats, and supporting mechanisms.}
+\label{tab:threat-goals}
+\setlength{\extrarowheight}{2pt}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}ll>{\raggedright\arraybackslash}Xl@{}}
+\toprule
+Requirement & Associated threat & Security mechanism & Auditor? \\
+\midrule
+G1 key-substitution detection & A1, A3, A5 & A1 and A5 use self-checks and the dual-index warning.\newline A3 uses divergent labels and the global VRF-bound identity entry.\newline A5 also uses identity re-fetch and predecessor cross-signature. & no \\
+G2 offline-window consistency & general rewriting & windowed consistency proofs & no \\
+G3 directory privacy & enumeration / recon & VRF-derived labels & no \\
+G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\
+\bottomrule
+\end{tabularx}
+\end{table}
