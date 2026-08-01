@@ -25,13 +25,12 @@ where this fails is scenario X1 in \cref{sec:threat-adversary}). Clients may be
 resource-constrained and intermittently connected, which is why the cost of
 catching up after an offline period is a primary concern.
 
-The \textbf{message-delivery and key-distribution server} is the provider's
+The \textbf{message-delivery and key-distribution server} is part of the provider's
 infrastructure. It stores and serves the X3DH pre-key bundles that Alice needs to
 start a session with Bob (\cref{ssec:bg-x3dh}) and relays ciphertext between the
-parties. It is the single service-side point through which public keys reach their consumers,
-and therefore the single service-side point at which a key can be substituted. The
-client--service channel is the other substitution surface, modelled separately as
-the network adversary (A3, \cref{sec:threat-adversary}).
+parties. A malicious provider can substitute a key through this delivery path or through the
+directory state it controls. A network attacker can separately alter the bundle while it is in
+transit (scenario A3, \cref{sec:threat-adversary}).
 
 The \textbf{key-transparency log server} maintains the verifiable directory and
 its append-only log, answers lookup and monitoring queries with cryptographic
@@ -40,13 +39,11 @@ same party as the message-delivery server. The analysis assumes the worst case
 throughout: that the two are a single, possibly malicious, operator, which avoids
 relying on any assumption that they do not collude.
 
-The \textbf{auditors} are independent parties that observe the log from a second
-vantage point, cross-check the tree heads the server publishes, and replay each
-epoch's declared update set against the committed directory root (the per-epoch
-transition audit of \cref{ch:design}). Their role in this model is fork detection
-(scenario A4) and binding a malicious operator to declare every cross-epoch
-mutation. The dual-index warning itself depends on neither, a separation made
-precise in \cref{sec:threat-assumptions}.
+The \textbf{auditors} observe the log from an independent vantage point. They compare signed
+tree heads and replay each epoch's declared updates against the committed directory root (the
+per-epoch transition audit of \cref{ch:design}). These checks detect split-view equivocation
+and undeclared mutations between epochs. The dual-index warning mechanism itself does not
+require an auditor, as clarified in \cref{sec:threat-assumptions}.
 
 The interactions between these actors define three trust boundaries (\cref{fig:threat-arch}). The
 client--server boundary is semi-trusted. The client depends on the server to answer requests but
@@ -58,13 +55,11 @@ The server--auditor boundary is independent. The auditor's value is that its vie
 obtained separately from the client's. The network and infrastructure adversaries are modelled
 separately, and a deployment may face either or both at once.
 
-The system operates in one of two authentication modes, both developed in
-\cref{ch:design} and referred to in this chapter only by name: a \emph{session
-mode}, in which a per-conversation dual-index entry authenticates the keys of a
-given session, and a \emph{continuous mode}, in which a per-ratchet-epoch
-fingerprint authenticates the evolving Double Ratchet state
-(\cref{ssec:bg-ratchet}). The threat model applies to both. Where a guarantee is
-specific to one mode, this is indicated.
+The design supports two authentication modes, defined in \cref{ch:design}. Session mode uses
+per-conversation dual-index entries to authenticate session keys. Continuous mode uses a
+fingerprint at each ratchet epoch to authenticate the evolving Double Ratchet state
+(\cref{ssec:bg-ratchet}). The threat model applies to both modes, and mode-specific conditions
+are identified where necessary.
 
 \begin{figure}[t]
 \centering
@@ -89,24 +84,26 @@ post-compromise security does not defend against once the adversary remains acti
 (\cref{ssec:bg-ratchet}), and that ACKA's continuous mode is designed to catch
 (\cref{sec:bg-acka}).
 
-\paragraph{The Infrastructure Attacker (Malicious Server).} The server is
-semi-trusted. It is relied upon for availability but assumed to act maliciously when it
-can do so without being caught. It may substitute the key it serves for a user,
-censor writes a client attempts to make to the log, and equivocate by presenting
-two internally consistent but divergent views of the directory to different
-clients. This is the adversary key transparency was built to expose
-(\cref{sec:bg-vkd}), and it lies outside ACKA's detection theorem, which assumes a $\Logsec$-secure log rather than constructing one against such a server. The same semi-trusted, potentially equivocating operator is assumed in CONIKS~\cite{melara2015coniks}, SEEMless~\cite{chase2019seemless}, Parakeet~\cite{malvai2023parakeet}, and the IETF Key Transparency architecture. Deployed messengers rely on such a service to return users' public keys, and documented fake-key attacks show that its compromise or coercion is a practical threat~\cite{yadav2022fakekey}.
+\paragraph{The Infrastructure Attacker (Malicious Server).} The server is semi-trusted. Clients
+depend on the server to answer requests but verify its cryptographic responses rather than
+assuming honest behaviour. A malicious operator may substitute a key, censor a log write, or
+present different internally consistent directory views to different clients. This is the
+malicious-directory threat considered by the key-transparency systems surveyed in
+\cref{sec:bg-vkd} and by the IETF Key Transparency
+architecture~\cite{ietf-keytrans-architecture}. Documented fake-key attacks show why compromise
+or coercion of a key-distribution service is a practical concern~\cite{yadav2022fakekey}.
 
-\paragraph{What the Adversary Cannot Do.} The model grants the adversary the
-capabilities above and no more. It cannot break the underlying primitives: it
-cannot find collisions in SHA-256, solve the discrete-logarithm problem
-underlying X25519, or forge an Ed25519 signature. It cannot forge a
-verifiable-random-function proof without the server's VRF secret key, nor produce
-a Merkle inclusion proof for an entry that was never committed to the log. It
-cannot sustain equivocation without detection by an honest auditor holding a valid,
-independent second-vantage head (\cref{sec:threat-goals}). And it cannot
-compromise an honest client's device: endpoint security is out of scope, and the
-boundary case where this assumption is lifted is scenario X1.
+\paragraph{What the Adversary Cannot Do.} The model assumes that the underlying cryptographic
+mechanisms remain secure. An external attacker cannot find SHA-256 collisions, recover an
+X25519 shared secret without the required private key, forge signatures under keys it does not
+control, or produce valid VRF proofs without the corresponding secret key. The malicious
+operator does hold the directory's VRF and signing keys, so it can evaluate global identity
+labels and sign new directory states. It cannot, however,
+produce a valid inclusion proof for a value absent from the root of the signed head being
+verified without violating the collision-resistance assumption underlying the authenticated
+data structure. Equivocation is detected when an
+honest auditor compares two conflicting, validly signed heads for the same epoch. Endpoint
+compromise remains outside the model and is represented by X1.
 
 The implications of these adversary capabilities for the design are developed in
 \cref{ch:design}.
@@ -127,12 +124,12 @@ address (X1). Each scenario is evaluated experimentally in \cref{ch:eval}.
 Scenario & Adversary & Objective & Required outcome \\
 \midrule
 A0 & none & honest baseline & all checks pass \\
-A1 & malicious server & substitute a user's key & substitution detected by the affected parties \\
-A2 & malicious server & substitute a key and censor the warning & censorship must not appear as successful verification \\
-A3 & network (Dolev--Yao) & substitute a key in transit & in-transit substitution detected \\
-A4 & malicious server & equivocate (split-view) & conflicting signed views exposed \\
+A1 & malicious server & substitute a user's key & substitution detected by the affected client and, for established pairs, reported to the peer \\
+A2 & malicious server & substitute a key and censor the warning & censorship produces an alarm or a failed check, never successful verification \\
+A3 & network (Dolev--Yao) & perform a coordinated key substitution in transit & in-transit substitution detected \\
+A4 & malicious server & equivocate (split-view) & conflicting signed heads exposed \\
 A5 & malicious server & substitute during a key rotation & unauthorized rotation must not be accepted as authentic \\
-X1 & endpoint holder & impersonate using the victim's key & outside the directory boundary \\
+X1 & endpoint attacker & impersonate using the victim's key & outside the directory boundary \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -144,15 +141,13 @@ The scenarios below turn the adversary model of \cref{tab:threat-attacks} into a
 ordered from the primary key-substitution threat through its network and equivocation variants to the
 endpoint-compromise boundary.
 
-\paragraph{A1: Key Substitution.} A1 is the primary attack in the model. A
-compromised or coerced server writes its own key in place of the victim's. The
-substituted key is internally consistent: the malicious server has
-legitimately appended the forged key to its own Merkle log and can produce valid
-inclusion proofs for it, so the Merkle proofs alone do not detect A1. Detection instead comes from
-the victim observing the wrong key under its own name and from the peer learning
-of the substitution through the in-band warning channel. The evaluation
-(\cref{ch:eval}) instantiates A1 in two forms: A1a, substitution of the global
-identity slot, and A1b, substitution of an immutable dual-index session slot.
+\paragraph{A1: Key Substitution.} A1 is the primary server-side substitution attack. A
+compromised or coerced operator commits an attacker-controlled key under the victim's identity
+and returns a valid inclusion proof for that malicious directory state. The proof establishes
+that the key belongs to the signed state, not that it is the victim's authentic key. The
+affected client detects the unexpected binding, and an established peer can learn of it through
+the shared warning slot. The evaluation (\cref{ch:eval}) instantiates A1a at the global
+identity slot and A1b at an immutable dual-index session slot.
 
 \paragraph{A2: Warning Censorship.} A2 concerns censorship before the warning commits. After
 detecting a key mismatch, the client verifies the warning slot. A proof-verified empty slot raises the
@@ -160,21 +155,22 @@ compound A2 alarm. If a committed warning later disappears, the transition audit
 directory transition. For a client using windowed catch-up, an in-window substitution is detected only
 if the warning commits and remains present at the catch-up read (\cref{ssec:design-catchup}).
 
-\paragraph{A3: Network Man-in-the-Middle.} With no server collusion, a
-Dolev--Yao adversary substitutes a key in the bundle in transit. The two parties
-then derive different shared secrets, and because the dual-index labels are
-derived from that secret, they address disjoint locations in the directory: the
-victim queries a label at which the impersonator never registered. In addition, the substituted
-bundle diverges from the identity entry at the victim's global VRF-derived label, so the client's
-comparison against that VRF-bound entry exposes the substitution independently of the missed
-dual-index slot.
+\paragraph{A3: Network Man-in-the-Middle.} With no server collusion, a Dolev--Yao adversary may
+replace Bob's identity key and signed pre-key with an attacker-controlled pair whose signature
+verifies under the substituted identity. The attacker also replaces or withholds the optional
+one-time pre-key. The attacker can then derive the X3DH secret for the session it establishes
+with Alice. By establishing separate sessions with Alice and Bob, the attacker causes the
+legitimate parties to hold different conversation secrets and derive disjoint dual-index
+labels. The substituted bundle also differs from the identity entry stored under Bob's global
+VRF-derived label. The affected client can therefore detect A3 through both label divergence
+and the comparison with the honest directory entry.
 
-A3 also has a post-compromise variant that motivates the continuous mode: an
-adversary that has already compromised a session and then injects a forged ratchet
-key mid-conversation is invisible to a server-side audit, because the server and
-log remain honest. Continuous mode detects it because each epoch logs a
-fingerprint of the ratchet key, so an injected key produces a conflicting
-fingerprint at the agreed label and the same warning is raised.
+A post-compromise variant of A3 motivates continuous mode. An adversary that has already
+compromised a session may inject a forged ratchet key while the directory itself continues to
+operate correctly. The transition audit alone cannot identify the semantic mismatch because the
+directory operations remain internally valid. Continuous mode instead authenticates the ratchet
+key at each epoch. The forged key then produces either a label the other party does not derive
+or a conflicting fingerprint at the expected label, causing the client to report a warning.
 
 \paragraph{A4: Equivocation (Split-View).} Inherited from Certificate
 Transparency (\cref{ssec:bg-ct2kt}), the server signs two heads at one epoch, one
@@ -183,20 +179,18 @@ two views. The cross-vantage comparison of the two heads exposes the fork.
 
 \paragraph{A5: Malicious Key Rotation.} A legitimate rotation also changes the identity key, so a
 changed key is not by itself malicious. A malicious server exploits this by substituting its own key
-inside a rotation. The peer re-fetches the identity entry at the global VRF-derived label. If the
-identity key has changed, the predecessor cross-signature, the new key signed by the trusted
-predecessor, determines whether the rotation is authorized. In the demonstrated A5 control, a missing
+inside a rotation. The peer re-fetches the identity entry at the global VRF-derived label. If the identity key has changed, a valid cross-signature from the trusted predecessor binds the
+new key to that predecessor and distinguishes an authorized rotation from an unauthorized
+replacement. In the demonstrated A5 control, a missing
 or invalid predecessor cross-signature causes rejection. The live client path currently relies on the
 identity re-fetch and warning, while the cross-signature check is exercised by the adversarial suite.
 
-\paragraph{X1: Endpoint Compromise (Boundary).} Once the adversary holds the
-victim's own private key, it derives the same shared secret, the same labels, and
-the same proofs, and is indistinguishable from the victim. X1 marks the boundary of
-key-transparency protection. Key transparency protects communication between honest
-endpoints but cannot protect a compromised endpoint. The attack--defence structure of these
-scenarios, separating the interposition routes that place an attacker key (A1, A3,
-A5) from the concealment attempts that try to hide it (A2, A4) and from the
-out-of-scope endpoint boundary (X1), is set out in \cref{fig:eval-attacktree}.
+\paragraph{X1: Endpoint Compromise (Boundary).} Once the adversary controls the victim's
+private state, it can derive the same conversation secrets and labels and can query the same
+directory entries. The protocol can no longer distinguish the attacker from the victim. X1
+therefore marks the endpoint boundary of key-transparency protection.
+\Cref{fig:eval-attacktree} separates the key-substitution routes A1, A3, and A5 from the
+concealment attempts A2 and A4 and from the endpoint-compromise boundary X1.
 
 % ============================================================================
 \section{Assumptions}\label{sec:threat-assumptions}
@@ -216,13 +210,13 @@ only for fork detection (A4) and the per-epoch transition audit (\cref{ch:design
 dual-index warning mechanism. Detection of server-side substitution (A1) and network
 man-in-the-middle (A3) is performed by the communicating clients and depends on no auditor.
 
-Finally, the model follows a trust-on-first-use (TOFU) approach.\label{sec:threat-fair} Peer-side
-detection acts only after a key has been pinned. One limitation remains, inherited from the
-trust-on-first-use assumption that also underlies ACKA. Detection establishes that the key seen now
-differs from a key trusted earlier. It cannot vouch for the first key, before any trusted baseline
-exists. A substitution that predates first contact, poisoning the initial pin, is not caught, because
-there is nothing to compare against. This limitation is carried through the analysis and revisited in
-the discussion of limitations (\cref{ch:discussion}).
+The model uses trust on first use (TOFU) for the initial binding supplied by the
+directory.\label{sec:threat-fair} A malicious operator that substitutes the first directory
+entry before any authentic baseline exists can poison that initial binding. Later monitoring
+can detect changes from the pinned value but cannot establish that the original value was
+authentic. First-contact A3 remains detectable when the directory is honest because comparison
+with the global VRF-bound identity entry exposes the substituted bundle. The limitation of the
+initial directory binding is revisited in \cref{ch:discussion}.
 
 % ============================================================================
 \FloatBarrier
@@ -230,30 +224,33 @@ the discussion of limitations (\cref{ch:discussion}).
 
 The adversary model and assumptions give four security requirements, denoted G1--G4.
 
-\paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or a network
-adversary (A3) substitutes a key, an honest party detects it once an honest monitor completes the
-required verified lookups and, where the peer's warning is needed, that warning write commits. For
-established-pair attacks A1 and A5, either party must be able to detect the substitution.
+\paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or network adversary (A3)
+substitutes a key, the relevant client reports the substitution after completing the
+scenario-specific verified lookups. For an established pair affected by A1 or A5, the detecting
+client writes a warning to the shared warning slot. Peer notification is completed when that
+warning commits and the other client's monitor reads and verifies it.
 
-\paragraph{G2: Consistency Across Offline Windows.} A client returning after an
-offline period requests one distant-head consistency proof rather than one per missed epoch, and
-confirms that the log it now sees is an append-only extension of the one it last verified. The
-proof's size depends on the endpoint log sizes rather than on a proof count fixed directly to the
-window $W$.
+\paragraph{G2: Consistency Across Offline Windows.} A returning client obtains one consistency
+proof between the last verified log size and the current log size. It verifies that the current
+state extends the earlier state without requesting one proof for every missed epoch. Proof size
+depends on the two log sizes and does not grow linearly with the number of missed epochs.
 
-\paragraph{G3: Directory Privacy.} The mapping between a user's identity and its
-directory slot is hidden from outsiders.
+\paragraph{G3: Directory Privacy.} The global directory label derived from a user's identity is
+computationally unpredictable to parties that do not hold the operator's VRF secret key.
 
-\paragraph{G4: Fork Detection.} An equivocating server (A4) that signs two
-divergent heads at one epoch is detected by cross-vantage auditing when a valid, independent
-second-vantage head is available. G4 is the only requirement that depends on the auditor-honesty
-assumption (\cref{sec:threat-assumptions}).
+\paragraph{G4: Fork Detection.} An equivocating server (A4) that signs two different heads for
+the same epoch is detected when an honest auditor obtains and compares the client-observed head
+with a valid head from an independent vantage. G4 is the only security requirement that depends
+on the auditor's independent vantage (\cref{sec:threat-assumptions}).
 
 % ============================================================================
 \FloatBarrier
 \section{Out of Scope}\label{sec:threat-scope}
 
-The model excludes prevention, endpoint compromise, operator query privacy, group messaging, and
-multi-device keychains. A refusal or dropped response is reported as an unavailable or incomplete
-check rather than successful verification. These boundaries and possible extensions are examined in
-\cref{ch:discussion}.
+A malicious operator may still serve a substituted key. After an authentic baseline has been
+established, the requirement is that completed verification exposes a later substitution. The
+design does not guarantee service availability.
+Endpoint compromise, query privacy from the operator, group messaging, and multi-device
+keychains are outside the model. A refusal or dropped response produces an unavailable or
+incomplete check rather than successful verification. These boundaries and possible extensions
+are examined in \cref{ch:discussion}.

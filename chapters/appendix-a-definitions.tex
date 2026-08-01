@@ -247,7 +247,9 @@ combination of Diffie--Hellman values over the parties' identity keys $\pkid{\cd
 pre-key $\spk{\B}$, an optional one-time pre-key $\opk{\B}{i}$, and Alice's ephemeral key
 $\ek{\A}$; the post-quantum variant PQXDH~\cite{pqxdh} augments this with a KEM. It is introduced and
 diagrammed in \cref{ssec:bg-x3dh,fig:bg-x3dh}. In this thesis $\sharedS$ is the entropy source for
-the dual-index labels (\cref{def:dualindex-derive}), used in \cref{ssec:design-labels}.
+the dual-index labels (\cref{def:dualindex-derive}), used in \cref{ssec:design-labels}. This
+thesis assumes the security of the X25519 Diffie--Hellman operation used by X3DH and does not
+analyse that primitive further.
 \end{definition}
 
 \begin{definition}[Double Ratchet]\label{def:doubleratchet}
