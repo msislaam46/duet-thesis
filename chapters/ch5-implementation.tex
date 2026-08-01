@@ -116,7 +116,7 @@ Module & Specification implemented & Conformance evidence \\
 \texttt{auditor} & cross-vantage fork detection + per-epoch transition audit (\cref{alg:auditor}) & append-only audit + equivocation tests, and transition audit catches undeclared deletion and modification \\
 \texttt{monitor} & writer-side persistence check + deletion-evidence bundle (\cref{alg:detect}) & persistence holds while committed, and deletion yields evidence that verifies against the server's signed heads \\
 \texttt{cea} & ACKA example CEA construction~\cite{dowling2023acka}, server-composed register/verify with sender pre-post check and advance-only-on-success (\cref{alg:cea}) & cross-implementation vectors vs.\ TypeScript, plus occupied-label and no-advance-on-fork/not-posted tests \\
-\texttt{hook\_process\_\allowbreak prekey\_bundle} & documentation-only libsignal integration sketch (not compiled into the standalone directory build) & marks where a production binding of the live X3DH secret could be inserted \\
+\texttt{hook\_process\_\allowbreak prekey\_bundle} & documentation-only libsignal integration module, compiled with the crate but not invoked as an executable hook & marks where a production binding of the live X3DH secret could be inserted \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -281,8 +281,8 @@ recomputation, Merkle inclusion, ECVRF, and Ed25519) and depends only on Node's 
 \texttt{crypto} module for SHA-256, SHA-512, and X25519, with its ECVRF curve arithmetic
 implemented in-house, so the embedded verifier adds no cryptographic dependency to the Signal
 client. On every ACI peer-key retrieval it runs the full verification chain of \cref{ssec:design-verify}
-against the head the server returns, refusing any response whose signature, prefix root, or log
-inclusion fails to check.
+against the head the server returns, and returns a rejecting verification verdict when a response's
+signature, prefix root, or log inclusion fails to check.
 
 Client-visible verdicts distinguish unavailability from an integrity failure. A server that is merely unreachable must not be
 mistaken for an attacker, so an unreachable server raises a calm, amber unavailability notice and
@@ -523,7 +523,7 @@ cryptographic and sampling randomness. The toolchain version is recorded. The VR
 key and the sampling generator are seeded from fixed constants, so label placement and the
 choice of sampled users are deterministic across runs. Each benchmark begins from fresh seeded server
 state, so no residual state carries between runs, while the live demonstration uses an administrative
-reset. The tests and benchmarks are
-driven by the single commands \texttt{cargo test} and \texttt{cargo bench} respectively, with the hardware, operating system, and
+reset. The Rust tests and benchmarks are
+driven by \texttt{cargo test} and \texttt{cargo bench} respectively, with the hardware, operating system, and
 compiler version captured automatically into an environment record that accompanies the results. The
 repository layout and the one-command runner scripts are listed in \cref{sec:apiref-repo}.
