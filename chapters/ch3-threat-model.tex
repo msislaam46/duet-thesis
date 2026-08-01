@@ -94,9 +94,9 @@ architecture~\cite{ietf-keytrans-architecture}. Documented fake-key attacks show
 or coercion of a key-distribution service is a practical concern~\cite{yadav2022fakekey}.
 
 \paragraph{What the Adversary Cannot Do.} The model assumes that the underlying cryptographic
-mechanisms remain secure. An external attacker cannot find SHA-256 collisions, recover an
-X25519 shared secret without the required private key, forge signatures under keys it does not
-control, or produce valid VRF proofs without the corresponding secret key. The malicious
+mechanisms remain secure. An external attacker cannot find SHA-256 collisions, compute the honest
+parties' X25519 shared secret without either party's private key, forge signatures under keys it
+does not control, or produce valid VRF proofs without the corresponding secret key. The malicious
 operator does hold the directory's VRF and signing keys, so it can evaluate global identity
 labels and sign new directory states. It cannot, however,
 produce a valid inclusion proof for a value absent from the root of the signed head being
@@ -197,9 +197,10 @@ concealment attempts A2 and A4 and from the endpoint-compromise boundary X1.
 
 The guarantees of the later chapters rest on the following assumptions.
 
-The \textbf{cryptographic assumptions} on SHA-256, Ed25519, and the RFC~9381 VRF are stated in
-\cref{app:definitions}, together with the RFC~9162 consistency property used by the append-only log.
-These bound the adversary's capabilities in \cref{sec:threat-adversary}.
+The assumptions for the cryptographic primitives used by the model are stated in
+\cref{app:definitions}. The same appendix separately defines the RFC~9162 consistency property used
+by the append-only log. These assumptions and properties bound the adversary's capabilities in
+\cref{sec:threat-adversary}.
 
 The \textbf{endpoint assumption} is that honest clients' devices are not
 compromised. This is the X1 boundary, and lifting it places the situation outside
