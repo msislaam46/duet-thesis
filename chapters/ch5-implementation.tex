@@ -21,7 +21,7 @@ environment; the connection to libsignal is a separate integration patch at the 
 (\cref{ssec:impl-hooks}), so compatibility with libsignal's integration surface is preserved without
 building against it. Its data structures and proof formats follow the KeyTrans draft and were designed by comparison
 with Signal's own Go implementation~\cite{signal-kt-server}; the cryptographic primitives are
-independently validated against the RFC test vectors (\cref{app:tests}). There is no executable
+independently validated against the RFC test vectors (\cref{tab:tests-rust-prim}). There is no executable
 Go\,$\leftrightarrow$\,DUET interoperability test: the proof encodings differ deliberately
 (Signal's are fixed-width, DUET's bitmap-compressed), so no wire-compatibility is claimed.
 
@@ -81,7 +81,7 @@ overcome end to end.
 HTTP with the Rust directory server and uses the reference client constructions to verify keys.
 An independent auditor retrieves signed tree heads, epoch deltas, and consistency proofs. Shared
 test vectors require byte-for-byte agreement for the covered operations and inputs.
-\Cref{app:apiref} specifies the HTTP API.}
+\Cref{sec:apiref-rest} specifies the HTTP API.}
 \label{fig:impl-overview}
 \end{figure}
 
@@ -188,9 +188,9 @@ end-to-end demonstration (\cref{sec:impl-tests,ssec:impl-demo}). An independent
 auditor binary, a small \texttt{ureq} HTTP client, polls the signed tree head, verifies its Ed25519
 signature, and checks append-only consistency on each new epoch, so that a forked or rewritten
 history is caught from a second vantage point. A benchmark harness completes the set, driving the
-measurements of \cref{ch:eval}; \cref{app:apiref} lists the endpoints and request formats (the public, admin, hook, and event interfaces of
+measurements of \cref{ch:eval}. The public, admin, hook, and event interfaces are listed in
 \cref{tab:apiref-public,tab:apiref-admin,tab:apiref-hooks,tab:apiref-events}, with the demonstration
-screens of \cref{fig:demo-baseline,fig:demo-cmd,fig:demo-equivocation}), and the complete test
+screens of \cref{fig:demo-baseline,fig:demo-cmd,fig:demo-equivocation}, and the complete test
 catalogue in \cref{app:tests}
 (\cref{tab:tests-rust-prim,tab:tests-rust-server,tab:tests-rust-system,tab:tests-jest-wire,tab:tests-jest-unit,tab:tests-adversarial}).
 
@@ -212,7 +212,7 @@ and signed tree head of the epoch at which the warning committed and, on any lat
 assembles the inclusion proof, the proven non-inclusion, and the consistency proof between the two
 heads into a bundle that verifies against the server's own signatures. The module is exercised by unit tests
 as a reference component; the live background monitor runs the detection and warning-publication path
-only (\cref{app:algorithms}). The warning payload itself
+only (\cref{alg:detect}). The warning payload itself
 carries an HKDF-derived MAC (\cref{alg:dualindex}) so that a reader can distinguish a peer-authored
 warning from one the operator injected once it has learned the slot's label. One write-path element left
 to a production deployment is authenticated writes. Without account-layer proof of raw-label ownership the
@@ -298,7 +298,7 @@ networked stack.
 \caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript
 KT client communicates over HTTP with the Rust directory server. It verifies keys at three lifecycle
 hooks and reports verdicts to the badge and banner. An independent auditor polls the server. The
-scripted attacker uses a privileged testing interface. \Cref{app:apiref} lists the hook functions
+scripted attacker uses a privileged testing interface. \Cref{tab:apiref-hooks,tab:apiref-events} list the hook functions
 and verdict-event names.}
 \label{fig:impl-signal}
 \end{figure}
@@ -334,7 +334,7 @@ where the prototype instead substitutes its deterministic stand-in. Verdicts app
 interface through a conversation-header badge (green when verified, red on a warning) and a
 banner, driven by DOM events that signal a warning (a detected key substitution or
 man-in-the-middle) and temporary unavailability. The specific hook functions and event names are
-listed in \cref{app:apiref}.
+listed in \cref{tab:apiref-hooks,tab:apiref-events}.
 
 \Cref{fig:impl-verify} illustrates the matching branch of the networked \texttt{RemoteKTClient.detectMitm}
 path. The client reads its own dual-index lookup slot $\ell_{\mathsf{self}}$, and the server replies
@@ -386,7 +386,7 @@ writes a warning that Bob later reads. The auditor separately rejects the immuta
 
 The integration runs as a live, multi-actor demonstration: two linked Signal Desktop clients, the
 standalone Rust server, the auditor, and a scripted attacker, driven by the runner scripts of
-\cref{app:apiref}. Its purpose is to demonstrate the detection paths in the Signal user
+\cref{sec:apiref-repo}. Its purpose is to demonstrate the detection paths in the Signal user
 interface rather than only in a benchmark. The clearest run is the dual-index substitution
 (scenario A1b). The attacker overwrites the victim's per-conversation slot on the shared server; on the
 victim's next monitor tick the own-key self-check fails, and the client writes the shared warning slot
@@ -398,7 +398,7 @@ pinned peer detects the substitution and commits the warning (the conditional ca
 \cref{ch:design}).
 Independently of the clients, the auditor's per-epoch transition audit rejects this A1b overwrite: the
 dual-index slot is immutable, so the declared in-place rotation is an \textsc{ImmutableRotation} the
-replay refuses and the epoch alarms (\cref{fig:impl-auditor}). Its cross-vantage fork check separately
+replay refuses and the epoch alarms (\cref{fig:impl-auditor}). Its cross-vantage fork check
 reports no equivocation, since A1b is a substitution rather than a split view. This is the opposite of
 the global-slot case A1a, where the identity slot is mutable and a malicious rotation is a legal
 declared operation the auditor cannot tell from an honest key change; there the auditor stays
@@ -596,4 +596,4 @@ choice of sampled users are deterministic across runs. Each experiment begins fr
 after an administrative reset, so no residual state carries between runs. The benchmark suite is
 driven by single commands (\texttt{cargo test}, \texttt{cargo bench}), with the hardware, operating system, and
 compiler version captured automatically into an environment record that accompanies the results. The
-repository layout and the one-command runner scripts are listed in \cref{app:apiref}.
+repository layout and the one-command runner scripts are listed in \cref{sec:apiref-repo}.

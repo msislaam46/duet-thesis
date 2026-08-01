@@ -87,7 +87,7 @@ warnings because it holds the shared secret and can therefore produce valid payl
 it cannot distinguish an honest peer from an abusive one. A production system would require rate
 limiting and per-sender signed warning payloads.
 
-\paragraph{Evaluation Completeness.} The adversarial suite (\cref{app:tests}) models substitution
+\paragraph{Evaluation Completeness.} The adversarial suite (\cref{sec:tests-adversarial}) models substitution
 against an \emph{already-established} conversation, the scheme's stated scope
 (\cref{ssec:design-detection}), and a network man-in-the-middle against an honest global directory. It
 does not model a two-leg adversary interposed at first contact, nor a server that keeps a fabricated

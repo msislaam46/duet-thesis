@@ -162,7 +162,7 @@ that gap. This is the combined-tree semantics of the Key Transparency draft (\cr
 The six checks are split across the two implementations. In the Rust reference, the label-bound entry
 points and the head-bound wrappers together enforce the label binding, VRF, value, prefix-root,
 log-inclusion, signature, head-equality, and latest-leaf currency checks, so a validly signed but
-stale or forked head is rejected (the entry points are catalogued in \cref{app:apiref}). The live
+stale or forked head is rejected (the public endpoints carrying these proof objects are listed in \cref{tab:apiref-public}). The live
 TypeScript client folds the same checks into \texttt{verifyChain}, so every lookup enforces all six.
 The ``full client verification'' benchmarked in \cref{ch:eval} is the complete six-step chain.
 
@@ -175,7 +175,7 @@ attacks A1, A3, and A5 of \cref{ch:threat} through complementary mechanisms. An 
 channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5). The
 secret-derived dual-index labels detect a network man-in-the-middle (A3): an attacker with a
 different shared secret derives disjoint labels, so the proof-verified lookup returns non-inclusion. A
-separate comparison with the peer's global VRF-anchored directory entry detects pre-emptive occupation
+comparison with the peer's global VRF-anchored directory entry also detects pre-emptive occupation
 of the expected slot, because an attacker-controlled value cannot match the authenticated global key.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
@@ -317,7 +317,7 @@ the same directional lookup label, the lemma holds even when $\sharedS$ is known
 \Cref{lem:dualindex-consistency} states this formally with its argument. Under one signed head a
 substituted peer value and an honest self-check at the shared label cannot both verify, so a malicious
 server cannot keep both consistent. Its interpretation and the surrounding detection cases are
-developed in \cref{app:definitions}. A complete formal security proof remains future work
+developed in \cref{def:g1-consistency}. A complete formal security proof remains future work
 (\cref{ch:discussion}).
 
 The dual-index mechanism complements rather than replaces CEA. $\CEA$ authenticates the
@@ -493,10 +493,10 @@ is a signed, append-only extension of the state already trusted. The catch-up co
 therefore depends only logarithmically on the sizes of the previously trusted and current
 log states, rather than linearly on the number of missed epochs. The warning-slot lookup is
 performed during the same synchronization workflow and so does not change the asymptotic
-complexity. \Cref{lem:windowed-size} states the windowed-proof size, and \cref{app:algorithms} presents the \textsf{WindowedCatchUp} procedure
-alongside the pseudocode for the Merkle log tree, the sparse prefix tree, and
-client verification (\cref{alg:merklelog,alg:prefix,alg:client}); \cref{tab:alg-purpose} maps each of
-the eight algorithms to its purpose.
+complexity. \Cref{lem:windowed-size} states the windowed-proof size, and \cref{alg:client} presents the
+\textsf{WindowedCatchUp} procedure alongside client registration, retrieval, and verification. The
+Merkle log tree and the sparse prefix tree appear in \cref{alg:merklelog,alg:prefix}, and
+\cref{tab:alg-purpose} maps each of the eight algorithms to its purpose.
 
 \begin{figure}[H]
 \centering

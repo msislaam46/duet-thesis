@@ -33,7 +33,7 @@ Measurements are grouped into seventeen metric families, \emph{M1}--\emph{M17}.
 \Cref{tab:eval-map} defines each family, its baseline, and where its result is reported. M1--M13 follow
 the chapter's progression from proof size to operating modes. M14--M17 extend the earlier families and
 are reported with the result they strengthen.\footnote{The Rust harness uses the same numbering, so
-each family can be traced to the corresponding benchmark group in \cref{app:benchmarks}.}
+each family can be traced to the corresponding benchmark group in \cref{tab:bench-repro}.}
 
 \begin{table}[H]
 \centering
@@ -48,13 +48,13 @@ M1  & Lookup proof size vs.\ $N$              & single- vs VRF-indexed     & \cr
 M2  & Proof generation latency (server)        & VRF-indexed                & \cref{ssec:eval-latency} \\
 M3  & Full signed-head lookup verification latency & VRF-indexed, windowed      & \cref{ssec:eval-latency} \\
 M4  & Offline catch-up bandwidth vs.\ $W$      & synthetic vs windowed & \cref{ssec:eval-catchup} \\
-M5  & Marginal warning-slot read (superseded by M16) & raw warning (unverified)   & \cref{app:benchmarks} \\
-M6  & Clean-session sanity check (superseded by M17) & None                       & \cref{app:benchmarks} \\
+M5  & Marginal warning-slot read (superseded by M16) & raw warning (unverified)   & \cref{tab:bench-detection} \\
+M6  & Clean-session sanity check (superseded by M17) & None                       & \cref{sec:bench-sizes} \\
 M7  & Size + verify at scale ($10^6,10^7$)    & VRF-indexed, windowed      & \cref{ssec:eval-scale} \\
-M8  & Latency-derived single-thread operation rate & VRF-indexed                & \cref{app:benchmarks} \\
+M8  & Latency-derived single-thread operation rate & VRF-indexed                & \cref{tab:bench-maint} \\
 M9  & Key rotation + epoch-commit cost         & VRF-indexed, windowed      & \cref{ssec:eval-throughput} \\
-M10 & VRF prove/verify in isolation            & None                       & \cref{app:benchmarks} \\
-M11 & KT lookup-verification cost at the handshake hook & vs no-KT floor             & \cref{app:benchmarks} \\
+M10 & VRF prove/verify in isolation            & None                       & \cref{tab:bench-maint} \\
+M11 & KT lookup-verification cost at the handshake hook & vs no-KT floor             & \cref{tab:bench-maint} \\
 M12 & Local signature/consistency kernel + one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
 M13 & Session vs continuous mode               & session vs continuous      & \cref{ssec:eval-modes} \\
 M14 & Proof size + verification vs history depth & single-epoch (M1, M3)    & \cref{ssec:eval-sizes} \\
@@ -87,7 +87,7 @@ observations.
 Proof sizes are exact and seed-deterministic. M7 instead reports distributions over \num{1000} random
 lookups per $N$. Fixed cryptographic and sampling seeds support reproducing the results, following the procedure in
 \cref{sec:impl-repro}. The benchmark host, software versions, and the complete commands to reproduce
-the runs are reported in \cref{app:benchmarks}. Body timings are
+the runs are reported in \cref{sec:bench-env,sec:bench-repro}. Body timings are
 rounded to $0.1\,\si{\micro\second}$. Separate benchmark contexts shift some component medians by a few
 percent, so the chapter quotes the in-path figures and does not attribute those small differences to
 the mechanism.
@@ -177,7 +177,7 @@ M14 measures the history term that is absent from the single-epoch rows. It grow
 through $E\in\{1,16,256,1024\}$ epochs at $N=10^3$ and $N=10^4$. The observed paths contain
 $\{0,4,8,10\}$ hashes, adding $\{0,128,256,320\}$ bytes. These values match the RFC~9162
 Merkle-log bound~\cite{rfc9162}. Directory size and history depth contribute independently
-(\cref{app:benchmarks}), which confirms the $O(\lg N+\lg E)$ proof-size claim. The CONIKS comparison
+(\cref{tab:bench-m14}), which confirms the $O(\lg N+\lg E)$ proof-size claim. The CONIKS comparison
 continues to use the convention-matched single-epoch proof and reports the history term separately.
 
 \subsection{Generation and Verification Latency (M2, M3)}\label{ssec:eval-latency}
@@ -306,7 +306,7 @@ M17 checks the expected non-alarm behaviour of seven honest workflows: first reg
 established session with the expected key, a proven-empty warning slot, repeated verification of a
 valid state, valid log growth under a correct consistency proof, multiple honest continuous-mode
 epochs, and agreeing cross-vantage heads. Named tests in the relevant suites assert each outcome
-(\cref{app:tests}). M17 is therefore functional coverage of the enumerated clean workflows, not an
+(\cref{tab:bench-m17}). M17 is therefore functional coverage of the enumerated clean workflows, not an
 estimate of a population-wide false-alarm rate.
 
 % ============================================================================
@@ -367,7 +367,7 @@ directory, not that it is invariant.
 
 \subsection{Maintenance Cost and Prototype Limits (M9)}\label{ssec:eval-throughput}
 
-Three related metric families are reported in \cref{app:benchmarks}. M8 derives single-thread
+Three related metric families are reported in \cref{sec:bench-timings}. M8 derives single-thread
 operation rates of approximately \num{8940} lookups and \num{7150} updates per second at $N=10^4$.
 M10 measures VRF proof generation and verification in isolation. M11 measures one complete
 signed-head lookup verification against a synthetic one-hash floor. It excludes transport,
@@ -426,7 +426,7 @@ Session mode writes one directory entry per signed-pre-key rotation. Continuous 
 ratchet epoch to provide the finer-grained CEA check (\cref{ssec:design-modes}). M13 measures a
 single label-bound proof generation and verification in each mode. The medians are
 \SI{27.3}{\micro\second} for session mode and \SI{27.7}{\micro\second} for continuous mode
-(\cref{app:benchmarks}). Their \SI{0.4}{\micro\second} difference is within run-to-run variation, so
+(\cref{tab:bench-modes}). Their \SI{0.4}{\micro\second} difference is within run-to-run variation, so
 no ordering is inferred.
 
 Both M13 bodies include server-side proof generation and client-side verification of the value,
@@ -441,7 +441,7 @@ session-mode raw lookup on the same log. Each series remains flat as $K$ grows, 
 depth independence. Their pointwise difference is at most \SI{0.1}{\micro\second}, including at $K=720$
 on a log with more than ten thousand committed entries. That delta bounds the additional
 fingerprint-comparison work and is not evidence of a history-depth cost. The full
-$K$-by-rotation-cadence grid is reported in \cref{app:benchmarks}.
+$K$-by-rotation-cadence grid is reported in \cref{tab:bench-m15-writes}.
 
 The material difference between the modes is therefore write frequency. \Cref{tab:eval-modes}
 reports the writes over a conversation of $E$ hourly epochs, assuming one signed-pre-key rotation
@@ -521,7 +521,7 @@ signature~\cite[Section~5.3, Table~1]{melara2015coniks}) at $N = 10^6$ gives $32
 $10^6$. On the same convention as this chapter's measurement, proof and VRF without a signature, DUET's
 \num{817}\,bytes sits within \num{7}\% of CONIKS's \num{768}\,bytes. This is rough parity, with DUET
 marginally larger on the raw proof. This VRF-indexed identity lookup does not itself carry the
-dual-index warning mechanism. Detection is supplied separately through additional raw-label lookups
+dual-index warning mechanism. Detection instead uses additional raw-label lookups
 that reuse the same prefix-tree and log-proof structure without the VRF component (\cref{sec:design-dual}),
 none of which enlarges an individual proof. No
 wire-format advantage is claimed here. A full DUET lookup response also returns the signed tree head \emph{per
@@ -607,7 +607,7 @@ X1 key extraction & No directory control. & Endpoint compromise lies outside key
 \end{table}
 
 The scenarios also correspond to MITRE ATT\&CK Enterprise techniques~\cite{mitre-attack}.
-\Cref{app:security} gives the technique matrix, the STRIDE enumeration, the attack-route grouping, and
+\Cref{sec:sec-mitre,sec:sec-stride,sec:sec-routes,ssec:eval-timeline} give the technique matrix, the STRIDE enumeration, the attack-route grouping, and
 the detection timeline.
 
 \subsection{Residual Risks and Security Position}\label{ssec:eval-posture}
@@ -654,7 +654,7 @@ The in-memory tree also grows large at CONIKS scale (\cref{ssec:eval-scale}). Pr
 therefore requires persistent storage, distribution, concurrency testing, and networked measurements
 that this evaluation does not provide.
 
-The two modes expose a separate deployment trade-off. Session mode writes once per signed-pre-key
+The two modes also differ in write frequency. Session mode writes once per signed-pre-key
 rotation, whereas continuous mode writes once per ratchet epoch for finer-grained CEA checking and
 therefore performs substantially more writes (\cref{ssec:eval-modes}). The exact ratio is determined by
 message activity and rotation cadence in a live system, not a fixed deployment value.

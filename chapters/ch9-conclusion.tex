@@ -26,7 +26,7 @@ Conceptually, the dual-index scheme gives both participants access to a shared w
 retaining participant-specific lookup labels. Cryptographically, the windowed consistency proof
 authenticates an offline interval using one proof between distant signed heads. The Rust reference
 system and Signal Desktop verifier demonstrate integration feasibility. The benchmark suite and
-adversarial scenarios provide empirical evidence, including the separate controls used for A3--A5.
+adversarial scenarios provide empirical evidence, including the scenario-specific controls used for A3--A5.
 
 Production integration still requires binding the per-session labels to Signal's live X3DH secret and
 defining how failed checks affect session establishment (\cref{ch:discussion}). Under the threat-model

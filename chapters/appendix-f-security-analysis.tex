@@ -63,7 +63,7 @@ fails to replay.
 inclusion proof and signed tree head of the epoch at which its warning committed, and the persistence
 check re-verifies the warning's inclusion on a later head. In the prototype this check is implemented
 and unit-tested as a reference component; it is not wired into the live background monitor
-(\cref{app:algorithms}). If the leaf later disappears,
+(\cref{alg:detect}). If the leaf later disappears,
 the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
 $\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
 constitute publicly verifiable evidence, attributable to the server's signing key, that the server
@@ -81,7 +81,7 @@ unavailable check (amber, not red), without attributing its cause. The A2 signal
 mismatch together with a \emph{proof-verified} absence of the warning. All three safeguards are
 implemented. The write-once policy and the transition audit run live, the first enforced by the
 server's raw-label update interface, the second by the auditor replaying each epoch's declared update
-set. The persistence check is a tested reference component (\cref{ch:impl}, \cref{app:algorithms}).
+set. The persistence check is a tested reference component (\cref{ch:impl}, \cref{alg:detect}).
 The prototype does not implement account-layer authentication of raw-label writes (proof of raw-label
 ownership). Without it, the write-once policy still binds an honest server and the transition audit
 still binds a malicious one, but a malicious client could pre-emptively occupy a currently empty peer
@@ -185,7 +185,7 @@ A2 is different from those residuals. If a warning write is censored before comm
 mismatch together with proof-verified warning absence raises the compound alarm. If a committed
 warning later disappears, the invalid transition is detected by the transition audit. The separate
 persistence component can retain evidence of that disappearance, although it is not wired into the
-live background monitor (\cref{app:algorithms}).
+live background monitor (\cref{alg:detect}).
 
 \begin{table}[ht]
 \centering
