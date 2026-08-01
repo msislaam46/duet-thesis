@@ -130,9 +130,9 @@ The implementation is organized as follows:
   harness.
   \item \texttt{demo/}: the server, auditor, and attacker orchestration together with
   the served visualization and threat-model pages.
-  \item \texttt{signal-desktop/ts/kt/}: the embedded TypeScript client, whose eight core
+  \item \texttt{signal-desktop/ts/kt/}: the embedded TypeScript client, whose shared
   verifier modules are mirrored byte-for-byte by the standalone \texttt{signal-desktop-kt/}
-  package (integration wiring and test scaffolding differ between the two).
+  package, while integration wiring and test scaffolding differ between the two.
 \end{itemize}
 
 The system is driven by single commands: \texttt{cargo test} and \texttt{cargo bench}, run from
@@ -151,7 +151,7 @@ the client's environment before launch.
 \section{Integration and Flow Diagrams}\label{sec:apiref-diagrams}
 
 These diagrams accompany the client integration of \cref{sec:impl-signal}. \Cref{fig:impl-signal}
-maps the runtime arrangement of the embedded client and the three processes it exercises,
+maps the runtime arrangement of the embedded client and the three processes it drives,
 \cref{fig:impl-verify} traces the matching branch of the networked
 \texttt{RemoteKTClient.detectMitm} verification path, and \cref{fig:impl-e2e} traces the normal and
 A1b attack workflows across the four roles.
@@ -185,6 +185,17 @@ the two clients, directory, and auditor. In the lower panel, Alice detects an ow
 writes a warning that Bob later reads. The auditor separately rejects the immutable-slot rotation.}
 \label{fig:impl-e2e}
 \end{figure}
+
+In \cref{fig:impl-e2e}, Alice and Bob each run an embedded verifier, while the KT server and auditor
+execute as separate processes. In the normal path Alice registers her key and commits. Bob's verifier
+then performs three label-bound, proof-verified lookups (the peer slot $\ell_A$ it retrieves Alice
+from, its own slot $\ell_B$, and the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably
+empty) and returns \texttt{SAFE}, while the auditor polls and replays to \textsc{Consistent}. In the
+A1b branch the server overwrites Alice's own dual-index slot $\ell_A$ (which is also Bob's peer slot).
+Alice's monitor reads the substituted value against her pinned key, finds a mismatch, and writes the
+shared warning slot. Bob's monitor then reads that warning and both clients go red. Independently, the
+auditor's transition replay rejects the declared immutable rotation, so detection does not rest on the
+client path alone. The live run in \cref{ssec:impl-demo} shows this inside the real interface.
 
 % ----------------------------------------------------------------------------
 \FloatBarrier

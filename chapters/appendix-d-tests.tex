@@ -9,8 +9,9 @@ five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-fa
 consistency-proof cases that return \textsc{ConsistencyUnverified}, and the exact status-line
 mapping), and \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
 (\cref{ssec:eval-detection}), \num{134} tests in total, run under \texttt{cargo test}. The TypeScript
-client is covered by \num{116} Jest tests in eleven suites,
-and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs.
+client is covered by \num{116} standalone Jest tests in eleven suites and a further \num{16} embedded
+electron-mocha tests in four Signal Desktop suites that drive realistic ACI strings through the
+integration boundary, and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs.
 \Cref{tab:impl-t5a} lists representative correctness tests and the requirement each protects, and
 \cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
 verdicts. The unit,
@@ -225,7 +226,7 @@ The \emph{wire-parity} suite runs the full client verification chain against a \
 server over the network. It is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
 to be running, and its five tests early-return as no-ops when the server is absent, so a bare
 \texttt{npm test} run does not by itself establish wire parity. The integration suite and the
-cryptographic unit suites (\texttt{remote\_kt\_client}, \texttt{cea}, \texttt{secret\_store}) exercise
+cryptographic unit suites (\texttt{remote\_kt\_client}, \texttt{cea}, \texttt{secret\_store}) run
 the verifier against a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF,
 and Ed25519 signer). The remaining unit suites use test doubles by design: \texttt{background\_monitor}
 and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to-event routing,
@@ -235,9 +236,10 @@ malformed-response rejection, and the \texttt{canonical\_service\_id}, \texttt{d
 PNI event-silence added with the canonical-identity fix. \Cref{tab:tests-jest-wire} lists the
 wire-parity and integration tests, and
 \cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list the nine unit suites.
-The canonical-identity boundary is additionally exercised inside Signal Desktop's own test runner,
-which drives a realistic ACI string through the same boundary adapter the live preload callers use,
-so a regression at that boundary fails the embedded test rather than passing silently.
+Beyond the standalone harness, \num{16} embedded electron-mocha tests run in four suites under Signal
+Desktop's own test runner (\cref{tab:tests-embedded}). They drive realistic ACI strings through the
+same integration boundary the live preload callers use, so a regression at that boundary fails an
+embedded test rather than passing silently.
 
 \begin{table}[H]
 \centering
@@ -295,7 +297,7 @@ Suite & Test \\
 \toprule
 Suite & Test \\
 \midrule
-\texttt{remote\_kt\_client} & \textsc{safe} when the fetched key matches the logged key \\
+\texttt{remote\_kt\_client} & \texttt{SAFE} when the fetched key matches the logged key \\
 \texttt{remote\_kt\_client} & \textsc{key\_mismatch} when the fetched key differs from the logged key \\
 \texttt{remote\_kt\_client} & \textsc{key\_not\_in\_log} (proven non-inclusion) for an unregistered peer \\
 \texttt{remote\_kt\_client} & a stale old-leaf inclusion under the current STH is refused (currency pin) \\
@@ -348,7 +350,7 @@ Suite & Test \\
 \toprule
 Suite & Test \\
 \midrule
-\texttt{getKeysForServiceId\_status} & \textsc{safe} $\to$ verified \\
+\texttt{getKeysForServiceId\_status} & \texttt{SAFE} $\to$ verified \\
 \texttt{getKeysForServiceId\_status} & \textsc{key\_not\_in\_log} $\to$ absent, not verified \\
 \texttt{getKeysForServiceId\_status} & \textsc{key\_mismatch} / \textsc{proof\_invalid} / \textsc{mitm\_warning} $\to$ warning with \texttt{shouldProceed=false} (3 cases) \\
 \texttt{getKeysForServiceId\_status} & a network/init failure (\texttt{KtUnreachableError}) $\to$ unreachable, not verified \\
@@ -397,6 +399,39 @@ Suite & Test \\
 \end{tabular}
 \end{table}
 
+\begin{table}[H]
+\centering
+\caption{Embedded electron-mocha tests: the ACI integration boundary in Signal Desktop (\num{16} tests).}
+\label{tab:tests-embedded}
+\footnotesize
+\renewcommand{\arraystretch}{0.90}
+\begin{tabular}{@{}lp{9.6cm}@{}}
+\toprule
+Suite & Test \\
+\midrule
+\texttt{service\_id\_bytes} & a realistic ACI string converts to the exact 16 raw UUID bytes \\
+\texttt{service\_id\_bytes} & a PNI-prefixed service id is rejected with a typed error \\
+\texttt{service\_id\_bytes} & a malformed string throws, never truncating \\
+\midrule
+\texttt{ktServiceId} & matches the raw ACI string \\
+\texttt{ktServiceId} & matches the raw 16-byte UUID hex the monitor emits after the fix \\
+\texttt{ktServiceId} & still matches the legacy UTF-8-hex encoding (back-compat) \\
+\texttt{ktServiceId} & does not match a different peer under any encoding \\
+\texttt{ktServiceId} & accepts when either id is unknown, to avoid hiding a real warning \\
+\midrule
+\texttt{aci\_integration} & derives 16-byte ids from real ACI strings via the boundary adapter \\
+\texttt{aci\_integration} & registers, verifies clean (\texttt{SAFE}), and monitors the dual-index path clean \\
+\texttt{aci\_integration} & detects a substituted lookup slot via \texttt{detectMitm} (dual-index) \\
+\texttt{aci\_integration} & flags a mismatched fetched key as \texttt{KEY\_MISMATCH} (global path) \\
+\texttt{aci\_integration} & a tampered slot makes Alice publish a warning that Bob authenticates \\
+\midrule
+\texttt{pni\_getkeys\_silence} & a PNI calls none of verify, dispatch, or record \\
+\texttt{pni\_getkeys\_silence} & an ACI drives verify, dispatch (\texttt{kt:verified}), and record \\
+\texttt{pni\_getkeys\_silence} & an ACI with no own identity key still verifies but does not record \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 % ----------------------------------------------------------------------------
 \section{Cross-Language Equivalence Vectors}\label{sec:tests-xlang}
 
@@ -414,11 +449,10 @@ verifier of the Rust server's outputs (\cref{sec:impl-tests}).
 % ----------------------------------------------------------------------------
 \section{Adversarial Scenario Suite}\label{sec:tests-adversarial}
 
-The suite exercises each enumerated threat scenario of \cref{ch:threat} end to end against the real
-\texttt{duet} crate, asserting both the verdict and the epoch at which detection occurs, so it
-provides machine-checkable coverage of the threat model rather than of isolated components. The
-detection epochs it reports are the schedule of this scripted demonstration, not a protocol-wide
-latency bound.
+The suite runs against the real \texttt{duet} crate and asserts the expected security outcome for A0,
+A1a, A1b, A2--A5, and X1. The A1 variants additionally assert the warning epoch. The other latency
+entries in \cref{tab:tests-adversarial} describe the scripted schedule of this demonstration rather
+than test assertions or protocol-wide bounds.
 
 \begin{table}[H]
 \centering
@@ -442,8 +476,8 @@ X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 \end{table}
 
 The suite is the Rust integration test \texttt{tests/adversarial.rs}, run with
-\texttt{cargo test --test adversarial}; each scenario asserts both its verdict and its detection
-epoch, and a narrated walkthrough of the same scenarios is provided by the
-\texttt{kt\_attack\_demo} binary. All eight scenarios pass: the A0 baseline, the six detection
-scenarios A1a, A1b and A2--A5, and the X1 endpoint-compromise case asserted as an out-of-scope
-boundary. The corresponding detection latencies are the ones reported in \cref{ch:eval}.
+\texttt{cargo test --test adversarial}. Each scenario asserts its expected security outcome, and the
+A1 variants additionally assert the warning epoch, while a narrated walkthrough of the same scenarios
+is provided by the \texttt{kt\_attack\_demo} binary. All eight scenarios pass: the A0 baseline, the
+six detection scenarios A1a, A1b and A2--A5, and the X1 endpoint-compromise case asserted as an
+out-of-scope boundary. The corresponding detection latencies are the ones reported in \cref{ch:eval}.
