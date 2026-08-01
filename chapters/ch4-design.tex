@@ -162,7 +162,7 @@ that gap. This is the combined-tree semantics of the Key Transparency draft (\cr
 The six checks are split across the two implementations. In the Rust reference, the label-bound entry
 points and the head-bound wrappers together enforce the label binding, VRF, value, prefix-root,
 log-inclusion, signature, head-equality, and latest-leaf currency checks, so a validly signed but
-stale or forked head is rejected (the public endpoints carrying these proof objects are listed in \cref{tab:apiref-public}). The live
+stale or forked head is rejected. The public endpoints that return these proof objects are listed in \cref{tab:apiref-public}. The live
 TypeScript client folds the same checks into \texttt{verifyChain}, so every lookup enforces all six.
 The ``full client verification'' benchmarked in \cref{ch:eval} is the complete six-step chain.
 

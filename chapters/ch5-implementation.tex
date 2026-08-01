@@ -20,8 +20,8 @@ The crate is a standalone workspace with no libsignal dependency, which isolates
 environment; the connection to libsignal is a separate integration patch at the pre-key-bundle hook
 (\cref{ssec:impl-hooks}), so compatibility with libsignal's integration surface is preserved without
 building against it. Its data structures and proof formats follow the KeyTrans draft and were designed by comparison
-with Signal's own Go implementation~\cite{signal-kt-server}; the cryptographic primitives are
-independently validated against the RFC test vectors (\cref{tab:tests-rust-prim}). There is no executable
+with Signal's own Go implementation~\cite{signal-kt-server}. The directly implemented ECVRF is
+checked against the RFC~9381 test vectors~\cite{rfc9381} (\cref{tab:tests-rust-prim}). There is no executable
 Go\,$\leftrightarrow$\,DUET interoperability test: the proof encodings differ deliberately
 (Signal's are fixed-width, DUET's bitmap-compressed), so no wire-compatibility is claimed.
 
@@ -189,9 +189,9 @@ auditor binary, a small \texttt{ureq} HTTP client, polls the signed tree head, v
 signature, and checks append-only consistency on each new epoch, so that a forked or rewritten
 history is caught from a second vantage point. A benchmark harness completes the set, driving the
 measurements of \cref{ch:eval}. The public, admin, hook, and event interfaces are listed in
-\cref{tab:apiref-public,tab:apiref-admin,tab:apiref-hooks,tab:apiref-events}, with the demonstration
-screens of \cref{fig:demo-baseline,fig:demo-cmd,fig:demo-equivocation}, and the complete test
-catalogue in \cref{app:tests}
+\cref{tab:apiref-public,tab:apiref-admin,tab:apiref-hooks,tab:apiref-events}.
+\Cref{fig:demo-baseline,fig:demo-cmd,fig:demo-equivocation} show the demonstration screens. The
+complete test catalogue is in \cref{app:tests}
 (\cref{tab:tests-rust-prim,tab:tests-rust-server,tab:tests-rust-system,tab:tests-jest-wire,tab:tests-jest-unit,tab:tests-adversarial}).
 
 The directory-immutability safeguards of \cref{ssec:design-detection} are enforced across these

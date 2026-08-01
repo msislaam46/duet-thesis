@@ -25,7 +25,7 @@ would fail if the client still had to fetch a proof per epoch or if the windowed
 with the missed-epoch count $W$ (\cref{ssec:eval-catchup}).
 
 \emph{Are the evaluated substitution attacks detected without alarms on the enumerated clean workflows?} A
-missed attack in the adversarial suite would refute the detection claim. M17 separately checks that
+missed attack in the adversarial suite would refute the detection claim. M17 also checks that
 every enumerated clean workflow produces the expected non-alarm verdict
 (\cref{ssec:eval-detection,sec:eval-security}).
 
@@ -86,8 +86,8 @@ observations.
 
 Proof sizes are exact and seed-deterministic. M7 instead reports distributions over \num{1000} random
 lookups per $N$. Fixed cryptographic and sampling seeds support reproducing the results, following the procedure in
-\cref{sec:impl-repro}. The benchmark host, software versions, and the complete commands to reproduce
-the runs are reported in \cref{sec:bench-env,sec:bench-repro}. Body timings are
+\cref{sec:impl-repro}. The benchmark host and software versions are reported in \cref{sec:bench-env}. The commands needed
+to reproduce the runs are listed in \cref{sec:bench-repro}. Body timings are
 rounded to $0.1\,\si{\micro\second}$. Separate benchmark contexts shift some component medians by a few
 percent, so the chapter quotes the in-path figures and does not attribute those small differences to
 the mechanism.
@@ -607,8 +607,9 @@ X1 key extraction & No directory control. & Endpoint compromise lies outside key
 \end{table}
 
 The scenarios also correspond to MITRE ATT\&CK Enterprise techniques~\cite{mitre-attack}.
-\Cref{sec:sec-mitre,sec:sec-stride,sec:sec-routes,ssec:eval-timeline} give the technique matrix, the STRIDE enumeration, the attack-route grouping, and
-the detection timeline.
+The technique matrix is in \cref{sec:sec-mitre}. The STRIDE enumeration is in \cref{sec:sec-stride}.
+\Cref{sec:sec-routes} groups the attack routes, and \cref{ssec:eval-timeline} gives the detection
+timeline.
 
 \subsection{Residual Risks and Security Position}\label{ssec:eval-posture}
 

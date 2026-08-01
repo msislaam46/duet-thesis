@@ -378,9 +378,6 @@ consistency construction addresses that open efficiency requirement.
 % ============================================================================
 \section{Verifiable Key Directories for Key Transparency}\label{sec:bg-vkd}
 
-
-\subsection{The Verifiable Key Directory (VKD) Abstraction}\label{ssec:bg-vkd-abstraction}
-
 The surveyed systems differ in data structure, privacy guarantees, and performance, but they
 implement a common abstraction known as a verifiable key directory (VKD). A VKD is an authenticated
 key--value directory whose responses can be verified without trusting the operator. Each returned
@@ -424,11 +421,10 @@ chiefly in whether, and how, the tree is path-compressed.
 and non-membership proofs, but they do not by themselves provide directory
 privacy. That role is played by the \emph{zero-knowledge set} (ZKS): a committed
 key--value map whose membership and non-membership queries can be answered
-without revealing anything further about the directory's contents. Several VKD
-systems refine this primitive (SEEMless introduces an \emph{append-only} ZKS
-(aZKS), Parakeet an \emph{ordered} ZKS (oZKS), and ELEKTRA a \emph{rotatable} ZKS
-(RZKS)~\cite{chen2022rzks}), differing mainly in how they encode update history
-and how they preserve privacy under server compromise.
+without revealing anything further about the directory's contents. Several VKD systems refine the ZKS primitive. SEEMless introduces an append-only ZKS
+(aZKS)~\cite{chase2019seemless}. Parakeet uses an ordered ZKS (oZKS)~\cite{malvai2023parakeet}.
+ELEKTRA builds on a rotatable ZKS (RZKS)~\cite{chen2022rzks,len2023elektra}. These constructions
+differ mainly in how they encode update history and preserve privacy after server compromise.
 
 \subsection{Academic VKD Constructions for KT}\label{ssec:bg-vkd-academic}
 
