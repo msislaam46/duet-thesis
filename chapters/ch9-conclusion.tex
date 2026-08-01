@@ -22,8 +22,8 @@ attack scenarios. The STRIDE analysis identified one privacy residual and three 
 availability controls.
 
 These results support the four contributions introduced in \cref{sec:intro-contributions}.
-Conceptually, the dual-index scheme gives both participants access to a shared warning location while
-retaining participant-specific lookup labels. Cryptographically, the windowed consistency proof
+Conceptually, the dual-index scheme gives both parties access to a shared warning location while
+retaining party-specific lookup labels. Cryptographically, the windowed consistency proof
 authenticates an offline interval using one proof between distant signed heads. The Rust reference
 system and Signal Desktop verifier demonstrate integration feasibility. The benchmark suite and
 adversarial scenarios provide empirical evidence, including the scenario-specific controls used for A3--A5.
@@ -32,4 +32,4 @@ Production integration still requires binding the per-session labels to Signal's
 defining how failed checks affect session establishment (\cref{ch:discussion}). Under the threat-model
 assumptions of \cref{ch:threat}, the design makes substitution detectable through automatic
 client-side checks and an in-band peer warning. The prototype therefore shows that these checks can run
-automatically inside a messaging client and notify both participants when a substitution is detected.
+automatically inside a messaging client and notify both parties when a substitution is detected.

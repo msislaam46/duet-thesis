@@ -212,7 +212,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 \clearpage
 \paragraph{Dual-index labels and warnings (Algorithm~\ref{alg:dualindex}).} The per-conversation
 label layer of \cref{sec:design-dual}: from each conversation's shared secret, HKDF~\cite{rfc5869} derives the two
-participant lookup labels and the canonically ordered shared warning label. \textsf{WriteWarning}
+party-specific lookup labels and the canonically ordered shared warning label. \textsf{WriteWarning}
 publishes a MAC-authenticated alert and trusts neither an apparent success nor a write-once
 conflict, confirming publication by a verified read-back; \textsf{CheckWarning} raises
 \textsc{Alert} on any proven non-empty slot.

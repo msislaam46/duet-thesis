@@ -87,6 +87,23 @@ ownership). Without it, the write-once policy still binds an honest server and t
 still binds a malicious one, but a malicious client could pre-emptively occupy a currently empty peer
 slot (\cref{ch:discussion}).
 
+Detection is bidirectional, which matters for the offline case. The victim's own-key self-check
+publishes the warning when the victim notices the wrong key under its own name. In addition, a peer
+that has trust-on-first-use-pinned the victim's key detects a substituted peer slot and publishes the
+warning on the victim's behalf, so an offline victim is still covered. For a server-side substitution
+(A1), where the server makes the served bundle agree with the log, a peer comparing the freshly
+served bundle against the log sees no mismatch. Detection then comes either from the victim's own-key
+self-check or from a peer that has already trust-on-first-use-pinned the victim's key and compares the
+substituted log value against its pin. Only against a pre-first-contact substitution, where no peer
+has yet pinned a key, is the victim's self-check the sole detector. The residual limitation is the
+trust-on-first-use caveat of \cref{sec:threat-fair}, since a substitution that predates first contact
+pins the incorrect key.
+
+The closest related design, KTACA, reaches client-side detection through \emph{anonymous}
+lookups~\cite{yadav2020poster,yadav2022fakekey}, a cost Parakeet explicitly objects
+to~\cite[p.~14]{malvai2023parakeet}. The derived, pre-use unpredictable labels used here obtain the
+same peer-facing detection without anonymity infrastructure.
+
 % ----------------------------------------------------------------------------
 \section{MITRE ATT\&CK Technique-to-Mitigation Matrix}\label{sec:sec-mitre}
 
@@ -287,7 +304,7 @@ Threat & KT control & Residual \\
 \midrule
 Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
 Server fabricates a divergent tree head & \emph{detected}, not prevented: the server holds the STH key, so the signature does not stop it; a fabricated divergent head is caught by the append-only consistency check and the cross-vantage fork check & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
-Client escalates to server writes & partly prevented, partly \emph{detected}: write-once cryptographically rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration; a first write to an empty slot by a participant who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorization on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
+Client escalates to server writes & partly prevented, partly \emph{detected}: write-once cryptographically rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration; a first write to an empty slot by a party who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorization on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
 \bottomrule
 \end{tabular}
 \end{table}

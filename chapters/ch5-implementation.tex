@@ -368,7 +368,7 @@ each run an embedded verifier, while the KT server and auditor execute as separa
 key and commits; Bob's verifier then performs three label-bound, proof-verified lookups (the peer
 slot $\ell_A$ it retrieves Alice from, its own slot $\ell_B$, and the shared warning slot
 $\ell_{\mathsf{warn}}$, which is verifiably empty) and returns \textsc{safe}, while the auditor
-polls and replays to \textsc{consistent}. In the A1b branch the server overwrites Alice's own
+polls and replays to \textsc{Consistent}. In the A1b branch the server overwrites Alice's own
 dual-index slot $\ell_A$ (which is also Bob's peer slot): Alice's monitor reads the substituted value
 against her pinned key, finds a mismatch, and writes the shared warning slot; Bob's monitor then reads
 that warning and both clients go red. Independently, the auditor's transition replay rejects the
@@ -402,7 +402,7 @@ replay refuses and the epoch alarms (\cref{fig:impl-auditor}). Its cross-vantage
 reports no equivocation, since A1b is a substitution rather than a split view. This is the opposite of
 the global-slot case A1a, where the identity slot is mutable and a malicious rotation is a legal
 declared operation the auditor cannot tell from an honest key change; there the auditor stays
-\textsc{consistent} and detection rests on the client self-check alone. \Cref{fig:impl-screens} shows the resulting red banner on both
+\textsc{Consistent} and detection rests on the client self-check alone. \Cref{fig:impl-screens} shows the resulting red banner on both
 clients: the DevTools console beside each records the victim's \texttt{WRITE warning slot} and the
 peer's \texttt{READ warning slot} at the \emph{identical} label, the bidirectional detection across
 the two client instances.
