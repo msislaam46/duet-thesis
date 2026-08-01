@@ -9,13 +9,23 @@ five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-fa
 consistency-proof cases that return \textsc{ConsistencyUnverified}, and the exact status-line
 mapping), and \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
 (\cref{ssec:eval-detection}), \num{134} tests in total, run under \texttt{cargo test}. The TypeScript
-client is covered by \num{106} Jest tests in eight suites,
+client is covered by \num{116} Jest tests in eleven suites,
 and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs.
 \Cref{tab:impl-t5a} lists representative correctness tests and the requirement each protects, and
 \cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
 verdicts. The unit,
 cross-language, and TypeScript tests are catalogued in the tables that follow. The \texttt{kt\_auditor}
 binary tests are summarized by category above rather than listed individually.
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-impl-testing}
+\caption[The evidence classes.]{Five independent evidence classes support the implementation and
+evaluation. Published vectors test specification conformance. Unit, invariant, cross-language, and
+adversarial tests support the correctness claims. The benchmarks support the cost claims of
+\cref{ch:eval}.}
+\label{fig:impl-testing}
+\end{figure}
 
 \begin{table}[ht]
 \centering
@@ -207,21 +217,27 @@ Module & Test & Property checked \\
 % ----------------------------------------------------------------------------
 \section{TypeScript (Signal Desktop) Jest Suite}\label{sec:tests-ts}
 
-The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{106} Jest tests in
-eight suites: a live-server wire-parity suite, an in-process integration suite, and six unit suites.
+The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{116} Jest tests in
+eleven suites: a live-server wire-parity suite, an in-process integration suite, and nine unit suites.
 Some catalogue rows represent parameterized cases (twelve decoder mutations, three status mappings,
-three VRF vectors); the totals count executed tests.
+three VRF vectors), and the totals count executed tests.
 The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust
-server over the network; it is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
+server over the network. It is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
 to be running, and its five tests early-return as no-ops when the server is absent, so a bare
 \texttt{npm test} run does not by itself establish wire parity. The integration suite and the
 cryptographic unit suites (\texttt{remote\_kt\_client}, \texttt{cea}, \texttt{secret\_store}) exercise
 the verifier against a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF,
 and Ed25519 signer). The remaining unit suites use test doubles by design: \texttt{background\_monitor}
-and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to-event routing, and
+and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to-event routing,
 \texttt{decoder\_validation} drives the DTO decoders through a mocked transport to check
-malformed-response rejection. \Cref{tab:tests-jest-wire} lists the wire-parity and integration tests;
-\cref{tab:tests-jest-unit,tab:tests-jest-unit-b} list the six unit suites.
+malformed-response rejection, and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
+\texttt{pni\_silence} suites cover the ACI canonical-bytes boundary, display-string preservation, and
+PNI event-silence added with the canonical-identity fix. \Cref{tab:tests-jest-wire} lists the
+wire-parity and integration tests, and
+\cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list the nine unit suites.
+The canonical-identity boundary is additionally exercised inside Signal Desktop's own test runner,
+which drives a realistic ACI string through the same boundary adapter the live preload callers use,
+so a regression at that boundary fails the embedded test rather than passing silently.
 
 \begin{table}[H]
 \centering
@@ -351,6 +367,32 @@ Suite & Test \\
 \texttt{decoder\_validation} & prefix proof: missing \texttt{kind} and non-array \texttt{siblings} rejected; bad-hex/short root and wrong-length signature rejected \\
 \texttt{decoder\_validation} & STH \texttt{configHash} required as exactly 32 bytes (missing or wrong-length rejected) \\
 \texttt{decoder\_validation} & \texttt{/vrf-public-key}: non-object, invalid-hex, and wrong-length responses rejected; \texttt{/sth-public-key}: a malformed response rejected independently (valid VRF); both-valid accepted \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Jest tests: canonical-identity boundary suites added with the ACI fix.}
+\label{tab:tests-jest-canonical}
+\footnotesize
+\renewcommand{\arraystretch}{0.90}
+\begin{tabular}{@{}lp{10.2cm}@{}}
+\toprule
+Suite & Test \\
+\midrule
+\texttt{canonical\_service\_id} & the canonical form of an ACI string is exactly 16 bytes \\
+\texttt{canonical\_service\_id} & canonical 16-byte ids derive three 32-byte labels \\
+\texttt{canonical\_service\_id} & the 36-byte UTF-8 form the live path once used throws (the defect) \\
+\texttt{canonical\_service\_id} & a PNI-prefixed service id is not 16 bytes and would throw \\
+\texttt{canonical\_service\_id} & canonical labels satisfy the symmetry property \\
+\midrule
+\texttt{display\_string} & \texttt{conversations()} returns the original UUID when it was supplied \\
+\texttt{display\_string} & falls back to the byte-hex key when no display string is supplied \\
+\texttt{display\_string} & \texttt{forget()} removes both the secret and the display name \\
+\midrule
+\texttt{pni\_silence} & a PNI drives no client call, no CEA step, and no warning \\
+\texttt{pni\_silence} & an ACI control does reach the client, proving the guard is specific \\
 \bottomrule
 \end{tabular}
 \end{table}

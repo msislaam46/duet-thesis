@@ -79,7 +79,10 @@ POST & \texttt{/admin/reset} & rebuild the server from its fixed seed with a fre
 
 \Cref{tab:apiref-hooks} maps the integration concepts of \cref{sec:impl-signal} to the
 concrete function names in the prototype, and \cref{tab:apiref-events} maps the
-user-interface verdicts to their DOM event names.
+user-interface verdicts to their DOM event names. The live client attaches only at key upload and
+peer-key retrieval and records peer identity through a periodic sweep. The session-establishment and
+pre-key-bundle rows are documentation-only integration sketches that mark where a production binding
+of the live X3DH secret would attach.
 
 \begin{table}[ht]
 \centering
@@ -145,13 +148,55 @@ the client's environment before launch.
 
 % ----------------------------------------------------------------------------
 \FloatBarrier
+\section{Integration and Flow Diagrams}\label{sec:apiref-diagrams}
+
+These diagrams accompany the client integration of \cref{sec:impl-signal}. \Cref{fig:impl-signal}
+maps the runtime arrangement of the embedded client and the three processes it exercises,
+\cref{fig:impl-verify} traces the matching branch of the networked
+\texttt{RemoteKTClient.detectMitm} verification path, and \cref{fig:impl-e2e} traces the normal and
+A1b attack workflows across the four roles.
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-impl-signal}
+\caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript
+KT client communicates over HTTP with the Rust directory server. It verifies keys at the key-upload
+and peer-key-retrieval hooks and reports verdicts to the badge and banner. An independent auditor polls the server. The
+scripted attacker uses a privileged testing interface. \Cref{tab:apiref-hooks,tab:apiref-events} list the hook functions
+and verdict-event names.}
+\label{fig:impl-signal}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\input{figures/tikz/fig-impl-verify}
+\caption[Owner-slot and warning-slot verification.]{Matching branch of
+\texttt{RemoteKTClient.detectMitm}. The client verifies its own dual-index slot against a signed
+head anchored to the append-only log. Only a matching owner-slot value proceeds to the proof-verified
+warning-slot lookup. The live monitor handles registration and warning publication separately.}
+\label{fig:impl-verify}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\input{figures/tikz/fig-impl-e2e}
+\caption[Normal and A1b attack paths across the four roles.]{Normal and A1b attack paths across
+the two clients, directory, and auditor. In the lower panel, Alice detects an own-slot mismatch and
+writes a warning that Bob later reads. The auditor separately rejects the immutable-slot rotation.}
+\label{fig:impl-e2e}
+\end{figure}
+
+% ----------------------------------------------------------------------------
+\FloatBarrier
 \section{Demonstration Gallery}\label{sec:apiref-demo}
 
 The supporting captures for the demonstration of \cref{ssec:impl-demo} show the
 honest baseline before any attack, the attacker-side terminals that stage each scenario, the
 global-VRF and continuous-mode detection fronts, and the auditor outputs. The composite two-client
 warning capture that carries the RQ4 evidence remains in \cref{ssec:impl-demo}
-(\cref{fig:impl-screens}). The honest baseline is shown in \cref{fig:demo-baseline}, the attacker
+(\cref{fig:impl-screens}). In that capture the two DevTools consoles record the bidirectional
+detection at one shared slot, the victim logging \texttt{WRITE warning slot label=a480\ldots} and the
+peer logging \texttt{READ warning slot label=a480\ldots} at the identical hex. The honest baseline is shown in \cref{fig:demo-baseline}, the attacker
 terminals in \cref{fig:demo-cmd}, the staged equivocation in \cref{fig:demo-equivocation}, the
 global-VRF and CEA fronts in \cref{fig:impl-screens-fronts}, and the auditor outputs in
 \cref{fig:impl-auditor}.
