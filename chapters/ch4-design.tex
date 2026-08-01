@@ -167,16 +167,12 @@ key-derivation function Signal already uses elsewhere:
   \ell_{\mathsf{warn}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"warning"}} \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B),\ 32\big).
 \end{aligned}
 \end{equation}
-In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key. The terms
-$\mathit{id}_{\mathsf{self}}$ and $\mathit{id}_{\mathsf{peer}}$ are the deriving party's own and peer
-identifiers, and $\min$
-and $\max$ impose a canonical order on the two identities (comparing their fixed-width
-byte representations lexicographically), and each label is a 32-byte
-(256-bit) output, matching the prefix tree's label width. The identifiers are ordered
-canonically \emph{only} for the warning label, so that both parties compute the same
-$\ell_{\mathsf{warn}}$. The two lookup labels are deliberately asymmetric, so that each
-party's key occupies its own slot. The parties' keys occupy separate lookup slots alongside the
-shared warning slot.
+In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key, while
+$\mathit{id}_{\mathsf{self}}$ and $\mathit{id}_{\mathsf{peer}}$ identify the deriving party and its
+peer. The $\min$ and $\max$ operations order the fixed-width identity encodings lexicographically.
+Each output is 32 bytes, matching the prefix tree's label width. Canonical ordering is used only for
+the warning label, which both parties must derive identically. Directional ordering gives each party a
+separate lookup slot.
 
 \begin{figure}[ht]
 \centering
@@ -485,7 +481,7 @@ components onto their instantiation in this work.
 ACKA component & Role in the framework & Instantiation in this work \\
 \midrule
 $\CKA$ & continuous key agreement & Signal's Double Ratchet, unmodified at the design level, simulated in the prototype \\
-$\CEA$ & per-epoch labels and fingerprints & continuous mode retains ACKA's per-epoch CEA label-and-fingerprint construction. Session mode adds conversation-derived dual-index labels and a shared warning slot \\
+$\CEA$ & per-epoch labels and fingerprints & Continuous mode retains ACKA's per-epoch CEA label-and-fingerprint construction \\
 $\Log$ & abstract append-only secure log, required to be $\Logsec$-secure & DUET's verifiable key directory, comprising the prefix tree, Merkle log, signed tree heads, consistency and exclusion proofs, the write-once raw-label policy, and per-epoch transition validation \\
 \bottomrule
 \end{tabularx}
@@ -515,7 +511,7 @@ paragraphs below expand the three that most affect the system's behaviour.
 \label{tab:design-decisions}
 \setlength{\extrarowheight}{2pt}
 \small
-\begin{tabular}{@{}p{4.0cm}p{5.4cm}p{3.6cm}@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.7cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.3cm}@{}}
 \toprule
 Decision & Justification & Reference / precedent \\
 \midrule
@@ -529,7 +525,7 @@ Client-tunable window $W$ & lets each client trade catch-up frequency against pe
 Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability required by ACKA's $\Logsec$ notion, makes warning deletion detectable and provable & ACKA~\cite{dowling2023acka}, IETF KeyTrans auditing~\cite{ietf-keytrans-protocol} \\
 Truncate VRF output $\beta$ to 32 bytes & 256-bit label space, matches the prefix-tree label width & Signal keytrans~\cite{signal-kt-server} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \paragraph{Directory Structure.} The directory is a sparse binary Merkle tree rather
@@ -549,8 +545,8 @@ asymptotic cost in proof size. This is the structure used by CONIKS and the IETF
 \paragraph{Global-Label Derivation.} Global slots are addressed by an ECVRF over the user identifier
 rather than a bare hash, for the directory-privacy reason given in \cref{ssec:design-structures}. The
 design selects ECVRF-EDWARDS25519-SHA512-TAI (RFC~9381) because it matches Signal's deployed keytrans
-VRF, so no new cryptographic dependency is introduced. Its measured cost in this prototype is reported
-in \cref{ch:eval}.
+VRF, avoiding a second, incompatible VRF suite and preserving compatibility with Signal's
+key-transparency service. Its measured cost in this prototype is reported in \cref{ch:eval}.
 
 \paragraph{Combined Prefix-Plus-Log Stack.} Authentication uses two trees, a prefix
 tree for the current directory and an append-only log of its committed roots, rather

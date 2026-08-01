@@ -79,9 +79,9 @@ client treats anything other than a proof-verified response as a failed check ra
 absence. A refusal therefore never masquerades as a verified absence. The prototype reports it as an
 unavailable check (amber, not red), without attributing its cause. The A2 signal proper is the key
 mismatch together with a \emph{proof-verified} absence of the warning. All three safeguards are
-implemented. The write-once policy and the transition audit run live, the first enforced by the
-server's raw-label update interface, the second by the auditor replaying each epoch's declared update
-set. The persistence check is a tested reference component (\cref{ch:impl}, \cref{alg:detect}).
+represented in the prototype. The write-once policy and transition audit run live. The persistence
+check is implemented and unit-tested as a reference component but is not wired into the background
+monitor (\cref{ch:impl}, \cref{alg:detect}).
 The prototype does not implement account-layer authentication of raw-label writes (proof of raw-label
 ownership). Without it, the write-once policy still binds an honest server and the transition audit
 still binds a malicious one, but a malicious client could pre-emptively occupy a currently empty peer
