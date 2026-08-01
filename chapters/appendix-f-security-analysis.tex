@@ -168,9 +168,10 @@ Elevation of privilege & 3 & 3 & None \\
 \end{tabular}
 \end{table}
 
-The forgery threats are addressed under the assumptions stated in
-\cref{sec:threat-assumptions}. These include ECVRF label binding, SHA-256, Ed25519, the append-only
-log, and client-side proof verification. Key substitution is detected by the controls evaluated in
+The forgery threats are assessed under the hash and signature assumptions in \cref{sec:def-primitives}.
+The VRF assumption is stated in \cref{sec:def-vrf}, and the authenticated-log properties are defined
+in \cref{sec:def-structures}. The endpoint, auditor, and trust-on-first-use assumptions are stated in
+\cref{sec:threat-assumptions}. Key substitution is detected by the controls evaluated in
 \cref{sec:eval-security}.
 
 One residual follows from the semi-trusted-server model. The operator learns the association between

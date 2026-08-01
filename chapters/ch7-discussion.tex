@@ -54,7 +54,8 @@ policies.
 The STRIDE analysis (\cref{sec:sec-stride}) identifies four residual threats. The operator
 necessarily learns the label-to-user mapping, because the prototype provides no query privacy from
 the operator. The remaining three concern missing availability controls: write rate limiting, a
-staleness timeout for published epochs, and gossip-based detection of proof omission.
+staleness timeout for published epochs, and gossip-based detection of proof omission. A refused or
+dropped response prevents verification from completing and is not treated as successful verification.
 
 \paragraph{Prototype Bounds.} The benchmarks are single-machine and in-memory, so they characterize
 the design's algorithmic cost rather than the cost of a networked, database-backed service. The epoch

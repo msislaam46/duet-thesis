@@ -21,7 +21,7 @@ The \textbf{clients}, Alice ($A$) and Bob ($B$), run the messaging application o
 their own devices. They generate and hold their own secret keys, publish the
 corresponding public key material, and perform all verification locally. They are
 assumed honest: their devices are not under adversarial control (the boundary
-where this fails is scenario X1 in \cref{sec:threat-adversary}). Clients may be
+where this fails is scenario X1 in \cref{sec:threat-scenarios}). Clients may be
 resource-constrained and intermittently connected, which is why the cost of
 catching up after an offline period is a primary concern.
 
@@ -30,7 +30,7 @@ infrastructure. It stores and serves the X3DH pre-key bundles that Alice needs t
 start a session with Bob (\cref{ssec:bg-x3dh}) and relays ciphertext between the
 parties. A malicious provider can substitute a key through this delivery path or through the
 directory state it controls. A network attacker can separately alter the bundle while it is in
-transit (scenario A3, \cref{sec:threat-adversary}).
+transit (scenario A3, \cref{sec:threat-scenarios}).
 
 The \textbf{key-transparency log server} maintains the verifiable directory and
 its append-only log, answers lookup and monitoring queries with cryptographic
@@ -55,6 +55,27 @@ The server--auditor boundary is independent. The auditor's value is that its vie
 obtained separately from the client's. The network and infrastructure adversaries are modelled
 separately, and a deployment may face either or both at once.
 
+The network adversary follows Dolev and Yao~\cite{dolevyao1983}. It can intercept, modify, inject,
+delete, and replay messages and impersonate parties in transit. It does not independently control
+the server's directory.
+
+A malicious operator may substitute a key, censor a log write, or present different internally
+consistent directory views to different clients. This is the malicious-directory threat considered by
+the key-transparency systems surveyed in \cref{sec:bg-vkd} and by the IETF Key Transparency
+architecture~\cite{ietf-keytrans-architecture}. Documented fake-key attacks show why compromise or
+coercion of a key-distribution service is a practical concern~\cite{yadav2022fakekey}.
+
+\paragraph{What the Adversary Cannot Do.} The model assumes that the underlying cryptographic
+mechanisms remain secure. An external attacker cannot find SHA-256 collisions, compute the honest
+parties' X25519 shared secret without either party's private key, forge signatures under keys it
+does not control, or produce valid VRF proofs without the corresponding secret key. The malicious
+operator does hold the directory's VRF and signing keys, so it can evaluate global identity
+labels and sign new directory states. It cannot, however,
+produce a valid inclusion proof for a value absent from the root of the signed head being
+verified without violating the collision-resistance assumption underlying the authenticated
+data structure. Endpoint
+compromise remains outside the model and is represented by X1.
+
 The design supports two authentication modes, defined in \cref{ch:design}. Session mode uses
 per-conversation dual-index entries to authenticate session keys. Continuous mode uses a
 fingerprint at each ratchet epoch to authenticate the evolving Double Ratchet state
@@ -73,40 +94,7 @@ auditor observes the log from a separate vantage point.}
 
 % ============================================================================
 \FloatBarrier
-\section{Adversary Model}\label{sec:threat-adversary}
-
-\paragraph{The Network Attacker (Dolev--Yao).} Following Dolev and
-Yao~\cite{dolevyao1983}, the network adversary has maximal control of the wire:
-it can intercept, modify, inject, delete, and replay any message, and it can
-impersonate any party in transit. It does not, on its own, control the server's
-directory. This models the active man-in-the-middle that the Double Ratchet's
-post-compromise security does not defend against once the adversary remains active
-(\cref{ssec:bg-ratchet}), and that ACKA's continuous mode is designed to catch
-(\cref{sec:bg-acka}).
-
-\paragraph{The Infrastructure Attacker (Malicious Server).} The server is semi-trusted. Clients
-depend on the server to answer requests but verify its cryptographic responses rather than
-assuming honest behaviour. A malicious operator may substitute a key, censor a log write, or
-present different internally consistent directory views to different clients. This is the
-malicious-directory threat considered by the key-transparency systems surveyed in
-\cref{sec:bg-vkd} and by the IETF Key Transparency
-architecture~\cite{ietf-keytrans-architecture}. Documented fake-key attacks show why compromise
-or coercion of a key-distribution service is a practical concern~\cite{yadav2022fakekey}.
-
-\paragraph{What the Adversary Cannot Do.} The model assumes that the underlying cryptographic
-mechanisms remain secure. An external attacker cannot find SHA-256 collisions, compute the honest
-parties' X25519 shared secret without either party's private key, forge signatures under keys it
-does not control, or produce valid VRF proofs without the corresponding secret key. The malicious
-operator does hold the directory's VRF and signing keys, so it can evaluate global identity
-labels and sign new directory states. It cannot, however,
-produce a valid inclusion proof for a value absent from the root of the signed head being
-verified without violating the collision-resistance assumption underlying the authenticated
-data structure. Equivocation is detected when an
-honest auditor compares two conflicting, validly signed heads for the same epoch. Endpoint
-compromise remains outside the model and is represented by X1.
-
-The implications of these adversary capabilities for the design are developed in
-\cref{ch:design}.
+\section{Attack Scenarios}\label{sec:threat-scenarios}
 
 \Cref{tab:threat-attacks} summarizes the attack scenarios this adversary model
 admits, ranging from the honest baseline (A0) through the
@@ -135,11 +123,6 @@ X1 & endpoint attacker & impersonate using the victim's key & outside the direct
 \end{table}
 
 \FloatBarrier
-\subsection{Attack Scenarios}\label{ssec:threat-scenarios}
-
-The scenarios below turn the adversary model of \cref{tab:threat-attacks} into attack scenarios,
-ordered from the primary key-substitution threat through its network and equivocation variants to the
-endpoint-compromise boundary.
 
 \paragraph{A1: Key Substitution.} A1 is the primary server-side substitution attack. A
 compromised or coerced operator commits an attacker-controlled key under the victim's identity
@@ -195,12 +178,8 @@ concealment attempts A2 and A4 and from the endpoint-compromise boundary X1.
 % ============================================================================
 \section{Assumptions}\label{sec:threat-assumptions}
 
-The guarantees of the later chapters rest on the following assumptions.
-
-The assumptions for SHA-256, HKDF, and Ed25519 are stated in \cref{sec:def-primitives}.
-\Cref{sec:def-vrf} states the VRF assumption, and \cref{def:x3dh} states the X25519 assumption.
-\Cref{def:consistency} also defines the RFC~9162 consistency property used by the append-only log.
-These assumptions and properties bound the adversary's capabilities in \cref{sec:threat-adversary}.
+The following operational assumptions define the conditions under which the security requirements are
+evaluated.
 
 The \textbf{endpoint assumption} is that honest clients' devices are not
 compromised. This is the X1 boundary, and lifting it places the situation outside
@@ -225,33 +204,19 @@ initial directory binding is revisited in \cref{ch:discussion}.
 
 The adversary model and assumptions give four security requirements, denoted G1--G4.
 
-\paragraph{G1: Key-Substitution Detection.} If a server (A1, A5) or network adversary (A3)
-substitutes a key, the relevant client reports the substitution after completing the
-scenario-specific verified lookups. For an established pair affected by A1 or A5, the detecting
-client writes a warning to the shared warning slot. Peer notification is completed when that
-warning commits and the other client's monitor reads and verifies it.
+\paragraph{G1: Key-Substitution Detection.} Any substitution of a public key by the server
+(A1, A5) or a network adversary (A3) must be detected by the affected client. For an
+established conversation affected by A1 or A5, the other party must receive an in-band
+warning, or suppression of that warning must prevent successful verification.
 
-\paragraph{G2: Consistency Across Offline Windows.} A returning client obtains one consistency
-proof between the last verified log size and the current log size. It verifies that the current
-state extends the earlier state without requesting one proof for every missed epoch. Proof size
-depends on the two log sizes and does not grow linearly with the number of missed epochs.
+\paragraph{G2: Consistency Across Offline Windows.} A returning client must be able to verify
+that the current log state extends its last trusted state without processing every missed
+epoch separately.
 
-\paragraph{G3: Directory Privacy.} The global directory label derived from a user's identity is
-computationally unpredictable to parties that do not hold the operator's VRF secret key.
+\paragraph{G3: Directory Privacy.} It must be computationally infeasible for a party other
+than the directory operator to infer a user's identity from its public directory location.
 
 \paragraph{G4: Fork Detection.} An equivocating server (A4) that signs two different heads for
 the same epoch is detected when an honest auditor obtains and compares the client-observed head
 with a valid head from an independent vantage. G4 is the only security requirement that depends
-on the auditor's independent vantage (\cref{sec:threat-assumptions}).
-
-% ============================================================================
-\FloatBarrier
-\section{Out of Scope}\label{sec:threat-scope}
-
-A malicious operator may still serve a substituted key. After an authentic baseline has been
-established, the requirement is that completed verification exposes a later substitution. The
-design does not guarantee service availability.
-Endpoint compromise, query privacy from the operator, group messaging, and multi-device
-keychains are outside the model. A refusal or dropped response produces an unavailable or
-incomplete check rather than successful verification. These boundaries and possible extensions
-are examined in \cref{ch:discussion}.
+on the auditor's independent vantage.
