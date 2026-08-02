@@ -222,7 +222,7 @@ The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{
 eleven suites: a live-server wire-parity suite, an in-process integration suite, and nine unit suites.
 Some catalogue rows represent parameterized cases (twelve decoder mutations, three status mappings,
 three VRF vectors), and the totals count executed tests.
-The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust
+The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust directory
 server over the network. It is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
 to be running, and its five tests early-return as no-ops when the server is absent, so a bare
 \texttt{npm test} run does not by itself establish wire parity. The integration suite and the
@@ -243,7 +243,7 @@ embedded test rather than passing silently.
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: wire parity against the live Rust server, and the integration suite (\num{36} tests).}
+\caption{Jest tests: wire parity against the live Rust directory server, and the integration suite (\num{36} tests).}
 \label{tab:tests-jest-wire}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}
@@ -442,9 +442,9 @@ and \texttt{cea::cross\_impl\_test\_vectors}, the last pinning three ratchet epo
 first (\cref{tab:tests-rust-prim,tab:tests-rust-system}); on the TypeScript side, the
 \texttt{kt\_integration} vectors v1, v3, and the warn-MAC vector, and the \texttt{cea} vector test
 (\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The Ed25519 and Merkle computations are checked to
-agree by the wire-parity suite, which verifies the Rust server's live outputs with the TypeScript
+agree by the wire-parity suite, which verifies the Rust directory server's live outputs with the TypeScript
 verifiers. Together these are the contract that licenses the TypeScript client as a faithful
-verifier of the Rust server's outputs (\cref{sec:impl-tests}).
+verifier of the Rust directory server's outputs (\cref{sec:impl-tests}).
 
 % ----------------------------------------------------------------------------
 \section{Adversarial Scenario Suite}\label{sec:tests-adversarial}

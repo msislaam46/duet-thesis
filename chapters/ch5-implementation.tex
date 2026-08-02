@@ -301,7 +301,7 @@ verification error through the client warning interface (\cref{ssec:impl-demo}).
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
 The integration runs as a live, multi-actor demonstration: two linked Signal Desktop clients, the
-standalone Rust server, the auditor, and a scripted attacker, driven by the runner scripts of
+standalone Rust directory server, the auditor, and a scripted attacker, driven by the runner scripts of
 \cref{sec:apiref-repo}. Its purpose is to demonstrate the detection paths in the Signal user
 interface rather than only in a benchmark. The clearest run is the dual-index substitution
 (scenario A1b). The attacker overwrites the victim's per-conversation slot on the shared server. On the
@@ -377,9 +377,9 @@ at one epoch) is reported as a fork, and that a divergent head with an invalid s
 correctly rejected rather than misclassified as a fork.
 
 On the \textbf{TypeScript} side, the standalone verifier harness contains 116 Jest tests. Live
-Rust--TypeScript wire parity is a separate opt-in target that requires the Rust server, and a normal
+Rust--TypeScript wire parity is a separate opt-in target that requires the Rust directory server, and a normal
 Jest run alone does not establish wire parity. When enabled, the wire-parity suite runs the client's
-full verification chain against the live Rust server, confirming multi-entry inclusion, proven
+full verification chain against the live Rust directory server, confirming multi-entry inclusion, proven
 non-inclusion, the Ed25519 signed-tree-head check (and its rejection of a tampered head), the VRF
 path, and windowed consistency. The integration suite and the cryptographic unit suites run the
 verifier against a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF, and
@@ -415,7 +415,8 @@ was therefore updated to implement the same ECVRF suite and checked against the 
 second problem concerned signed-head verification. An early client checked the head signature only
 once per monitoring tick, allowing an individual lookup to be answered against a fabricated head. Each
 search now returns its signed head atomically. The client verifies the signature, requires the
-returned root to match that signed head, and checks the inclusion proof against that root.
+returned root to match that signed head, and checks the inclusion proof against that root. The client
+rejects an unsigned or absent head.
 
 \paragraph{Identifier Representation.} Signal represents ACIs and phone-number identifiers (PNIs) as service-ID strings. The dual-index and
 CEA constructions accept only canonical 16-byte ACIs. The integration boundary converts an ACI

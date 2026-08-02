@@ -300,7 +300,7 @@ deliberately asymmetric. Specified in \cref{ssec:design-labels}.
 \intuition{A party publishes its key at its own lookup slot, and raises the alarm by writing to the
 shared warning slot.}
 $\mathsf{Register}(\lblself,\mathit{pk})$ binds the party's public key at its own lookup label in the
-directory. $\mathsf{WriteWarning}(\lblwarn)$ writes a non-empty alert payload to the shared warning
+directory. $\mathsf{WriteWarning}(\lblwarn)$ writes a non-empty warning payload to the shared warning
 slot, authenticated by a MAC under a pair-bound key expanded from $\mathit{PRK}$ with the info string
 \texttt{"warn-mac"} and the canonically ordered identities, so that a reader can distinguish a
 peer-authored warning from operator-injected data (\cref{alg:dualindex}). The slot is write-once: an
