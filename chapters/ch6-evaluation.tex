@@ -400,10 +400,10 @@ dominating the operation. A server could cache the stable identity label, but th
 not measured here.
 
 Epoch commit rises from \SI{451.0}{\micro\second} at $10^3$ to
-\SI{6.73}{\milli\second} at $10^4$. The implementation deep-clones the committed tree and its memoized hash-chain state, so the operation is linear in the stored snapshot. The two measured points illustrate that
+\SI{6.73}{\milli\second} at $10^4$. The implementation deep-clones the current tree and its memoized hash-chain state into the committed snapshot, so the operation is linear in the stored snapshot. The two measured points illustrate that
 cost but do not by themselves establish the asymptotic result. \Cref{sec:disc-future} proposes
-persistent tree updates to target $O(\lg N)$ work per modified label, or $O(k\lg N)$ for $k$
-updates.
+persistent structural-sharing updates whose path-copying work is bounded by $O(kd)$ for $k$ modified
+labels at the fixed tree depth $d=256$, that is, $O(k)$ and independent of $N$.
 
 The scale run exposes the corresponding memory limit. Building the $10^7$-label tree takes about
 26 minutes and leaves a \SI{21.3}{\giga\byte} resident set (\cref{tab:bench-scale}). Persistent and
@@ -652,7 +652,8 @@ also performs owner and peer checks and may perform catch-up or continuous-mode 
 
 The server results expose prototype constraints. Epoch commit grows with the stored snapshot because
 the current implementation deep-clones it (\cref{ssec:eval-throughput}). \Cref{sec:disc-future} proposes
-persistent tree updates targeting $O(\lg N)$ work per modified label, not implemented or measured here.
+persistent structural-sharing updates with per-label work bounded by the fixed tree depth. This
+alternative is not implemented or measured here.
 The in-memory tree also grows large at CONIKS scale (\cref{ssec:eval-scale}). Production operation
 therefore requires persistent storage, distribution, concurrency testing, and networked measurements
 that this evaluation does not provide.
