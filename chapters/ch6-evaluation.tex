@@ -66,12 +66,12 @@ M17 & Clean-session verdict coverage           & None                       & \c
 \end{table}
 
 Three configurations recur throughout the chapter. The \emph{single-index} reference is a plain
-log-inclusion proof. The \emph{VRF-indexed} configuration is the identity lookup performed through
-\texttt{search\_by\_user\_id}. The harness records it under the historical identifier
+log-inclusion proof. The \emph{VRF-indexed} configuration performs an identity lookup. The benchmark corpus records this
+configuration under the historical identifier
 \texttt{dual\_index}. The \emph{windowed} configuration adds windowed consistency verification.
 These are benchmark configurations rather than a complete mechanism-level ablation.
 
-The raw dual-index warning path instead calls \texttt{search(label)} and omits the \num{80}-byte VRF
+The raw dual-index warning path instead uses raw-label lookups and omits the \num{80}-byte VRF
 proof. M16 measures its verified detector branches, while M13 and M15 measure the
 session-versus-continuous trade. M11 alone uses the \emph{no-KT floor}, a synthetic identity-hash
 comparison rather than a mechanism-level baseline (\cref{ssec:eval-throughput}). The measurements
@@ -81,15 +81,14 @@ Timings are recorded in Criterion reports and by a manual harness. The manual ha
 median and 95th percentile from \num{2000} sequential in-process iterations per operation. The thesis
 uses these as descriptive sample statistics and does not infer a confidence interval for a mean.
 Measurements near the platform's timer resolution, including the
-\SIrange{0.1}{0.3}{\micro\second} M4 windowed-generation values, are treated as coarse hot-path
-observations.
+\SIrange{0.1}{0.3}{\micro\second} M4 windowed-generation values, are treated as coarse observations rather than precise timings.
 
 Proof sizes are exact and seed-deterministic. M7 instead reports distributions over \num{1000} random
 lookups per $N$. Fixed cryptographic and sampling seeds support reproducing the results, following the procedure in
 \cref{sec:impl-repro}. The benchmark host and software versions are reported in \cref{sec:bench-env}. The commands needed
-to reproduce the runs are listed in \cref{sec:bench-repro}. Body timings are
+to reproduce the runs are listed in \cref{sec:bench-repro}. Operation timings are
 rounded to $0.1\,\si{\micro\second}$. Separate benchmark contexts shift some component medians by a few
-percent, so the chapter quotes the in-path figures and does not attribute those small differences to
+percent, so the chapter reports the figures from the corresponding benchmark run and does not attribute those small differences to
 the mechanism.
 
 Three limitations qualify these results. First, the server is in-memory and
@@ -216,7 +215,7 @@ proof depth. Median full verification remains below \SI{150}{\micro\second} thro
 timing~\cite{melara2015coniks}.
 
 The server-side full search is also near-flat over this range because the compressed-leaf chain is
-memoized (\cref{sec:impl-modules}). It reads \SI{111.2}{\micro\second}
+memoized (\cref{ssec:impl-core-state}). It reads \SI{111.2}{\micro\second}
 at $N=10^3$ and \SI{111.6}{\micro\second} at $N=10^4$. The scale run's search median reads
 \SI{132.7}{\micro\second} at $N=10^6$ and \SI{441.7}{\micro\second} at $N=10^7$
 (\cref{ssec:eval-scale}). The median is approximately flat through $10^6$ and then rises at $10^7$.
@@ -286,20 +285,21 @@ monitoring-bandwidth extension identified by CONIKS~\cite{melara2015coniks}.
 
 \subsection{Detector-Branch Latency and Clean-Session Coverage (M16, M17)}\label{ssec:eval-detection}
 
-M16 reconstructs in Rust the verified operations performed by two branches of the isolated
-\texttt{KTClient.detectMitm} helper (\cref{sec:impl-signal}). The timed body performs raw-label
-search, proof verification, and value comparison without the VRF step measured by M3. It does not
-time the TypeScript implementation directly.
+M16 reconstructs in Rust the verified operations in the early-return and clean-match branches of the
+in-process TypeScript detector \texttt{KTClient.detectMitm} (\cref{tab:bench-m16}). It isolates
+raw-label search, proof verification, and value comparison without the VRF step measured by M3. It
+does not time the TypeScript implementation. The networked \texttt{RemoteKTClient.detectMitm} path
+and the separate live background monitor are described in \cref{ssec:impl-hooks}.
 
 On the early-return branch, the detector produces a verdict after one verified lookup when the owner value mismatches.
 The median is \SI{27.8}{\micro\second}, with a 95th percentile of
 \SI{28.8}{\micro\second}, at $N=10^4$. On the clean-matching branch, the owner slot contains the
-expected key and the helper also verifies that the warning slot is empty. This two-lookup branch has a
+expected key and the detector also verifies that the warning slot is empty. This two-lookup branch has a
 median of \SI{31.1}{\micro\second} and a 95th percentile of
 \SI{32.7}{\micro\second}. The empty warning result must be proof-verified, because accepting an
 unproven empty response would let the server conceal a committed warning.
 
-These are local Rust component costs. In the in-process \texttt{KTClient.detectMitm} helper, a
+These are local Rust component costs. In the in-process detector, a
 verifiably empty owner slot also proceeds to the warning-slot lookup before first registration. M16
 does not benchmark the empty-slot first-registration path as a separate case, and registration itself
 is outside the timed body. An end-to-end detector measurement would additionally include the
@@ -375,7 +375,7 @@ Three related metric families are reported in \cref{sec:bench-timings}. M8 deriv
 operation rates of approximately \num{8940} lookups and \num{7150} updates per second at $N=10^4$.
 M10 measures VRF proof generation and verification in isolation. M11 measures, in Rust, one complete
 signed-head lookup verification corresponding to the operation invoked at the handshake hook, against
-the synthetic one-hash floor. It is a component proxy rather than a timing of the live TypeScript
+the synthetic single-hash comparison used as the no-KT floor. It is a component proxy rather than a timing of the live TypeScript
 hook, and it excludes transport, X3DH/PQXDH, and session establishment. This subsection focuses on the
 maintenance costs that limit the single-machine prototype.
 
@@ -400,9 +400,8 @@ dominating the operation. A server could cache the stable identity label, but th
 not measured here.
 
 Epoch commit rises from \SI{451.0}{\micro\second} at $10^3$ to
-\SI{6.73}{\milli\second} at $10^4$. The implementation deep-clones the committed tree and its chain
-memos, so the operation is linear in the stored snapshot. The two measured points illustrate that
-cost but do not by themselves establish the asymptotic result. \Cref{ch:discussion} proposes
+\SI{6.73}{\milli\second} at $10^4$. The implementation deep-clones the committed tree and its memoized hash-chain state, so the operation is linear in the stored snapshot. The two measured points illustrate that
+cost but do not by themselves establish the asymptotic result. \Cref{sec:disc-future} proposes
 persistent tree updates to target $O(\lg N)$ work per modified label, or $O(k\lg N)$ for $k$
 updates.
 
@@ -420,9 +419,9 @@ one-head fork check has a median of \SI{27.1}{\micro\second} and a 95th percenti
 figure is a conservative upper proxy for verification alone.
 
 The measurement excludes network transfer, epoch-delta retrieval, committed-root inclusion
-verification, and the full \texttt{audit\_epoch} transition replay. That replay applies each
+verification, and the full transition replay. That replay applies each
 disclosed update to a candidate replica. The fork-check figure also does not represent a mature
-auditor with a long observation history. The implemented \texttt{detect\_fork} scans the retained
+auditor with a long observation history. The implemented fork check scans the retained
 heads, whereas M12 seeds exactly one.
 
 \subsection{Session versus Continuous Mode (M13, M15)}\label{ssec:eval-modes}
@@ -486,7 +485,7 @@ label-binding check.
 \section{Comparison with Prior Systems}\label{sec:eval-compare}
 
 This section places the measured results beside the key-transparency systems surveyed in
-\cref{ch:background}. \Cref{tab:eval-compare} compares the systems on the dimensions most relevant
+\cref{sec:bg-compare}. \Cref{tab:eval-compare} compares the systems on the dimensions most relevant
 to assessing a messaging deployment. The published figures are drawn from each system's paper or
 repository. Byte figures are compared after convention alignment and stated to the precision that
 alignment supports, while cross-hardware timing ratios are order-of-magnitude and illustrative only
@@ -529,7 +528,7 @@ marginally larger on the raw proof. This VRF-indexed identity lookup does not it
 dual-index warning mechanism. Detection instead uses additional raw-label lookups
 that reuse the same prefix-tree and log-proof structure without the VRF component (\cref{sec:design-dual}),
 none of which enlarges an individual proof. The comparison is limited to the aligned proof body. A full DUET lookup response also returns the signed tree head \emph{per
-lookup} (\cref{sec:impl-signal}), which this proof-body comparison excludes on both sides.
+lookup} (\cref{sec:impl-challenges}), which this proof-body comparison excludes on both sides.
 
 Second, restricted to the prefix-proof sibling representation, DUET's bitmap-compressed proof carries
 roughly one-ninth the sibling-hash bytes of Signal's fixed \num{256}-sibling copath at the measured
@@ -546,7 +545,7 @@ for the hiding of tree density. Under this conservative comparison, DUET uses ap
 as many bytes for the sibling representation, while its bitmap exposes about $\lceil\lg N\rceil$ bits
 of tree-density metadata.
 It does not net against the signed tree head, which a full DUET response carries per lookup
-(\cref{sec:impl-signal}) and which Signal's \num{8192}-byte copath figure excludes on both sides.
+(\cref{sec:impl-challenges}) and which Signal's \num{8192}-byte copath figure excludes on both sides.
 SEEMless reports approximately 8.6\,kB lookup proofs at $10^7$~\cite[p.~12]{chase2019seemless},
 placing its measured proof size near Signal's fixed 8\,kB copath.
 
@@ -578,7 +577,7 @@ in this thesis are single-machine and in-memory (\cref{sec:eval-method}).\end{qu
 % ============================================================================
 \section{Security Evaluation}\label{sec:eval-security}
 
-The adversarial scenario suite of \cref{sec:impl-tests} applies the attack taxonomy defined in
+The adversarial scenario suite documented in \cref{sec:tests-adversarial} applies the attack taxonomy defined in
 \cref{ch:threat}. It asserts the verdict and scripted detection point for each scenario, with the
 results reported in \cref{tab:tests-adversarial}. The automated Rust suite
 covers all eight scenarios: the A0 baseline, the two substitution variants A1a (global VRF slot)
@@ -605,13 +604,13 @@ Attack & Mechanism (requirement) & Evidence & Result \\
 A1/A3/A5 key substitution & A1 self-check and warning. A3 divergent-label and global-VRF identity comparison. A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite exercises each route (\cref{tab:tests-adversarial}). & Detected. The scripted point depends on the scenario. \\
 A2 warning censorship & Key mismatch together with proof-verified warning absence (extension of G1). & The A2 scenario exercises the compound signal. & Detected. \\
 A4 split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 one-head local kernel. & Detected at the next scripted comparison. \\
-Directory enumeration & ECVRF-derived identity labels against outsider enumeration (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{sec:impl-tests}). & Resisted against outsiders under the VRF pseudorandomness assumption. \\
+Directory enumeration & ECVRF-derived identity labels against outsider enumeration (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{tab:tests-rust-prim}). & Resisted against outsiders under the VRF pseudorandomness assumption. \\
 X1 key extraction & No directory control. & Endpoint compromise lies outside key transparency. & Out of scope. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\Cref{app:security} provides the MITRE ATT\&CK mapping~\cite{mitre-attack} (\cref{sec:sec-mitre}), the
+The detailed security analysis provides the MITRE ATT\&CK mapping~\cite{mitre-attack} (\cref{sec:sec-mitre}), the
 STRIDE analysis (\cref{sec:sec-stride}), the attack-route grouping (\cref{sec:sec-routes}), and the
 detection timeline (\cref{ssec:eval-timeline}).
 
@@ -647,12 +646,12 @@ window rather than one per epoch (\cref{ssec:eval-catchup,sec:eval-compare}). Th
 particularly relevant to intermittently connected clients.
 
 The warning detector uses raw-label lookups rather than the VRF-indexed identity proof. M16 measures
-one- and two-lookup Rust reconstructions of two isolated \texttt{KTClient.detectMitm} branches.
+one- and two-lookup Rust reconstructions of the two isolated detector branches described in \cref{ssec:eval-detection}.
 Their combined bandwidth and end-to-end latency were not measured. A complete background-monitor pass
 also performs owner and peer checks and may perform catch-up or continuous-mode verification.
 
 The server results expose prototype constraints. Epoch commit grows with the stored snapshot because
-the current implementation deep-clones it (\cref{ssec:eval-throughput}). \Cref{ch:discussion} proposes
+the current implementation deep-clones it (\cref{ssec:eval-throughput}). \Cref{sec:disc-future} proposes
 persistent tree updates targeting $O(\lg N)$ work per modified label, not implemented or measured here.
 The in-memory tree also grows large at CONIKS scale (\cref{ssec:eval-scale}). Production operation
 therefore requires persistent storage, distribution, concurrency testing, and networked measurements
@@ -663,7 +662,7 @@ rotation, whereas continuous mode writes once per ratchet epoch for finer-graine
 therefore performs substantially more writes (\cref{ssec:eval-modes}). The exact ratio is determined by
 message activity and rotation cadence in a live system, not a fixed deployment value.
 
-Further work includes authenticated write ownership and stronger query privacy (\cref{ch:discussion}).
+Further work includes authenticated write ownership and stronger query privacy (\cref{sec:disc-future}).
 An OPRF could hide the raw lookup identity from the service performing the oblivious evaluation, but
 hiding the fetched entry and the requester would additionally require private retrieval and network
 anonymity. The measured proof sizes and local cryptographic costs support the client-side design.

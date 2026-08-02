@@ -291,12 +291,12 @@ returned proof, checks that this root is included in the log, validates the tree
 signature, and anchors the head as an append-only extension of its pinned baseline. Only when the
 owner slot verifies and matches the client's own key does it issue a second
 lookup for the shared warning slot, whose proven inclusion or non-inclusion separates a
-clean verdict from a warning. The helper returns \texttt{null} when both lookups pass and a
-\texttt{MitmWarning} when the owner slot is absent or mismatched, or when the warning slot is occupied.
-A proof or head-anchoring failure causes the helper to throw. The live background monitor does not call
-this helper directly: it implements the corresponding checks in \texttt{monitorConversation}
-(\cref{alg:detect}), publishes warnings when required, and reports its own \texttt{MonitorVerdict} or
-verification error through the client warning interface (\cref{ssec:impl-demo}).
+clean verdict from a warning. When both checks pass, the method returns \texttt{null}. It returns a
+\texttt{MitmWarning} if the owner slot is absent or mismatched or if the warning slot is occupied.
+A proof or head-anchoring failure throws an exception. The live background monitor implements the
+corresponding checks independently in \texttt{monitorConversation} (\cref{alg:detect}) rather than
+calling this method directly. It publishes warnings when required and reports its own
+\texttt{MonitorVerdict} or verification error through the client warning interface (\cref{ssec:impl-demo}).
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
