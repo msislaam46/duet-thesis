@@ -2,20 +2,21 @@
 
 End-to-end encrypted messaging depends on authentic public keys, yet manual comparison is rarely
 completed~\cite{vaziripour2017} and the deployed transparency systems surveyed in \cref{ch:background}
-do not warn both peers. For honestly established and monitored conversations, DUET addresses this gap
-through automatic key-substitution checks and an in-band peer-warning channel without changing
-lookup-proof asymptotics.
+do not warn both peers. This thesis set out to close this gap for honestly
+established and monitored conversations while preserving lookup-proof asymptotics. DUET does so
+through automatic key-substitution checks and an in-band peer-warning channel.
 
-DUET instantiates ACKA's abstract log component $\Log$ as a malicious-server-resistant verifiable key
-directory (\cref{ch:design}). It adds a dual-index warning scheme for in-band peer alerts and a
-windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
+DUET instantiates ACKA's abstract log component $\Log$ as a verifiable key directory that does not
+assume operator honesty (\cref{ch:design}). It adds a dual-index warning scheme for in-band peer
+warnings and a windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
 and compares signed heads obtained from separate vantage points, providing the cross-vantage check
-used to detect equivocation. Both mechanisms are implemented in the Rust reference system, and the
-client-verification path is exercised through a verifier embedded in Signal Desktop (\cref{ch:impl}).
+used to detect equivocation. The Rust reference system implements these mechanisms and
+the auditor, and a Signal Desktop verifier exercises the client-verification path (\cref{ch:impl}).
 
 \Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an
-individual lookup proof. The measured proof remains at rough size parity with CONIKS, and median full
-verification remains below \SI{150}{\micro\second} through $10^7$ labels. Windowed catch-up uses one
+individual lookup proof. At a matched directory size, the implemented VRF-indexed lookup
+proof is roughly comparable in size to the corresponding CONIKS proof, and median full verification
+remains below \SI{150}{\micro\second} through $10^7$ labels. Windowed catch-up uses one
 distant-head proof rather than one per missed epoch. These are local component measurements. End-to-end
 monitor latency was not measured. The system produced the expected verdicts across the enumerated
 attack scenarios. The STRIDE analysis identified one privacy residual and three unimplemented
@@ -23,13 +24,13 @@ availability controls.
 
 These results support the four contributions introduced in \cref{sec:intro-contributions}.
 Conceptually, the dual-index scheme gives both parties access to a shared warning location while
-retaining party-specific lookup labels. Cryptographically, the windowed consistency proof
-authenticates an offline interval using one proof between distant signed heads. The Rust reference
+retaining party-specific lookup labels. Cryptographically, DUET applies an RFC~9162
+distant-head consistency proof to offline monitoring. The Rust reference
 system and Signal Desktop verifier demonstrate integration feasibility. The benchmark suite and
-adversarial scenarios provide empirical evidence, including the scenario-specific controls used for A3--A5.
+adversarial scenarios provide empirical evidence, including the scenario-specific controls used for A3, A4, and A5.
 
-Production integration still requires binding the per-session labels to Signal's live X3DH secret and
-defining how failed checks affect session establishment (\cref{ch:discussion}). Under the threat-model
-assumptions of \cref{ch:threat}, the design makes substitution detectable through automatic
-client-side checks and an in-band peer warning. The prototype therefore shows that these checks can run
-automatically inside a messaging client and notify both parties when a substitution is detected.
+Production integration still requires binding the per-session labels to Signal's live conversation
+secret and defining how failed checks affect session establishment (\cref{sec:disc-future}). Under
+the assumptions of \cref{sec:threat-assumptions}, the prototype shows that these automatic checks can
+run inside a messaging client and, in the demonstrated dual-index warning path, notify both parties of
+a detected substitution.
