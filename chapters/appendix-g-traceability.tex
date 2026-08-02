@@ -27,7 +27,7 @@ RQ1 & substitution is detected, in band (bidirectional for A1/A5 after honest es
 dual-index warning scheme for A1; local divergent-label detection and the global VRF-anchored entry for A3 (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
 scenarios A1--A5 (\cref{tab:tests-adversarial}); dual-index derivation tests (\cref{tab:tests-rust-prim}) &
 M17 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M17 asserts non-alarm on every clean workflow \\
-RQ2 & detection does not enlarge an individual per-lookup proof; verification stays below the latency target and grows far more slowly than $N$ &
+RQ2 & detection does not enlarge an individual per-lookup proof; median full verification remains below \SI{150}{\micro\second} and grows far more slowly than $N$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
 prefix-tree, VRF, Merkle-log tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
 M1--M3, M7, M11, M16 & \cref{sec:eval-micro,ssec:eval-scale}: 817\,B @ $10^6$; verify \SI{139.2}{\micro\second} at $10^7$; \SI{27.8}{} and \SI{31.1}{\micro\second} for synthetic Rust reconstructions of the one- and two-lookup detector branches (M16); one signed-head lookup verification (the hook operation) timed as a Rust component (M11, \cref{sec:eval-deploy}) \\
@@ -47,7 +47,7 @@ M12 & \cref{ssec:eval-auditor}: \SI{27.1}{\micro\second}/check (median; local on
 Supporting & continuous mode trades write volume for finer detection &
 CEA continuous mode (\cref{ssec:design-modes}) &
 M13 mode benchmark (\cref{sec:bench-modes}) &
-M13 & \cref{ssec:eval-modes}: plateau at $720\times$ \\
+M13 & \cref{ssec:eval-modes}: bounded above by $720\times$ \\
 Supporting & a committed warning cannot be removed silently &
 write-once policy + transition audit + persistence evidence (\cref{ssec:design-detection}) &
 write-once and undeclared-removal tests (\cref{tab:tests-rust-server}); transition-audit and deletion-evidence tests (\cref{tab:tests-rust-system}) &

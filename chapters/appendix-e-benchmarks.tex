@@ -167,11 +167,11 @@ M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
 \end{table}
 
 \medskip\noindent\emph{Operation rates and maintenance (M8--M11): latency-derived single-thread rates, key
-rotation and epoch commit, the VRF in isolation, and the KT lookup-verification cost at the handshake hook.}
+rotation and epoch commit, the VRF in isolation, and the Rust lookup-verification component corresponding to the handshake hook.}
 
 \begin{table}[ht]
 \centering
-\caption[M8--M11: single-thread rates and hook cost.]{M8--M11: latency-derived single-thread rates, rotation, epoch commit, VRF, and the KT lookup-verification cost at the handshake hook.}
+\caption[M8--M11: single-thread rates and hook cost.]{M8--M11: latency-derived single-thread rates, rotation, epoch commit, VRF, and the Rust lookup-verification component corresponding to the handshake hook.}
 \label{tab:bench-maint}
 \small
 \begin{tabular}{@{}L{6.2cm}lrr@{}}
@@ -186,7 +186,7 @@ M9 epoch commit (windowed)           & $10^3$ & 451.0 & 504.8 \\
 M9 epoch commit (windowed)           & $10^4$ & 6727.3 & 7504.7 \\
 M10 VRF prove (isolated)             &        & 110.0 & 115.3 \\
 M10 VRF verify (isolated)            &        & 73.5  & 76.8 \\
-M11 handshake-hook lookup verification & & \multicolumn{2}{l}{identical to M3 (\cref{ssec:eval-latency})} \\
+M11 lookup-verification component (handshake-hook proxy) & & \multicolumn{2}{l}{identical to M3 (\cref{ssec:eval-latency})} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -310,7 +310,7 @@ from the benchmark CSVs by a helper script in the benchmark tooling, so they can
 corpus. \Cref{tab:bench-m14} is the M14 history-depth sweep: at each directory size the log-inclusion
 sibling count tracks $\lceil\lg E\rceil$ and the serialized proof grows by $32$ bytes per sibling, the
 history term the single-epoch rows report as zero. \Cref{tab:bench-m15} is the M15 deep-chain
-experiment: each series stays flat as $K$ grows, and their pointwise difference stays within the timer
+experiment: both median series vary by at most \SI{0.5}{\micro\second} across the tested values of $K$, and their pointwise difference stays within the timer
 resolution through $K=720$ ratchet epochs, not interpreted as a distinct mechanism cost.
 \Cref{tab:bench-m15-writes} is the companion analytic write-amplification grid. \Cref{tab:bench-m16} is
 the M16 detector-branch cost, each branch a synthetic Rust reconstruction of the corresponding
@@ -357,8 +357,8 @@ and must reproduce byte-for-byte; timings reproduce within noise.
 groups and CSV keys below are frozen provenance identifiers, so some retain historical names.
 \texttt{windowed\_full\_client\_verify} is the M3 full signed-head lookup verification and does not
 time a catch-up proof. \texttt{M8\_throughput} records per-operation latencies from which a
-single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures one signed-head KT lookup
-verification at the handshake hook. It excludes X3DH/PQXDH, network transfer, and the remainder of
+single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures, in Rust, one signed-head lookup
+verification corresponding to the operation invoked at the handshake hook. It excludes X3DH/PQXDH, network transfer, and the remainder of
 session establishment.
 
 \begin{table}[ht]

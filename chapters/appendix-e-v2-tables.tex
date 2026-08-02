@@ -33,8 +33,7 @@ $10^{4}$ & 1 & 0 & 625 & 127.9 / 144.7 \\
 \caption[M15: continuous-mode verification versus ratchet depth.]{M15 deep-chain
 experiment: the final-epoch transparency check after $K$ ratchet epochs, timed
 against a session-mode raw lookup on the \emph{same} deep server so both series see
-the identical log depth and directory size. Each series is flat across $K$ (depth
-independence). The $\Delta$ column is their pointwise difference, within the timer
+the identical log depth and directory size. Both median series vary by at most \SI{0.5}{\micro\second} across the tested $K$ values, supporting depth independence over the evaluated range. The $\Delta$ column is their pointwise difference, within the timer
 resolution and not interpreted as a distinct mechanism cost.
 Times in \si{\micro\second}, log depth in epochs.}
 \label{tab:bench-m15}
