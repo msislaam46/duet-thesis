@@ -57,7 +57,7 @@ every committed directory state, and a consistency proof certifies that this
 history has only ever grown. Nothing previously committed has been modified,
 deleted, or reordered.
 
-\paragraph{Signed Tree Head.} Each epoch, the root of the log is signed with Ed25519
+\paragraph{Signed Tree Head (STH).} Each epoch, the root of the log is signed with Ed25519
 and published as the STH. This gives clients and auditors a single authenticated value
 that commits to the whole directory and its history. It is the anchor against which
 every lookup is ultimately checked.
