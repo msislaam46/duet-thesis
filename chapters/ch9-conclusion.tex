@@ -1,10 +1,10 @@
 \chapter{Conclusion}\label{ch:conclusion}
 
 End-to-end encrypted messaging depends on authentic public keys, yet manual comparison is rarely
-completed~\cite{vaziripour2017} and the deployed transparency systems surveyed in \cref{ch:background}
-do not warn both peers. This thesis set out to close this gap for honestly
-established and monitored conversations while preserving lookup-proof asymptotics. DUET does so
-through automatic key-substitution checks and an in-band peer-warning channel.
+completed~\cite{vaziripour2017}, and the deployed transparency systems surveyed in \cref{ch:background}
+do not warn both peers. This thesis addresses that gap through DUET, which automatically checks for
+key substitution and provides an in-band peer-warning channel for honestly established and monitored
+conversations without changing lookup-proof asymptotics.
 
 DUET instantiates ACKA's abstract log component $\Log$ as a verifiable key directory that does not
 assume operator honesty (\cref{ch:design}). It adds a dual-index warning scheme for in-band peer
