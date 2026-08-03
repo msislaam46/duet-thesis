@@ -265,3 +265,99 @@ A1b causing an \textsc{ImmutableRotation} transition-audit failure. In the right
 \textsc{alarm: fork}.}
 \label{fig:impl-auditor}
 \end{figure}
+
+% ============================================================================
+\section{Implementation Detail and Engineering Record}\label{sec:apiref-engineering}
+
+This section preserves the module, server, integration, and engineering detail summarized in
+\cref{ch:impl}.
+
+\subsection{Directory State, Cryptography, and Server}\label{ssec:apiref-eng-core}
+
+The directory's state lives entirely in memory, in the cooperating structures that parallel the
+authenticated-data-structure stack of the design (\cref{ssec:design-structures}). The base
+\texttt{hashing} module fixes the RFC~6962 leaf and node domain tags shared by both structures.
+The \texttt{merkle\_log} module maintains the append-only log as a vector of hashes and implements
+the RFC~9162 inclusion and consistency verifiers, each proof costing time logarithmic in the
+number of entries. The \texttt{prefix\_tree} module implements the directory itself as a
+path-compressed sparse Merkle tree, held as a pointer-based structure so that only the nodes
+actually populated are materialized. Each compressed leaf lazily memoizes the top of its
+empty-sibling hash chain, so that serving a proof whose copath meets a compressed leaf does not
+recompute the up-to-256-level chain on every lookup. A single \texttt{Arc<Mutex<KTServer>>} protects the server state, so reads and writes are serialized.
+The prototype does not shard or replicate this state.
+
+The \texttt{vrf} module implements the
+ECVRF-EDWARDS25519-SHA512-TAI construction of RFC~9381 (suite \texttt{0x03}). The \texttt{dual\_index} module
+derives the three labels $\ell_{\mathsf{self}}$, $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$
+from the shared secret by HKDF-SHA256 (RFC~5869), exactly as specified in
+\cref{ssec:design-labels}, and the \texttt{cea} module implements the continuous example construction
+of the ACKA framework~\cite{dowling2023acka}. The crates
+\texttt{sha2}, \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard
+primitives, and the ECVRF of RFC~9381 is the one hand-written primitive, checked against the published
+suite-\texttt{0x03} test vectors.
+
+A standalone HTTP server, built on the
+\texttt{axum} framework over the asynchronous \texttt{tokio} runtime, wraps the \texttt{KTServer}
+and serves the lookup, monitoring, and consistency operations as JSON, alongside a privileged
+testing interface used only by the adversarial scenario suite and the scripted attacker. An independent
+auditor binary, a small \texttt{ureq} HTTP client, verifies signed-head growth and replays epoch
+transitions along its own view. The server enforces the write-once policy in its raw-label
+update path, so a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
+\texttt{/update-raw} endpoint answers \texttt{409 Conflict}), while the privileged interface exposes
+an explicit unchecked overwrite so the adversarial suite can play a malicious operator. Every commit
+freezes a \emph{declared update set} that the server publishes at an \texttt{/epoch-delta} endpoint,
+which the auditor consumes (\cref{fig:impl-transition-audit}) by replaying each epoch's declared set
+against its own replica and accepting only if the replayed root equals the committed root. This
+corresponds to the third-party auditor role in the IETF KeyTrans protocol~\cite{ietf-keytrans-protocol}.
+Independently of any auditor, the \texttt{monitor} module provides a writer-side persistence check that
+retains the inclusion proof and signed tree head from the epoch in which a warning commits, so that a
+later removal yields a bundle verifying against the server's own signed heads (\cref{alg:detect}).
+Authenticated ownership of raw-label writes is not implemented, so without account-layer authorization a
+malicious client could occupy an unclaimed peer slot before its legitimate owner writes to it. The one
+core cost that is not sublinear is the epoch commit, which snapshots the tree by a deep clone.
+
+\subsection{Signal Desktop Integration Wiring}\label{ssec:apiref-eng-wiring}
+
+The integration uses key-upload and peer-key-retrieval hooks together with a background monitor.
+Peer identity material is recorded during key retrieval and through a periodic identity-record
+sweep. No live session-establishment hook exposes the X3DH shared secret. The
+peer-key-retrieval hook runs the full verification chain
+(\cref{ssec:design-verify}) on a peer's key at the retrieval boundary and reports the verdict without
+blocking session establishment. Verdicts appear in the user
+interface through a conversation-header badge and a
+banner, driven by DOM events. The specific hook functions and event names are
+listed in \cref{tab:apiref-hooks,tab:apiref-events}.
+\Cref{fig:impl-verify} illustrates the matching branch of the networked \texttt{RemoteKTClient.detectMitm}
+path: the client reads its own dual-index lookup slot $\ell_{\mathsf{self}}$, verifies the prefix
+proof, log-inclusion proof, and signed tree head, and only on a verified owner slot issues a second
+lookup for the shared warning slot. When both checks pass, the method returns \texttt{null}; it returns a
+\texttt{MitmWarning} if the owner slot is absent or mismatched or the warning slot is occupied, and a
+proof or head-anchoring failure throws. The live background monitor implements the
+corresponding checks independently in \texttt{monitorConversation} (\cref{alg:detect}).
+
+\subsection{Electron, Determinism, and Fail-Closed Behaviour}\label{ssec:apiref-eng-robust}
+
+Three Electron obstacles arose. The bundler splits a chunk at every dynamic
+import, so every dynamic import for the key-transparency code was removed and the whole layer now
+lives in one bundle, with the networked path made opt-in and its failure caught separately. With
+context isolation enabled, property assignments to \texttt{window} in the preload world are not visible
+to the renderer, so objects injected through the console had no effect, whereas DOM custom events on
+\texttt{window} cross the boundary. The application's typed event bus and those DOM custom events were
+mismatched, resolved by dispatching on both. Several robustness issues appeared only end to end: a
+server that generated a fresh signing key on each launch invalidated cached public keys, fixed by
+deriving the server's keys deterministically from a seed; a panic on a freshly emptied log poisoned the
+shared mutex, resolved by bootstrapping a genesis epoch at initialization; and an administrative reset
+that rebuilds the server from its seed makes the demonstration repeatable.
+
+On the client, the trusted computing
+base is the verifier implementation, its cryptographic dependencies, and the directly implemented
+ECVRF (\cref{ssec:impl-core-crypto}), together with the operator's two public keys, the STH signing
+key and the VRF key. Because the prototype obtains these keys from the service during initialization,
+their initial authenticity remains a trust assumption, and independent authenticated provisioning is a
+production requirement. Subject to that assumption, the server, network, and log are not trusted, and
+every response is re-checked. The verifier is fail-closed for integrity checks: any cryptographic or
+proof-validation failure yields a reject verdict rather than falling through to acceptance. The present
+key-fetch hook reports explicit mismatches and proof failures as a red warning but does not abort bundle
+processing, so complete error-to-UI routing and session-blocking enforcement remain prototype
+limitations (\cref{ch:discussion}). Production request handlers must also recover from poisoned locks
+instead of relying only on the genesis-epoch bootstrap.
