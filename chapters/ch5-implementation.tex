@@ -1,17 +1,17 @@
 \chapter{Implementation}\label{ch:impl}
 
-The implementation combines a Rust cryptographic core and directory with a TypeScript verifier
-embedded in Signal Desktop. This chapter covers their architecture, integration, parity testing,
-engineering constraints, and reproducibility.
+The implementation has two components. The Rust component provides the directory, cryptographic
+operations, auditor, and benchmarks. The TypeScript component embeds the client verifier in Signal
+Desktop. This chapter covers their architecture, integration, parity testing, engineering
+constraints, and reproducibility.
 
 % ============================================================================
 \section{Architecture and Language Boundary}\label{sec:impl-strategy}
 
-The implementation separates a measured Rust reference system from a TypeScript verifier embedded in
-Signal Desktop. The standalone \texttt{duet} crate contains the directory, cryptographic operations,
-auditor, and benchmarks. Rust was chosen because comparable systems use it and because the crate can
-be measured without Signal or libsignal dependencies~\cite{malvai2023parakeet,facebook-akd}.
-\Cref{fig:impl-overview} shows this language and trust boundary.
+The standalone \texttt{duet} crate implements the Rust component. Rust was chosen because comparable
+systems use it and because the crate can be measured independently of Signal and
+libsignal~\cite{malvai2023parakeet,facebook-akd}. \Cref{fig:impl-overview} shows the resulting
+language and trust boundary.
 
 The TypeScript layer implements the client-side proof checks and user-interface path. It verifies
 prefix, log, VRF, and signed-head evidence locally, performs the required raw-label writes, and is
@@ -256,8 +256,8 @@ demonstration setup.
 % ============================================================================
 \section{Reproducibility}\label{sec:impl-repro}
 
-Reproducibility relies on fixed cryptographic and sampling inputs and a recorded environment. Seeds
-determine the VRF key, label placement, sampled users, and fresh state for each benchmark, while the
-demonstration uses the administrative reset. The environment record identifies the hardware and the
-versions of the operating system, compiler, and toolchain. \Cref{sec:apiref-repo} gives the \texttt{cargo test} and
-\texttt{cargo bench} commands, repository layout, and runner scripts.
+Fixed seeds determine the VRF key, label placement, sampled users, and fresh server state for each
+benchmark, preventing state from carrying between runs. The live demonstration instead uses the
+administrative reset. The environment record identifies the hardware, operating system, compiler, and
+toolchain versions. \Cref{sec:apiref-repo} gives the \texttt{cargo test} and \texttt{cargo bench}
+commands, repository layout, and runner scripts.

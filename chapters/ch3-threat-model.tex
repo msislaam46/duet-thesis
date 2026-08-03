@@ -28,7 +28,7 @@ modify, inject, replay, or drop traffic~\cite{dolevyao1983}. The auditor obtains
 from the client. A malicious operator may substitute keys, censor warning writes, or present different
 consistent histories~\cite{ietf-keytrans-architecture,yadav2022fakekey}.
 
-The model assumes secure SHA-256, X25519, Ed25519, and VRF operations. The operator holds its own VRF
+The model assumes collision resistance for SHA-256 and the security of HMAC-SHA256, HKDF-SHA256, X25519, Ed25519, and the ECVRF. The operator holds its own VRF
 and signing keys, but it cannot authenticate a value absent from a signed root without violating the
 authenticated structure's collision-resistance assumption. Endpoint compromise defines the boundary
 case \hyperref[sc:threat-x1]{X1}. The session and continuous authentication modes evaluated under this
@@ -155,7 +155,7 @@ conversation, the peer must receive an in-band warning, or suppression must caus
 log extends its last trusted state without processing every missed epoch.
 
 \paragraph{G3: Directory Privacy.} It must be computationally infeasible for anyone but the
-directory operator to infer a user's identity from its public location.
+directory operator to infer a user's identity from its public directory location.
 
 \paragraph{G4: Fork Detection.} An honest auditor detects A4 by comparing the client-observed head
 with a different valid head for the same epoch from an independent vantage. G4 alone depends on this

@@ -13,7 +13,7 @@ transition validation. Under \hyperref[sc:threat-a3]{A3}, divergent conversation
 global VRF-bound identity entry supplies an independent binding.
 
 The evaluation supports this separation of costs. Identity proofs remain roughly comparable with the
-matched CONIKS proof, detector branches reuse raw-label proofs, and distant-head consistency replaces
+matched CONIKS proof, detection paths reuse raw-label proofs, and distant-head consistency replaces
 a proof per missed epoch with one proof. These measurements characterize component costs rather than
 production throughput.
 
@@ -66,15 +66,17 @@ measurement.
 
 \subsection{Completing the Protocol and Security Argument}
 
-The first implementation priority is to
-obtain the live X3DH or PQXDH conversation secret and the live Double Ratchet chain key from
-libsignal, and to authenticate the party authorized to make the first raw-label write. A formal
-analysis should then define a combined detection game covering the KDF, VRF, signed heads, warning
-authentication, and append-only verification, alongside symbolic analysis and separate verification
-of the client proof checker. Later replacement and deletion would remain governed by transition
-auditing rather than by first-write authorization alone. The persistence check that detects later
-removal is available as a tested reference component (\cref{sec:sec-suppression}). Its module status
-is identified in \cref{tab:impl-modules}.
+The first implementation priority is to obtain the live X3DH or PQXDH conversation secret and the
+live Double Ratchet chain key from libsignal. Replacing the stand-ins changes the inputs to the
+existing label and CEA constructions rather than their downstream proof formats. The live
+conversation secret is required for the \hyperref[sc:threat-a3]{A3} label-unpredictability claim. The
+raw-label interface must also authenticate the party authorized to make the first write, preventing a
+malicious client from occupying an empty conversation slot before its legitimate owner. Later
+replacement and deletion remain governed by transition auditing rather than first-write
+authorization. The tested persistence component provides evidence of later removal, and its
+implementation status is identified in \cref{tab:impl-modules}. A formal analysis should define a
+combined detection game covering the KDF, VRF, signed heads, warning authentication, and append-only
+verification, alongside symbolic analysis and separate verification of the client proof checker.
 
 \subsection{Groups, Devices, and Directory Privacy}
 
@@ -96,18 +98,21 @@ require immutable raw writes, authenticated ownership, transition disclosures, c
 independent auditor or gossip federation with incentives for independent operation. PQXDH secrets
 already fit the label KDF, but post-quantum operation also needs replacements for the ECVRF and
 signed-head signatures~\cite{pqxdh}. This thesis does not select or implement a post-quantum VRF.
-Concurrency, serialization, reclamation, and memory use would
+Even with PQXDH-derived labels, end-to-end post-quantum security would still depend on the messenger's
+authentication and ratchet mechanisms. Concurrency, serialization, reclamation, and memory use would
 require measurement after structural sharing.
 
 \subsection{Evaluation, Operations, and Usability}
 
-A usability study should test interpretation of
-the red warning and the amber notice, accessibility, escalation, and alarm fatigue,
-continuing the ceremony research that motivated the design~\cite{vaziripour2017}. Production warnings
+A usability study should determine whether cryptographic detection leads to an appropriate user
+response. It should test interpretation of the red warning and amber notice, accessibility,
+escalation, and alarm fatigue, continuing the ceremony research that motivated the
+design~\cite{vaziripour2017}. Production warnings
 should carry the scenario, epoch, signed heads, and proofs needed for operator or auditor review
 without exposing unnecessary metadata. An operational policy must define when to reject a proof,
 request rotation, or escalate without turning warning records into a new metadata leak. Further
 experiments should use persistent storage, concurrent requests, wide-area delay, varied epoch and
 catch-up policies, mobile CPU and energy measurements, and archived raw samples. The same approach
 may also be evaluated in clinical, emergency-response, and industrial key-distribution settings, each
-with its own identity, availability, and regulatory requirements.
+with its own identity model, device-enrolment and revocation process, availability requirements, and
+regulatory controls.

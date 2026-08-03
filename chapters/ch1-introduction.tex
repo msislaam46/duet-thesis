@@ -61,11 +61,10 @@ that Alice's peer lookup and Bob's self-check cannot authenticate different valu
 head. \Cref{ch:design} establishes these properties, and \cref{ch:eval} evaluates their costs.
 
 \paragraph{Systems.} The systems contribution instantiates ACKA's abstract log
-component~\cite{dowling2023acka} as the DUET directory through a standalone Rust reference
-implementation comprising the \texttt{duet} crate, an HTTP directory server, and a cross-vantage
-auditor. It also includes a TypeScript verifier integrated into a fork of Signal Desktop
-(\cref{ch:impl}). The shared protocol operations are checked for byte-for-byte agreement using
-cross-language test vectors.
+component~\cite{dowling2023acka} as the DUET directory through a standalone Rust implementation
+comprising the \texttt{duet} crate, an HTTP directory server, and a cross-vantage auditor. A
+TypeScript verifier is integrated into a fork of Signal Desktop~(\cref{ch:impl}). Shared protocol
+operations are checked for byte-for-byte agreement using cross-language test vectors.
 
 \paragraph{Empirical.} The benchmark evaluation, covering metrics M1--M17, yields four principal
 findings. At a matched directory size, the implemented VRF-indexed lookup proof is roughly comparable

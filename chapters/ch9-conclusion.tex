@@ -10,8 +10,8 @@ DUET instantiates ACKA's abstract log component $\Log$ as a verifiable key direc
 assume operator honesty (\cref{ch:design}). It adds a dual-index warning scheme for in-band peer
 warnings and a windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
 and compares signed heads obtained from separate vantage points, providing the cross-vantage check
-used to detect equivocation. The Rust reference system implements these mechanisms and
-the auditor. A Signal Desktop verifier exercises the client-verification path (\cref{ch:impl}).
+used to detect equivocation. The Rust implementation provides the directory server, proof construction, and auditor. A Signal
+Desktop verifier exercises the client-verification path (\cref{ch:impl}).
 
 \Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an
 individual lookup proof. At a matched directory size, the implemented VRF-indexed lookup
@@ -24,8 +24,8 @@ availability controls.
 These results support the four contributions introduced in \cref{sec:intro-contributions}.
 Conceptually, the dual-index scheme gives both parties access to a shared warning location while
 retaining party-specific lookup labels. Cryptographically, DUET applies an RFC~9162
-distant-head consistency proof to offline monitoring. The Rust reference
-system and Signal Desktop verifier demonstrate integration feasibility. Empirically, the benchmark suite quantifies the component costs, and the adversarial suite tests the
+distant-head consistency proof to offline monitoring. The Rust directory
+implementation and Signal Desktop verifier demonstrate integration feasibility. Empirically, the benchmark suite quantifies the component costs, and the adversarial suite tests the
 controls across the attack scenarios.
 
 Production integration still requires binding the per-session labels to Signal's live conversation

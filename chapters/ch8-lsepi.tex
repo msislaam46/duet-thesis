@@ -36,7 +36,7 @@ and both are stated in \cref{ch:discussion}~\cite{ico-data-principles}.
 
 Undetected key substitution is a physical risk for journalists, activists, and others whose safety
 depends on a conversation staying private. Automatic detection is intended in part to protect these
-groups, making accurate reporting about what was built an ethical obligation. This
+groups, making accurate reporting about what was built an ethical obligation. The
 prototype runs on a single machine and in memory and uses a deterministic conversation-secret
 stand-in and a seeded ratchet simulation (\cref{sec:impl-strategy}). It does not protect a client
 whose endpoint is compromised (\cref{sec:threat-assumptions}). Overstating a security tool puts its
@@ -47,8 +47,8 @@ warning causes alarm fatigue rather than protection. The interface
 therefore uses amber for an unavailable directory and red only for a verified mismatch. A red warning
 states that an integrity or consistency check failed without assigning a cause. Usability
 testing, accessibility, escalation routes, and support paths are unaddressed here and named as future
-work in \cref{ch:discussion}. Warning records also reveal who was warned and when, creating a new
-metadata surface.
+work in \cref{ch:discussion}. Warning records also reveal who was warned and when. Although the
+warning channel protects users, it creates a new metadata surface.
 
 The evaluation used synthetic accounts and neither recruited participants nor intercepted live
 traffic (\cref{ssec:impl-demo}), so it was not a human-participant study. A deployment would need to
@@ -94,7 +94,7 @@ UK GDPR (pseudonymised account data) & a production directory would associate ke
 UK export controls (cryptographic software) & the design composes standard cryptographic primitives & classification depends on functionality, destination, and end use, and public specifications do not by themselves determine it & no export-control classification is attempted \\
 BCS Code of Conduct & public interest, competence, relevant authority, and profession & duties on security and privacy, competence, honesty to the supervisor, and not overstating results & established libraries, RFC test vectors, reproducible tests, supervisory review, and explicit scope \\
 IET Rules of Conduct & accuracy and rigour, working within competence, and qualified opinions & reported results must state their limitations and stay within competence & adversarial tests, cross-language vectors, reproducibility measures, and explicit scope qualifications \\
-Research ethics (synthetic data) & adversarial functionality was exercised in a local test harness & no live interception and no real users & synthetic accounts only, with no personal data processed \\
+Research ethics (synthetic data) & adversarial functionality was exercised in a local test harness & no live interception and no real users & synthetic accounts only, with no participant personal data processed \\
 \bottomrule
 \end{tabularx}
 \end{table}

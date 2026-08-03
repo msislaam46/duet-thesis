@@ -36,7 +36,7 @@ Claim & Result & Scope \\
 Lookup proof size & a median of \num{817} bytes at $N=10^6$ and \num{945} bytes at $N=10^7$ & VRF-indexed identity lookup excluding the signed head. Detailed distributions are in \cref{tab:bench-scale} \\
 Full client verification & \SI{139.2}{\micro\second} median at $N=10^7$ and below \SI{150}{\micro\second} at every measured size & Local Rust verification including VRF, log inclusion, and signed-head verification \\
 Offline catch-up & \num{320} raw hash bytes for one proof at $W=720$, against \num{222528} bytes for the synthetic repeated-proof baseline & Raw path hashes, not serialized network traffic. The ratio is \num{695.4} for this baseline \\
-Detector branches & \SI{27.8}{\micro\second} for one verified mismatching-owner lookup and \SI{31.1}{\micro\second} for the clean two-lookup path & Rust reconstruction excluding TypeScript, transport, polling, and registration \\
+Detection paths & \SI{27.8}{\micro\second} for one verified mismatching-owner lookup and \SI{31.1}{\micro\second} for the clean two-lookup path & Rust reconstruction excluding TypeScript, transport, polling, and registration \\
 Authentication modes & Similar isolated label-bound verification cost. Continuous mode writes once per ratchet epoch rather than once per signed-pre-key rotation & Simulated continuous-mode input and cadence model \\
 Security outcomes & Expected outcomes for the A0 baseline, \hyperref[sc:threat-a1]{A1a and A1b},
 \hyperref[sc:threat-a2]{A2}, \hyperref[sc:threat-a3]{A3}, \hyperref[sc:threat-a4]{A4},
@@ -118,7 +118,7 @@ proof remains a few hundred bytes and grows logarithmically (\cref{sec:bench-siz
 A verified lookup whose returned owner does not match the expected owner completes in
 \SI{27.8}{\micro\second}. The clean two-lookup path fetches and verifies both the self label and the
 peer label and completes in \SI{31.1}{\micro\second}. These Rust reconstructions measure local
-verified-lookup work in the detector branches. They exclude the TypeScript client, transport, polling,
+verified-lookup work in the mismatch and clean paths. They exclude the TypeScript client, transport, polling,
 and registration and therefore bound the cryptographic component rather than user-visible latency.
 
 All seven specified clean workflows produce their expected clean verdicts, and no workflow produces a
@@ -283,6 +283,7 @@ it trusts live on the endpoint.
 % ============================================================================
 \section{Implications for Deployment}\label{sec:eval-deploy}
 
+The measured client costs support the feasibility of client-side verification at the tested scale.
 Median full verification remains below \SI{150}{\micro\second} through $10^7$ labels, and the
 measured proof body remains below one kilobyte. At a matched directory size, the proof is in the
 same size class as CONIKS. Detection reuses this format through additional label-bound lookups
@@ -293,12 +294,12 @@ compare with \num{222528} bytes across \num{720} proofs for the synthetic repeat
 Both figures exclude serialization overhead. The baseline models this implementation without
 windowing rather than a deployed system.
 
-M16 times one- and two-lookup Rust reconstructions of isolated branches. It excludes combined
-bandwidth and end-to-end background-monitor latency. The directory server measurements expose two
+M16 measures the Rust lookup work for the mismatch path and the clean two-lookup path. These
+component timings exclude combined bandwidth and end-to-end background-monitor latency. The directory server measurements expose two
 further constraints. Epoch commit deep-clones the current tree into the committed snapshot, and the
 in-memory tree becomes large at CONIKS scale. Persistent structural sharing, storage, concurrency
 testing, and networked measurements remain necessary.
 
 Session and continuous modes have similar isolated verification costs but different write frequencies.
-Session mode writes on signed-pre-key rotation, while continuous mode writes at each ratchet epoch.
-Their measured ratio therefore reflects the cadence model rather than a fixed deployment value.
+Session mode writes on signed-pre-key rotation, while continuous mode writes at each ratchet epoch for
+finer-grained checking. Their measured ratio reflects the cadence model rather than a fixed deployment value.
