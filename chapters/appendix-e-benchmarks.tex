@@ -57,6 +57,14 @@ portable. The proof sizes, being computed rather than timed, are hardware-indepe
 Lookup proof size against directory size is reported in \cref{tab:bench-m1}, and offline
 catch-up raw consistency-path hash bytes against the window in \cref{tab:bench-m4}.
 
+Proof \emph{generation} was timed separately from the byte counts above. At $W = 720$ the windowed
+proof has a median proof-generation time of \SI{0.3}{\micro\second} against
+\SI{197.0}{\micro\second} for the repeated current-head-anchored baseline. The quotient is only
+approximate because the windowed value is close to the reporting resolution of the harness. The
+proof-count reduction follows from the windowed construction rather than from these timings. The
+timings show that the reduction is not purchased with a generation cost that would offset the
+bandwidth saving.
+
 \begin{table}[ht]
 \centering
 \caption{M1: lookup proof size versus directory size $N$ (single-epoch log).}

@@ -277,10 +277,7 @@ evaluated points (\cref{fig:eval-catchup-plot}). At $W=720$, the windowed path c
 \num{222528} bytes. The exact ratio is \num{695.4}, reported in prose as roughly \num{700}-fold
 because it is specific to the synthetic baseline.
 
-The generation body has a median of \SI{0.3}{\micro\second} for the windowed proof and
-\SI{197.0}{\micro\second} for the repeated baseline. This is a separate timing result and its quotient
-is only approximate because the windowed value is close to the reporting resolution. The generation
-and bandwidth measurements confirm that one windowed proof replaces $W$ repeated proofs. This addresses the
+The windowed catch-up construction addresses the
 monitoring-bandwidth extension identified by CONIKS~\cite{melara2015coniks}.
 
 \subsection{Detector-Branch Latency and Clean-Session Coverage (M16, M17)}\label{ssec:eval-detection}
