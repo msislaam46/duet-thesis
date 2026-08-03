@@ -598,21 +598,19 @@ Ratchet in \cref{ssec:bg-ratchet} is the principal example. Formally, a CKA is a
 key-exchange protocol that continually produces fresh symmetric keys from exchanged public
 key-shares~\cite[p.~9]{dowling2023acka}.
 
-ACKA (Authenticated Continuous Key Agreement) is composed of three
-primitives~\cite[p.~7]{dowling2023acka}. First, the \emph{CKA} is the
-key-exchange protocol just defined. Second, \emph{Continuous Entity
-Authentication} (CEA), with its security notion CEAsec, is, informally, a
-per-epoch authenticator: each epoch it derives a label and a fingerprint from a
-chained secret state and the new public key-share, so that the two parties can
-check, epoch by epoch, that they are talking to each other and not to an injected
-key~\cite[pp.~13--14, 18]{dowling2023acka}. Finally, the \emph{secure logging
-scheme} ($\Log$), with security notion $\Logsec$, is an append-only, immutable log to which fingerprints are
-posted and from which they are queried~\cite[p.~10]{dowling2023acka}. An adversary who injects a forged
-key-share must either collide on the honest party's label (producing two
-fingerprints at one label, which alerts all communicating parties) or post
-under a label the impersonated party never generates, which that party detects on
-lookup~\cite[p.~7]{dowling2023acka} (\cref{fig:bg-acka} summarizes the
-composition).
+ACKA is composed of three primitives~\cite[p.~18]{dowling2023acka}. First, the \emph{CKA} is the
+key-exchange protocol just defined. Second, \emph{Continuous Entity Authentication} (CEA), whose
+security notion is $\CEAsec$~\cite[p.~18]{dowling2023acka}, is informally a per-epoch
+authenticator. Each epoch it derives a label and a fingerprint from a chained secret state and the
+new public key-share, so that the two parties can check, epoch by epoch, that they are talking to
+each other and not to an injected key~\cite[pp.~13--14]{dowling2023acka}. Finally, the
+\emph{secure logging scheme} $\Log$, whose required security notion is $\Logsec$, provides the
+append-only, immutable log to which fingerprints are posted and from which they are
+queried~\cite[pp.~10--11]{dowling2023acka}. An adversary who injects a forged key-share must either
+collide on the honest party's label, producing two fingerprints at one label and alerting all
+communicating parties, or post under a label the impersonated party never generates, which that
+party detects on lookup~\cite[pp.~7--8]{dowling2023acka}. \Cref{fig:bg-acka} summarizes the
+composition.
 
 ACKA requires append-only immutability but leaves the log construction abstract. It notes that the
 log could be a blockchain or another distributed-ledger protocol and specifies the interface
@@ -623,7 +621,7 @@ man-in-the-middle controlling the communication channel. This adversary may lear
 state, control the sender's randomness, inject forged ratchet key-shares, and possess the long-term
 authentication secrets~\cite[pp.~5, 19--20, 23]{dowling2023acka}.
 
-Its detection result is conditional on CEAsec security and a log satisfying the $\Logsec$
+ACKA's detection result assumes security under $\CEAsec$ and a log satisfying the $\Logsec$
 definition~\cite[p.~7]{dowling2023acka}. A malicious log operator therefore lies outside ACKA's
 theorem. ACKA specifies the required log interface but does not provide a construction that resists
 an equivocating server. It also assumes a pre-shared state that is common and globally unique across
