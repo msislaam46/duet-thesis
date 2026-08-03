@@ -18,7 +18,7 @@ that the client can run the full verification chain (\cref{ssec:design-verify}).
 
 \begin{table}[ht]
 \centering
-\caption{Public directory-server endpoints.}
+\caption{Public directory server endpoints.}
 \label{tab:apiref-public}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
@@ -186,7 +186,7 @@ writes a warning that Bob later reads. The auditor separately rejects the immuta
 \label{fig:impl-e2e}
 \end{figure}
 
-In \cref{fig:impl-e2e}, Alice and Bob each run an embedded verifier, while the KT server and auditor
+In \cref{fig:impl-e2e}, Alice and Bob each run an embedded verifier, while the directory server and auditor
 execute as separate processes. In the normal path Alice registers her key and commits. Bob's verifier
 then performs three label-bound, proof-verified lookups (the peer slot $\ell_A$ it retrieves Alice
 from, its own slot $\ell_B$, and the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably

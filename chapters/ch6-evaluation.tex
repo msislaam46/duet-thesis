@@ -9,7 +9,8 @@ the coverage of the security controls.
 \section{Methodology}\label{sec:eval-method}
 
 The evaluation asks whether detection enlarges an individual proof, how verification changes with
-directory size, whether offline catch-up can use one proof, and whether the defined attacks are detected and the listed clean workflows complete without warnings. Seventeen metric families connect these
+directory size, and whether offline catch-up can use one proof. It also tests whether the defined
+attacks are detected and the listed clean workflows complete without warnings. Seventeen metric families connect these
 questions to proof size, latency, catch-up, scale, operating modes, and security outcomes.
 
 The Rust harness measures local cryptographic work in process. It excludes HTTP, Electron, database,
@@ -296,7 +297,7 @@ baseline represents this implementation without windowing rather than a deployed
 
 The detector figures have a narrower scope. M16 times one- and two-lookup Rust reconstructions of
 the isolated branches, not the combined bandwidth or end-to-end latency of a background-monitor pass.
-The directory-server measurements also expose two deployment constraints. Epoch commit deep-clones the current
+The directory server measurements also expose two deployment constraints. Epoch commit deep-clones the current
 tree into the committed snapshot, and the in-memory tree becomes large at CONIKS scale. Persistent
 structural sharing, storage, concurrency testing, and networked measurements remain necessary.
 

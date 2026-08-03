@@ -16,7 +16,7 @@
 
 This appendix specifies the eight algorithms the thesis refers to. They fall into two groups.
 Algorithms~\ref{alg:merklelog}--\ref{alg:dualindex} are the data-structure and derivation
-primitives: the Merkle log tree, the sparse prefix tree, the key-transparency server that combines
+primitives: the Merkle log tree, the sparse prefix tree, the directory server that combines
 them, and the dual-index label derivation. Algorithms~\ref{alg:client}--\ref{alg:cea} are the
 protocol procedures built on those primitives: client verification, MitM detection and warning
 persistence, the auditor, and the continuous-authentication mode. \Cref{tab:alg-purpose} states the
@@ -58,7 +58,7 @@ implementation enforces it at the API boundary.
 % constraint is Alg. 5 (Client Verification), the longest in the appendix.
 % NOTE: a bare \small inside an algorithm has no effect; algorithm2e takes its
 % body font from \AlFnt, so it must be set via \SetAlFnt.
-\begin{spacing}{0.92}
+\begin{spacing}{1.0}
 
 \clearpage
 \paragraph{The Merkle log (Algorithm~\ref{alg:merklelog}).} The append-only log layer under every
@@ -134,13 +134,14 @@ authenticated dictionary holding the directory's current state. Its underlying s
 path-compressed binary trie over 256-bit labels, and each leaf commits its mutable-or-immutable kind
 into the hash. Lookups return compressed inclusion and non-inclusion proofs. A verified
 non-inclusion proof establishes that a warning slot is empty rather than merely unreported.
+
 \begin{algorithm}[H]
 \caption{Sparse Binary Merkle Prefix Tree (label-keyed)}\label{alg:prefix}
 \KwData{path-compressed binary trie over 256-bit labels; empty hash $e=\Hash(\varepsilon)$}
 \Fn{\normalfont\textsf{Insert}($\mathit{label},\mathit{value},\mathit{kind}$)}{
   \Req $|\mathit{label}|=32$ \tcp*{$\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$, bound into the leaf}
   place leaf $\Hleaf(\mathit{kind}\concat\mathit{label}\concat\mathit{value})$ at the bit-path of $\mathit{label}$\;
-  recompute hashes along the insertion path only \tcp*{$O(256)$}
+  recompute hashes along the insertion path only \tcp*{$O(d)$, $d=256$}
   \KwRet \textsf{RootHash}()\;
 }
 \Fn{\normalfont\textsf{Lookup}($\mathit{label}$)}{

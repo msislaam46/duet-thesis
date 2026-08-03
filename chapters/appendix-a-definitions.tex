@@ -352,9 +352,11 @@ the collision resistance of $\Hash$ (\cref{def:hash}), is violated.
 \end{lemma}
 \begin{proof}[Argument]
 Alice's peer-lookup and Bob's self-lookup resolve to the same label
-$\ell=\HKDFexp(\mathit{PRK},\texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},32)$, the
-directional slot for Bob's key (the canonical $\min/\max$ ordering applies only to
-$\ell_{\mathsf{warn}}$). Under a single $\mathit{sth}$ a verifying inclusion proof binds $\ell$ to
+\[
+  \ell=\HKDFexp(\mathit{PRK},\texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},32).
+\]
+This is the directional slot for Bob's key. The canonical $\min/\max$ ordering applies only to
+$\ell_{\mathsf{warn}}$. Under a single $\mathit{sth}$ a verifying inclusion proof binds $\ell$ to
 exactly one committed prefix-tree leaf, whose value is fixed by the log-inclusion proof against the
 one signed root. Two accepted values $v_{\mathsf{peer}}\neq v_{\mathsf{self}}$ at $\ell$ under that
 root would exhibit two verifying openings of one committed label, contradicting proof soundness and
