@@ -4,7 +4,7 @@ This appendix reproduces the complete aggregate benchmark tables summarized in \
 from recorded runs on the single environment below: the authoritative $10^7$ run supplies the timing
 corpus and M7, and the validated full-grid run supplies the M14--M16 families; sizes are exact and
 seed-deterministic, and timings are reported as the median and 95th percentile. The metric families M1--M17 are as defined by the
-measurement map in \cref{sec:eval-method} (\cref{tab:eval-map}); baselines are named, not coded
+measurement map in \cref{sec:eval-method} (\cref{tab:bench-repro}); baselines are named, not coded
 (\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed}) and mean the same
 thing here as in the chapter. Where a row is qualified \emph{(dual-index)}, it reports the
 VRF-indexed \texttt{search\_by\_user\_id} lookup recorded under the historical configuration identifier
@@ -84,7 +84,7 @@ $10^6$ & 20 & 640 & 23 & 913 \\
 
 \vspace{2pt}{\footnotesize The VRF lookup bytes are the single seeded-leaf path; at $10^6$ that leaf
 sits at depth~23 (913\,B). The distribution median over \num{1000} random lookups is \num{817}\,bytes
-(\cref{tab:bench-scale}, \cref{ssec:eval-scale}), the figure quoted in the text.}
+(\cref{tab:bench-scale}), the figure quoted in \cref{tab:eval-headlines}.}
 \end{table}
 
 \begin{table}[ht]
