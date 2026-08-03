@@ -138,15 +138,15 @@ technique except T1552.004 is mitigated by a key-transparency control; T1552.004
 endpoint-compromise boundary, out of scope for any directory mechanism (\cref{ch:threat}). The table
 lists only techniques with a faithful ATT\&CK counterpart~\cite{mitre-attack}. Adversary behaviours
 specific to a malicious \emph{directory} have no precise Enterprise-technique match and
-are the thesis's own A1/A2/A4 threats, analysed through the STRIDE enumeration and the attack
+are the thesis's own A1/A2/A4 threats, analysed through the STRIDE threat analysis and the attack
 scenarios of \cref{ch:threat} instead. These behaviours include observing registration patterns,
 operating a parallel encrypted channel, abusing the server's own write authority, selectively
 censoring writes, and presenting divergent signed views (equivocation).
 
 % ----------------------------------------------------------------------------
-\section{STRIDE Enumeration}\label{sec:sec-stride}
+\section{STRIDE Threat Analysis}\label{sec:sec-stride}
 
-The STRIDE enumeration covers the server (Merkle log, prefix tree, signed tree head), the client
+The STRIDE threat analysis covers the server (Merkle log, prefix tree, signed tree head), the client
 (registration, verification, warning monitor), and the auditor. Of twenty threats, sixteen are
 addressed by an implemented control and four are residual. The control column distinguishes attacks
 that are cryptographically prevented from those detected after they are attempted. Forgery of a VRF
