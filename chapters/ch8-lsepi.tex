@@ -1,9 +1,7 @@
 \chapter{Legal, Social, Ethical and Professional Issues}\label{ch:lsepi}
 
-Integrating a security research prototype with open-source Signal code raises questions of licensing,
-data protection, user impact, and professional responsibility. \Cref{tab:lsepi-mapping} summarizes the
-principal instruments and considerations this chapter examines, and the sections that follow develop
-each in turn.
+\Cref{tab:lsepi-mapping} records the instrument, relevance, implication, and project response for each
+issue this project raises. The sections below develop those requiring a design decision.
 
 \begin{table}[ht]
 \centering
@@ -26,92 +24,72 @@ Research ethics (synthetic data) & adversarial functionality was exercised in a 
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
 % ============================================================================
 \section{Legal Issues}\label{sec:lsepi-legal}
 
-The prototype extends two Signal codebases, libsignal and Signal Desktop, both licensed under the GNU
-Affero General Public License v3 (AGPL-3.0)~\cite{libsignal,signal-desktop}. Conveying modified
-covered code would engage the licence's corresponding-source obligations. If a modified program
-supporting network interaction were offered as a remote service, AGPL~Section~13 would additionally require
-its users to be offered the corresponding source~\cite{agpl3}. The prototype was not operated as a
-public network service, and the upstream copyright and licence notices are preserved throughout.
-Whether a particular separately developed component forms part of a combined or derivative work
-depends on the facts, the jurisdiction, and the mode of combination and distribution, and is not
-determined here.
+The client work derives from libsignal and Signal-Desktop, both distributed under the
+AGPL-3.0~\cite{libsignal,signal-desktop,agpl3}. Conveying modified AGPL-covered code requires the
+corresponding source to be provided under the licence. If a modified version is operated as a network
+service that supports remote interaction, Section~13 additionally requires that interacting users be
+offered the corresponding source. This prototype was evaluated locally rather than operated as a
+public service. UK law protects software as a literary work, so upstream copyright and licence notices are retained rather than
+rewritten~\cite{uk-software-copyright}. Upstream contribution would require a contributor
+licence agreement with the Signal Foundation~\cite{signal-foundation-structure,signal-cla}, a route
+not taken here.
 
-From a copyright perspective, the Signal Foundation could evaluate the work through Signal
-Messenger's software projects, either by considering an independent implementation of the published
-design~\cite{uk-software-copyright} or by reviewing an upstream code
-contribution~\cite{signal-foundation-structure}. Reusing the Rust implementation would
-require confirmation of ownership and an explicit licence. Changes contributed to Signal Desktop or
-libsignal would remain subject to AGPL-3.0 and Signal's contributor agreement~\cite{signal-cla}. Any
-adoption would also require Signal's own security, privacy, export-control, and deployment review.
-These are possible routes rather than a legal determination.
-
-Cryptographic software may be subject to UK export controls depending on its functionality,
-destination, and end use~\cite{uk-cryptonote}. The controlled items are set out in the UK strategic
-export control lists, which are revised periodically~\cite{uk-export-lists}. Public specifications
-and open-source libraries do not by themselves determine classification. No export-control
-classification is attempted here.
-
-\FloatBarrier
-DUET's directory stores public keys and pseudonymous labels rather than message content. The
-benchmark inputs were synthetic and were not linked to real people. In production, the operator may
-associate keys and labels with accounts. Such pseudonymised information remains
-personal data for an operator holding the linking information~\cite{ico-pseudonymisation}. Production
-use would require a data-protection assessment, a documented processing purpose and lawful basis,
-data minimisation, restricted access to warning records, and defined retention
-periods~\cite{ico-data-principles}.
+The project uses publicly documented cryptographic algorithms and open-source implementations. Public
+availability does not by itself determine export-control classification, so this thesis makes no claim
+that the implementation falls within a particular exemption~\cite{uk-cryptonote,uk-export-lists}. A
+production release would require classification against the applicable control list and the guidance
+current at that time. The directory stores pseudonymised identifiers, public keys, and epoch metadata,
+never message content or plaintext identifiers. Pseudonymised data remains personal data under UK
+GDPR, so this design is treated as processing personal data rather than
+exempt~\cite{ico-pseudonymisation}. Data minimisation is served by the VRF-derived index, which keeps
+raw identifiers out of the published tree. Two residual exposures remain, the query pattern visible
+to the operator and the density metadata a bitmap-compressed proof reveals, and both are stated in
+\cref{ch:discussion}~\cite{ico-data-principles}.
 
 % ============================================================================
 \section{Social and Ethical Issues}\label{sec:lsepi-social}
 
-Undetected key substitution is particularly serious for journalists, activists, and other users who
-rely on confidential messaging. Automatic checks and in-band peer warnings reduce dependence on
-manual verification and support the public-interest duties discussed in \cref{sec:lsepi-prof}.
+Undetected key substitution is a physical risk for journalists, activists, and others whose safety
+depends on a conversation staying private. These are among the users an automatic detector is
+intended to protect, which makes accuracy about what was built an ethical obligation. This
+implementation runs on a single machine and in memory and uses a deterministic conversation-secret
+stand-in and a seeded ratchet simulation (\cref{sec:impl-strategy}). It does not protect a client
+whose endpoint is compromised (\cref{sec:threat-assumptions}). Overstating a security tool puts its
+intended users at risk.
 
-That same importance imposes a duty of honesty about what the work does and does not achieve, because
-overstating a security guarantee can expose users to risks the system does not address. The thesis is
-explicit about its limitations: the prototype carries two proof-of-concept stand-ins for live
-protocol state (\cref{sec:impl-strategy}), it is a single-machine prototype rather than a distributed
-deployment, and endpoint compromise is outside the guarantee (\cref{sec:threat-assumptions}).
+Warnings can themselves cause harm when they are ambiguous, excessive, or disclose sensitive
+information. A red warning a user cannot interpret produces alarm fatigue rather than protection,
+which is why an unreachable directory server raises an amber notice and only a verified mismatch
+raises a red warning. A red warning reports that an integrity or consistency check failed. It does not by
+itself assign a cause to that failure. Usability
+testing, accessibility, escalation routes, and support paths are unaddressed here and named as future
+work in \cref{ch:discussion}. Warning records are also new data about who was warned and when, so the
+capability that protects a user creates a fresh metadata surface.
 
-Stronger messaging security can also be used by malicious actors, but weakening authentication would
-expose all users to silent key substitution. Review of DUET identified and corrected several
-security-relevant defects, including missing signed-head binding (\cref{sec:impl-challenges}). These
-findings concerned the prototype rather than deployed Signal software. Consistent with the
-public-interest duty discussed in \cref{sec:lsepi-prof}, any future vulnerability affecting deployed
-Signal code would first be reported through Signal's security-vulnerability
-channel~\cite{signal-security-report}.
-
-Warnings can themselves cause harm when they are frequent, unexplained, or raised by an abusive peer.
-The interface therefore distinguishes unavailable checks from integrity-related conditions and
-authenticated peer warnings. A red warning does not identify the cause or prove an operator attack.
-Production deployment would require usability testing of the wording, accessibility, escalation
-process, and support paths for at-risk users. All adversarial functionality was exercised only in an
-isolated local test harness against synthetic accounts, with no live Signal interception and no real
-users (\cref{ssec:impl-demo}).
-Operating the directory at production scale would introduce infrastructure and energy costs, network
-demand, and access constraints for users with less capable devices or limited connectivity. The
-prototype does not measure these environmental and economic effects, which would need to be assessed
-before deployment.
+All evaluation used synthetic accounts (\cref{ssec:impl-demo}). No live traffic was intercepted, no
+real user observed, and no personal data processed, so no ethics approval was required. The
+infrastructure, energy, and access costs of an independent second vantage were not measured, and any
+deployment depending on one should measure them.
 
 % ============================================================================
 \section{Professional Issues and Codes of Conduct}\label{sec:lsepi-prof}
 
-The BCS Code of Conduct identifies four areas of professional responsibility~\cite{bcs-code}. Under
-the public-interest principle, the thesis considers security, privacy, warning-related harm, and users
-who depend on confidential messaging. Consistent with professional competence and integrity, the
-implementation uses established cryptographic libraries where available and tests the ECVRF
-implementation against the RFC~9381 vectors. Regular supervisory review, source attribution, and
-compliance with the university's academic-integrity requirements reflect the duty to the relevant
-authority. Separating measured prototype results from unimplemented production requirements reflects
-the duty to the profession.
+The BCS Code of Conduct organizes obligations into public interest, professional competence and
+integrity, duty to relevant authority, and duty to the profession~\cite{bcs-code}. The public
+interest is served by stating the limits above as prominently as the results. Competence and
+integrity are served by verifying rather than trusting the one primitive written by hand, and by
+disclosing in \cref{sec:impl-challenges} the defects corrected during development, including a
+missing signed-head binding a passing test suite had not caught.
 
-The IET Rules of Conduct impose related obligations~\cite{iet-conduct}. Rule~2 incorporates the
-Engineering Council and Royal Academy of Engineering Statement of Ethical Principles, including
-accuracy and rigour. Rules~5 and~6 require members to maintain their knowledge and undertake only work
-they are competent to perform. Rule~26 requires professional opinions to state their limitations and
-qualifications. The adversarial tests, cross-language vectors, reproducibility measures, and explicit
-scope qualifications reported in \cref{ch:impl,ch:eval,ch:discussion} demonstrate how these obligations
-were applied in the project.
+The IET Rules of Conduct point the same way~\cite{iet-conduct}. Rule 2 requires accuracy and rigour,
+which is why every measurement in \cref{ch:eval} carries its scope. Rules 5 and 6 require working
+within competence and maintaining knowledge, which is why the hand-written ECVRF is checked against
+the RFC~9381 vectors rather than assumed correct. Rule 26 requires that opinions state their
+limitations, which is why the thesis states the assumptions and qualifications attached to its
+security and performance claims. Had any defect borne on deployed Signal software, the route would be
+Signal's security vulnerability reporting
+channel rather than publication~\cite{signal-security-report}. None was found.
