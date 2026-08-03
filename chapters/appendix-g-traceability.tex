@@ -74,3 +74,27 @@ Empirical & benchmark evaluation M1--M17; STRIDE/MITRE evaluation (\cref{ch:eval
 \bottomrule
 \end{tabularx}
 \end{table}
+
+% ============================================================================
+\section{Security Requirement Mapping}\label{sec:trace-goals}
+
+\Cref{tab:threat-goals} maps the four security requirements of \cref{sec:threat-goals} to their
+associated threats and the mechanisms developed in \cref{ch:design}.
+
+\begin{table}[H]
+\centering
+\caption{Security requirements, associated threats, and supporting mechanisms.}
+\label{tab:threat-goals}
+\setlength{\extrarowheight}{2pt}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}ll>{\raggedright\arraybackslash}Xl@{}}
+\toprule
+Requirement & Associated threat & Security mechanism & Auditor? \\
+\midrule
+G1 key-substitution detection & A1, A3, A5 & A1 and A5 use self-checks and the dual-index warning.\newline A3 uses divergent labels and the global VRF-bound identity entry.\newline A5 also uses identity re-fetch and predecessor cross-signature. & no \\
+G2 offline-window consistency & general rewriting & windowed consistency proofs & no \\
+G3 directory privacy & enumeration / recon & VRF-derived labels & no \\
+G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\
+\bottomrule
+\end{tabularx}
+\end{table}
