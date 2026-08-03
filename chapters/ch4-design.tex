@@ -282,6 +282,13 @@ $\Log$~\cite{dowling2023acka}. DUET instantiates $\Log$ with the prefix tree, Me
 consistency and exclusion proofs, write-once raw labels, and transition validation. Continuous mode
 retains ACKA's per-epoch label-and-fingerprint construction.
 
+ACKA and DUET represent a label's history differently. ACKA detects impersonation when conflicting
+fingerprints appear at one label, whereas DUET stores one immutable value per label. DUET therefore
+detects an earlier adversarial post through the sender's occupancy check and a later overwrite through
+transition auditing. The receiver's per-epoch check alone does not cover the overwrite case, so that
+case depends on the audit. A complete proof that this representation preserves ACKA's guarantees
+remains future work.
+
 DUET additionally supplies conversation-derived lookup labels and a shared warning slot, windowed
 catch-up, and cross-vantage fork detection. These additions address malicious directory behaviour,
 peer notification, and offline recovery beyond ACKA's assumed log. The complete

@@ -10,8 +10,7 @@ the coverage of the security controls.
 
 The evaluation asks whether detection enlarges an individual proof, how verification changes with
 directory size, whether offline catch-up can use one proof, and whether the defined attacks are detected and the listed clean workflows complete without warnings. Seventeen metric families connect these
-questions to proof size, latency, catch-up, scale, operating modes, and security outcomes. \Cref{sec:bench-repro}
-maps every family to its benchmark and reproduction command.
+questions to proof size, latency, catch-up, scale, operating modes, and security outcomes.
 
 The Rust harness measures local cryptographic work in process. It excludes HTTP, Electron, database,
 and network costs. Manual-harness medians and 95th percentiles use \num{2000} sequential iterations,
@@ -52,9 +51,9 @@ the stated assumptions \\
 A lookup proof carries a prefix copath, a log inclusion path, and a fixed VRF and framing component,
 which gives the size model of \cref{eq:eval-proofsize}. The median lookup proof is \num{817} bytes at
 $N=10^{6}$ and \num{945} bytes at $N=10^{7}$, and the growth between them is the \(\lceil \lg N \rceil\)
-term rather than any change in the fixed component. Detection does not enlarge an individual proof.
-A dual-index or CEA lookup verifies against the same directory and the same signed head as a baseline
-lookup, so the cost of detection is an additional lookup rather than a larger one.
+term rather than any change in the fixed component. A dual-index or CEA lookup verifies against the
+same directory and the same signed head as a baseline lookup, so detection is an additional lookup
+rather than a larger proof.
 
 \begin{equation}\label{eq:eval-proofsize}
   |\pi| \;=\; 32h \;+\; 32h_{\mathrm{log}} \;+\; 177 \ \text{bytes},
@@ -206,8 +205,9 @@ ratios are 10.0 and 8.7. This is a trade-off and not a strict improvement. The f
 reveals nothing about how populated the tree is, whereas DUET's bitmap compression exposes
 approximately $\lceil \lg N \rceil$ bits of density metadata to whoever holds the proof. DUET
 trades that bounded metadata exposure for lower bandwidth. SEEMless reports approximately
-8.6\,\si{\kilo\byte} at $N = 10^{7}$ under its own construction~\cite[p.~12]{chase2019seemless},
-which is a similar approximate size range.
+8.6\,\si{\kilo\byte} at $N = 10^{7}$ under its own construction~\cite[p.~12]{chase2019seemless}. This
+is close to Signal's fixed \num{8192}-byte copath, although the figures are not directly comparable
+because the constructions account for different proof components.
 
 For offline catch-up the difference is larger. CONIKS reports an approximately 736-byte per-epoch
 proof~\cite[Table~1]{melara2015coniks}, so a 720-epoch window costs $720 \times 736 = 529{,}920$
@@ -275,7 +275,7 @@ respectively~\cite{mitre-attack}. The scripted detection sequence is in
 
 \subsection{Residual Risks and Security Position}\label{ssec:eval-posture}
 
-Detection is not prevention. A rejecting verdict shows that a specified integrity or consistency check
+A rejecting verdict shows that a specified integrity or consistency check
 failed. It does not by itself identify the cause or establish that the directory operator caused the
 failure. An unavailable directory server raises an amber notice, while a verified mismatch raises a red
 warning. Endpoint compromise defeats every mechanism evaluated here because the verifier and the keys

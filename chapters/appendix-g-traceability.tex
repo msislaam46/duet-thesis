@@ -26,7 +26,7 @@ RQ & Design claim & Mechanism & Test / scenario & Benchmark & Evidence \\
 RQ1 & substitution is detected, in band (bidirectional for A1/A5 after honest establishment; local divergent-label plus global VRF comparison for A3) &
 dual-index warning scheme for A1; local divergent-label detection and the global VRF-anchored entry for A3 (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
 scenarios A1--A5 (\cref{tab:tests-adversarial}); dual-index derivation tests (\cref{tab:tests-rust-prim}) &
-M17 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M17 asserts non-alarm on every clean workflow \\
+M17 & \cref{sec:eval-security}: scenarios A1--A5 establish detection; M17 asserts a clean verdict with no warning on every clean workflow \\
 RQ2 & detection does not enlarge an individual per-lookup proof; median full verification remains below \SI{150}{\micro\second} and grows far more slowly than $N$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
 prefix-tree, VRF, Merkle-log tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &

@@ -45,10 +45,12 @@ production release would require classification against the applicable control l
 current at that time. The directory stores pseudonymised identifiers, public keys, and epoch metadata,
 never message content or plaintext identifiers. Pseudonymised data remains personal data under UK
 GDPR, so this design is treated as processing personal data rather than
-exempt~\cite{ico-pseudonymisation}. Data minimisation is served by the VRF-derived index, which keeps
-raw identifiers out of the published tree. Two residual exposures remain, the query pattern visible
-to the operator and the density metadata a bitmap-compressed proof reveals, and both are stated in
-\cref{ch:discussion}~\cite{ico-data-principles}.
+exempt~\cite{ico-pseudonymisation}. VRF-derived indices keep raw identifiers out of the published
+tree and reduce direct identifier exposure, but they do not make the records anonymous. Production
+use would require a data-protection assessment, a documented processing purpose and lawful basis,
+restricted access to warning records, and defined retention periods. Two residual exposures remain,
+the query pattern visible to the operator and the density metadata a bitmap-compressed proof reveals,
+and both are stated in \cref{ch:discussion}~\cite{ico-data-principles}.
 
 % ============================================================================
 \section{Social and Ethical Issues}\label{sec:lsepi-social}
@@ -70,8 +72,8 @@ testing, accessibility, escalation routes, and support paths are unaddressed her
 work in \cref{ch:discussion}. Warning records are also new data about who was warned and when, so the
 capability that protects a user creates a fresh metadata surface.
 
-All evaluation used synthetic accounts (\cref{ssec:impl-demo}). No live traffic was intercepted, no
-real user observed, and no personal data processed, so no ethics approval was required. The
+All evaluation used synthetic accounts (\cref{ssec:impl-demo}). The evaluation did not recruit
+participants or intercept live traffic and was not conducted as a human-participant study. The
 infrastructure, energy, and access costs of an independent second vantage were not measured, and any
 deployment depending on one should measure them.
 
@@ -83,7 +85,10 @@ integrity, duty to relevant authority, and duty to the profession~\cite{bcs-code
 interest is served by stating the limits above as prominently as the results. Competence and
 integrity are served by verifying rather than trusting the one primitive written by hand, and by
 disclosing in \cref{sec:impl-challenges} the defects corrected during development, including a
-missing signed-head binding a passing test suite had not caught.
+missing signed-head binding a passing test suite had not caught. Regular supervisory review, source
+attribution, and compliance with the university's academic-integrity requirements address the duty to
+the relevant authority. Separating measured prototype results from unimplemented production
+requirements addresses the duty to the profession.
 
 The IET Rules of Conduct point the same way~\cite{iet-conduct}. Rule 2 requires accuracy and rigour,
 which is why every measurement in \cref{ch:eval} carries its scope. Rules 5 and 6 require working

@@ -325,7 +325,7 @@ the M16 detector-branch cost, each branch a synthetic Rust reconstruction of the
 detector branch.
 
 M17 is functional coverage rather than a timed family. \Cref{tab:bench-m17} maps each listed honest
-state to the test that asserts its expected non-alarm verdict. The clean-path predicate exercised by
+state to the test that asserts its expected clean verdict. The clean-path predicate exercised by
 the two new cases is a Rust reimplementation of the detector's clean-path logic, not the production
 TypeScript detector.
 
@@ -333,7 +333,7 @@ TypeScript detector.
 
 \begin{table}[ht]
 \centering
-\caption{M17 clean-session verdict coverage: each honest state and the test source that asserts its non-alarm verdict.}
+\caption{M17 clean-session verdict coverage: each honest state and the test source that asserts its clean verdict with no warning.}
 \label{tab:bench-m17}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.4cm}>{\raggedright\arraybackslash}p{7.6cm}@{}}

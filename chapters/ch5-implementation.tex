@@ -208,9 +208,9 @@ The complete counts, names, and outcomes are in \cref{sec:tests-evidence}, withi
 The Rust tests exhaustively cover every Merkle-log
 inclusion proof and every consistency pair up to size 64, together with forged-proof rejection, so the
 log implementation is checked against its full input space at that size rather than at sampled points.
-The auditor is tested for a soundness pair as well as a liveness one. A genuine equivocation is
-reported as \textsc{Fork}, while a divergent head carrying an invalid signature is rejected outright
-rather than misclassified as a fork.
+The auditor tests cover both rejection of invalid fork evidence and detection of genuine
+equivocation. A real equivocation is reported as \textsc{Fork}, while a divergent head carrying an
+invalid signature is rejected outright rather than misclassified as a fork.
 
 The TypeScript harness contains 116 Jest tests, and sixteen further embedded tests run inside Signal
 Desktop's own runner across four suites, exercising realistic account identifiers through the live
