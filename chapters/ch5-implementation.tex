@@ -43,8 +43,8 @@ log, ECVRF-EDWARDS25519-SHA512-TAI, signed tree heads, dual-index and CEA constr
 server, and an independent auditor~\cite{rfc9162,rfc9381,dowling2023acka}. The crates \texttt{sha2},
 \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard primitives, so
 the ECVRF is the one primitive written by hand, and it is checked against the RFC~9381 vectors.
-\Cref{fig:impl-modules} shows the module structure, and \cref{tab:impl-modules} records the inventory
-with its specification grounding and conformance evidence.
+\Cref{fig:impl-modules} shows the module structure, while \cref{tab:impl-modules} maps each module to
+its specification grounding and conformance evidence.
 
 \begin{figure}[ht]
 \centering
@@ -83,10 +83,10 @@ Module & Specification implemented & Conformance evidence \\
 \subsection{Directory State and Cryptography}\label{ssec:impl-core-state}
 \label{ssec:impl-core-crypto}
 
-The directory materializes only populated prefix paths and bitmap-compresses proofs. The walk is a
-fixed 256-bit descent, but a compressed leaf terminates it early, and the chain of empty-sibling
-hashes below that point is memoized lazily rather than recomputed. A transmitted proof carries about $\lceil \lg N \rceil$ sibling hashes, because the chain of
-empty-sibling hashes below a compressed leaf is elided rather than sent. Update cost is a separate
+The directory materializes only populated prefix paths and bitmap-compresses proofs. A compressed leaf
+terminates the otherwise fixed 256-bit walk. Empty-sibling hashes below that leaf are memoized lazily
+rather than recomputed and omitted from the transmitted proof, which carries about
+$\lceil \lg N \rceil$ non-empty sibling hashes. Update cost is a separate
 property. With the trie depth fixed at $d=256$, copying the affected paths for $k$ modified labels
 costs $O(kd)$, which is $O(k)$ in $k$ and independent of $N$.
 
@@ -136,17 +136,17 @@ is in \cref{sec:bench-env}. The reproduction procedure is in \cref{sec:bench-rep
 \section{Signal Desktop Integration}\label{sec:impl-signal}
 
 The embedded TypeScript client verifies Rust directory responses and reports the result through a
-conversation badge and banner. Successful verification produces a green state. An unavailable check
-produces an amber notice. A proof failure, key mismatch, or authenticated peer warning produces a red
-warning.
+conversation badge and banner. The interface shows a green state after successful verification, an
+amber notice when a check is unavailable, and a red warning after a proof failure, key mismatch, or
+authenticated peer warning.
 
 \subsection{Client Verification and Lifecycle}\label{ssec:impl-verifier}
 \label{ssec:impl-hooks}
 
 Node's cryptographic provider supplies SHA-256, SHA-512, HMAC-SHA256, Ed25519, and X25519, while the
-ECVRF arithmetic is implemented in TypeScript. At the peer-key-retrieval boundary, which is Signal
-Desktop's own identity-key path and not a simulation, the client performs the complete verification
-chain in \cref{ssec:design-verify}. Invalid or absent signed heads, proof failures, and mismatching
+ECVRF arithmetic is implemented in TypeScript. The client performs the complete verification chain in
+\cref{ssec:design-verify} at Signal Desktop's own peer-key-retrieval boundary, using the real
+identity-key path rather than a simulation. Invalid or absent signed heads, proof failures, and mismatching
 keys produce rejecting verification verdicts. The current hook reports the verdict but does not block
 session establishment, which is a deliberate prototype choice rather than an oversight.
 
@@ -161,7 +161,7 @@ engineering record is in \cref{sec:apiref-engineering}.
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
 The demonstration runs two Signal Desktop clients with the Rust directory server, auditor, and
-scripted attacker. \Cref{fig:impl-baseline} records a proof-verified clean state. In
+scripted attacker. \Cref{fig:impl-baseline} shows a proof-verified clean state. In
 \hyperref[sc:threat-a1]{A1b}, replacement
 of an immutable conversation slot causes the affected client to publish a warning that the peer reads
 from the shared slot, and the auditor independently returns \textsc{ImmutableRotation} for that
@@ -193,9 +193,8 @@ the red banner.}
 \FloatBarrier
 \section{Cross-Implementation Testing and Parity}\label{sec:impl-tests}
 
-Testing connects the two implementations and the security claims. RFC vectors check the ECVRF. Fixed
-cross-language vectors require byte-for-byte agreement for label derivation, warning payloads, and CEA
-evolution. A live wire-parity suite checks the TypeScript verifier against signed heads, VRF outputs,
+RFC vectors check the ECVRF, while fixed cross-language vectors require byte-for-byte agreement for
+label derivation, warning payloads, and CEA evolution. A live wire-parity suite checks the TypeScript verifier against signed heads, VRF outputs,
 Merkle proofs, and consistency proofs produced by the Rust directory server. The Rust integration and
 cryptographic suites run against a real in-process \texttt{KTServer} rather than a mock, and the
 adversarial suite at \texttt{tests/adversarial.rs} covers A0,
@@ -203,20 +202,18 @@ adversarial suite at \texttt{tests/adversarial.rs} covers A0,
 \hyperref[sc:threat-a3]{A3}, \hyperref[sc:threat-a4]{A4},
 \hyperref[sc:threat-a5]{A5}, and \hyperref[sc:threat-x1]{X1}. These tests
 establish agreement and expected behaviour for the specified inputs, not equivalence over every input.
-The complete counts, names, and outcomes are in \cref{sec:tests-evidence}, within \cref{app:tests}.
+\Cref{sec:tests-evidence} gives the complete counts, names, and outcomes.
 
-The Rust tests exhaustively cover every Merkle-log
-inclusion proof and every consistency pair up to size 64, together with forged-proof rejection, so the
-log implementation is checked against its full input space at that size rather than at sampled points.
-The auditor tests cover both rejection of invalid fork evidence and detection of genuine
-equivocation. A real equivocation is reported as \textsc{Fork}, while a divergent head carrying an
-invalid signature is rejected outright rather than misclassified as a fork.
+The Rust tests exhaustively cover every Merkle-log inclusion proof and consistency pair up to size 64,
+including forged-proof rejection, rather than sampling that input space. Auditor tests reject invalid
+fork evidence and report genuine equivocation as \textsc{Fork}, while a divergent head with an invalid
+signature is rejected rather than misclassified.
 
-The TypeScript harness contains 116 Jest tests, and sixteen further embedded tests run inside Signal
-Desktop's own runner across four suites, exercising realistic account identifiers through the live
-integration boundary. These totals are distinct from each other and from the opt-in live wire-parity
-suite, and they must not be presented as one interchangeable figure.
-\Cref{sec:impl-repro} records the complete reproduction commands and environment.
+The TypeScript harness contains 116 Jest tests. Sixteen embedded tests across four suites exercise
+realistic account identifiers through Signal Desktop's own integration boundary. The standalone,
+embedded, and opt-in wire-parity suites are separate test
+classes rather than one aggregate total. \Cref{sec:impl-repro} provides the complete reproduction
+commands and environment.
 
 % ============================================================================
 \FloatBarrier
@@ -225,7 +222,7 @@ suite, and they must not be presented as one interchangeable figure.
 Three problems materially changed the implementation. First, the initial TypeScript label stand-in
 could not agree with Rust's RFC~9381 ECVRF, because the two encode-to-curve steps differed. Both
 clients were aligned on the ECVRF-EDWARDS25519-SHA512-TAI suite and checked against the published
-vectors. Signed heads were also bound to each lookup response at this point, preventing a valid proof
+vectors. Signed heads were also bound to each lookup response, preventing a valid proof
 from being paired with an unsigned or unrelated head.
 
 Second, registration and lookup originally encoded Signal account identifiers differently. Converting
@@ -235,12 +232,11 @@ exposed a time-of-check race between reading the head and using it to bound a pr
 consistency proof to the already validated head size prevents a later commit from making the client or
 auditor compare a proof against the wrong upper bound.
 
-Third, Electron bundling and context isolation prevented reliable loading and delivery to the
-interface, through three distinct obstacles. The bundler split the key-transparency code at its
-dynamic imports, so the layer was kept in one bundle. Context isolation blocked assignments to
-\texttt{window} while allowing DOM custom events to cross the preload and renderer boundary. The
-application's typed event bus and those DOM custom events were then mismatched, which was resolved by
-dispatching on both. The remaining bundling, deterministic-state, and reset detail is described in
+Third, three Electron bundling and context-isolation problems blocked reliable interface delivery.
+Dynamic imports split the key-transparency code, so it was kept in one bundle. Context isolation
+blocked assignments to \texttt{window} but allowed DOM events across the preload and renderer
+boundary. Dispatching on both the typed event bus and the DOM events resolved their mismatch. The
+remaining bundling, deterministic-state, and reset detail is described in
 \cref{sec:apiref-engineering}.
 
 Within the uncompromised-endpoint assumption in \cref{sec:threat-assumptions}, directory-response
@@ -252,18 +248,16 @@ failures produce an amber notice rather than a red integrity warning, so an unre
 never reported as an attack. The Signal hook currently reports these verdicts but leaves
 session-blocking policy to future work.
 
-Deterministic seeded server keys, a genesis epoch, and an administrative reset make the demonstration
-repeatable and prevent a failed operation on an empty log from leaving the shared state unusable. A
-poisoned mutex is likewise survivable in the harness. Production handlers would still need explicit
-recovery from lock failure rather than relying on demonstration setup.
+Seeded server keys, a genesis epoch, and an administrative reset make the demonstration repeatable and
+prevent an empty-log failure from leaving shared state unusable. The harness also recovers from a
+poisoned mutex. Production handlers would still need explicit lock-failure recovery rather than the
+demonstration setup.
 
 % ============================================================================
 \section{Reproducibility}\label{sec:impl-repro}
 
-Reproducibility of the measurements in \cref{ch:eval} depends on a recorded environment and
-deterministic cryptographic and sampling inputs. Fixed seeds determine the VRF key, label placement,
-and sampled users. Each benchmark begins from fresh seeded server state, so no residual state carries
-between runs, while the live demonstration uses the administrative reset. The Rust tests and
-benchmarks are run with \texttt{cargo test} and \texttt{cargo bench}, respectively. The environment
-record captures the hardware, operating system, compiler, and toolchain versions. The repository
-layout and the one-command runner scripts are listed in \cref{sec:apiref-repo}.
+Reproducibility relies on fixed cryptographic and sampling inputs and a recorded environment. Seeds
+determine the VRF key, label placement, sampled users, and fresh state for each benchmark, while the
+demonstration uses the administrative reset. The environment record identifies the hardware and the
+versions of the operating system, compiler, and toolchain. \Cref{sec:apiref-repo} gives the \texttt{cargo test} and
+\texttt{cargo bench} commands, repository layout, and runner scripts.

@@ -21,7 +21,7 @@ Signal publishes a long-term identity key, a signed pre-key, and optional one-ti
 Number authenticates the parties' identity keys and account identifiers through an out-of-band
 comparison~\cite{safetynumbers}. A signed pre-key is authenticated indirectly by its identity-key
 signature, while one-time pre-keys are unsigned. The ceremony therefore authenticates the long-term
-identity binding rather than every public value used in one session. \Cref{sec:ext-signal} records the
+identity binding rather than every public value used in one session. \Cref{sec:ext-signal} provides the
 full key-material notation and coverage.
 
 \subsection{The Extended Triple Diffie--Hellman (X3DH) Protocol}\label{ssec:bg-x3dh}
@@ -43,7 +43,7 @@ substitution, whose full derivation and message sequence are in \cref{sec:ext-si
 The Double Ratchet evolves the X3DH or PQXDH secret into per-message keys, providing forward secrecy
 and post-compromise recovery after the adversary becomes passive~\cite{doubleratchet,pqxdh}. It does
 not re-authenticate the public keys used to establish the session, so its guarantees still depend on
-an authentic initial binding. \Cref{sec:ext-ratchet} records the key-schedule detail.
+an authentic initial binding. \Cref{sec:ext-ratchet} explains the key-schedule details.
 
 \subsection{Safety Numbers and the Verification Gap}\label{ssec:bg-gap}
 
@@ -80,9 +80,8 @@ relevant tree size, and they answer different questions, because inclusion authe
 whereas consistency shows that committed history was not rewritten. The construction, domain
 separation, and proof walkthrough are explained in \cref{sec:ext-merkle}.
 
-Although each proof is compact, a monitoring policy that requests one proof for every missed epoch
-makes a returning client's total work grow with its offline period. This is the efficiency problem
-addressed by DUET's windowed proof.
+Although each proof is compact, requesting one proof for every missed epoch makes a returning
+client's total work grow with its offline period. DUET's windowed proof addresses this cost.
 
 \subsection{Key Transparency Requirements}\label{ssec:bg-ct2kt}
 
@@ -120,8 +119,8 @@ Most systems combine VRF-derived labels with a sparse or path-compressed Merkle 
 a zero-knowledge set to hide information beyond the queried binding. SEEMless uses an append-only ZKS,
 Parakeet an ordered ZKS, and ELEKTRA a rotatable ZKS~\cite{chase2019seemless,malvai2023parakeet,chen2022rzks,len2023elektra}.
 Merkle\textsuperscript{2} instead composes a chronological log with per-key
-histories~\cite[pp.~1--2]{hu2021merkle2}. The structural differences and terminology are recorded in
-\cref{sec:ext-vkd-blocks}.
+histories~\cite[pp.~1--2]{hu2021merkle2}. \Cref{sec:ext-vkd-blocks} explains the structural
+differences and terminology.
 
 \subsection{Academic and Deployed Systems}\label{ssec:bg-vkd-academic}
 

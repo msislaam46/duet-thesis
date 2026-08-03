@@ -14,8 +14,8 @@ global VRF-bound identity entry supplies an independent binding.
 
 The evaluation supports this separation of costs. Identity proofs remain roughly comparable with the
 matched CONIKS proof, detector branches reuse raw-label proofs, and distant-head consistency replaces
-a proof per missed epoch with one proof. These are component results rather than a
-production-throughput claim.
+a proof per missed epoch with one proof. These measurements characterize component costs rather than
+production throughput.
 
 The construction applies beyond Signal wherever a messenger supplies a semi-trusted directory and a
 conversation secret, with continuous mode additionally needing public ratchet keys and secret epoch
@@ -26,7 +26,8 @@ endpoint security, and the need for an independent vantage to expose a consisten
 % ============================================================================
 \section{Limitations}\label{sec:disc-limitations}
 
-The guarantee begins after an honest baseline and therefore retains trust on first use. It covers
+The guarantee begins only after a baseline has been pinned, so it cannot establish whether the
+initial binding was authentic. It covers
 pairwise, single-device conversations rather than groups, MLS, Sender Keys, or complete multi-device
 warning propagation. Endpoint compromise remains outside any directory guarantee.
 
@@ -73,7 +74,7 @@ authentication, and append-only verification, alongside symbolic analysis and se
 of the client proof checker. Later replacement and deletion would remain governed by transition
 auditing rather than by first-write authorization alone. The persistence check that detects later
 removal is available as a tested reference component (\cref{sec:sec-suppression}). Its module status
-is recorded in \cref{tab:impl-modules}.
+is identified in \cref{tab:impl-modules}.
 
 \subsection{Groups, Devices, and Directory Privacy}
 

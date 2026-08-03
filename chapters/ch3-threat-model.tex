@@ -106,10 +106,10 @@ directory operations remain internally valid. Continuous mode instead authentica
 key at each epoch. The forged key then produces either a label the other party does not derive
 or a conflicting fingerprint at the expected label, causing the client to report a warning.
 
-\paragraph{A4: Equivocation (Split-View).}\phantomsection\label{sc:threat-a4} Inherited from Certificate
-Transparency (\cref{ssec:bg-ct2kt}), the server signs two heads at one epoch, one
-for the victim and one for the auditor, and no single client can distinguish the
-two views. The cross-vantage comparison of the two heads exposes the fork.
+\paragraph{A4: Equivocation (Split-View).}\phantomsection\label{sc:threat-a4} A4 follows the split-view
+threat studied in Certificate Transparency (\cref{ssec:bg-ct2kt}). The server signs two heads at one
+epoch, one for the victim and one for the auditor, and no single client can distinguish the two
+views. The cross-vantage comparison of the two heads exposes the fork.
 
 \paragraph{A5: Malicious Key Rotation.}\phantomsection\label{sc:threat-a5} A legitimate rotation also changes the identity key, so a
 changed key is not by itself malicious. A malicious server exploits this by substituting its own key
@@ -129,16 +129,17 @@ concealment attempts A2 and A4 and from the endpoint-compromise boundary X1.
 % ============================================================================
 \section{Assumptions}\label{sec:threat-assumptions}
 
-Honest client devices are not compromised. This is the \hyperref[sc:threat-x1]{X1} boundary. At least
-one honest auditor is needed for the transition audit and \hyperref[sc:threat-a4]{A4} fork detection,
-but not for the client checks used by \hyperref[sc:threat-a1]{A1},
-\hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5}.
+The model excludes \hyperref[sc:threat-x1]{X1} by assuming that honest clients retain control of their
+private state. The transition audit and \hyperref[sc:threat-a4]{A4} fork detection require at least
+one honest auditor with an independent view, whereas the client checks for
+\hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5} do not.
 
-The initial directory binding follows trust on first use.\label{sec:threat-fair} A malicious operator
-can poison a binding before an authentic baseline exists. Later monitoring detects changes from the
-pinned value but cannot prove that the first value was authentic. First-contact A3 remains detectable
-when the directory is honest because the global VRF-bound identity entry exposes the substituted
-bundle. \Cref{ch:discussion} returns to this limitation.
+DUET's monitoring guarantee begins only after a client pins a directory binding while the directory
+is honest.\label{sec:threat-fair} If a malicious operator controls the first value, later monitoring
+detects changes but cannot establish its authenticity. With an honest directory, first-contact A3
+remains detectable because the substituted pre-key bundle conflicts with the identity key under the
+user's global VRF-derived label.
+\Cref{ch:discussion} discusses the remaining trust-on-first-use limitation.
 
 % ============================================================================
 \FloatBarrier
@@ -146,19 +147,16 @@ bundle. \Cref{ch:discussion} returns to this limitation.
 
 The adversary model and assumptions give four security requirements, denoted G1--G4.
 
-\paragraph{G1: Key-Substitution Detection.} Any substitution of a public key by the server
-(A1, A5) or a network adversary (A3) must be detected by the affected client. For an
-established conversation affected by A1 or A5, the other party must receive an in-band
-warning, or suppression of that warning must prevent successful verification.
+\paragraph{G1: Key-Substitution Detection.} Any public-key substitution by the server (A1, A5) or a
+network adversary (A3) must be detected by the affected client. For an established A1 or A5
+conversation, the peer must receive an in-band warning, or suppression must cause verification to fail.
 
-\paragraph{G2: Consistency Across Offline Windows.} A returning client must be able to verify
-that the current log state extends its last trusted state without processing every missed
-epoch separately.
+\paragraph{G2: Consistency Across Offline Windows.} A returning client must verify that the current
+log extends its last trusted state without processing every missed epoch.
 
-\paragraph{G3: Directory Privacy.} It must be computationally infeasible for a party other
-than the directory operator to infer a user's identity from its public directory location.
+\paragraph{G3: Directory Privacy.} It must be computationally infeasible for anyone but the
+directory operator to infer a user's identity from its public location.
 
-\paragraph{G4: Fork Detection.} An equivocating server (A4) that signs two different heads for
-the same epoch is detected when an honest auditor obtains and compares the client-observed head
-with a valid head from an independent vantage. G4 is the only security requirement that depends
-on the auditor's independent vantage.
+\paragraph{G4: Fork Detection.} An honest auditor detects A4 by comparing the client-observed head
+with a different valid head for the same epoch from an independent vantage. G4 alone depends on this
+independent vantage.

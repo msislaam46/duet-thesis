@@ -11,11 +11,11 @@ defines the primitives and encodings used below.
 % ============================================================================
 \section{Architecture}\label{sec:design-arch}
 
-The proposed architecture is built around three authenticated data structures arranged in layers,
-where each layer authenticates the one below (\cref{fig:design-arch}). The prefix tree stores the
+The architecture combines three authenticated data structures, with each layer authenticating the
+one below (\cref{fig:design-arch}). The prefix tree stores the
 current directory state, the append-only log records every committed version of that state, and the
-signed tree head authenticates the latest log root. This is the combined-tree design of the IETF Key
-Transparency working group (\cref{ssec:bg-keytrans}). Lookups are served against the \emph{last
+signed tree head authenticates the latest log root. Together, they follow the combined-tree design of
+the IETF Key Transparency working group (\cref{ssec:bg-keytrans}). Lookups are served against the \emph{last
 committed epoch}, never the live tree. Only a committed prefix root has been appended to the log and
 can therefore be linked by an inclusion proof to a signed tree head.
 
@@ -36,7 +36,7 @@ committed prefix root becomes one leaf of an append-only Merkle log, and an Ed25
 authenticates the latest log root. A lookup is accepted only after its prefix proof, the committed
 prefix root's log inclusion, and the signed head have all verified.
 
-\paragraph{Why a VRF?} The VRF carries G3 (Directory Privacy)
+\paragraph{Why a VRF?} The VRF implements G3 (Directory Privacy)
 (\cref{sec:threat-goals}). The operator holds the VRF secret key and maps a user
 identifier to a pseudorandom label, attaching a proof that the label was computed
 correctly. A client verifies that proof against the operator's public key but cannot
@@ -136,8 +136,8 @@ The derivation establishes three properties on which detection rests.
 \paragraph{Symmetry.} From Alice's and Bob's respective viewpoints, the directional lookup
 derivation ensures $A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and $A.\ell_{\mathsf{peer}} =
 B.\ell_{\mathsf{self}}$, while the canonical identity ordering gives $A.\ell_{\mathsf{warn}} =
-B.\ell_{\mathsf{warn}}$. The two parties therefore agree on which slot each key lives in and, above
-all, on the one warning slot they both watch.
+B.\ell_{\mathsf{warn}}$. The two parties therefore agree on the two directional lookup slots and the
+shared warning slot they both monitor.
 
 \paragraph{Pre-Use Unpredictability.} The server does not hold $\sharedS$, so the HKDF outputs are
 pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
@@ -175,8 +175,9 @@ analysis, including the \hyperref[sc:threat-a2]{A2} compound condition and the t
 Alice's peer lookup and Bob's self-check use the same directional label. Under one signed head that
 label cannot authenticate two different values, even if the conversation secret is known.
 \Cref{lem:dualindex-consistency} states the same-head result, while
-\cref{def:g1-consistency} covers the surrounding detection cases. Warning publication, changes across
-epochs, offline catch-up, and equivocation require the separate mechanisms described elsewhere.
+\cref{def:g1-consistency} covers the surrounding detection cases. The same-head result does not cover
+warning publication, changes across epochs, offline catch-up, or equivocation. Those cases rely on
+warning persistence, transition auditing, windowed consistency, and cross-vantage comparison.
 
 CEA authenticates a fingerprint stored at an entry. The dual-index construction determines the
 conversation-derived locations at which entries and warnings are stored. A complete combined proof
@@ -187,7 +188,7 @@ remains future work (\cref{ch:discussion}).
 In \emph{session mode}, labels derive from the initial X3DH or PQXDH secret, and each slot stores the
 identity key. A party re-registers when its signed pre-key rotates. The remaining handshake values are
 not logged separately, but they contribute to the shared secret from which the labels derive.
-\Cref{tab:design-x3dh-coverage} records the detailed coverage.
+\Cref{tab:design-x3dh-coverage} summarizes this coverage.
 
 \emph{Continuous mode} follows ACKA's CEA construction. At epoch $t$, each party derives a shared label
 $L_t$ and a directional fingerprint $F_t$ from the current chained state and public ratchet key, then
@@ -346,13 +347,13 @@ dependent on populated prefix depth, while binary branching avoids the wider cop
 an $n$-ary trie. Accumulators would make the required non-membership proof more expensive.
 
 \paragraph{Global-Label Derivation.} Global slots use ECVRF-EDWARDS25519-SHA512-TAI rather than a bare
-hash. This gives publicly verifiable outsider-enumeration resistance and matches Signal's deployed
+hash. The VRF therefore provides publicly verifiable outsider-enumeration resistance and matches Signal's deployed
 suite~\cite{rfc9381,signal-kt-server}.
 
 \paragraph{Combined Prefix-Plus-Log Stack.} The prefix tree authenticates the present directory,
 while the log authenticates its history. One structure alone would not provide both lookup proofs and
 the consistency evidence required by windowed catch-up and cross-vantage fork detection. The extra
-cost is one log-inclusion path, quantified in \cref{ch:eval}. These choices provide one authenticated
-chain from a directory entry to a signed history and retain direct non-inclusion proofs for the
-warning slot. \Cref{sec:design-detail-alternatives} records the alternatives, and
+cost is one log-inclusion path, quantified in \cref{ch:eval}. The combined stack provides one authenticated
+chain from a directory entry to a signed history and retains direct non-inclusion proofs for the
+warning slot. \Cref{sec:design-detail-alternatives} compares the alternatives, and
 \cref{tab:threat-goals} maps the choices to the security requirements.
