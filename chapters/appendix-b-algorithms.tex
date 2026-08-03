@@ -133,7 +133,7 @@ build on. The $m=0$ case is accepted as the local trust-on-first-use convention.
 holding the directory's current state: a path-compressed binary trie over 256-bit labels whose
 leaves commit their mutable-or-immutable kind into the hash. Its lookups return compressed
 proofs of inclusion \emph{and} of absence; first-class non-inclusion is what lets a client prove a
-warning slot is genuinely empty rather than merely unreported.
+warning slot is empty rather than merely unreported.
 \begin{algorithm}[H]
 \caption{Sparse Binary Merkle Prefix Tree (label-keyed)}\label{alg:prefix}
 \KwData{path-compressed binary trie over 256-bit labels; empty hash $e=\Hash(\varepsilon)$}

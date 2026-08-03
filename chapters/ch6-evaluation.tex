@@ -55,7 +55,7 @@ M8  & Latency-derived single-thread operation rate & VRF-indexed                
 M9  & Key rotation + epoch-commit cost         & VRF-indexed, windowed      & \cref{ssec:eval-throughput} \\
 M10 & VRF prove/verify in isolation            & None                       & \cref{tab:bench-maint} \\
 M11 & Rust lookup-verification component (peer-key-retrieval proxy) & vs no-KT floor             & \cref{tab:bench-maint} \\
-M12 & Local signature and consistency kernel with a one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
+M12 & Local signature and consistency verification with a one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
 M13 & Session vs continuous mode               & session vs continuous      & \cref{ssec:eval-modes} \\
 M14 & Proof size + verification vs history depth & single-epoch (M1, M3)    & \cref{ssec:eval-sizes} \\
 M15 & Continuous-mode verification vs ratchet depth & session raw lookup     & \cref{ssec:eval-modes} \\
@@ -411,12 +411,12 @@ distributed storage remain outside this in-memory evaluation.
 
 \subsection{Auditor Cost (M12)}\label{ssec:eval-auditor}
 
-M12 measures a local signature-and-consistency kernel rather than the complete networked audit. It
-times an STH signature check, consistency-proof generation and verification, and a fork check against
-one observed head. The first body has a median of \SI{28.6}{\micro\second} at $N=10^4$. Since proof
-generation and verification are timed together, that figure is a conservative upper proxy for
-verification alone. The one-head fork check has a median of \SI{27.1}{\micro\second} and a 95th
-percentile of \SI{33.1}{\micro\second}.
+M12 measures two local verification operations rather than the complete networked audit. The first
+combines an STH signature check with consistency-proof generation and verification. Its median is
+\SI{28.6}{\micro\second} at $N=10^4$. Since proof generation and verification are timed together,
+this figure is a conservative upper proxy for verification alone. The second checks for a fork
+against one observed head. Its median is \SI{27.1}{\micro\second}, and its 95th percentile is
+\SI{33.1}{\micro\second}.
 
 The measurement excludes network transfer, epoch-delta retrieval, committed-root inclusion
 verification, and the full transition replay. That replay applies each
