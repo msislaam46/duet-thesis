@@ -316,7 +316,7 @@ owner- and warning-slot checks.}
 \label{fig:impl-baseline}
 \end{figure}
 
-The dual-index substitution run (scenario A1b) overwrites the affected client's per-conversation
+The dual-index substitution run (scenario \hyperref[sc:threat-a1]{A1b}) overwrites the affected client's per-conversation
 slot on the shared server. On the next monitor tick, the own-key self-check fails. The client writes
 once to the shared warning slot and displays a red conversation banner reading that its identity key
 was replaced. The peer monitors the \emph{same} shared label, reads the warning on its next tick, and
@@ -330,7 +330,7 @@ the dual-index slot is immutable, the declared in-place rotation produces an
 (\cref{fig:impl-auditor}). The cross-vantage check reports no equivocation because A1b is a
 substitution rather than a split view.
 
-The global VRF-indexed identity-slot case A1a differs. The identity slot is mutable, so a malicious
+The global VRF-indexed identity-slot case \hyperref[sc:threat-a1]{A1a} differs. The identity slot is mutable, so a malicious
 rotation is a permitted declared operation that the auditor cannot distinguish from an honest key
 change. The auditor therefore remains \textsc{Consistent}, and detection rests on the client
 self-check. \Cref{fig:impl-screens} records this path. The affected client detects its substituted
@@ -353,7 +353,8 @@ Key Transparency banner.}
 The supporting gallery contains another global-VRF capture and the continuous-mode capture
 (\cref{fig:impl-screens-fronts}). In the global-VRF case the attacker overwrites the VRF-derived identity entry and the account-wide monitor
 flags it. For continuous mode the attacker injects a forged ratchet key, whose per-epoch fingerprint
-conflicts with the one the directory holds, and the same warning is raised. A staged equivocation (A4) is
+conflicts with the one the directory holds, and the same warning is raised. A staged equivocation
+(\hyperref[sc:threat-a4]{A4}) is
 the one case the auditor, not the client, catches (\cref{fig:impl-auditor}, right). All three run in an isolated local test harness, against
 synthetic accounts, with no live Signal interception and no real users.
 

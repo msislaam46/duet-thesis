@@ -104,7 +104,7 @@ $\Hash(\mathit{config})$ from the parameters it expects will reject the mismatch
 parameter substitution thus becomes a signed, monitorable act rather than a silent one: a uniform
 mismatch is rejected by any client that recomputes the commitment, and serving different parameter
 sets to different clients is equivocation on the configuration commitment, exposed by the same
-cross-vantage comparison as A4.
+cross-vantage comparison as \hyperref[sc:threat-a4]{A4}.
 
 \subsection{The Client Verification Chain}\label{ssec:design-verify}
 
@@ -144,7 +144,8 @@ six-step chain.
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}
 
 The dual-index scheme meets the in-band peer-warning requirement of \cref{ssec:bg-implications} and so
-achieves G1 (Key-Substitution Detection) against the substitution attacks A1, A3, and A5. An in-band
+achieves G1 (Key-Substitution Detection) against the substitution attacks
+\hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5}. An in-band
 warning channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5).
 The secret-derived dual-index labels detect a network man-in-the-middle (A3), because an attacker with
 a different shared secret derives disjoint labels, so the proof-verified lookup returns non-inclusion.
@@ -231,7 +232,7 @@ label, the MAC allows the peer to distinguish an authentic warning from an opera
 An append-only log authenticates committed roots but does not by itself constrain directory
 transitions. DUET therefore combines write-once labels, per-epoch transition auditing, and retained
 persistence evidence. \Cref{sec:sec-suppression} gives the full suppression and offline-detection
-analysis, including the A2 compound condition and the treatment of refused responses.
+analysis, including the \hyperref[sc:threat-a2]{A2} compound condition and the treatment of refused responses.
 
 \subsection{Shared-Label Consistency}\label{ssec:design-consistency}
 

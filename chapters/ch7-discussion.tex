@@ -16,9 +16,9 @@ deployment and operational costs remain subject to the limitations below.
 rules of \cref{ssec:design-labels,ssec:design-detection}. Under the KDF assumption, the
 domain-separated derivation ensures that learning one lookup label does not allow an observer without
 the conversation secret to derive the shared warning label. Before a warning commits, a key mismatch
-combined with proof-verified warning absence raises the A2 alarm. A missing or invalid proof cannot be
+combined with proof-verified warning absence raises the \hyperref[sc:threat-a2]{A2} alarm. A missing or invalid proof cannot be
 treated as clean absence. After commitment, removal violates the permitted transition and is rejected
-by the transition audit. Under A3, divergent conversation secrets produce different lookup labels,
+by the transition audit. Under \hyperref[sc:threat-a3]{A3}, divergent conversation secrets produce different lookup labels,
 while the global VRF-bound identity entry independently exposes the substituted key.
 
 \paragraph{Applicability Beyond Signal.} Session mode requires a semi-trusted directory and a
@@ -48,7 +48,8 @@ since DUET cannot protect a client whose private state is controlled by the adve
 \paragraph{Trust Assumptions.} An honest auditor is required for the per-epoch transition audit,
 which replays each declared update set and rejects undeclared replacement or deletion. Split-view
 detection additionally requires a signed head obtained from an independent vantage. The client-side
-checks for A1, A3, and A5 do not require an auditor. In the prototype, the running auditor performs
+checks for \hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and
+\hyperref[sc:threat-a5]{A5} do not require an auditor. In the prototype, the running auditor performs
 the transition audit, and the testing interface supplies the second view used by the fork scenario
 (\cref{ssec:impl-demo}). A production deployment would need authenticated epoch disclosures and an
 independent head or gossip source, together with transport, freshness, and failure-handling
@@ -121,7 +122,7 @@ Signal Desktop integration does not expose that value to the DUET hook and there
 deterministic stand-in. Replacing the stand-in changes the input, not the downstream construction. If
 the secret remains unknown to the server, the HKDF-derived labels are session-specific and
 computationally unpredictable under the KDF assumption. This binding is required for the
-real-adversary A3 guarantee (\cref{sec:threat-scenarios}).
+real-adversary \hyperref[sc:threat-a3]{A3} guarantee.
 
 \paragraph{Authenticated Ownership of Raw-Label Writes.} The raw-label interface enforces write-once
 behaviour but does not authenticate a client's right to make the first write at a label. A malicious

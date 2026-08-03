@@ -112,19 +112,19 @@ address (X1). Each scenario is evaluated experimentally in \cref{ch:eval}.
 Scenario & Adversary & Objective & Required outcome \\
 \midrule
 A0 & none & honest baseline & all checks pass \\
-A1 & malicious server & substitute a user's key & substitution detected by the affected client and, for established pairs, reported to the peer \\
-A2 & malicious server & substitute a key and censor the warning & censorship produces an alarm or a failed check, never successful verification \\
-A3 & network (Dolev--Yao) & perform a coordinated key substitution in transit & in-transit substitution detected \\
-A4 & malicious server & equivocate (split-view) & conflicting signed heads exposed \\
-A5 & malicious server & substitute during a key rotation & unauthorized rotation must not be accepted as authentic \\
-X1 & endpoint attacker & impersonate using the victim's key & outside the directory boundary \\
+\hyperref[sc:threat-a1]{A1} & malicious server & substitute a user's key & substitution detected by the affected client and, for established pairs, reported to the peer \\
+\hyperref[sc:threat-a2]{A2} & malicious server & substitute a key and censor the warning & censorship produces an alarm or a failed check, never successful verification \\
+\hyperref[sc:threat-a3]{A3} & network (Dolev--Yao) & perform a coordinated key substitution in transit & in-transit substitution detected \\
+\hyperref[sc:threat-a4]{A4} & malicious server & equivocate (split-view) & conflicting signed heads exposed \\
+\hyperref[sc:threat-a5]{A5} & malicious server & substitute during a key rotation & unauthorized rotation must not be accepted as authentic \\
+\hyperref[sc:threat-x1]{X1} & endpoint attacker & impersonate using the victim's key & outside the directory boundary \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \FloatBarrier
 
-\paragraph{A1: Key Substitution.} A1 is the primary server-side substitution attack. A
+\paragraph{A1: Key Substitution.}\phantomsection\label{sc:threat-a1} A1 is the primary server-side substitution attack. A
 compromised or coerced operator commits an attacker-controlled key under the victim's identity
 and returns a valid inclusion proof for that malicious directory state. The proof establishes
 that the key belongs to the signed state, not that it is the victim's authentic key. The
@@ -132,13 +132,13 @@ affected client detects the unexpected binding, and an established peer can lear
 the shared warning slot. The evaluation (\cref{ch:eval}) instantiates A1a at the global
 identity slot and A1b at an immutable dual-index session slot.
 
-\paragraph{A2: Warning Censorship.} A2 concerns censorship before the warning commits. After
+\paragraph{A2: Warning Censorship.}\phantomsection\label{sc:threat-a2} A2 concerns censorship before the warning commits. After
 detecting a key mismatch, the client verifies the warning slot. A proof-verified empty slot raises the
 compound A2 alarm. If a committed warning later disappears, the transition audit detects the invalid
 directory transition. For a client using windowed catch-up, an in-window substitution is detected only
 if the warning commits and remains present at the catch-up read (\cref{ssec:design-catchup}).
 
-\paragraph{A3: Network Man-in-the-Middle.} With no server collusion, a Dolev--Yao adversary may
+\paragraph{A3: Network Man-in-the-Middle.}\phantomsection\label{sc:threat-a3} With no server collusion, a Dolev--Yao adversary may
 replace Bob's identity key and signed pre-key with an attacker-controlled pair whose signature
 verifies under the substituted identity. The attacker also replaces or withholds the optional
 one-time pre-key. The attacker can then derive the X3DH secret for the separate session established
@@ -155,12 +155,12 @@ directory operations remain internally valid. Continuous mode instead authentica
 key at each epoch. The forged key then produces either a label the other party does not derive
 or a conflicting fingerprint at the expected label, causing the client to report a warning.
 
-\paragraph{A4: Equivocation (Split-View).} Inherited from Certificate
+\paragraph{A4: Equivocation (Split-View).}\phantomsection\label{sc:threat-a4} Inherited from Certificate
 Transparency (\cref{ssec:bg-ct2kt}), the server signs two heads at one epoch, one
 for the victim and one for the auditor, and no single client can distinguish the
 two views. The cross-vantage comparison of the two heads exposes the fork.
 
-\paragraph{A5: Malicious Key Rotation.} A legitimate rotation also changes the identity key, so a
+\paragraph{A5: Malicious Key Rotation.}\phantomsection\label{sc:threat-a5} A legitimate rotation also changes the identity key, so a
 changed key is not by itself malicious. A malicious server exploits this by substituting its own key
 inside a rotation. The peer re-fetches the identity entry at the global VRF-derived label. If the identity key has changed, a valid cross-signature from the trusted predecessor binds the
 new key to that predecessor and distinguishes an authorized rotation from an unauthorized
@@ -168,7 +168,7 @@ replacement. In the demonstrated A5 control, a missing
 or invalid predecessor cross-signature causes rejection. The live client path currently relies on the
 identity re-fetch and warning, while the cross-signature check is exercised by the adversarial suite.
 
-\paragraph{X1: Endpoint Compromise (Boundary).} Once the adversary controls the victim's
+\paragraph{X1: Endpoint Compromise (Boundary).}\phantomsection\label{sc:threat-x1} Once the adversary controls the victim's
 private state, it can derive the same conversation secrets and labels and can query the same
 directory entries. The protocol can no longer distinguish the attacker from the victim. X1
 therefore marks the endpoint boundary of key-transparency protection.

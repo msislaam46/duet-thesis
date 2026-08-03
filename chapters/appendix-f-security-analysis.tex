@@ -77,7 +77,8 @@ refusal. It can withhold the lookup, the epoch, or the auditor's disclosure, whe
 or selectively for the one revealed warning label. Either way the refusal is observable, since a
 client treats anything other than a proof-verified response as a failed check rather than a clean
 absence. A refusal therefore never masquerades as a verified absence. The prototype reports it as an
-unavailable check (amber, not red), without attributing its cause. The A2 signal proper is the key
+unavailable check (amber, not red), without attributing its cause. The \hyperref[sc:threat-a2]{A2}
+signal proper is the key
 mismatch together with a \emph{proof-verified} absence of the warning. All three safeguards are
 represented in the prototype. The write-once policy and transition audit run live. The persistence
 check is implemented and unit-tested as a reference component but is not wired into the background
@@ -91,7 +92,7 @@ Detection is bidirectional, which matters for the offline case. The victim's own
 publishes the warning when the victim notices the wrong key under its own name. In addition, a peer
 that has trust-on-first-use-pinned the victim's key detects a substituted peer slot and publishes the
 warning on the victim's behalf, so an offline victim is still covered. For a server-side substitution
-(A1), where the server makes the served bundle agree with the log, a peer comparing the freshly
+(\hyperref[sc:threat-a1]{A1}), where the server makes the served bundle agree with the log, a peer comparing the freshly
 served bundle against the log sees no mismatch. Detection then comes either from the victim's own-key
 self-check or from a peer that has already trust-on-first-use-pinned the victim's key and compares the
 substituted log value against its pin. Only against a pre-first-contact substitution, where no peer
@@ -124,11 +125,11 @@ boundary X1.}
 \toprule
 ID & Technique & Vector in KT & KT mitigation & Scen. \\
 \midrule
-T1557 & Adversary-in-the-Middle & network interception of X3DH & label mismatch (different secret $\Rightarrow$ different label) & A3 \\
+T1557 & Adversary-in-the-Middle & network interception of X3DH & label mismatch (different secret $\Rightarrow$ different label) & \hyperref[sc:threat-a3]{A3} \\
 T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & shared-secret divergence & A3 \\
-T1565 & Data Manipulation & modify key bindings in the tree & Merkle inclusion-proof verification & A1,A3,A4 \\
+T1565 & Data Manipulation & modify key bindings in the tree & Merkle inclusion-proof verification & A1,A3,\hyperref[sc:threat-a4]{A4} \\
 T1565.002 & Transmitted Data Manipulation & replace a key in transit & label mismatch (different secret) + global VRF identity binding & A3 \\
-T1552.004 & Private Keys & extract insecurely stored private keys from a device & \emph{none}: KT boundary (endpoint compromise) & X1 \\
+T1552.004 & Private Keys & extract insecurely stored private keys from a device & \emph{none}: KT boundary (endpoint compromise) & \hyperref[sc:threat-x1]{X1} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -323,7 +324,7 @@ proof-omission. Each is a deployment-layer engineering task rather than a gap in
 \section{Attack Routes and Detection Timeline}\label{sec:sec-routes}
 
 \Cref{fig:eval-attacktree} groups the evaluated scenarios by their role. Server substitution (A1), a
-network man-in-the-middle attack (A3), and malicious rotation (A5) are independent ways of causing a
+network man-in-the-middle attack (A3), and malicious rotation (\hyperref[sc:threat-a5]{A5}) are independent ways of causing a
 client to accept an attacker-controlled key. The OR relationship indicates that any one of these
 routes can expose message plaintext if the substitution succeeds. Each route is paired with the
 control that detects it.
