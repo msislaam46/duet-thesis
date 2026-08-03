@@ -23,8 +23,8 @@ where each layer authenticates the one below (\cref{fig:design-arch}). The prefi
 current directory state, the append-only log records every committed version of that state, and the
 signed tree head authenticates the latest log root. This is the combined-tree design of the IETF Key
 Transparency working group (\cref{ssec:bg-keytrans}). Lookups are served against the \emph{last
-committed epoch}, never the live tree, because only a committed prefix root has been appended to the
-log, so only a committed root can be tied, through one chain of proofs, back to a signed head.
+committed epoch}, never the live tree. Only a committed prefix root has been appended to the log and
+can therefore be linked by an inclusion proof to a signed tree head.
 
 \begin{figure}[t]
 \centering
@@ -37,10 +37,9 @@ labels.}
 
 \subsection{The Three Structures}\label{ssec:design-structures}
 
-The three structures operate as a stack, and every lookup verification is rooted in
-all three structures: a lookup is checked against the prefix tree, whose root is checked
-against the log, whose head is checked against the signed commitment
-(\cref{ssec:design-verify}).
+The three structures form a verification stack. A lookup proof is checked against the prefix root,
+the prefix root's inclusion in the Merkle log, and the signed tree head that authenticates the log
+root (\cref{ssec:design-verify}).
 
 \paragraph{Prefix Tree.} The directory is a sparse binary Merkle tree that maps each
 256-bit \emph{label} to a \emph{value}. For a user-identity entry, the value is an
@@ -219,16 +218,15 @@ entry, while a substitution that predates an honest baseline remains the TOFU bo
 \subsection{Detection and the Bidirectional Warning}\label{ssec:design-detection}
 
 On detecting a suspicious key at a lookup slot, a party writes data to
-$\ell_{\mathsf{warn}}$. Both parties' background monitors read $\ell_{\mathsf{warn}}$
-on their next check and raise a warning. To make warnings distinguishable from noise, the
-warning payload is authenticated. The writer appends a MAC computed under a key derived from the
-shared secret with the two identities in canonical order
-($\HKDFexp(\mathit{PRK}, \text{\texttt{"warn-mac"}} \concat \min(\mathit{id_A},\mathit{id_B}) \concat \max(\mathit{id_A},\mathit{id_B}), 32)$),
-which only the two conversation parties can produce or verify. Any \emph{unauthenticated} value found at the slot still
-raises a warning (since no third party should be able to reach the slot at all, unauthenticated
-data there is itself evidence of misbehaviour), but the MAC lets the peer distinguish an authentic
-warning from an injected one, which matters because the operator learns the label the first time the
-slot is read (\cref{ssec:design-properties}) and could thereafter write to it.
+$\ell_{\mathsf{warn}}$. Both parties' background monitors read this slot on their next check and
+raise a warning. The payload carries a MAC under a key derived from the shared secret and the
+canonically ordered identities
+($\HKDFexp(\mathit{PRK}, \text{\texttt{"warn-mac"}} \concat \min(\mathit{id_A},\mathit{id_B}) \concat \max(\mathit{id_A},\mathit{id_B}), 32)$).
+Only the two conversation parties can produce or verify this MAC. The warning label is unpredictable
+to the operator until one party reveals it in a request, so any \emph{unauthenticated} value returned
+at that location is itself suspicious and still raises a warning. After the operator observes the
+label, the MAC allows the peer to distinguish an authentic warning from an operator-injected value
+(\cref{ssec:design-properties}).
 
 An append-only log authenticates committed roots but does not by itself constrain directory
 transitions. DUET therefore combines write-once labels, per-epoch transition auditing, and retained
@@ -410,9 +408,9 @@ RFC~9162~\cite{rfc9162} guarantees that such a proof has size
 \end{equation}
 growing only logarithmically with the current log size $n = m + W$ rather than linearly
 with the number of intermediate epochs (\cref{fig:design-windowed}). The bound in
-\cref{eq:design-proofsize} is what bounds the window's cost: the client verifies the
-proof against the signed root of that tree head, so the new state is accepted only if it
-is a signed, append-only extension of the state already trusted. The warning-slot lookup is
+\cref{eq:design-proofsize} limits the window's cost. The client verifies the proof against the signed
+root of the new tree head and accepts the new state only as a signed, append-only extension of its
+trusted state. The warning-slot lookup is
 performed during the same synchronization workflow and so does not change the asymptotic
 complexity. \Cref{lem:windowed-size} states the windowed-proof size, and \cref{app:algorithms} gives the
 pseudocode for all eight algorithms.

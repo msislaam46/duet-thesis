@@ -10,10 +10,10 @@ engineering constraints, and reproducibility.
 Because the cryptographic core and the Signal Desktop integration have different requirements, they
 are maintained as separate implementations with a defined language boundary.
 
-The cryptographic operations and the transparency log are isolated in a standalone Rust crate,
-while the client-side verification and the user-interface hooks are integrated directly into
-Signal Desktop's TypeScript codebase. The first layer is the \texttt{duet} crate. It is the reference implementation of the design, and it
-is the implementation on which all measurements reported in \cref{ch:eval} are performed. Rust was
+The cryptographic operations and the transparency log are isolated in the standalone
+\texttt{duet} Rust crate, while client-side verification and the user-interface hooks are integrated
+into Signal Desktop's TypeScript codebase. The crate is the reference implementation used for all
+measurements reported in \cref{ch:eval}. Rust was
 chosen for the measurement core because it is the language of the comparable production systems
 (Parakeet and Meta's \texttt{akd} library are both Rust~\cite{malvai2023parakeet,facebook-akd}).
 The crate is a standalone workspace with no libsignal dependency, which isolates the measurement
@@ -25,7 +25,7 @@ checked against the RFC~9381 test vectors~\cite{rfc9381} (\cref{tab:tests-rust-p
 Go\,$\leftrightarrow$\,DUET interoperability test: the proof encodings differ deliberately
 (Signal's are fixed-width, DUET's bitmap-compressed), so no wire-compatibility is claimed.
 
-The second layer is an integration into the Signal Desktop client~\cite{signal-desktop}, written
+The integration is built into the Signal Desktop client~\cite{signal-desktop}, written
 in TypeScript. The client integration demonstrates the prototype's verification and in-band
 warning path against Signal Desktop identity keys within the client codebase, rather than only
 within the standalone harness. The client re-implements prefix-root recomputation, Merkle inclusion, ECVRF, and Ed25519. It
@@ -236,7 +236,7 @@ only its role and its measurement boundary. Timings are \emph{server-side}: the 
 not the quantity being characterized. Each benchmark constructs fresh seeded server state, while the
 live demonstration uses the administrative reset. The benchmark runner executes the regular suite and
 the scale-only $10^7$-label run (M7) separately and records the environment for the resulting corpus.
-\Cref{sec:eval-method} states what each statistic does and does not license, and \cref{app:benchmarks}
+\Cref{sec:eval-method} states what each statistic does and does not license. \Cref{app:benchmarks}
 gives the sampling procedure, the companion-harness statistics, the workload construction, and the
 measurement environment.
 
@@ -262,10 +262,10 @@ cryptographic library to Signal Desktop. On each peer-key retrieval for an accou
 the verifier checks the complete chain described in \cref{ssec:design-verify}. An invalid signature,
 prefix root, or log-inclusion proof produces a rejecting verification verdict.
 
-Client-visible verdicts distinguish unavailability from an integrity failure. A server that is merely unreachable must not be
-mistaken for an attacker, so an unreachable server raises a calm, amber unavailability notice and
-never the red warning, which is reserved for a proof or key-integrity failure or an
-authenticated peer warning.
+Client-visible verdicts distinguish unavailability from integrity failure. When the server cannot be
+reached, the client displays the amber unavailability notice and does not mark the key as verified.
+The red warning is reserved for proof failures, key mismatches, and authenticated peer warnings, so
+an outage is not presented as evidence of an attack.
 
 \subsection{Hooking the Signal Lifecycle}\label{ssec:impl-hooks}
 
@@ -316,23 +316,28 @@ owner- and warning-slot checks.}
 \label{fig:impl-baseline}
 \end{figure}
 
-The dual-index substitution run (scenario A1b) overwrites the victim's per-conversation slot on the shared server. On the
-victim's next monitor tick the own-key self-check fails, and the client writes the shared warning slot
-once and raises a red conversation banner reading that its identity key was replaced. The peer client,
-monitoring the \emph{same} shared label, reads it on its own next tick and raises the matching red
-banner, so both sides are alerted whenever a monitoring victim or a pinned peer detects the
-substitution and commits the warning (the conditional case argued in \cref{ch:design}).
-Independently of the clients, the auditor's per-epoch transition audit rejects this A1b overwrite: the
-dual-index slot is immutable, so the declared in-place rotation is an \textsc{ImmutableRotation} the
-replay refuses and the epoch alarms (\cref{fig:impl-auditor}). Its cross-vantage fork check
-reports no equivocation, since A1b is a substitution rather than a split view. The VRF-indexed
-identity-slot case A1a differs. The identity slot is mutable, so a malicious rotation is a permitted declared operation
-that the auditor cannot distinguish from an honest key change. The auditor therefore remains
-\textsc{Consistent}, and detection rests on the client self-check. \Cref{fig:impl-screens} records this
-A1a path. The affected client detects its replaced identity key and publishes the shared warning. The
-peer reads the same warning label, so both clients display the red banner. The development-only
-\emph{Inject Fork} control visible beside the badge belongs to the separate continuous-mode
-demonstration and was not used for this sequence (\cref{sec:apiref-demo}).
+The dual-index substitution run (scenario A1b) overwrites the affected client's per-conversation
+slot on the shared server. On the next monitor tick, the own-key self-check fails. The client writes
+once to the shared warning slot and displays a red conversation banner reading that its identity key
+was replaced. The peer monitors the \emph{same} shared label, reads the warning on its next tick, and
+displays the matching banner. Both clients are therefore warned after either a monitored owner or a
+pinned peer detects the substitution and commits the warning, under the conditions established in
+\cref{ch:design}.
+
+The auditor independently rejects the A1b overwrite through its per-epoch transition audit. Since
+the dual-index slot is immutable, the declared in-place rotation produces an
+\textsc{ImmutableRotation} verdict and the transition audit rejects the epoch
+(\cref{fig:impl-auditor}). The cross-vantage check reports no equivocation because A1b is a
+substitution rather than a split view.
+
+The global VRF-indexed identity-slot case A1a differs. The identity slot is mutable, so a malicious
+rotation is a permitted declared operation that the auditor cannot distinguish from an honest key
+change. The auditor therefore remains \textsc{Consistent}, and detection rests on the client
+self-check. \Cref{fig:impl-screens} records this path. The affected client detects its substituted
+identity key and publishes the shared warning. The peer reads the same warning label, so both clients
+display the red banner. The development-only \emph{Inject Fork} control visible beside the badge
+belongs to the separate continuous-mode demonstration and was not used for this sequence
+(\cref{sec:apiref-demo}).
 
 \begin{figure}[p]
 \centering
