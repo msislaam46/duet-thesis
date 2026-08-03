@@ -104,9 +104,9 @@ $t$ is $\prefroot{t}$. Used in \cref{ssec:design-structures}.
 \begin{definition}[Inclusion and non-inclusion proof in the prefix tree]\label{def:noninclusion}
 \intuition{Because every label has a fixed position, one can prove a label is \emph{absent} by
 exhibiting the (default) contents of its slot, just as one proves presence.}
-A prefix-tree proof for label $\ell$ is the co-path of sibling hashes from the leaf at position
+A prefix-tree proof for label $\ell$ is the copath of sibling hashes from the leaf at position
 $\ell$ to the prefix root $\prefroot{t}$. An \emph{inclusion} proof recomputes $\prefroot{t}$ from
-$\Hash(\mathit{kind}\concat\ell\concat \mathit{value})$ and the co-path; a \emph{non-inclusion} proof recomputes it from
+$\Hash(\mathit{kind}\concat\ell\concat \mathit{value})$ and the copath; a \emph{non-inclusion} proof recomputes it from
 the default (empty) leaf value at position $\ell$, establishing that no value is bound at $\ell$
 \cite{melara2015coniks,ietf-keytrans-protocol}. Proven non-inclusion of the warning slot is what
 makes warning censorship detectable (\cref{def:dualindex-check}). Used in \cref{ssec:design-verify}.

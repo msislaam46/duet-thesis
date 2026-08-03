@@ -11,14 +11,14 @@ assume operator honesty (\cref{ch:design}). It adds a dual-index warning scheme 
 warnings and a windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
 and compares signed heads obtained from separate vantage points, providing the cross-vantage check
 used to detect equivocation. The Rust reference system implements these mechanisms and
-the auditor, and a Signal Desktop verifier exercises the client-verification path (\cref{ch:impl}).
+the auditor. A Signal Desktop verifier exercises the client-verification path (\cref{ch:impl}).
 
 \Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an
 individual lookup proof. At a matched directory size, the implemented VRF-indexed lookup
 proof is roughly comparable in size to the corresponding CONIKS proof, and median full verification
 remains below \SI{150}{\micro\second} through $10^7$ labels. Windowed catch-up uses one
 distant-head proof rather than one per missed epoch. These are local component measurements. End-to-end
-monitor latency was not measured. The system produced the expected verdicts across the enumerated
+monitor latency was not measured. The adversarial suite produced the expected verdicts across the enumerated
 attack scenarios. The STRIDE analysis identified one privacy residual and three unimplemented
 availability controls.
 
@@ -26,8 +26,8 @@ These results support the four contributions introduced in \cref{sec:intro-contr
 Conceptually, the dual-index scheme gives both parties access to a shared warning location while
 retaining party-specific lookup labels. Cryptographically, DUET applies an RFC~9162
 distant-head consistency proof to offline monitoring. The Rust reference
-system and Signal Desktop verifier demonstrate integration feasibility. The benchmark suite and
-adversarial scenarios provide empirical evidence, including the scenario-specific controls used for A3, A4, and A5.
+system and Signal Desktop verifier demonstrate integration feasibility. Empirically, the benchmark suite quantifies the component costs, and the adversarial scenarios
+exercise the scenario-specific controls for A3, A4, and A5.
 
 Production integration still requires binding the per-session labels to Signal's live conversation
 secret and defining how failed checks affect session establishment (\cref{sec:disc-future}). Under

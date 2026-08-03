@@ -144,7 +144,7 @@ M3 VRF verify (dual-index)           & $10^4$ & 75.0  & 92.0 \\
 of a lookup the client already verifies. This is \emph{not} the detector: it is an unverified read,
 taken in clean state, whereas the detector performs one or two proof-carrying lookups (the owner slot
 always, and the warning slot only when the owner check passes; \cref{ssec:eval-detection}). The read's underlying cost is data-dependent (a compressed-leaf sibling on the
-co-path implies a subtree-hash chain of up to \num{256} levels), but the implementation memoizes
+copath implies a subtree-hash chain of up to \num{256} levels), but the implementation memoizes
 each leaf's chain top (\cref{sec:impl-modules}), so the sampled check reads
 ${\approx}$\SI{1.6}{\micro\second} independent of $N$, with only a cold leaf's first touch paying
 the chain once. The harness samples \num{1000} random conversations and the table reports the

@@ -40,7 +40,7 @@ out in \cref{sec:disc-limitations}.
 
 \paragraph{Scope.} The scheme detects substitution after an honest baseline has been established and
 therefore retains trust on first use. The current design covers pairwise, single-device
-conversations. It does not cover group messaging, Sender Keys, or MLS, where warnings must reach
+conversations. It does not cover group messaging, Sender Keys, or Messaging Layer Security (MLS), where warnings must reach
 changing memberships. Multi-device warning propagation also remains open. ELEKTRA addresses a related
 multi-device keychain problem~\cite{len2023elektra}. The guarantee excludes endpoint compromise,
 since DUET cannot protect a client whose private state is controlled by the adversary.
@@ -142,8 +142,9 @@ relevant group epoch under MLS~\cite{rfc9420}. The design would also need rules 
 replacing warning state across joins and removals and for delivering warnings to every current
 device.
 
-\paragraph{Exploring OPRF-Based Identity Blinding.} An OPRF (RFC~9497~\cite{rfc9497}) could hide the
-raw lookup identity from the service performing the oblivious evaluation. It would not by itself hide
+\paragraph{Exploring OPRF-Based Identity Blinding.} An oblivious pseudorandom function (OPRF),
+specified in RFC~9497~\cite{rfc9497}, could hide the raw lookup identity from the service performing
+the oblivious evaluation. It would not by itself hide
 which pseudonymous entry is fetched or who issued the request. Those properties require
 private-retrieval and network-anonymity mechanisms respectively. Achieving identity blinding in DUET
 would require redesigning registration and index association and defining how the OPRF role is
