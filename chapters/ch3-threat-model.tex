@@ -30,9 +30,9 @@ consistent histories~\cite{ietf-keytrans-architecture,yadav2022fakekey}.
 
 The model assumes secure SHA-256, X25519, Ed25519, and VRF operations. The operator holds its own VRF
 and signing keys, but it cannot authenticate a value absent from a signed root without violating the
-authenticated structure's collision-resistance assumption. Endpoint compromise is
-\hyperref[sc:threat-x1]{scenario X1}, and the
-two authentication modes are defined in \cref{ssec:design-modes}.
+authenticated structure's collision-resistance assumption. Endpoint compromise defines the boundary
+case \hyperref[sc:threat-x1]{X1}. The session and continuous authentication modes evaluated under this
+model are defined in \cref{ssec:design-modes}.
 
 \begin{figure}[t]
 \centering

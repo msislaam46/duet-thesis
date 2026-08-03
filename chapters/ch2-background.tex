@@ -261,7 +261,7 @@ whether another client received a different history, so signed heads must be com
 independent vantage points. These requirements lead directly to the dual-index warning, windowed
 consistency, and auditor mechanisms in \cref{ch:design}.
 
-Proof construction also trades bandwidth against structural privacy. Signal's fixed-length
+Proof construction introduces a separate bandwidth--privacy trade-off. Signal's fixed-length
 \num{8192}-byte proof conceals directory occupancy~\cite{signal-kt-server}, whereas CONIKS transmits
 the authentication path required for the queried entry~\cite[p.~10]{melara2015coniks}. The evaluation
 places DUET's compressed proof within this design space.

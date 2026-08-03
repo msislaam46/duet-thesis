@@ -1,22 +1,25 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix summarizes the complete test corpus that backs the conformance claims of \cref{sec:impl-tests}.
-The test corpus comprises the following groups. The Rust core is covered by \num{97} unit and invariant tests across
-nine modules, the \num{8}-scenario adversarial integration suite, and \num{25} tests in the
-\texttt{kt\_auditor} binary (the delta-replay test, six \texttt{classify\_head} rollback/fork cases,
-five \texttt{commit\_decision} transaction cases, an end-to-end partial-fetch-failure test, and twelve
-\texttt{PollStatus} tests covering every poll verdict, including the missing, unparseable, and failing
-consistency-proof cases that return \textsc{ConsistencyUnverified}, and the exact status-line
-mapping), and \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
-(\cref{ssec:eval-detection}), \num{134} tests in total, run under \texttt{cargo test}. The TypeScript
-client is covered by \num{116} standalone Jest tests in eleven suites and a further \num{16} embedded
-electron-mocha tests in four Signal Desktop suites that drive realistic ACI strings through the
-integration boundary, and a fixed set of cross-language vectors requires the two implementations to produce byte-identical outputs.
+The Rust core contains \num{134} tests: \num{97} unit and invariant tests across nine modules, the
+\num{8}-scenario adversarial integration suite, \num{25} tests in the \texttt{kt\_auditor} binary, and
+\num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
+(\cref{ssec:eval-detection}), all run under \texttt{cargo test}. The TypeScript client has \num{116}
+standalone Jest tests in eleven suites and a further \num{16} embedded electron-mocha tests in four
+Signal Desktop suites that drive realistic ACI strings through the integration boundary. A fixed set
+of cross-language vectors additionally requires the two implementations to produce byte-identical
+outputs.
+
+The \num{25} \texttt{kt\_auditor} tests comprise the delta-replay test, six \texttt{classify\_head}
+rollback/fork cases, five \texttt{commit\_decision} transaction cases, an end-to-end
+partial-fetch-failure test, and twelve \texttt{PollStatus} tests covering every poll verdict,
+including the missing, unparseable, and failing consistency-proof cases that return
+\textsc{ConsistencyUnverified}, and the exact status-line mapping.
+
 \Cref{tab:impl-t5a} lists representative correctness tests and the requirement each protects, and
 \cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
-verdicts. The unit,
-cross-language, and TypeScript tests are catalogued in the tables that follow. The \texttt{kt\_auditor}
-binary tests are summarized by category above rather than listed individually.
+verdicts. The unit, cross-language, and TypeScript tests are catalogued in the tables that follow. The
+\texttt{kt\_auditor} binary tests are summarized by category above rather than listed individually.
 
 \begin{figure}[ht]
 \centering

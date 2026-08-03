@@ -352,6 +352,7 @@ suite~\cite{rfc9381,signal-kt-server}.
 \paragraph{Combined Prefix-Plus-Log Stack.} The prefix tree authenticates the present directory,
 while the log authenticates its history. One structure alone would not provide both lookup proofs and
 the consistency evidence required by windowed catch-up and cross-vantage fork detection. The extra
-cost is one log-inclusion path, quantified in \cref{ch:eval}. The full alternatives are in
-\cref{sec:design-detail-alternatives}. The requirement mapping is in \cref{tab:threat-goals}.
-\Cref{tab:design-decisions} summarizes these design choices.
+cost is one log-inclusion path, quantified in \cref{ch:eval}. These choices provide one authenticated
+chain from a directory entry to a signed history and retain direct non-inclusion proofs for the
+warning slot. \Cref{sec:design-detail-alternatives} records the alternatives, and
+\cref{tab:threat-goals} maps the choices to the security requirements.

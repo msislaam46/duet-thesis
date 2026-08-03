@@ -52,11 +52,6 @@ alongside a proof-verified empty slot. After the warning commits, the transition
 removal as an invalid directory transition. The resulting signal allows both parties to detect the
 substitution automatically and in band (\cref{sec:design-dual}).
 
-The thesis also implements the abstract append-only-log component of the Authenticated Continuous Key
-Agreement (ACKA) framework~\cite{dowling2023acka} as the DUET directory and evaluates its proof sizes
-and local cryptographic costs. Within this directory, the dual-index scheme makes key substitution by
-a semi-trusted operator detectable. The ACKA framework is introduced in \cref{sec:bg-acka}.
-
 \paragraph{Cryptographic.} The cryptographic contribution applies an RFC~9162~\cite{rfc9162}
 distant-head consistency proof to offline monitoring. A returning client re-verifies the log with one
 proof instead of retrieving one proof for every missed epoch. The proof size stays logarithmic in the
@@ -65,11 +60,12 @@ endpoint log sizes rather than linear in the number of epochs missed (\cref{sec:
 that Alice's peer lookup and Bob's self-check cannot authenticate different values under one signed
 head. \Cref{ch:design} establishes these properties, and \cref{ch:eval} evaluates their costs.
 
-\paragraph{Systems.} The systems contribution includes a standalone Rust reference implementation
-comprising the \texttt{duet} crate, an HTTP directory server, and a cross-vantage auditor. It also
-includes a TypeScript verifier integrated into a fork of the Signal Desktop client (\cref{ch:impl}).
-The shared protocol operations in the two implementations are checked for byte-for-byte agreement
-using cross-language test vectors.
+\paragraph{Systems.} The systems contribution instantiates ACKA's abstract log
+component~\cite{dowling2023acka} as the DUET directory through a standalone Rust reference
+implementation comprising the \texttt{duet} crate, an HTTP directory server, and a cross-vantage
+auditor. It also includes a TypeScript verifier integrated into a fork of Signal Desktop
+(\cref{ch:impl}). The shared protocol operations are checked for byte-for-byte agreement using
+cross-language test vectors.
 
 \paragraph{Empirical.} The benchmark evaluation, covering metrics M1--M17, yields four principal
 findings. At a matched directory size, the implemented VRF-indexed lookup proof is roughly comparable
