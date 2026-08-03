@@ -206,8 +206,8 @@ honest baseline before any attack, the attacker-side terminals that stage each s
 global-VRF and continuous-mode detection fronts, and the auditor outputs. The composite two-client
 warning capture that carries the RQ4 evidence remains in \cref{ssec:impl-demo}
 (\cref{fig:impl-screens}). In that capture the two DevTools consoles record the bidirectional
-detection at one shared slot, the victim logging \texttt{WRITE warning slot label=a480\ldots} and the
-peer logging \texttt{READ warning slot label=a480\ldots} at the identical hex. The honest baseline is shown in \cref{fig:demo-baseline}, the attacker
+detection at one shared slot. The affected client logs a warning-slot write, and the peer logs a read
+at the identical label. The honest baseline is shown in \cref{fig:demo-baseline}, the attacker
 terminals in \cref{fig:demo-cmd}, the staged equivocation in \cref{fig:demo-equivocation}, the
 global-VRF and CEA fronts in \cref{fig:impl-screens-fronts}, and the auditor outputs in
 \cref{fig:impl-auditor}.

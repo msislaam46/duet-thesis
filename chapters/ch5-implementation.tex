@@ -303,8 +303,20 @@ calling this method directly. It publishes warnings when required and reports it
 The integration runs as a live, multi-actor demonstration: two linked Signal Desktop clients, the
 standalone Rust directory server, the auditor, and a scripted attacker, driven by the runner scripts of
 \cref{sec:apiref-repo}. Its purpose is to demonstrate the detection paths in the Signal user
-interface rather than only in a benchmark. The clearest run is the dual-index substitution
-(scenario A1b). The attacker overwrites the victim's per-conversation slot on the shared server. On the
+interface rather than only in a benchmark. \Cref{fig:impl-baseline} records the verified state before
+an attack. The green badge and the console's proof-verified owner- and warning-slot reads show that
+the client accepts the clean directory state.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/normal.png}
+\caption[Verified client state before an attack.]{Verified client state before an attack. The Signal
+Desktop client displays the green Key Transparency badge, while the console records successful
+owner- and warning-slot checks.}
+\label{fig:impl-baseline}
+\end{figure}
+
+The dual-index substitution run (scenario A1b) overwrites the victim's per-conversation slot on the shared server. On the
 victim's next monitor tick the own-key self-check fails, and the client writes the shared warning slot
 once and raises a red conversation banner reading that its identity key was replaced. The peer client,
 monitoring the \emph{same} shared label, reads it on its own next tick and raises the matching red
@@ -313,26 +325,28 @@ substitution and commits the warning (the conditional case argued in \cref{ch:de
 Independently of the clients, the auditor's per-epoch transition audit rejects this A1b overwrite: the
 dual-index slot is immutable, so the declared in-place rotation is an \textsc{ImmutableRotation} the
 replay refuses and the epoch alarms (\cref{fig:impl-auditor}). Its cross-vantage fork check
-reports no equivocation, since A1b is a substitution rather than a split view. This is the opposite of
-the global-slot case A1a, where the identity slot is mutable and a malicious rotation is a legal
-declared operation the auditor cannot tell from an honest key change, so there the auditor stays
-\textsc{Consistent} and detection rests on the client self-check alone. \Cref{fig:impl-screens} shows
-the resulting red banner on both clients. This is bidirectional detection across the two client
-instances, and their DevTools consoles record the victim's warning-slot write and the peer's read at
-the identical label (\cref{sec:apiref-demo}).
+reports no equivocation, since A1b is a substitution rather than a split view. The VRF-indexed
+identity-slot case A1a differs. The identity slot is mutable, so a malicious rotation is a permitted declared operation
+that the auditor cannot distinguish from an honest key change. The auditor therefore remains
+\textsc{Consistent}, and detection rests on the client self-check. \Cref{fig:impl-screens} records this
+A1a path. The affected client detects its replaced identity key and publishes the shared warning. The
+peer reads the same warning label, so both clients display the red banner. The development-only
+\emph{Inject Fork} control visible beside the badge belongs to the separate continuous-mode
+demonstration and was not used for this sequence (\cref{sec:apiref-demo}).
 
 \begin{figure}[p]
 \centering
-\screenshotplaceholder{\textwidth}{figures/ui-dualindex-self.png}\\[8pt]
-\screenshotplaceholder{\textwidth}{figures/ui-dualindex-contact.png}
-\caption[Dual-index warning on both clients (A1b).]{Dual-index warning across two linked Signal
-Desktop clients in scenario A1b. The top capture shows the victim and the bottom capture shows the
-peer. Both display the red Key Transparency banner.}
+\includegraphics[width=\textwidth]{figures/attacked_user.png}\\[8pt]
+\includegraphics[width=\textwidth]{figures/peer.png}
+\caption[VRF-indexed identity-slot warning on both clients (A1a).]{Scenario A1a across two linked
+Signal Desktop clients. The affected client detects the substituted VRF-indexed identity key and
+publishes the warning. The peer reads that authenticated warning, and both clients display the red
+Key Transparency banner.}
 \label{fig:impl-screens}
 \end{figure}
 
-The remaining demonstrations cover the global-slot and continuous-mode paths (\cref{fig:impl-screens-fronts}). For
-the global slot the attacker overwrites the VRF-derived identity entry and the account-wide monitor
+The supporting gallery contains another global-VRF capture and the continuous-mode capture
+(\cref{fig:impl-screens-fronts}). In the global-VRF case the attacker overwrites the VRF-derived identity entry and the account-wide monitor
 flags it. For continuous mode the attacker injects a forged ratchet key, whose per-epoch fingerprint
 conflicts with the one the directory holds, and the same warning is raised. A staged equivocation (A4) is
 the one case the auditor, not the client, catches (\cref{fig:impl-auditor}, right). All three run in an isolated local test harness, against
