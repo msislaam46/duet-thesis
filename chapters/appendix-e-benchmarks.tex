@@ -198,12 +198,12 @@ memo) discussed in \cref{ch:eval}.
 
 \FloatBarrier
 
-\medskip\noindent\emph{Auditor (M12), the local append-only cryptographic kernel: an STH signature
-check plus consistency-proof generation and verification, and a fork check against \emph{one}
-observed head. It excludes the full \texttt{audit\_epoch} transition replay, network transfer, and
-the growth of the fork check with the number of accumulated heads, so it is a compute floor and not
-an upper bound on deployed verification. Including proof generation makes the audit figure
-conservative only against the verify-only kernel beside it, not against the omitted work.}
+\medskip\noindent\emph{Auditor (M12). The local measurements cover an STH signature check,
+consistency-proof generation and verification, and a fork check against \emph{one} observed head.
+They exclude the full \texttt{audit\_epoch} transition replay, network transfer, and growth of the
+fork check with the number of accumulated heads. The measured costs are therefore lower than those
+of a complete deployed audit. Since the audit-epoch timing includes proof generation as well as
+verification, it is an upper estimate of verification alone.}
 
 \begin{table}[ht]
 \centering

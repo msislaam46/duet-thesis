@@ -55,7 +55,7 @@ M8  & Latency-derived single-thread operation rate & VRF-indexed                
 M9  & Key rotation + epoch-commit cost         & VRF-indexed, windowed      & \cref{ssec:eval-throughput} \\
 M10 & VRF prove/verify in isolation            & None                       & \cref{tab:bench-maint} \\
 M11 & Rust lookup-verification component (peer-key-retrieval proxy) & vs no-KT floor             & \cref{tab:bench-maint} \\
-M12 & Local signature/consistency kernel + one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
+M12 & Local signature and consistency kernel with a one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
 M13 & Session vs continuous mode               & session vs continuous      & \cref{ssec:eval-modes} \\
 M14 & Proof size + verification vs history depth & single-epoch (M1, M3)    & \cref{ssec:eval-sizes} \\
 M15 & Continuous-mode verification vs ratchet depth & session raw lookup     & \cref{ssec:eval-modes} \\
@@ -279,8 +279,8 @@ because it is specific to the synthetic baseline.
 
 The generation body has a median of \SI{0.3}{\micro\second} for the windowed proof and
 \SI{197.0}{\micro\second} for the repeated baseline. This is a separate timing result and its quotient
-is only approximate because the windowed value is close to the reporting resolution. Together, the
-measurements confirm that one windowed proof replaces $W$ repeated proofs. This addresses the
+is only approximate because the windowed value is close to the reporting resolution. The generation
+and bandwidth measurements confirm that one windowed proof replaces $W$ repeated proofs. This addresses the
 monitoring-bandwidth extension identified by CONIKS~\cite{melara2015coniks}.
 
 \subsection{Detector-Branch Latency and Clean-Session Coverage (M16, M17)}\label{ssec:eval-detection}
@@ -299,12 +299,11 @@ median of \SI{31.1}{\micro\second} and a 95th percentile of
 \SI{32.7}{\micro\second}. The empty warning result must be proof-verified, because accepting an
 unproven empty response would let the server conceal a committed warning.
 
-These are local Rust component costs. In the in-process detector, a
-verifiably empty owner slot also proceeds to the warning-slot lookup before first registration. M16
-does not benchmark the empty-slot first-registration path as a separate case, and registration itself
-is outside the timed body. An end-to-end detector measurement would additionally include the
-TypeScript runtime, HTTP transport, polling, registration, and network round trips. The complete
-background monitor also performs catch-up, owner-, peer-, and warning-slot checks.
+M16 reports local Rust component costs rather than end-to-end detector latency. In the in-process
+detector, a verifiably empty owner slot proceeds to the warning-slot lookup before first
+registration. M16 neither isolates that empty-slot branch nor times the subsequent registration. It
+also excludes the TypeScript runtime, HTTP transport, polling, and network round trips. The complete
+background monitor additionally performs catch-up and the owner-, peer-, and warning-slot checks.
 
 M17 checks the expected non-alarm behaviour of seven honest workflows: first registration, an
 established session with the expected key, a proven-empty warning slot, repeated verification of a
@@ -414,10 +413,10 @@ distributed storage remain outside this in-memory evaluation.
 
 M12 measures a local signature-and-consistency kernel rather than the complete networked audit. It
 times an STH signature check, consistency-proof generation and verification, and a fork check against
-one observed head. The first body has a median of \SI{28.6}{\micro\second} at $N=10^4$. The
-one-head fork check has a median of \SI{27.1}{\micro\second} and a 95th percentile of
-\SI{33.1}{\micro\second}. Since proof generation and verification are timed together, the first
-figure is a conservative upper proxy for verification alone.
+one observed head. The first body has a median of \SI{28.6}{\micro\second} at $N=10^4$. Since proof
+generation and verification are timed together, that figure is a conservative upper proxy for
+verification alone. The one-head fork check has a median of \SI{27.1}{\micro\second} and a 95th
+percentile of \SI{33.1}{\micro\second}.
 
 The measurement excludes network transfer, epoch-delta retrieval, committed-root inclusion
 verification, and the full transition replay. That replay applies each
@@ -545,8 +544,9 @@ $10^6$, so the prefix-only advantage is at least this large. The padding is a de
 for the hiding of tree density. Under this conservative comparison, DUET uses approximately one ninth
 as many bytes for the sibling representation, while its bitmap exposes about $\lceil\lg N\rceil$ bits
 of tree-density metadata.
-It does not net against the signed tree head, which a full DUET response carries per lookup
-(\cref{sec:impl-challenges}) and which Signal's \num{8192}-byte copath figure excludes on both sides.
+This component comparison excludes the signed tree head on both sides. A full DUET response carries
+one signed tree head per lookup (\cref{sec:impl-challenges}), while Signal's \num{8192}-byte copath
+figure likewise excludes the head.
 SEEMless reports approximately 8.6\,kB lookup proofs at $10^7$~\cite[p.~12]{chase2019seemless},
 placing its measured proof size near Signal's fixed 8\,kB copath.
 
@@ -559,12 +559,11 @@ per epoch at $N \approx 2^{32}$), so the derived total is indicative rather than
 stated parameterization it is over three orders of magnitude larger than the windowed proof
 ($529{,}920/320 \approx 1{,}656\times$).
 
-Finally, full client verification stays below \SI{150}{\micro\second} through $10^7$ labels. CONIKS
+Finally, median full client verification stays below \SI{150}{\micro\second} through $10^7$ labels. CONIKS
 reports \SI{159}{\micro\second} to verify the authentication path at $N = 10^7$ and approximately
 \SI{400}{\micro\second} to verify the signed-tree-root signature, and reports no VRF-verification
-time~\cite[Section~5.3]{melara2015coniks}. The comparison must be taken at matched scale, so it is the $10^7$
-median of \SI{139.2}{\micro\second} that belongs beside CONIKS's published figures, not the
-$\approx$\SI{128}{\micro\second} measured at $N \le 10^4$. At that scale DUET's measured value is
+time~\cite[Section~5.3]{melara2015coniks}. A matched-scale comparison therefore uses DUET's \SI{139.2}{\micro\second} median at $10^7$ labels
+rather than the approximately \SI{128}{\micro\second} median measured at $N \le 10^4$. At that scale DUET's measured value is
 lower than the published CONIKS figure and includes the VRF verification that CONIKS does not report.
 The hardware and methods differ, however, so the values do not support a direct performance ratio.
 The result established on this hardware is the sub-\SI{150}{\micro\second} median cost of full client
@@ -604,7 +603,7 @@ Attack & Mechanism (requirement) & Evidence & Result \\
 \midrule
 A1/A3/A5 key substitution & A1 self-check and warning. A3 divergent-label and global-VRF identity comparison. A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite exercises each route (\cref{tab:tests-adversarial}). & Detected. The scripted point depends on the scenario. \\
 A2 warning censorship & Key mismatch together with proof-verified warning absence (extension of G1). & The A2 scenario exercises the compound signal. & Detected. \\
-A4 split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 one-head local kernel. & Detected at the next scripted comparison. \\
+A4 split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 one-head fork check. & Detected at the next scripted comparison. \\
 Directory enumeration & ECVRF-derived identity labels against outsider enumeration (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{tab:tests-rust-prim}). & Resisted against outsiders under the VRF pseudorandomness assumption. \\
 X1 key extraction & No directory control. & Endpoint compromise lies outside key transparency. & Out of scope. \\
 \bottomrule
@@ -636,11 +635,12 @@ residuals constrain what can be claimed for a production service.
 The measurements identify both feasible client-side components and unresolved server-side work for a
 messenger such as Signal~\cite{signal-kt-server}.
 
-For a VRF-indexed identity lookup, median full verification remains below \SI{150}{\micro\second}
-through $10^7$ labels (\cref{ssec:eval-latency,ssec:eval-scale}), and, under the single-epoch
-comparison convention, the median proof body remains below one kilobyte. It is
-at rough size parity with the aligned CONIKS proof, while DUET's compressed prefix component is much
-smaller than Signal's fixed \num{256}-sibling copath (\cref{sec:eval-compare}).
+For a VRF-indexed identity lookup, median full verification remains below
+\SI{150}{\micro\second} through $10^7$ labels (\cref{ssec:eval-latency,ssec:eval-scale}). Under the
+single-epoch comparison convention, the median proof body also remains below one kilobyte. At the
+matched scale, it is at rough size parity with the aligned CONIKS proof, while DUET's compressed
+prefix component is much smaller than Signal's fixed \num{256}-sibling copath
+(\cref{sec:eval-compare}).
 
 Offline catch-up has a different cost profile. The windowed client fetches one proof for the missed
 window rather than one per epoch (\cref{ssec:eval-catchup,sec:eval-compare}). This one-proof result is
@@ -664,8 +664,6 @@ rotation, whereas continuous mode writes once per ratchet epoch for finer-graine
 therefore performs substantially more writes (\cref{ssec:eval-modes}). The exact ratio is determined by
 message activity and rotation cadence in a live system, not a fixed deployment value.
 
-Further work includes authenticated write ownership and stronger query privacy (\cref{sec:disc-future}).
-An OPRF could hide the raw lookup identity from the service performing the oblivious evaluation, but
-hiding the fetched entry and the requester would additionally require private retrieval and network
-anonymity. The measured proof sizes and local cryptographic costs support the client-side design.
-Persistent storage and networked operation remain future deployment work.
+Further work on authenticated write ownership and stronger query privacy is discussed in
+\cref{sec:disc-future}. The measured proof sizes and local cryptographic costs support the
+client-side design, while persistent storage and networked operation remain future deployment work.
