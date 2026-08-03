@@ -94,7 +94,7 @@ A committed epoch freezes a snapshot, appends its root to the log, and signs the
 Client recomputation checks each response without trusting the directory operator. Dual-index labels use
 HKDF-SHA256, while global identity labels use the RFC ECVRF. The main non-linear implementation cost
 is epoch commit, which deep-clones the current tree into the committed snapshot. The full
-module and data-structure detail is preserved in \cref{sec:apiref-engineering}.
+module and data-structure detail is described in \cref{sec:apiref-engineering}.
 
 \subsection{Server, Auditor, and Benchmark Boundary}\label{ssec:impl-core-server}
 \label{ssec:impl-bench}
@@ -240,7 +240,7 @@ interface, through three distinct obstacles. The bundler split the key-transpare
 dynamic imports, so the layer was kept in one bundle. Context isolation blocked assignments to
 \texttt{window} while allowing DOM custom events to cross the preload and renderer boundary. The
 application's typed event bus and those DOM custom events were then mismatched, which was resolved by
-dispatching on both. The remaining bundling, deterministic-state, and reset detail is preserved in
+dispatching on both. The remaining bundling, deterministic-state, and reset detail is described in
 \cref{sec:apiref-engineering}.
 
 Within the uncompromised-endpoint assumption in \cref{sec:threat-assumptions}, directory-response

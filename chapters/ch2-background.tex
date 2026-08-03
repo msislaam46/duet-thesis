@@ -3,6 +3,8 @@
 This chapter establishes the background needed to understand the design of DUET. It begins with
 Signal's asynchronous key-distribution model and then examines key-transparency systems and
 continuous-authentication research to derive the requirements carried into \cref{ch:design}.
+\Cref{app:extended-background} provides further detail on protocol mechanics, usability evidence, and
+the systems reviewed in this chapter.
 
 % ============================================================================
 \section{The Signal Protocol Stack}\label{sec:bg-signal}
@@ -56,7 +58,7 @@ in any tested application~\cite[p.~30]{vaziripour2017}. Instructions improved
 success~\cite[p.~29]{vaziripour2017}, but users still needed substantial
 time~\cite[p.~36]{vaziripour2017}. ACKA and its predecessor MoDUSA authenticate evolving protocol
 state, yet both retain a user-initiated comparison or an assumed secure
-log~\cite{dowling2021meta,dowling2023acka}. The supporting measurements are preserved in
+log~\cite{dowling2021meta,dowling2023acka}. The supporting measurements are reported in
 \cref{sec:ext-usability}.
 
 Three requirements follow. Authentication should detect coordinated substitution of
@@ -76,7 +78,7 @@ record belongs to the committed tree, while a consistency proof shows that a lat
 append-only extension of an earlier one~\cite{rfc6962,rfc9162}. Both proofs are logarithmic in the
 relevant tree size, and they answer different questions, because inclusion authenticates one record
 whereas consistency shows that committed history was not rewritten. The construction, domain
-separation, and proof walkthrough are preserved in \cref{sec:ext-merkle}.
+separation, and proof walkthrough are explained in \cref{sec:ext-merkle}.
 
 Although each proof is compact, a monitoring policy that requests one proof for every missed epoch
 makes a returning client's total work grow with its offline period. This is the efficiency problem
@@ -92,7 +94,9 @@ it does not hide queries from the operator or conceal the directory's scale.
 Local proof verification also does not establish that every observer received the same state. A malicious
 operator can present Alice and Bob with different internally consistent histories, and exposing such a fork
 requires signed commitments obtained from independent vantage points to be compared. DUET therefore
-separates local lookup verification from cross-vantage equivocation detection.
+separates local lookup verification from cross-vantage equivocation detection. The split-view problem
+and the comparison mechanisms used by existing systems are discussed further in
+\cref{sec:ext-splitview}.
 
 \subsection{The IETF KeyTrans Architecture}\label{ssec:bg-keytrans}
 
@@ -148,7 +152,7 @@ Signal, Proton, Google, and Apple use different combinations of monitoring, audi
 comparison~\cite{whatsapp2023whitepaper,signal-kt-server,goebel2023proton,google-kt,apple-ckv}, and an
 independent review of the Meta implementation reports no break of its transparency
 guarantees~\cite{nccgroup2023akd}. None of the cited deployments provides the peer-warning channel
-defined in this thesis. The per-system mechanisms, limitations, and citations are preserved in
+defined in this thesis. The per-system mechanisms, limitations, and citations are examined further in
 \cref{sec:ext-vkd-survey} and summarized in \cref{tab:bg-compare}.
 
 The deployments also expose relevant engineering choices. WhatsApp demonstrates a public audit path at
@@ -185,7 +189,7 @@ malicious operator~\cite[p.~7]{dowling2023acka}. ACKA assumes a common initial s
 trust on first use and verifies sequentially by epoch~\cite[p.~6]{dowling2023acka}. Only the receiver
 learns of a forgery, and its consistency mechanism is not used for third-party fork detection. The
 formal CKA definition, adversary model, abstract log construction, and receiver-only detection result
-are preserved in \cref{sec:ext-acka}.
+are examined further in \cref{sec:ext-acka}.
 
 DUET supplies the verifiable directory behind $\Log$. It also adds conversation-derived lookup labels,
 a shared peer-warning slot, windowed catch-up, and cross-vantage comparison of signed heads. ACKA and
@@ -195,8 +199,9 @@ against an active channel attacker, while key transparency constrains a maliciou
 % ============================================================================
 \section{Comparative Analysis of Existing Systems}\label{sec:bg-compare}
 
-\Cref{tab:bg-compare} compares the systems surveyed in \cref{sec:bg-vkd}. The capabilities that
-remain unsupported define the design requirements of \cref{ssec:bg-implications}.
+Key-transparency systems differ in the objects they authenticate, the mechanisms they use to detect
+misbehaviour, their support for offline recovery, and their consistency guarantees.
+\Cref{tab:bg-compare} summarizes these differences.
 
 \begin{table}[t]
 \centering
@@ -243,6 +248,7 @@ identity-to-key directory. ACKA instead assumes the secure-log interface describ
 \cref{sec:bg-acka}.\par}
 \end{table}
 
+\FloatBarrier
 \subsection{Implications for the Design}\label{ssec:bg-implications}
 
 The comparison yields three requirements. First, detection must reach the peer. Existing systems assign

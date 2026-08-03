@@ -80,7 +80,7 @@ against a signed root.}
 \end{figure}
 
 The Rust and TypeScript implementations enforce this same chain. The full-client measurement in
-\cref{ch:eval} includes every check. \Cref{sec:design-detail-sth} records the extended
+\cref{ch:eval} includes every check. \Cref{sec:design-detail-sth} provides the extended
 currency and head-binding argument.
 
 % ============================================================================
@@ -259,7 +259,7 @@ key and committing a warning. A committed warning is protected by three safeguar
 an occupied slot, the transition audit rejects an invalid declared change, and persistence evidence
 exposes a later removal from the committed history. If the operator censors the write in the first
 place, the distant-head proof still establishes append-only consistency but cannot exclude that
-transient substitution. The complete argument is preserved in
+transient substitution. The complete argument is given in
 \cref{sec:design-detail-window}.
 
 \subsection{Worked Parameterization}\label{ssec:design-param}
