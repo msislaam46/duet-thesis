@@ -3,11 +3,11 @@
 Private messaging carries personal, professional, and civic communication. Signal~\cite{signal-home}
 is a widely used end-to-end encrypted messenger whose protocol has influenced other messaging
 systems~\cite{signal-protocol-impact}, and it distributes public keys asynchronously through
-provider-operated infrastructure. Encryption protects a conversation only when the sender uses the
+provider-operated infrastructure~\cite{signaldocs}. Encryption protects a conversation only when the sender uses the
 intended recipient's authentic key, so a substituted binding can establish an encrypted channel with
 an attacker while the conversation still appears secure.
 
-Signal's traditional defence is a manual Safety Number comparison over an independent channel. The
+Signal's traditional defence is a manual Safety Number comparison~\cite{safetynumbers} over an independent channel. The
 comparison is sound when completed, but one study found that only about 14\% of unguided
 pair--application trials succeeded and that just two of twelve pairs completed the ceremony in any
 tested application~\cite{vaziripour2017}. A one-off comparison also does not monitor later key

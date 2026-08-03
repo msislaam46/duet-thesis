@@ -26,93 +26,100 @@ endpoint security, and the need for an independent vantage to expose a consisten
 % ============================================================================
 \section{Limitations}\label{sec:disc-limitations}
 
-The guarantee begins only after a baseline has been pinned, so it cannot establish whether the
-initial binding was authentic. It covers
-pairwise, single-device conversations rather than groups, MLS, Sender Keys, or complete multi-device
-warning propagation. Endpoint compromise remains outside any directory guarantee.
+DUET's monitoring guarantee begins after a client pins a directory binding. It detects later changes
+but cannot establish whether that initial binding was authentic. The design covers pairwise,
+single-device conversations rather than groups, MLS, Sender Keys, or complete multi-device warning
+propagation. It also cannot protect a compromised endpoint.
 
-Transition auditing requires an honest auditor, and \hyperref[sc:threat-a4]{A4} additionally requires a valid signed head from
-an independent vantage. A client alone rejects a head that does not extend its pinned baseline, but
-it cannot expose two internally consistent branches extending a common prefix. Production deployment
-also needs authenticated epoch disclosures, freshness and failure policies, and a real gossip or
+The design also depends on an honest auditor for transition validation. Detecting
+\hyperref[sc:threat-a4]{A4} additionally requires a valid signed head obtained from an independent
+vantage. A client can reject a head that does not extend its pinned baseline, but it cannot expose two
+internally consistent branches extending a common prefix. Production deployment therefore requires
+authenticated epoch disclosures, freshness and failure policies, and an independent gossip or
 second-vantage source.
 
-The prototype provides no query privacy from the operator, write-rate limit, published-head timeout,
-or gossip-based proof-omission detection. A malicious peer can publish a valid but false warning,
-since the payload MAC authenticates the peer rather than the truth of its report, so attributable
-warning records and abuse policy remain necessary.
+The prototype also lacks query privacy from the operator, write-rate limits, published-head timeouts,
+and gossip-based detection of omitted proofs. A malicious peer can publish a valid but false warning
+because the payload MAC authenticates its author rather than the truth of the report. Deployment
+therefore requires attributable warning records and an abuse policy.
 
-The implementation is single-machine and in-memory, and epoch commit deep-clones the current tree into
-the committed snapshot. The Signal client uses a deterministic conversation-secret stand-in and a
-seeded ratchet simulation, which exercise the code
-paths but do not establish label unpredictability or active-attacker security for live Signal state.
-The key-fetch hook reports a rejecting verdict without blocking session establishment. The simulated
-continuous mode supplies the raw Diffie--Hellman output where ACKA's Signal mapping uses the derived
-chain key, and its synchronous state does not model skipped ratchet epochs. A faithful binding must
-obtain the live chain key and support explicit epoch indices and bounded skipped state.
+The implementation has further limitations. It runs on one machine, stores the directory in memory,
+and deep-clones the current tree when committing an epoch. The Signal integration uses a deterministic
+conversation-secret stand-in and a seeded ratchet simulation. These exercise the code paths but do not
+establish label unpredictability or active-attacker security for live Signal state. The key-fetch
+integration reports a rejecting verdict without blocking session establishment. Simulated continuous
+mode also supplies the raw Diffie--Hellman output where ACKA's Signal mapping uses the derived chain
+key, and its synchronous state does not model skipped ratchet epochs. A production binding must obtain
+the live chain key and support explicit epoch indices and bounded skipped state.
 
-The security argument is an informal proof sketch supported by definitions, the same-head lemma, and
-the adversarial suite. The suite does not model separate first-contact sessions with each party or a
-fabricated pre-key bundle kept consistent with a malicious directory entry. Timings measure local
-components rather than a complete networked monitor or audit, and the committed corpus contains
-aggregate statistics rather than raw Criterion samples. M11 repeats the Rust lookup-verification
-component rather than timing the TypeScript key-fetch path, and M12 measures local signature and
-consistency work rather than network transfer, epoch-delta retrieval, or full transition replay.
-These distinctions prevent the component evidence from being read as an end-to-end deployment
-measurement.
+The supporting evidence has a narrower scope. The security argument is an informal proof sketch
+supported by definitions, the same-head lemma, and the adversarial suite. The suite does not model
+separate first-contact sessions with each party or a fabricated pre-key bundle kept consistent with a
+malicious directory entry. Timings measure local components rather than a complete networked monitor
+or audit, and the committed corpus contains aggregate statistics rather than raw Criterion samples.
+M11 repeats the Rust lookup-verification component rather than timing the TypeScript key-fetch path.
+M12 measures local signature and consistency work rather than network transfer, epoch-delta retrieval,
+or full transition replay. These limits prevent the component results from being interpreted as an
+end-to-end deployment measurement.
 
 % ============================================================================
 \section{Future Work}\label{sec:disc-future}
 
 \subsection{Completing the Protocol and Security Argument}
 
-The first implementation priority is to obtain the live X3DH or PQXDH conversation secret and the
-live Double Ratchet chain key from libsignal. Replacing the stand-ins changes the inputs to the
-existing label and CEA constructions rather than their downstream proof formats. The live
-conversation secret is required for the \hyperref[sc:threat-a3]{A3} label-unpredictability claim. The
-raw-label interface must also authenticate the party authorized to make the first write, preventing a
-malicious client from occupying an empty conversation slot before its legitimate owner. Later
-replacement and deletion remain governed by transition auditing rather than first-write
-authorization. The tested persistence component provides evidence of later removal, and its
-implementation status is identified in \cref{tab:impl-modules}. A formal analysis should define a
-combined detection game covering the KDF, VRF, signed heads, warning authentication, and append-only
-verification, alongside symbolic analysis and separate verification of the client proof checker.
+Production integration must obtain the live X3DH or PQXDH conversation secret and the live Double
+Ratchet chain key from libsignal. Replacing the current stand-ins changes the inputs to the existing
+label and CEA constructions rather than their downstream proof formats. The live conversation secret
+is necessary to support the \hyperref[sc:threat-a3]{A3} label-unpredictability claim.
+
+The raw-label interface must also authenticate the party authorized to make the first write, preventing
+a malicious client from occupying an empty conversation slot before its legitimate owner. Subsequent
+replacement and deletion remain governed by transition auditing and persistence evidence.
+
+The security argument also needs a formal detection game covering the KDF, VRF, signed heads, warning
+authentication, and append-only verification. Symbolic analysis and separate verification of the
+client proof checker would provide complementary assurance.
 
 \subsection{Groups, Devices, and Directory Privacy}
 
-Group support requires epoch-scoped labels and a
-warning policy for joins, removals, and every current device, potentially using domain-separated MLS
-exporter secrets~\cite{rfc9420}. ELEKTRA-style device cross-signing could strengthen multi-device
-continuity~\cite{len2023elektra}, alongside device-scoped labels, warning propagation, and reset
-handling. OPRF-based identity blinding could hide the raw lookup identity, but private retrieval and
-network anonymity would still be needed to conceal the fetched entry and the requester, and the
-design would have to define how the OPRF role is separated or distributed~\cite{rfc9497}.
+Group support requires epoch-scoped labels and a warning policy covering membership changes and every
+current device, potentially using domain-separated MLS exporter secrets~\cite{rfc9420}.
+Multi-device continuity could build on ELEKTRA-style device cross-signing, together with device-scoped
+labels, warning propagation, and reset handling~\cite{len2023elektra}.
+
+Stronger directory privacy is another research direction. OPRF-based identity blinding could conceal
+the raw lookup identity, but private retrieval and network anonymity would still be needed to hide the
+requested entry and the requester. The design would need to specify whether the OPRF role is separated
+or distributed~\cite{rfc9497}.
 
 \subsection{Deployment and Cryptographic Scale}
 
-Persistent copy-on-write nodes should replace full
-snapshot cloning. With fixed depth $d=256$, copying the paths for $k$ modified labels is $O(kd)$ and
-therefore $O(k)$, independent of $N$. The proof format would remain unchanged. Building on Signal's
-existing key-transparency service~\cite{signal-kt-server} would additionally
-require immutable raw writes, authenticated ownership, transition disclosures, client hooks, and an
-independent auditor or gossip federation with incentives for independent operation. PQXDH secrets
-already fit the label KDF, but post-quantum operation also needs replacements for the ECVRF and
-signed-head signatures~\cite{pqxdh}. This thesis does not select or implement a post-quantum VRF.
-Even with PQXDH-derived labels, end-to-end post-quantum security would still depend on the messenger's
-authentication and ratchet mechanisms. Concurrency, serialization, reclamation, and memory use would
-require measurement after structural sharing.
+Persistent copy-on-write nodes should replace full snapshot cloning without changing the proof format.
+This would avoid the full-tree copy currently performed at each epoch commit. Integration with
+Signal's existing key-transparency service~\cite{signal-kt-server} would require immutable raw writes,
+authenticated ownership, transition disclosures, client integration points, and an independent
+auditor or gossip federation.
+
+Post-quantum operation also requires replacements for the ECVRF and signed-head signatures, although
+PQXDH secrets already fit the label KDF~\cite{pqxdh}. Even with PQXDH-derived labels, end-to-end
+post-quantum security would continue to depend on the messenger's authentication and ratchet
+mechanisms. This thesis does not select or implement those replacements.
+
+Concurrency, serialization, reclamation, and memory use require measurement under realistic
+deployment loads.
 
 \subsection{Evaluation, Operations, and Usability}
 
-A usability study should determine whether cryptographic detection leads to an appropriate user
-response. It should test interpretation of the red warning and amber notice, accessibility,
-escalation, and alarm fatigue, continuing the ceremony research that motivated the
-design~\cite{vaziripour2017}. Production warnings
-should carry the scenario, epoch, signed heads, and proofs needed for operator or auditor review
-without exposing unnecessary metadata. An operational policy must define when to reject a proof,
-request rotation, or escalate without turning warning records into a new metadata leak. Further
-experiments should use persistent storage, concurrent requests, wide-area delay, varied epoch and
-catch-up policies, mobile CPU and energy measurements, and archived raw samples. The same approach
-may also be evaluated in clinical, emergency-response, and industrial key-distribution settings, each
-with its own identity model, device-enrolment and revocation process, availability requirements, and
-regulatory controls.
+A usability study should determine whether users correctly interpret and act on the red warning and
+amber notice. It should also examine accessibility, escalation, and alarm fatigue, continuing the
+verification-ceremony research that motivated the design~\cite{vaziripour2017}.
+
+Production warning records should contain the scenario, epoch, signed heads, and proofs needed for
+operator or auditor review while avoiding unnecessary metadata. An operational policy must define
+when to reject a proof, request key rotation, or escalate a warning.
+
+Moreover, future evaluation should cover persistent storage, concurrent requests, wide-area delay,
+different epoch and catch-up policies, mobile CPU and energy use, and archived raw samples. Applying
+the design in clinical, emergency-response, or industrial settings would require domain-specific
+identity models, device-enrolment and revocation procedures, availability requirements, and regulatory
+controls.

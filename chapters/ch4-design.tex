@@ -154,7 +154,7 @@ entry, while a substitution that predates an honest baseline remains the TOFU bo
 
 \subsection{Detection and the Bidirectional Warning}\label{ssec:design-detection}
 
-On detecting a suspicious key at a lookup slot, a party writes data to
+On detecting a suspicious key at a lookup slot, the client writes a warning payload to
 $\ell_{\mathsf{warn}}$. Both parties' background monitors read this slot on their next check and
 raise a warning. The payload carries a MAC under a key derived from the shared secret and the
 canonically ordered identities

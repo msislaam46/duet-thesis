@@ -162,7 +162,7 @@ distribution, not one label's path (\cref{ssec:eval-detection}).}
 \centering
 \caption[M5: marginal warning-slot lookup cost.]{M5 marginal warning-slot lookup cost. The
 distribution covers \num{1000} sampled conversations and measures one unverified warning-slot read.
-\Cref{ssec:eval-detection} reports the verified one- and two-lookup detector branches.}
+\Cref{ssec:eval-detection} reports the verified one- and two-lookup detection paths.}
 \label{tab:bench-detection}
 \small
 \begin{tabular}{@{}llrr@{}}
@@ -310,7 +310,7 @@ agreement.
 
 % ----------------------------------------------------------------------------
 \FloatBarrier
-\section{History Depth, Ratchet Depth, and Detector Branches (M14--M17)}\label{sec:bench-newfamilies}
+\section{History Depth, Ratchet Depth, and Detection Paths (M14--M17)}\label{sec:bench-newfamilies}
 
 The four families M14--M17 extend the microbenchmarks with the two axes and the two costs the
 single-epoch measurements above set aside. The tables in this section are \emph{generated} directly
@@ -321,8 +321,8 @@ history term the single-epoch rows report as zero. \Cref{tab:bench-m15} is the M
 experiment: both median series vary by at most \SI{0.5}{\micro\second} across the tested values of $K$, and their pointwise difference stays within the timer
 resolution through $K=720$ ratchet epochs, not interpreted as a distinct mechanism cost.
 \Cref{tab:bench-m15-writes} is the companion analytic write-amplification grid. \Cref{tab:bench-m16} is
-the M16 detector-branch cost, each branch a synthetic Rust reconstruction of the corresponding
-detector branch.
+the M16 detection-path cost, each path a synthetic Rust reconstruction of the corresponding
+detection path.
 
 M17 is functional coverage rather than a timed family. \Cref{tab:bench-m17} maps each listed honest
 state to the test that asserts its expected clean verdict. The clean-path predicate exercised by

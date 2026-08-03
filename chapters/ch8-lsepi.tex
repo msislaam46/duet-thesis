@@ -27,9 +27,9 @@ GDPR, so this design is treated as processing personal data rather than
 exempt~\cite{ico-pseudonymisation}. VRF-derived indices keep raw identifiers out of the published
 tree and reduce direct identifier exposure, but they do not make the records anonymous. Production
 use would require a data-protection assessment, a documented processing purpose and lawful basis,
-restricted access to warning records, and defined retention periods. Two residual exposures remain,
+restricted access to warning records, and defined retention periods~\cite{ico-data-principles}. Two residual exposures remain,
 the query pattern visible to the operator and the density metadata a bitmap-compressed proof reveals,
-and both are stated in \cref{ch:discussion}~\cite{ico-data-principles}.
+and both are stated in \cref{ch:discussion}.
 
 % ============================================================================
 \section{Social and Ethical Issues}\label{sec:lsepi-social}
@@ -47,8 +47,8 @@ warning causes alarm fatigue rather than protection. The interface
 therefore uses amber for an unavailable directory and red only for a verified mismatch. A red warning
 states that an integrity or consistency check failed without assigning a cause. Usability
 testing, accessibility, escalation routes, and support paths are unaddressed here and named as future
-work in \cref{ch:discussion}. Warning records also reveal who was warned and when. Although the
-warning channel protects users, it creates a new metadata surface.
+work in \cref{ch:discussion}. Warning records also reveal who was warned and when, creating additional
+metadata that requires protection.
 
 The evaluation used synthetic accounts and neither recruited participants nor intercepted live
 traffic (\cref{ssec:impl-demo}), so it was not a human-participant study. A deployment would need to

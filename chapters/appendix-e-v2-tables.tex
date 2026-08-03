@@ -75,7 +75,7 @@ $K$ (ratchet epochs) & $R{=}60$ & $R{=}168$ & $R{=}720$ & $R{=}2880$ \\
 
 \begin{table}[ht]
 \centering
-\caption[M16: verified detector-branch latency.]{M16 detector-branch cost at
+\caption[M16: verified detection-path latency.]{M16 detection-path cost at
 $N=10^4$: synthetic Rust reconstructions of the two branches of
 \texttt{KTClient.detectMitm}, timing the same verified operations (raw-label
 search, proof verification, and value comparison) rather than the TypeScript
@@ -85,7 +85,7 @@ registration.}
 \small
 \begin{tabular}{@{}lrr@{}}
 \toprule
-Detector branch (baseline: raw-label, no VRF) & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
+Detection path (baseline: raw-label, no VRF) & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
 Early return (owner mismatch): one verified lookup & 27.8 & 28.8 \\
 Clean match: verified owner inclusion + warning non-inclusion & 31.1 & 32.7 \\
