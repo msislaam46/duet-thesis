@@ -167,11 +167,11 @@ M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
 \end{table}
 
 \medskip\noindent\emph{Operation rates and maintenance (M8--M11): latency-derived single-thread rates, key
-rotation and epoch commit, the VRF in isolation, and the Rust lookup-verification component corresponding to the handshake hook.}
+rotation and epoch commit, the VRF in isolation, and the Rust lookup-verification component corresponding to the verification performed at the peer-key-retrieval boundary.}
 
 \begin{table}[ht]
 \centering
-\caption[M8--M11: single-thread rates and hook cost.]{M8--M11: latency-derived single-thread rates, rotation, epoch commit, VRF, and the Rust lookup-verification component corresponding to the handshake hook.}
+\caption[M8--M11: single-thread rates and verification cost.]{M8--M11: latency-derived single-thread rates, rotation, epoch commit, VRF, and the Rust lookup-verification component corresponding to the verification performed at the peer-key-retrieval boundary.}
 \label{tab:bench-maint}
 \small
 \begin{tabular}{@{}L{6.2cm}lrr@{}}
@@ -186,7 +186,7 @@ M9 epoch commit (windowed)           & $10^3$ & 451.0 & 504.8 \\
 M9 epoch commit (windowed)           & $10^4$ & 6727.3 & 7504.7 \\
 M10 VRF prove (isolated)             &        & 110.0 & 115.3 \\
 M10 VRF verify (isolated)            &        & 73.5  & 76.8 \\
-M11 lookup-verification component (handshake-hook proxy) & & \multicolumn{2}{l}{identical to M3 (\cref{ssec:eval-latency})} \\
+M11 lookup-verification component (peer-key-retrieval proxy) & & \multicolumn{2}{l}{identical to M3 (\cref{ssec:eval-latency})} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -358,8 +358,8 @@ groups and CSV keys below are frozen provenance identifiers, so some retain hist
 \texttt{windowed\_full\_client\_verify} is the M3 full signed-head lookup verification and does not
 time a catch-up proof. \texttt{M8\_throughput} records per-operation latencies from which a
 single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures, in Rust, one signed-head lookup
-verification corresponding to the operation invoked at the handshake hook. It excludes X3DH/PQXDH, network transfer, and the remainder of
-session establishment.
+verification corresponding to the verification performed at the peer-key-retrieval boundary. It
+excludes X3DH/PQXDH, network transfer, and session establishment.
 
 \begin{table}[ht]
 \centering

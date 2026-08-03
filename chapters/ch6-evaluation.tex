@@ -54,7 +54,7 @@ M7  & Size + verify at scale ($10^6,10^7$)    & VRF-indexed, windowed      & \cr
 M8  & Latency-derived single-thread operation rate & VRF-indexed                & \cref{tab:bench-maint} \\
 M9  & Key rotation + epoch-commit cost         & VRF-indexed, windowed      & \cref{ssec:eval-throughput} \\
 M10 & VRF prove/verify in isolation            & None                       & \cref{tab:bench-maint} \\
-M11 & Rust lookup-verification component corresponding to the handshake hook & vs no-KT floor             & \cref{tab:bench-maint} \\
+M11 & Rust lookup-verification component (peer-key-retrieval proxy) & vs no-KT floor             & \cref{tab:bench-maint} \\
 M12 & Local signature/consistency kernel + one-head fork check & windowed         & \cref{ssec:eval-auditor} \\
 M13 & Session vs continuous mode               & session vs continuous      & \cref{ssec:eval-modes} \\
 M14 & Proof size + verification vs history depth & single-epoch (M1, M3)    & \cref{ssec:eval-sizes} \\
@@ -374,9 +374,10 @@ directory, not that it is invariant.
 Three related metric families are reported in \cref{sec:bench-timings}. M8 derives single-thread
 operation rates of approximately \num{8940} lookups and \num{7150} updates per second at $N=10^4$.
 M10 measures VRF proof generation and verification in isolation. M11 measures, in Rust, one complete
-signed-head lookup verification corresponding to the operation invoked at the handshake hook, against
-the synthetic single-hash comparison used as the no-KT floor. It is a component proxy rather than a timing of the live TypeScript
-hook, and it excludes transport, X3DH/PQXDH, and session establishment. This subsection focuses on the
+signed-head lookup verification corresponding to the verification performed at the
+peer-key-retrieval boundary. It compares this operation with the synthetic single-hash comparison
+used as the no-KT floor. M11 is a component proxy rather than a timing of the live TypeScript path,
+and it excludes transport, X3DH/PQXDH, and session establishment. This subsection focuses on the
 maintenance costs that limit the single-machine prototype.
 
 \begin{table}[ht]
