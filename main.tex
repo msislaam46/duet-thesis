@@ -111,11 +111,13 @@ The security of end-to-end encrypted messaging rests on an assumption that its c
 not itself establish. The public keys handed out by the server must be authentic. Signal's
 original built-in defence, the Safety Number, covers only the long-term identity keys and requires a
 manual out-of-band comparison that a usability study found few pairs complete without guidance.
-Key transparency supports detection of unauthorized key changes by publishing the directory as a
-verifiable, append-only log, and is now deployed in production systems. But a key substituted in the
-log itself is noticed only by its owner, with no in-band channel to warn the peer, and a returning
-client that uses per-epoch monitoring pays a cost that grows with the number of missed epochs, and so
-with the time spent offline.
+Key transparency makes unauthorized key changes detectable by committing public-key directory states
+to a verifiable, append-only log, and is now deployed in production systems. Existing
+approaches expose changes through self-monitoring, external auditing, witness validation, or
+whole-directory verification. None of these provides an automatic, conversation-specific channel
+through which a party that detects a substitution can warn its peer. Returning clients that monitor
+every epoch also incur a cost that grows with the number of missed epochs and therefore with the
+time spent offline.
 
 To close both gaps, this thesis proposes DUET (DUal-index, Epoch-windowed Transparency), a key
 transparency scheme for secure messaging that remains aligned with the emerging IETF Key
@@ -130,9 +132,10 @@ proof between the last trusted and current tree heads, so a client requests and 
 rather than one for each of the $W$ missed epochs, with size logarithmic in the endpoint log sizes
 rather than linear in the epochs it missed.
 
-Benchmark results show that DUET's lookup proof is comparable in size to the corresponding proof in
-CONIKS. Full client verification remains below \SI{150}{\micro\second} through ten million labels, and
-a month of missed epochs is covered by one short proof rather than one per epoch. A two-client Signal
+Benchmark results show that, at a matched directory size, DUET's lookup proof is comparable in size
+to the corresponding proof in CONIKS. Median full client verification remains below
+\SI{150}{\micro\second} through ten million labels, and a month of missed epochs is covered by one
+short proof rather than one per epoch. A two-client Signal
 Desktop prototype runs verification automatically in the background and raises key-substitution
 warnings in band. An independent auditor checks the public-key directory for invalid changes and
 conflicting signed views.

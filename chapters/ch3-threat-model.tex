@@ -32,7 +32,7 @@ parties. A malicious provider can substitute a key through this delivery path or
 directory state it controls. A network attacker can separately alter the bundle while it is in
 transit (scenario A3, \cref{sec:threat-scenarios}).
 
-The \textbf{key-transparency log server} maintains the verifiable directory and
+The \textbf{key-transparency directory server} maintains the verifiable directory and
 its append-only log, answers lookup and monitoring queries with cryptographic
 proofs, and publishes a signed tree head each epoch. It may be operated by the
 same party as the message-delivery server. The analysis assumes the worst case
@@ -141,7 +141,7 @@ if the warning commits and remains present at the catch-up read (\cref{ssec:desi
 \paragraph{A3: Network Man-in-the-Middle.} With no server collusion, a Dolev--Yao adversary may
 replace Bob's identity key and signed pre-key with an attacker-controlled pair whose signature
 verifies under the substituted identity. The attacker also replaces or withholds the optional
-one-time pre-key. The attacker can then derive the X3DH secret for the session it establishes
+one-time pre-key. The attacker can then derive the X3DH secret for the separate session established
 with Alice. By establishing separate sessions with Alice and Bob, the attacker causes the
 legitimate parties to hold different conversation secrets and derive disjoint dual-index
 labels. The substituted bundle also differs from the identity entry stored under Bob's global
