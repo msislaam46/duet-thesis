@@ -1,49 +1,28 @@
 \chapter{Introduction}\label{ch:intro}
 
-Private messaging is now part of everyday personal, professional, and civic communication.
-Signal~\cite{signal-home} is a widely used end-to-end encrypted messenger whose cryptographic design
-has influenced other messaging systems~\cite{signal-protocol-impact}. The Signal Protocol provides
-Signal's end-to-end encryption and is introduced in \cref{sec:bg-signal}. Signal's widespread use and
-the protocol's broader influence make it an important setting for studying key authentication in
-asynchronous private messaging.
+Private messaging carries personal, professional, and civic communication. Signal~\cite{signal-home}
+is a widely used end-to-end encrypted messenger whose protocol has influenced other messaging
+systems~\cite{signal-protocol-impact}, and it distributes public keys asynchronously through
+provider-operated infrastructure. Encryption protects a conversation only when the sender uses the
+intended recipient's authentic key, so a substituted binding can establish an encrypted channel with
+an attacker while the conversation still appears secure.
 
-For journalists, activists, abuse survivors, and others whose safety may depend on confidential
-communication, encryption alone is not sufficient. A message must be encrypted under the intended
-recipient's authentic key. A silent key substitution defeats that guarantee while leaving the
-conversation looking secure. An attacker may then read or alter communications without giving either
-user an immediate indication that the channel has been compromised. Detecting such substitution is
-therefore particularly important where a loss of confidentiality could cause serious harm.
+Signal's traditional defence is a manual Safety Number comparison over an independent channel. The
+comparison is sound when completed, but one study found that only about 14\% of unguided
+pair--application trials succeeded and that just two of twelve pairs completed the ceremony in any
+tested application~\cite{vaziripour2017}. A one-off comparison also does not monitor later key
+changes, so the ceremony must be repeated after every new identity binding.
 
-That guarantee depends on the authenticity of the public key used by the sender. In asynchronous
-messengers such as Signal, clients obtain this key from provider-operated infrastructure, making the
-public-key directory a critical trust point. If the infrastructure substitutes an attacker's key for
-the recipient's, the protocol may establish an encrypted channel with the attacker. This is a
-key-substitution, or ``fake-key,'' attack. The encryption layer cannot determine that the supplied key
-belongs to the attacker rather than the intended recipient.
+Key transparency commits public-key directory states to a verifiable, append-only history, and Signal
+deploys this approach through optional Automatic Key Verification~\cite{signal-akv}. The systems
+surveyed in \cref{ch:background} expose changes through self-monitoring, auditing, witnesses, or
+whole-directory verification, but none gives one party an automatic, conversation-specific channel for
+warning the other, and per-epoch monitoring makes a returning client's work grow with the number of
+missed epochs.
 
-The traditional defence is a manual Safety Number comparison in which the two users in a
-conversation compare a displayed code over a separate, out-of-band channel. The comparison is sound
-when completed, but users rarely complete it without guidance. In one study, only about 14\% of
-unguided pair--application trials succeeded. Just two of twelve pairs completed the comparison in any
-of the applications tested~\cite{vaziripour2017}. Even a successful comparison is a one-off check that
-says nothing about later key changes.
-
-A messaging service's public-key directory maps user identities to their public identity keys.
-\emph{Key transparency} (KT) addresses this limitation by committing directory states to a verifiable,
-append-only history. Clients can then verify that returned bindings belong to committed directory
-states and that the history they observe remains append-only. Signal uses KT in its optional Automatic
-Key Verification feature~\cite{signal-akv}.
-
-When a substituted binding is committed to the directory, the systems surveyed in \cref{ch:background}
-rely on self-monitoring, external auditing, witness validation, or whole-directory verification to
-expose it. None provides an automatic, conversation-specific channel through which one party can warn
-the other that the logged key is not authentic. Per-epoch monitoring also imposes a cost on returning
-clients that grows linearly with the number of missed epochs.
-
-Key verification in an asynchronous messenger should therefore operate automatically, warn both
-parties in band, and reject a missing or invalid proof instead of accepting the key silently. A
-returning client should also be able to verify missed history without downloading one proof for every
-missed epoch, while keeping proof sizes and local verification costs practical.
+A suitable design must therefore verify keys automatically, report substitution to both parties in
+band, reject missing or invalid proofs, and let an offline client verify missed history without
+retrieving one proof per epoch.
 
 \section{Aim and Approach}\label{sec:intro-aims}
 
@@ -103,12 +82,9 @@ the implemented controls from the residual risks that remain (\cref{ch:eval}).
 
 \section{Thesis Roadmap}\label{sec:intro-roadmap}
 
-\Cref{ch:background} surveys the Signal stack, transparency logs, verifiable key directories, and the
-ACKA framework, and derives the requirements addressed by DUET. \Cref{ch:threat} defines the threat
-model and security requirements. \Cref{ch:design} presents the design and instantiates ACKA.
-\Cref{ch:impl} describes the two-layer implementation and its Signal Desktop integration.
-\Cref{ch:eval} evaluates the system empirically and against the threat model.
-\Cref{ch:discussion,ch:lsepi,ch:conclusion} cover the discussion and future work, the legal, social,
-ethical, and professional dimensions, and the conclusion. The appendices contain the formal
-definitions, algorithms, implementation and test references, benchmark tables, security analyses,
-traceability material, and glossary.
+\Cref{ch:background} develops the technical background and design requirements, and \cref{ch:threat}
+defines the adversaries, attack scenarios, and security requirements. \Cref{ch:design,ch:impl,ch:eval}
+present the design, implementation, and evaluation. \Cref{ch:discussion} interprets the results and
+sets out the limitations and future work, while \cref{ch:lsepi,ch:conclusion} address professional
+responsibilities and conclude the thesis. The appendices preserve the formal, implementation,
+testing, benchmark, security-analysis, and extended-background detail.

@@ -8,87 +8,38 @@ together with the endpoint-compromise boundary.
 % ============================================================================
 \section{System Model and Actors}\label{sec:threat-system}
 
-DUET considers asynchronous communication between Alice and Bob over
-infrastructure operated by a service provider (\cref{sec:bg-signal}). Either party
-may be offline while the other sends a message or updates key material. The system
-model comprises four actors: the
-communicating clients, the messaging infrastructure, the key-transparency
-service, and independent auditors. Their respective responsibilities and trust
-assumptions define the attack surface considered throughout the remainder of this
-chapter.
+DUET models asynchronous communication between Alice and Bob through provider-operated messaging and
+key-transparency services. Either party may be offline. The four actors are the clients, the messaging
+server, the directory server, and an independent auditor.
 
-The \textbf{clients}, Alice ($A$) and Bob ($B$), run the messaging application on
-their own devices. They generate and hold their own secret keys, publish the
-corresponding public key material, and perform all verification locally. They are
-assumed honest: their devices are not under adversarial control (the boundary
-where this fails is scenario X1 in \cref{sec:threat-scenarios}). Clients may be
-resource-constrained and intermittently connected, which is why the cost of
-catching up after an offline period is a primary concern.
+The \textbf{clients} hold their private keys, publish public key material, and verify directory
+responses locally. They are honest but may be intermittently connected. The \textbf{messaging server}
+distributes X3DH pre-key bundles and relays ciphertext. The \textbf{directory server} stores the
+verifiable directory, publishes a signed tree head each epoch, and answers lookup and monitoring
+queries. The two servers may be one malicious operator, so the model assumes no separation or
+non-collusion between them. The \textbf{auditor} obtains signed heads and epoch disclosures
+independently, compares views, and replays declared transitions against committed roots. This
+independent vantage supports transition auditing and fork detection, and the client-side dual-index
+warning does not require an auditor.
 
-The \textbf{message-delivery and key-distribution server} is part of the provider's
-infrastructure. It stores and serves the X3DH pre-key bundles that Alice needs to
-start a session with Bob (\cref{ssec:bg-x3dh}) and relays ciphertext between the
-parties. A malicious provider can substitute a key through this delivery path or through the
-directory state it controls. A network attacker can separately alter the bundle while it is in
-transit (scenario A3, \cref{sec:threat-scenarios}).
+These actors define three trust boundaries, shown in \cref{fig:threat-arch}. The client depends on the directory server for availability but
+verifies every response. The network is controlled by a Dolev--Yao adversary that can intercept,
+modify, inject, replay, or drop traffic~\cite{dolevyao1983}. The auditor obtains its view separately
+from the client. A malicious operator may substitute keys, censor warning writes, or present different
+consistent histories~\cite{ietf-keytrans-architecture,yadav2022fakekey}.
 
-The \textbf{key-transparency directory server} maintains the verifiable directory and
-its append-only log, answers lookup and monitoring queries with cryptographic
-proofs, and publishes a signed tree head each epoch. It may be operated by the
-same party as the message-delivery server. The analysis assumes the worst case
-throughout: that the two are a single, possibly malicious, operator, which avoids
-relying on any assumption that they do not collude.
-
-The \textbf{auditors} observe the log from an independent vantage point. They compare signed
-tree heads and replay each epoch's declared updates against the committed directory root (the
-per-epoch transition audit of \cref{ch:design}). These checks detect split-view equivocation
-and undeclared mutations between epochs. The dual-index warning mechanism itself does not
-require an auditor, as clarified in \cref{sec:threat-assumptions}.
-
-The interactions between these actors define three trust boundaries (\cref{fig:threat-arch}). The
-client--server boundary is semi-trusted. The client depends on the server to answer requests but
-verifies each response rather than assuming honest behaviour. This follows the semi-trusted-directory
-model used by CONIKS and the IETF Key Transparency architecture (\cref{sec:bg-vkd,ssec:bg-keytrans}).
-The client--network boundary is untrusted. The design adopts the full active network adversary
-described below, the same adversary ACKA defends against in its continuous mode (\cref{sec:bg-acka}).
-The server--auditor boundary is independent. The auditor's value is that its view of the log is
-obtained separately from the client's. The network and infrastructure adversaries are modelled
-separately, and a deployment may face either or both at once.
-
-The network adversary follows Dolev and Yao~\cite{dolevyao1983}. It can intercept, modify, inject,
-delete, and replay messages and impersonate parties in transit. It does not independently control
-the server's directory.
-
-A malicious operator may substitute a key, censor a log write, or present different internally
-consistent directory views to different clients. This is the malicious-directory threat considered by
-the key-transparency systems surveyed in \cref{sec:bg-vkd} and by the IETF Key Transparency
-architecture~\cite{ietf-keytrans-architecture}. Documented fake-key attacks show why compromise or
-coercion of a key-distribution service is a practical concern~\cite{yadav2022fakekey}.
-
-\paragraph{What the Adversary Cannot Do.} The model assumes that the underlying cryptographic
-mechanisms remain secure. An external attacker cannot find SHA-256 collisions, compute the honest
-parties' X25519 shared secret without either party's private key, forge signatures under keys it
-does not control, or produce valid VRF proofs without the corresponding secret key. The malicious
-operator does hold the directory's VRF and signing keys, so it can evaluate global identity
-labels and sign new directory states. It cannot, however,
-produce a valid inclusion proof for a value absent from the root of the signed head being
-verified without violating the collision-resistance assumption underlying the authenticated
-data structure. Endpoint
-compromise remains outside the model and is represented by X1.
-
-The design supports two authentication modes, defined in \cref{ch:design}. Session mode uses
-per-conversation dual-index entries to authenticate session keys. Continuous mode uses a
-fingerprint at each ratchet epoch to authenticate the evolving Double Ratchet state
-(\cref{ssec:bg-ratchet}). The threat model applies to both modes, and mode-specific conditions
-are identified where necessary.
+The model assumes secure SHA-256, X25519, Ed25519, and VRF operations. The operator holds its own VRF
+and signing keys, but it cannot authenticate a value absent from a signed root without violating the
+authenticated structure's collision-resistance assumption. Endpoint compromise is
+\hyperref[sc:threat-x1]{scenario X1}, and the
+two authentication modes are defined in \cref{ssec:design-modes}.
 
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-threat-arch}
-\caption[System model and trust boundaries.]{System model and trust boundaries. Clients reach the service operator across a
-network controlled by a Dolev--Yao adversary. The operator provides message delivery
-and the key-transparency log and is treated as one semi-trusted party. An independent
-auditor observes the log from a separate vantage point.}
+\caption[System model and trust boundaries.]{System model and trust boundaries. The clients verify
+the provider's responses across an untrusted network, while an auditor observes the directory from an
+independent vantage.}
 \label{fig:threat-arch}
 \end{figure}
 
@@ -178,25 +129,16 @@ concealment attempts A2 and A4 and from the endpoint-compromise boundary X1.
 % ============================================================================
 \section{Assumptions}\label{sec:threat-assumptions}
 
-The following operational assumptions define the conditions under which the security requirements are
-evaluated.
+Honest client devices are not compromised. This is the \hyperref[sc:threat-x1]{X1} boundary. At least
+one honest auditor is needed for the transition audit and \hyperref[sc:threat-a4]{A4} fork detection,
+but not for the client checks used by \hyperref[sc:threat-a1]{A1},
+\hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5}.
 
-The \textbf{endpoint assumption} is that honest clients' devices are not
-compromised. This is the X1 boundary, and lifting it places the situation outside
-the scope of any key-transparency guarantee.
-
-The \textbf{auditor assumption} is that at least one honest auditor observes the log. It is required
-only for fork detection (A4) and the per-epoch transition audit (\cref{ch:design}), not for the
-dual-index warning mechanism. Detection of server-side substitution (A1) and network
-man-in-the-middle (A3) is performed by the communicating clients and depends on no auditor.
-
-The model uses trust on first use (TOFU) for the initial binding supplied by the
-directory.\label{sec:threat-fair} A malicious operator that substitutes the first directory
-entry before any authentic baseline exists can poison that initial binding. Later monitoring
-can detect changes from the pinned value but cannot establish that the original value was
-authentic. First-contact A3 remains detectable when the directory is honest because comparison
-with the global VRF-bound identity entry exposes the substituted bundle. The limitation of the
-initial directory binding is revisited in \cref{ch:discussion}.
+The initial directory binding follows trust on first use.\label{sec:threat-fair} A malicious operator
+can poison a binding before an authentic baseline exists. Later monitoring detects changes from the
+pinned value but cannot prove that the first value was authentic. First-contact A3 remains detectable
+when the directory is honest because the global VRF-bound identity entry exposes the substituted
+bundle. \Cref{ch:discussion} returns to this limitation.
 
 % ============================================================================
 \FloatBarrier
