@@ -79,8 +79,9 @@ $N=10^{3}$ the median is \SI{128.7}{\micro\second}. The increase to \SI{139.2}{\
 $N=10^{7}$ is \SI{10.5}{\micro\second}, or 8.2 percent, while $N$ grows by four orders of magnitude.
 The supported conclusion is that verification grows far more slowly than the directory, not that it
 is invariant. Prefix-only verification moves from \SI{25.9}{\micro\second} to
-\SI{26.4}{\micro\second} across the same range, which locates the residual growth in the copath and
-not in the fixed cryptographic work.
+\SI{26.4}{\micro\second} across the same range. The measurements therefore do not attribute most of
+the \SI{10.5}{\micro\second} increase to prefix-proof reconstruction, and this benchmark does not
+isolate the remaining cause.
 
 The cause of the $N=10^{7}$ full-search tail is unresolved. Its 95th percentile is
 \SI{4581.9}{\micro\second} against a median of \SI{441.7}{\micro\second}. The harness records no
@@ -113,7 +114,7 @@ proof remains a few hundred bytes and grows logarithmically (\cref{sec:bench-siz
 \label{fig:eval-catchup-plot}
 \end{figure}
 
-\subsection{Detection-Path Costs and Clean-Workflow Outcomes (M16, M17)}\label{ssec:eval-detection}
+\subsection{Detection Costs and Clean-Run Results (M16, M17)}\label{ssec:eval-detection}
 
 A verified lookup whose returned owner does not match the expected owner completes in
 \SI{27.8}{\micro\second}. The clean two-lookup path fetches and verifies both the self label and the
@@ -180,7 +181,7 @@ Lookup proof size & \textbf{817\,B median at $10^6$} (max 945, prefix\,+\,VRF, e
 Client lookup verification & \textbf{$\approx$\SI{128}{\micro\second} at $10^3$--$10^4$, \SI{139.2}{\micro\second} at $10^7$} (including VRF and STH sig) & \SI{159}{\micro\second} path at $10^7$ $+\sim$\SI{400}{\micro\second} sig $=$ \SI{559}{\micro\second} (derived), excluding VRF & not published \\
 Catch-up at $W{=}720$ & \textbf{320\,B} (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB derived & Monitor endpoint\newline No published byte figure \\
 Key-substitution detection & \textbf{automatic in-band peer warning (established conversations)\newline divergent labels and VRF anchor (first contact)} & manual Safety Number comparison and self-monitoring & optional AKV lookup and self-monitoring\newline no peer warning \\
-Key coverage & identity \textbf{and per-session labels} \newline per-epoch CEA entries in continuous mode & identity only & account identifier, phone number, and username hash \\
+Authenticated records & Identity-key bindings at global and session-derived slots, and per-epoch ratchet-key fingerprints in continuous mode & Identity-key bindings & Account-identifier, phone-number, and username-hash mappings \\
 Query privacy (operator) & No & No & No \\
 Outsider enumeration resistance (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF) \\
 \bottomrule
@@ -265,7 +266,7 @@ Directory enumeration & ECVRF-derived identity labels against outsider enumerati
 \end{tabularx}
 \end{table}
 
-The supporting analysis maps the scenarios to STRIDE in \cref{sec:sec-stride}, to MITRE ATT\&CK~\cite{mitre-attack} in
+The supporting analysis maps the scenarios to STRIDE~\cite{stride} in \cref{sec:sec-stride}, to MITRE ATT\&CK~\cite{mitre-attack} in
 \cref{sec:sec-mitre}, and to attack routes in \cref{sec:sec-routes}. The scripted
 detection sequence is in \cref{ssec:eval-timeline}.
 

@@ -51,7 +51,7 @@ GET  & \texttt{/dashboard}, \texttt{/internals}, \texttt{/integration}, \texttt{
 A separate administrative API, bound to an internal-only port, is used exclusively by the
 adversarial scenario suite to stage attacks; it is not part of the protocol. In the
 prototype these endpoints are unauthenticated, and a production deployment would place them
-behind account-layer authorization. \Cref{tab:apiref-admin} lists them.
+behind account-layer authorisation. \Cref{tab:apiref-admin} lists them.
 
 \begin{table}[ht]
 \centering
@@ -312,7 +312,7 @@ corresponds to the third-party auditor role in the IETF KeyTrans protocol~\cite{
 Independently of any auditor, the \texttt{monitor} module provides a writer-side persistence check that
 retains the inclusion proof and signed tree head from the epoch in which a warning commits, so that a
 later removal yields a bundle verifying against the server's own signed heads (\cref{alg:detect}).
-Authenticated ownership of raw-label writes is not implemented, so without account-layer authorization a
+Authenticated ownership of raw-label writes is not implemented, so without account-layer authorisation a
 malicious client could occupy an unclaimed peer slot before its legitimate owner writes to it. The one
 core cost that is not sublinear is the epoch commit, which snapshots the tree by a deep clone.
 

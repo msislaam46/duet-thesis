@@ -154,7 +154,8 @@ session establishment, which is a deliberate prototype choice rather than an ove
 
 Key-upload and retrieval paths register identity material, and a background monitor checks owner,
 peer, and warning slots. A warning payload carries an HKDF-derived MAC over the conversation secret,
-so a client can distinguish a warning authored by its peer from one injected by the operator. Signal
+so a client can distinguish a payload produced by a holder of that secret from a value injected by the
+operator. Since both parties derive the same MAC key, the MAC does not identify the writer. Signal
 service-ID strings are converted to canonical 16-byte account identifiers at the integration boundary,
 and phone-number identifiers are excluded. Verdicts cross Electron's isolated contexts through DOM
 events. The exact functions, interfaces, and event names are in \cref{sec:apiref-hooks}. The extended

@@ -37,7 +37,7 @@ signed, monitorable act: a uniform mismatch is rejected by any client that recom
 and serving different parameter sets to different clients is equivocation on the configuration
 commitment, exposed by the same cross-vantage comparison as \hyperref[sc:threat-a4]{A4}.
 
-\paragraph{Verification-chain currency.} The verification chain of \cref{ssec:design-verify} has three
+\paragraph{Verification-chain current-snapshot binding.} The verification chain of \cref{ssec:design-verify} has three
 properties the figure does not make evident. First, global lookups require the VRF check, while
 client-derived raw labels omit it and the requested-label binding stands on its own. Second, the
 signed head used for verification must be identical to the head the client independently obtained and
@@ -47,7 +47,7 @@ to a different head, even one carrying a valid signature, which prevents stale-s
 an equivocating server from substituting another signed view. Third, inclusion is pinned to the latest
 leaf: because each commit appends the new directory root as the log's last leaf, verification requires
 $\mathit{leaf\_index} = \mathit{tree\_size} - 1$ at exactly the signed tree size. Inclusion proves
-membership, not currency (RFC~9162~\cite[Section~2.1.3.2]{rfc9162}), and the currency pin closes that
+membership, not current-snapshot binding (RFC~9162~\cite[Section~2.1.3.2]{rfc9162}), and the current-snapshot check closes that
 gap.
 
 % ============================================================================

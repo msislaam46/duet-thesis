@@ -13,9 +13,8 @@ corresponding source to be provided under the licence. If a modified version is 
 service that supports remote interaction, Section~13 additionally requires that interacting users be
 offered the corresponding source. This prototype was evaluated locally rather than operated as a
 public service. UK law protects software as a literary work, so upstream copyright and licence notices are retained rather than
-rewritten~\cite{uk-software-copyright}. Upstream contribution would require a contributor
-licence agreement with the Signal Foundation~\cite{signal-foundation-structure,signal-cla}, a route
-not taken here.
+rewritten~\cite{uk-software-copyright}. An upstream contribution would require signing Signal's contributor licence
+agreement~\cite{signal-cla}, a route not taken here.
 
 The project uses publicly documented cryptographic algorithms and open-source implementations. Public
 availability does not by itself determine export-control classification, so this thesis makes no claim
@@ -67,14 +66,14 @@ attribution, and compliance with the university's academic-integrity requirement
 the relevant authority. Separating measured prototype results from unimplemented production
 requirements addresses the duty to the profession.
 
-The IET Rules of Conduct impose corresponding duties~\cite{iet-conduct}. Rule 2 requires accuracy and rigour,
-which is why every measurement in \cref{ch:eval} carries its scope. Rules 5 and 6 require working
+The IET Rules of Conduct impose corresponding duties~\cite{iet-conduct}. Through the Statement of Ethical Principles incorporated by Rule 2, the IET requires accuracy and
+rigour, which is why every measurement in \cref{ch:eval} carries its scope. Rules 5 and 6 require working
 within competence and maintaining knowledge, which is why the hand-written ECVRF is checked against
 the RFC~9381 vectors rather than assumed correct. Rule 26 requires that opinions state their
 limitations, which is why the thesis states the assumptions and qualifications attached to its
-security and performance claims. No defect affecting deployed Signal software was found. Any such
-defect would have been reported through Signal's security vulnerability channel rather than
-published~\cite{signal-security-report}.
+security and performance claims. The defects found during development were confined to the prototype. No finding indicated a defect in
+upstream Signal software. Any upstream defect would have been reported through Signal's security
+vulnerability channel rather than published~\cite{signal-security-report}.
 
 The resulting responsibilities and project responses are summarized in \cref{tab:lsepi-mapping}.
 

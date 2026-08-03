@@ -217,7 +217,7 @@ live background monitor (\cref{alg:detect}).
 Threat & KT control & Residual \\
 \midrule
 Forge a VRF label & ECVRF-EDWARDS25519-SHA512-TAI binding & none (cryptographic) \\
-Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the PoC, so a first write can be planted; the owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorization (\cref{ch:discussion}) \\
+Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the PoC, so a first write can be planted; the owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorisation (\cref{ch:discussion}) \\
 Forge a Merkle proof & SHA-256 collision resistance & negligible ($2^{128}$) \\
 Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \bottomrule
@@ -305,7 +305,7 @@ Threat & KT control & Residual \\
 \midrule
 Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
 Server fabricates a divergent tree head & \emph{detected}, not prevented: the server holds the STH key, so the signature does not stop it; a fabricated divergent head is caught by the append-only consistency check and the cross-vantage fork check & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
-Client escalates to server writes & partly prevented, partly \emph{detected}: write-once cryptographically rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration; a first write to an empty slot by a party who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorization on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
+Client escalates to server writes & partly prevented, partly \emph{detected}: write-once cryptographically rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration; a first write to an empty slot by a party who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorisation on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
 \bottomrule
 \end{tabular}
 \end{table}

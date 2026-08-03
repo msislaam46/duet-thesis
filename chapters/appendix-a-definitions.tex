@@ -128,8 +128,8 @@ before trusting any proof anchored to it. Used in \cref{ssec:design-verify,ssec:
 
 This section defines the verifiable random function (VRF) that produces the directory's
 privacy-preserving lookup labels. The VRF lets the server derive a pseudorandom label for an
-identifier and prove that derivation correct, so a client can trust the label without the server
-being able to enumerate the directory. It underpins the global-slot index of \cref{ssec:design-labels}.
+identifier and prove that derivation correct. A client can therefore verify the label, while outsiders
+without the VRF secret key cannot compute labels for guessed identifiers. It underpins the global-slot index of \cref{ssec:design-labels}.
 
 \begin{definition}[Verifiable random function]\label{def:vrf}
 \intuition{A keyed function whose outputs look random to everyone but the key holder, yet come with a
@@ -153,8 +153,8 @@ For \emph{full uniqueness}, for every (even adversarially chosen) public key $\m
 $\alpha$ there is at most one $\beta$ for which some proof verifies. For \emph{pseudorandomness}, no
 probabilistic polynomial-time adversary wins the experiment $\Expt{vrf\text{-}prand}{\Adv}$ of
 RFC~9381~\cite{rfc9381} with advantage non-negligible in $\secpar$: the adversary, given
-$\mathit{pk}$ and a $\VRFeval$ oracle, must distinguish the true output $\beta^\star=\VRFeval(\mathit{sk},\alpha^\star)$
-on a fresh challenge $\alpha^\star$ from a uniform string. Uniqueness underlies label integrity
+$\mathit{pk}$ and a $\VRFeval$ oracle, must distinguish the true challenge output $\beta^\star$, obtained as the
+first component of $\VRFeval(\mathit{sk},\alpha^\star)$ for a fresh $\alpha^\star$, from a uniform string. Uniqueness underlies label integrity
 in the verification chain (G1); pseudorandomness underlies
 directory privacy (G3).
 \end{definition}
@@ -318,7 +318,7 @@ $\mathsf{CheckWarning}(\lblwarn,\STH_t)$ returns \textsc{Alert} if an inclusion 
 non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{Safe} if a non-inclusion proof
 (\cref{def:noninclusion}) establishes the slot is empty; a response with neither valid proof is
 rejected. The \textsc{Alert} verdict does not depend on the payload MAC of
-\cref{def:dualindex-write}: a value whose MAC verifies is an authentic peer warning, while
+\cref{def:dualindex-write}: a value whose MAC verifies was produced by a holder of the shared conversation secret, while
 unauthenticated data at a slot only the two parties can derive is itself evidence of misbehaviour,
 so either alerts (\cref{alg:dualindex}). A peer key is accepted only when the peer-lookup proof
 verifies through the chain of \cref{ssec:design-verify} and $\mathsf{CheckWarning}$ returns
@@ -366,8 +366,7 @@ the collision resistance of the Merkle construction.
 \begin{definition}[Same-head label consistency and G1]\label{def:g1-consistency}
 \intuition{Under one signed head the peer-lookup label and the owner's self-check label are the same
 slot, so a substituted peer key cannot pass the owner's self-check. Full G1 detection additionally
-uses the warning channel and the scenario-specific controls summarized in \cref{tab:threat-goals}. A
-quantified reduction remains future work.}
+uses the warning channel and the scenario-specific controls summarized in \cref{tab:threat-goals}.}
 The static core of G1 (Key-Substitution Detection) is a same-head consistency property
 (\cref{lem:dualindex-consistency}). Fixing a signed head $\STH_t$, the shared label
 $\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$ cannot carry two verifying values, by soundness
@@ -377,7 +376,7 @@ even if the adversary knows $\sharedS$.
 G1 in the full model of \cref{ch:threat} additionally relies on three properties with distinct
 adversary scopes, each argued separately. The raw dual-index labels must be unpredictable to the
 operator before first use, which needs HKDF (\cref{def:hkdf}) as a PRF keyed by an unknown,
-high-entropy $\sharedS$. Authenticated peer warnings need the unforgeability of the warning-MAC. The
+high-entropy $\sharedS$. Warning authenticity against operator injection needs the unforgeability of the warning-MAC. The
 separate global VRF-indexed path rests on the uniqueness of the VRF (\cref{def:vrf-security}) rather
 than on label secrecy.
 
@@ -387,5 +386,5 @@ post-commit deletion is caught by the transition audit and the retained persiste
 write-once policy prevents overwriting a committed warning. Split-view equivocation is handled by the
 cross-vantage auditor (\cref{ssec:design-detection}).
 
-A single quantified reduction combining these properties is left to future work (\cref{ch:discussion}).
+A complete formal proof combining these properties remains future work (\cref{ch:discussion}).
 \end{definition}

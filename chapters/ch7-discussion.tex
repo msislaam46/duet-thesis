@@ -7,7 +7,7 @@ completing, deploying, and extending the system.
 \section{Discussion}\label{sec:disc-discussion}
 
 DUET adds automatic in-band substitution detection through additional label-bound lookups rather than
-a new proof family, so it preserves the lookup proof's asymptotic size and verification cost. The
+a new proof family. Each lookup therefore retains the same asymptotic proof size and verification cost. The
 guarantee depends on domain-separated labels, proof-verified absence, warning persistence, and
 transition validation. Under \hyperref[sc:threat-a3]{A3}, divergent conversation secrets produce different labels, while the
 global VRF-bound identity entry supplies an independent binding.
@@ -21,7 +21,7 @@ The construction applies beyond Signal wherever a messenger supplies a semi-trus
 conversation secret, with continuous mode additionally needing public ratchet keys and secret epoch
 inputs. Session mode has the smaller integration and write surface, while continuous mode
 authenticates each ratchet epoch at a higher write rate. Both remain bounded by trust on first use,
-endpoint security, and the need for an independent vantage to expose a consistent fork.
+endpoint security, and the need for an independent vantage to expose two internally consistent views.
 
 % ============================================================================
 \section{Limitations}\label{sec:disc-limitations}
@@ -40,8 +40,9 @@ second-vantage source.
 
 The prototype also lacks query privacy from the operator, write-rate limits, published-head timeouts,
 and gossip-based detection of omitted proofs. A malicious peer can publish a valid but false warning
-because the payload MAC authenticates its author rather than the truth of the report. Deployment
-therefore requires attributable warning records and an abuse policy.
+because the shared MAC shows only that a holder of the conversation secret produced the payload. It
+does not establish that the report is true or identify the writer. Deployment therefore requires
+authenticated writer identities, attributable warning records, and an abuse policy.
 
 The implementation has further limitations. It runs on one machine, stores the directory in memory,
 and deep-clones the current tree when committing an epoch. The Signal integration uses a deterministic
@@ -72,7 +73,7 @@ Ratchet chain key from libsignal. Replacing the current stand-ins changes the in
 label and CEA constructions rather than their downstream proof formats. The live conversation secret
 is necessary to support the \hyperref[sc:threat-a3]{A3} label-unpredictability claim.
 
-The raw-label interface must also authenticate the party authorized to make the first write, preventing
+The raw-label interface must also authenticate the party authorised to make the first write, preventing
 a malicious client from occupying an empty conversation slot before its legitimate owner. Subsequent
 replacement and deletion remain governed by transition auditing and persistence evidence.
 

@@ -20,6 +20,7 @@ including the missing, unparseable, and failing consistency-proof cases that ret
 \cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
 verdicts. The unit, cross-language, and TypeScript tests are catalogued in the tables that follow. The
 \texttt{kt\_auditor} binary tests are summarized by category above rather than listed individually.
+\Cref{fig:impl-testing} summarizes the five evidence classes.
 
 \begin{figure}[ht]
 \centering
@@ -149,8 +150,8 @@ Test & Property checked \\
 \texttt{verify\_search\_result\_raw\_dual\_index} & the raw (VRF-less) chain verifies dual-index lookups \\
 \texttt{raw\_verification\_rejects\_proof\_for\_a\_different\_label} & the raw verifier rejects a genuine proof presented for a label other than the one queried (label binding without a VRF) \\
 \texttt{verify\_search\_result\_against\_binds\_to\_head} & the head-bound verifier rejects a valid proof served against any head other than the caller's pinned, signed head (the head binding, \cref{ssec:design-verify}) \\
-\texttt{against\_verifier\_rejects\_stale\_snapshot} & the head-bound verifier refuses an old-leaf inclusion presented under a newer signed head (currency pin) \\
-\texttt{snapshot\_is\_current\_pins\_the\_last\_leaf} & the currency check pins the last committed leaf, so a superseded snapshot is not accepted as current \\
+\texttt{against\_verifier\_rejects\_stale\_snapshot} & the head-bound verifier refuses an old-leaf inclusion presented under a newer signed head (current-snapshot check) \\
+\texttt{snapshot\_is\_current\_pins\_the\_last\_leaf} & the current-snapshot check pins the last committed leaf, so a superseded snapshot is not accepted as current \\
 \texttt{verify\_many\_users\_end\_to\_end} & the chain holds across a populated directory \\
 \midrule
 \texttt{sth\_signature\_verifies} & a correctly signed tree head is accepted \\
@@ -303,7 +304,7 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & \texttt{SAFE} when the fetched key matches the logged key \\
 \texttt{remote\_kt\_client} & \textsc{key\_mismatch} when the fetched key differs from the logged key \\
 \texttt{remote\_kt\_client} & \textsc{key\_not\_in\_log} (proven non-inclusion) for an unregistered peer \\
-\texttt{remote\_kt\_client} & a stale old-leaf inclusion under the current STH is refused (currency pin) \\
+\texttt{remote\_kt\_client} & a stale old-leaf inclusion under the current STH is refused (current-snapshot check) \\
 \texttt{remote\_kt\_client} & \texttt{matches=true} after honest registration \\
 \texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites the client's slot \\
 \texttt{remote\_kt\_client} & kind commitment: a present raw leaf tagged \textsc{mutable} is rejected (owner-side kind check) \\
@@ -426,7 +427,7 @@ Suite & Test \\
 \texttt{aci\_integration} & registers, verifies clean (\texttt{SAFE}), and monitors the dual-index path clean \\
 \texttt{aci\_integration} & detects a substituted lookup slot via \texttt{detectMitm} (dual-index) \\
 \texttt{aci\_integration} & flags a mismatched fetched key as \texttt{KEY\_MISMATCH} (global path) \\
-\texttt{aci\_integration} & a tampered slot makes Alice publish a warning that Bob authenticates \\
+\texttt{aci\_integration} & a tampered slot makes Alice publish a warning whose MAC Bob verifies \\
 \midrule
 \texttt{pni\_getkeys\_silence} & a PNI calls none of verify, dispatch, or record \\
 \texttt{pni\_getkeys\_silence} & an ACI drives verify, dispatch (\texttt{kt:verified}), and record \\
