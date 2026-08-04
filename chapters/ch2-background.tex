@@ -224,18 +224,18 @@ Parakeet~\cite{malvai2023parakeet} & identity key & self-monitoring & No & bound
   witnesses \\
 ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Warning only after account reset & per-update &
   external auditor \\
-OPTIKS~\cite{optiks2024} & identity key (+ devices) & self-monitoring (single proof, common case) & No &
-  verify before old periods are deleted & $\ge$1 auditor + bulletin board \\
+OPTIKS~\cite{optiks2024} & identity key (and devices) & self-monitoring (single proof, common case) & No &
+  verify before old periods are deleted & $\ge$1 auditor and bulletin board \\
 PRISM~\cite{pusch2025prism} & account keys & whole-directory verification & No &
   constant-size proof & zk-rollup on a data-availability layer \\
-WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & public auditing & No & Not applicable in the cited configuration\newline self-monitoring disabled & signed root + public write-once (WORM) audit log \\
+WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & public auditing & No & Not applicable in the cited configuration\newline self-monitoring disabled & signed root and public write-once (WORM) audit log \\
 Signal KT~\cite{signal-kt-server,signal-akv} & account identifier $\to$ identity key, phone-number and username-hash mappings & self-monitoring and audit interfaces, optional user-triggered AKV & No &
   monitoring endpoint\newline offline-window policy not documented in the cited source & signed head and public audit endpoints\newline independent auditor deployment not documented in the cited source \\
 Proton KT~\cite{goebel2023proton} & email address $\to$ Signed Key List (SKL) fingerprint & self-audit and external audit & No &
   self-audit within 90 days & CT logs and external auditing \\
 Google KT~\cite{google-kt} & account keys & self-monitoring (experimental, archived 2024) & No & Not documented in the cited source & CONIKS map in a CT log \\
 Apple CKV~\cite{apple-ckv} & account keys, device keys, and opt-in state & automatic device verification and E2E-encrypted CloudKit
-  cross-check & No & Not documented in the cited source & on-device consistency + encrypted log-hash gossip + internal audit \\
+  cross-check & No & Not documented in the cited source & on-device consistency, encrypted log-hash gossip, and internal audit \\
 \bottomrule
 \end{tabular}
 

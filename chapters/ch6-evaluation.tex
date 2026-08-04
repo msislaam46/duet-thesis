@@ -179,7 +179,7 @@ so each comparison below states its arithmetic rather than quoting a headline fi
 Dimension & \textbf{DUET (measured)} & CONIKS~\cite{melara2015coniks} & Signal KT~\cite{signal-kt-server} \\
 \midrule
 Lookup proof size & \textbf{817\,B median at $10^6$} (max 945, prefix and VRF, excluding STH) & 1{,}216\,B at $2^{32}$, 768--832\,B at $10^6$ derived (proof with and without signature) & 8{,}192\,B fixed sibling copath only (256$\times$32, no VRF) \\
-Client lookup verification & \textbf{$\approx$\SI{128}{\micro\second} at $10^3$--$10^4$, \SI{139.2}{\micro\second} at $10^7$} (including VRF and STH sig) & \SI{159}{\micro\second} path at $10^7$ $+\sim$\SI{400}{\micro\second} sig $=$ \SI{559}{\micro\second} (derived), excluding VRF & not published \\
+Client lookup verification & \textbf{$\approx$\SI{128}{\micro\second} at $10^3$--$10^4$, \SI{139.2}{\micro\second} at $10^7$} (including VRF and STH signature) & a \SI{159}{\micro\second} path at $10^7$ plus about \SI{400}{\micro\second} for the signature, about \SI{559}{\micro\second} in total (derived), excluding VRF & not published \\
 Catch-up at $W{=}720$ & \textbf{320\,B} (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB derived & Monitoring endpoint\newline No published byte figure \\
 Key-substitution detection & \textbf{automatic in-band peer warning (established conversations)\newline divergent labels and VRF anchor (first contact)} & manual Safety Number comparison and self-monitoring & optional AKV lookup and self-monitoring\newline no peer warning \\
 Authenticated records & Identity-key bindings at global and session-derived slots, and per-epoch ratchet-key fingerprints in continuous mode & Identity-key bindings & Account-identifier, phone-number, and username-hash mappings \\

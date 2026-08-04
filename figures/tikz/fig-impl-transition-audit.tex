@@ -25,7 +25,7 @@
   \draw[edge] (a4) -- node[left,font=\tiny]{no: incomplete} (gob);
 
   % right terminal column: alarms, no-op, and the grown-head consistency step
-  \node[bad,right=12mm of a2] (t2) {reject (rollback / fork)};
+  \node[bad,right=12mm of a2] (t2) {reject (rollback or fork)};
   \draw[edge] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
   \node[proc,right=12mm of a3,text width=3.7cm] (a3p) {verify RFC~9162 consistency proof};
   \draw[edge] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
@@ -56,7 +56,7 @@
   good/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm,draw=green!50!black,fill=green!5}]
 
   \node[proc] (b0) {\textbf{(b) transactional replay}\\(entered from (a))\\clone the committed replica into a candidate; $\mathit{cursor}\gets\mathit{audited\_epochs}$};
-  \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$ (cursor\,$\to$\,current, incl.\ $e{=}0$): fetch delta$_e$; replay each Insert / Rotate (reject a duplicate insert (A1) or an immutable rotation); require candidate root $=$ declared root$_e$};
+  \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$ (cursor\,$\to$\,current, incl.\ $e{=}0$): fetch delta$_e$; replay each Insert or Rotate (reject a duplicate insert (A1) or an immutable rotation); require candidate root $=$ declared root$_e$};
   \node[cv,below=of b1] (bcv) {\textbf{cross-vantage:} valid second-vantage head available?};
   \node[cv,below=6mm of bcv] (bcmp) {diverges from the primary head? (same-epoch different root, or a failed between-vantage consistency proof)};
   \node[good,below=6mm of bcmp] (b2) {commit replica, cursor, \emph{and} baseline atomically};
@@ -68,8 +68,8 @@
   \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard candidate, retry (not a fork)};
   \draw[edge] (b1.east) -- node[above,font=\tiny,fill=white,inner sep=1pt]{replay fail} (r2.west);
   \draw[edge] (b1.north east) -- node[above,font=\tiny,fill=white,inner sep=1pt,pos=0.4]{fetch fail} (r1.west);
-  \node[bad,right=12mm of bcmp] (r3) {vantages diverge: reject (equivocation / fork)};
+  \node[bad,right=12mm of bcmp] (r3) {vantages diverge: reject (equivocation or fork)};
   \draw[edge] (bcmp.east) -- node[above,font=\tiny]{yes} (r3.west);
   \coordinate (byp) at ([xshift=-28mm]bcv.west);
-  \draw[edge] (bcv.west) -- node[above,font=\tiny,align=center]{no / invalid:\\no G4 verdict} (byp) |- (b2.west);
+  \draw[edge] (bcv.west) -- node[above,font=\tiny,align=center]{no or invalid:\\no G4 verdict} (byp) |- (b2.west);
 \end{tikzpicture}

@@ -23,8 +23,8 @@
   % bands
   \node[band] at (-5.2,5.3) {API};
   \node[band] at (-5.2,3.8) {server core};
-  \node[band,align=right] at (-5.2,2.1) {authenticated\\structures and crypto};
-  \node[band] at (-5.2,0.5) {base};
+  \node[band,align=right] at (-5.2,2.1) {authenticated data\\structures and cryptography};
+  \node[band] at (-5.2,0.5) {hashing layer};
   % server dependency edges
   \draw[->] (api) -- (dir);
   \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (dir) -- (\n);}

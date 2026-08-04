@@ -23,7 +23,7 @@ contributions of \cref{sec:intro-contributions}.
 \toprule
 RQ & Design claim & Mechanism & Test or scenario & Benchmark & Evidence \\
 \midrule
-RQ1 & substitution is detected, in band (bidirectional for A1/A5 after honest establishment; local divergent-label plus global VRF comparison for A3) &
+RQ1 & substitution is detected, in band (bidirectional for A1 and A5 after honest establishment; local divergent-label plus global VRF comparison for A3) &
 dual-index warning scheme for A1; local divergent-label detection and the global VRF-anchored entry for A3 (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
 scenarios A1--A5 (\cref{tab:tests-adversarial}); dual-index derivation tests (\cref{tab:tests-rust-prim}) &
 M17 & \cref{sec:eval-security}: scenarios A1--A5 produce the expected detection outcomes in the implemented suite; M17 asserts a clean verdict with no warning on every clean workflow \\
@@ -43,7 +43,7 @@ Not applicable & \cref{sec:impl-signal,ssec:impl-demo}: the verifier runs inside
 Supporting & equivocation (split-view) is caught from a second vantage &
 cross-vantage auditor (\cref{sec:design-acka}) &
 scenario A4; auditor equivocation tests (\cref{sec:tests-rust}) &
-M12 & \cref{ssec:eval-auditor}: \SI{27.1}{\micro\second}/check (median; local signed-head fork comparison) \\
+M12 & \cref{ssec:eval-auditor}: \SI{27.1}{\micro\second} per check (median; local signed-head fork comparison) \\
 Supporting & continuous mode trades write volume for finer detection &
 CEA continuous mode (\cref{ssec:design-modes}) &
 M13 mode benchmark (\cref{sec:bench-modes}) &
@@ -93,7 +93,7 @@ Requirement & Associated threat & Security mechanism & Auditor? \\
 \midrule
 G1 key-substitution detection & A1, A3, A5 & A1 and A5 use self-checks and the dual-index warning.\newline A3 uses divergent labels and the global VRF-bound identity entry.\newline A5 also uses identity re-fetch and predecessor cross-signature. & no \\
 G2 offline-window consistency & general rewriting & windowed consistency proofs & no \\
-G3 directory privacy & enumeration / recon & VRF-derived labels & no \\
+G3 directory privacy & directory enumeration & VRF-derived labels & no \\
 G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\
 \bottomrule
 \end{tabularx}
