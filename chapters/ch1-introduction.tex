@@ -2,8 +2,8 @@
 
 Private messaging carries personal, professional, and civic communication. Signal~\cite{signal-home}
 is an end-to-end encrypted messenger whose protocol has influenced other messaging
-systems~\cite{signal-protocol-impact}, and it distributes public keys asynchronously through
-provider-operated infrastructure~\cite{x3dh}. Encryption protects a conversation only when the sender uses the
+systems~\cite{signal-protocol-impact}. It uses server-hosted pre-key bundles for asynchronous
+session establishment~\cite[Sections~3.1--3.3]{x3dh}. Encryption protects a conversation only when the sender uses the
 intended recipient's authentic key, so a substituted binding can establish an encrypted channel with
 an attacker while the conversation still appears secure.
 
