@@ -162,8 +162,8 @@ canonically ordered identities
 Only the two conversation parties can produce or verify this MAC. The warning label is unpredictable
 to the operator until one party reveals it in a request, so any \emph{unauthenticated} value returned
 at that location is itself suspicious and still raises a warning. After the operator observes the
-label, the MAC allows the peer to distinguish an authentic warning from an operator-injected value
-(\cref{ssec:design-properties}).
+label, a valid MAC shows that a holder of the shared key produced the value rather than the operator.
+Since both parties derive the same key, it does not identify the writer (\cref{ssec:design-properties}).
 
 An append-only log authenticates committed roots but does not by itself constrain directory
 transitions. DUET therefore combines write-once labels, per-epoch transition auditing, and retained

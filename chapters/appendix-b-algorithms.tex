@@ -245,7 +245,7 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}
   \lIf{$v=\bot$}{\KwRet \textsc{Safe}}
   $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$\;
-  \lIf{$\textsf{MAC-Verify}(k_{\mathrm{mac}},v)$}{\KwRet \textsc{Alert} \tcp*[f]{authentic peer warning}}
+  \lIf{$\textsf{MAC-Verify}(k_{\mathrm{mac}},v)$}{\KwRet \textsc{Alert} \tcp*[f]{valid pair-bound MAC from a shared-key holder}}
   \KwRet \textsc{Alert} \tcp*{unauthenticated data at an unpredictable slot: itself evidence of misbehaviour}
 }
 \end{algorithm}
