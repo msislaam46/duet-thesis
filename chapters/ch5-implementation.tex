@@ -9,7 +9,7 @@ constraints, and reproducibility.
 \section{Architecture and Language Boundary}\label{sec:impl-strategy}
 
 The standalone \texttt{duet} crate implements the Rust component. An initial Python version
-prototyped the core constructions but was too slow for the required large-directory benchmark campaign. The
+prototyped the core constructions but was too slow for the required large-directory benchmarks. The
 measured implementation was therefore rebuilt in Rust, which also supports libsignal integration and
 established cryptographic libraries for timing-sensitive operations. Rust allows the crate to be
 measured independently of Signal and libsignal and is also used by the Parakeet and Meta AKD
