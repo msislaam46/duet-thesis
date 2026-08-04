@@ -7,9 +7,7 @@
 \newcommand{\lwarn}{\ell_{\mathsf{warn}}}
 \SetKwProg{Fn}{function}{:}{}
 \SetKw{Req}{req}
-% Algorithms are set a size smaller than the 1.5-spaced body, as code listings
-% conventionally are: at body size the longest of them is taller than the text
-% block, and `[H]` placement leaves no room to break it.
+% A smaller font and fixed placement keep each procedure on one page.
 \SetAlFnt{\small}
 \SetAlCapFnt{\small}
 \SetAlCapNameFnt{\small}
@@ -31,8 +29,8 @@ purpose of each.
 Algorithm & Purpose \\
 \midrule
 \ref{alg:merklelog}~Merkle Log Tree & append-only log with inclusion and consistency proofs \\
-\ref{alg:prefix}~Sparse Prefix Tree & label-keyed authenticated map with (non-)inclusion proofs \\
-\ref{alg:server}~KT Server & combines log and prefix tree; serves signed heads and proofs \\
+\ref{alg:prefix}~Sparse Prefix Tree & label-keyed authenticated map with inclusion and non-inclusion proofs \\
+\ref{alg:server}~Directory Server & combines log and prefix tree; serves signed heads and proofs \\
 \ref{alg:dualindex}~Dual-Index Derivation & derives lookup and warning labels from the shared secret \\
 \ref{alg:client}~Client Verification & verifies a lookup end to end; registers, retrieves, catches up \\
 \ref{alg:detect}~MitM Detection & raises and persists the dual-index warning \\
@@ -47,21 +45,16 @@ leaf hashes as $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and an internal node as
 $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. The operator $\concat$ denotes byte
 concatenation. Identities are fixed-width 16-byte service IDs; this is a precondition of the
 dual-index derivation (Algorithm~\ref{alg:dualindex}), since without a fixed width the
-$\mathit{id_{self}}\concat\mathit{id_{peer}}$ split would be ambiguous, and the reference
+$\mathit{id_{self}}\concat\mathit{id_{peer}}$ split would be ambiguous, and the Rust
 implementation enforces it at the API boundary.
 
-% Set tighter than the 1.5-spaced body (with the \SetAlFnt{\small} above), as
-% code listings conventionally are: at body size and spacing the longest
-% algorithm is taller than the text block, and `[H]` leaves no room to break it.
-% Both levers are needed — with \small alone, 1.0 still overflows one page by
-% ~23pt. 0.92 is the loosest value that clears every page; the binding
-% constraint is Alg. 5 (Client Verification), the longest in the appendix.
+% A smaller font and fixed placement keep each procedure on one page.
 % NOTE: a bare \small inside an algorithm has no effect; algorithm2e takes its
 % body font from \AlFnt, so it must be set via \SetAlFnt.
 \begin{spacing}{1.0}
 
 \clearpage
-\paragraph{The Merkle log (Algorithm~\ref{alg:merklelog}).} The append-only log layer under every
+\paragraph{The Merkle log (Algorithm~\ref{alg:merklelog}).} The Merkle log is the append-only layer beneath every
 signed head. It fixes the RFC~9162~\cite{rfc9162} tree-hash and proof conventions used everywhere else: inclusion
 proofs bind one leaf to a root, and consistency proofs bind an old root to a newer one, the
 primitive that windowed catch-up (\cref{sec:design-windowed}) and the auditor's fork check both
@@ -166,13 +159,13 @@ non-inclusion proof establishes that a warning slot is empty rather than merely 
 \end{algorithm}
 
 \clearpage
-\paragraph{The server (Algorithm~\ref{alg:server}).} Composes the two structures into the
+\paragraph{The server (Algorithm~\ref{alg:server}).} The directory server composes the two structures into the
 key-transparency service: raw-label writes are write-once, \textsf{CommitEpoch} appends the prefix
 root to the log and signs the head (binding epoch, size, root, timestamp, and the policy
 commitment), and \textsf{Search} answers with the value plus the full proof chain a verifier needs.
 \textsf{SearchByUserId} adds the VRF step (ECVRF, RFC~9381~\cite{rfc9381}) that derives global labels privately.
 \begin{algorithm}[H]
-\caption{Key Transparency Server}\label{alg:server}
+\caption{Key-Transparency Directory Server}\label{alg:server}
 \KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$}
 \Fn{\normalfont\textsf{UpdateByUserId}($\mathit{user\_id},pk$)}{
   $(\beta,\pi_{\mathrm{vrf}})\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$ \tcp*{ECVRF, RFC 9381}
@@ -282,7 +275,7 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
   $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   $\mathit{server}.\textsf{UpdateRaw}(\lself,pk_{\mathit{self}})$\;
-  $\mathit{sth}\gets \mathit{server}.\textsf{CommitEpoch}()$ \tcp*{PoC only; a deployed client waits for the epoch boundary}
+  $\mathit{sth}\gets \mathit{server}.\textsf{CommitEpoch}()$ \tcp*{prototype only; a deployed client waits for the epoch boundary}
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth})$;\ \ \Req $v=pk_{\mathit{self}}$\;
   $\mathit{last\_sth}\gets \mathit{sth}$\;
   \KwRet $(\lself,\lpeer,\lwarn)$\;
@@ -376,7 +369,7 @@ persistence component, retained evidence.
       \textbf{raise} SecurityAlert\;
     }
   }
-  $\textsf{PersistenceCheck}(\mathit{server})$ \tcp*{reference step (tested in isolation); not wired into the PoC's live loop}
+  $\textsf{PersistenceCheck}(\mathit{server})$ \tcp*{persistence step (tested in isolation); not wired into the prototype's live loop}
 }
 \end{algorithm}
 
