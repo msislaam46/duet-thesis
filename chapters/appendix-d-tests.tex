@@ -44,11 +44,11 @@ correctness tests and the requirement each protects. Requirements G1--G4 are def
 \toprule
 Test & Component & Property checked & Why it matters \\
 \midrule
-exhaustive inclusion + forgeries & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a forged or uncommitted response cannot pass verification; detecting A1 then rests on comparing the proven value against the expected key \\
+exhaustive inclusion and forgery tests & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a forged or uncommitted response cannot pass verification; detecting A1 then rests on comparing the proven value against the expected key \\
 exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (G2; rollback/rewrite rejection) \\
 RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & directory privacy follows from the VRF assumption (G3); the vectors establish implementation conformance \\
 cross-implementation vectors & \texttt{dual\_index} & Rust and TypeScript derive identical labels & both parties must address one shared warning slot (G1) \\
-STH signature (happy / tamper / wrong-key) & \texttt{server} & only a correctly signed head is accepted & signed-head authenticity, the prerequisite of every downstream verdict \\
+STH-signature acceptance, tampering, and wrong-key tests & \texttt{server} & only a correctly signed head is accepted & signed-head authenticity, the prerequisite of every downstream verdict \\
 equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\Rightarrow$ fork & split-view detection (A4, G4) \\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
 windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding: a stale or foreign signed head is rejected \\

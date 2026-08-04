@@ -218,7 +218,7 @@ live background monitor (\cref{alg:detect}).
 Threat & KT control & Residual \\
 \midrule
 Forge a VRF label & ECVRF-EDWARDS25519-SHA512-TAI binding & none (cryptographic) \\
-Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the PoC, so a first write can be planted; the owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorisation (\cref{ch:discussion}) \\
+Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the prototype, so a first write can be planted; the owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorisation (\cref{ch:discussion}) \\
 Forge a Merkle proof & SHA-256 collision resistance & approximately $2^{128}$ generic collision-security work \\
 Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \bottomrule
@@ -291,9 +291,9 @@ Leak the shared secret from a label & HKDF-Expand (dual-index labels) and ECVRF 
 Threat & KT control & Residual \\
 \midrule
 Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented; freshness alarm left to deployment} \\
-Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve; a refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the PoC; counted as an availability residual} \\
+Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve; a refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the prototype; counted as an availability residual} \\
 Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & \emph{surfacing beyond the prototype warning UI (for example an out-of-band alert) left to deployment} \\
-Flood with fake registrations & deployment-level rate limiting & \emph{not implemented in the PoC (operational risk)} \\
+Flood with fake registrations & deployment-level rate limiting & \emph{not implemented in the prototype (operational risk)} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -321,7 +321,7 @@ semi-trusted-server model: the operator necessarily learns the label-to-user map
 Disclosure), a residual shared by the standard key-transparency literature (CONIKS~\cite{melara2015coniks},
 the IETF Key Transparency architecture~\cite{ietf-keytrans-protocol}) and not addressed by
 ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather than
-building a distrusted one. The other three are availability functions the proof-of-concept does not
+building a distrusted one. The other three are availability functions the prototype does not
 implement: write rate-limiting, a published-epoch staleness timeout, and a gossip transport for
 proof-omission. Each is a deployment-layer engineering task rather than a gap in the scheme
 (\cref{ch:discussion}).
