@@ -25,11 +25,11 @@
   \draw[edge] (a4) -- node[left,font=\tiny]{no: incomplete} (gob);
 
   % right terminal column: alarms, no-op, and the grown-head consistency step
-  \node[bad,right=12mm of a2] (t2) {ALARM (rollback / fork)};
+  \node[bad,right=12mm of a2] (t2) {reject (rollback / fork)};
   \draw[edge] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
   \node[proc,right=12mm of a3,text width=3.7cm] (a3p) {verify RFC~9162 consistency proof};
   \draw[edge] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
-  \node[bad,below=5mm of a3p] (t3) {invalid: ALARM (persists), no replay};
+  \node[bad,below=5mm of a3p] (t3) {invalid: reject (persists), no replay};
   \draw[edge] (a3p) -- node[right,font=\tiny]{invalid} (t3);
   \node[nop,below=4mm of t3] (t4) {idempotent: no state change};
   \draw[edge] (a4.east) |- node[below,font=\tiny,pos=0.85]{yes} (t4.west);
@@ -64,11 +64,11 @@
   \draw[edge] (b1) -- (bcv);
   \draw[edge] (bcv) -- node[left,font=\tiny]{yes} (bcmp);
   \draw[edge] (bcmp) -- node[left,font=\tiny]{no: agree} (b2);
-  \node[bad,right=12mm of b1] (r2) {ALARM (audit failed): root mismatch, duplicate insert (A1), or immutable \mbox{rotation}};
+  \node[bad,right=12mm of b1] (r2) {reject (audit failed): root mismatch, duplicate insert (A1), or immutable \mbox{rotation}};
   \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard candidate, retry (not a fork)};
   \draw[edge] (b1.east) -- node[above,font=\tiny,fill=white,inner sep=1pt]{replay fail} (r2.west);
   \draw[edge] (b1.north east) -- node[above,font=\tiny,fill=white,inner sep=1pt,pos=0.4]{fetch fail} (r1.west);
-  \node[bad,right=12mm of bcmp] (r3) {vantages diverge: ALARM (equivocation / fork)};
+  \node[bad,right=12mm of bcmp] (r3) {vantages diverge: reject (equivocation / fork)};
   \draw[edge] (bcmp.east) -- node[above,font=\tiny]{yes} (r3.west);
   \coordinate (byp) at ([xshift=-28mm]bcv.west);
   \draw[edge] (bcv.west) -- node[above,font=\tiny,align=center]{no / invalid:\\no G4 verdict} (byp) |- (b2.west);

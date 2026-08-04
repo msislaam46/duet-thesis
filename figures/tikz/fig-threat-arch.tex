@@ -6,7 +6,7 @@
    actor/.style={draw,rounded corners,minimum width=2.3cm,minimum height=10mm,align=center}]
   \node[actor] (A) at (0,0.95)  {Alice\\\footnotesize(client)};
   \node[actor] (B) at (0,-0.95) {Bob\\\footnotesize(client)};
-  \node[actor,fill=black!8] (S) at (6.0,0) {Service operator\\\footnotesize message delivery\\\footnotesize {}+ KT log server};
+  \node[actor,fill=black!8] (S) at (6.0,0) {Service operator\\\footnotesize message delivery and\\\footnotesize KT directory server};
   \node[actor] (Au) at (10.6,0) {Auditor};
   % untrusted-network band: the medium between clients and operator only, not the
   % honest endpoints; operator wholly to its right.

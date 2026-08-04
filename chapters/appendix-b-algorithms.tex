@@ -321,9 +321,9 @@ turns a substituted key into an alert. \textsf{DetectMitM} and \textsf{Backgroun
 retrieved key against the expected one and, on a mismatch, write the dual-index warning.
 \textsf{RecordWarning} and \textsf{PersistenceCheck} retain verified evidence so that a later silent
 deletion of a committed warning becomes publishable proof rather than an unobservable loss; in this
-proof-of-concept they are implemented and unit-tested as a reference component but are \emph{not} wired
+proof-of-concept they are implemented and separately unit-tested as a persistence component but are \emph{not} wired
 into the live background monitor, which runs the detection and (confirmed) warning-publication path
-only. No path silences a genuine mismatch: the outcome is always a raised alert or, for the tested
+only. No path silences a genuine mismatch: the outcome is always a raised warning or, for the tested
 persistence component, retained evidence.
 
 \begin{algorithm}[H]
@@ -357,7 +357,7 @@ persistence component, retained evidence.
   }
 }
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations},\mathit{id_{self}},\mathit{own\_pk}$)}{
-  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: the client's own VRF entry; reports an alert even with no active conversations}
+  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: the client's own VRF entry; reports a warning even with no active conversations}
   \If{$v_{\mathsf{vrf}}\ne\mathit{own\_pk}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;

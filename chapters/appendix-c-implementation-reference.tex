@@ -293,7 +293,7 @@ from the shared secret by HKDF-SHA256 (RFC~5869), exactly as specified in
 \cref{ssec:design-labels}, and the \texttt{cea} module implements the continuous example construction
 of the ACKA framework~\cite{dowling2023acka}. The crates
 \texttt{sha2}, \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard
-primitives, and the ECVRF of RFC~9381 is the one hand-written primitive, checked against the published
+primitives, and the ECVRF of RFC~9381 is the one primitive implemented directly, checked against the published
 suite-\texttt{0x03} test vectors.
 
 A standalone HTTP server, built on the

@@ -216,7 +216,7 @@ consistency.}
 System & What it logs & Primary detection mechanism & In-band peer warning &
   Offline recovery & Consistency and fork resistance \\
 \midrule
-CONIKS~\cite{melara2015coniks} & username $\to$ key binding & self-monitoring & No & linear, $\Theta(\ell)$ catch-up &
+CONIKS~\cite{melara2015coniks} & username $\to$ key binding & self-monitoring & No & linear in the number of missed updates &
   STR gossip among auditors\newline direct client-to-client exchange left as future work \\
 SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & per-update
   history & $\ge$1 honest auditor per epoch\newline commitments compared through gossip or a blockchain \\
@@ -229,12 +229,12 @@ OPTIKS~\cite{optiks2024} & identity key (+ devices) & self-monitoring (single pr
 PRISM~\cite{pusch2025prism} & account keys & whole-directory verification & No &
   constant-size proof & zk-rollup on a data-availability layer \\
 WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & public auditing & No & Not applicable in the cited configuration\newline self-monitoring disabled & signed root + public write-once (WORM) audit log \\
-Signal KT~\cite{signal-kt-server,signal-akv} & account identifier $\to$ identity key, phone-number and username-hash mappings & self-monitoring + audit interfaces, optional user-triggered AKV & No &
-  Monitor endpoint\newline offline-window policy not documented in the cited source & signed head + public audit endpoints\newline independent auditor deployment not documented in the cited source \\
-Proton KT~\cite{goebel2023proton} & email address $\to$ Signed Key List (SKL) fingerprint & self-audit + external audit & No &
-  self-audit within 90 days & CT logs + External Audit \\
+Signal KT~\cite{signal-kt-server,signal-akv} & account identifier $\to$ identity key, phone-number and username-hash mappings & self-monitoring and audit interfaces, optional user-triggered AKV & No &
+  monitoring endpoint\newline offline-window policy not documented in the cited source & signed head and public audit endpoints\newline independent auditor deployment not documented in the cited source \\
+Proton KT~\cite{goebel2023proton} & email address $\to$ Signed Key List (SKL) fingerprint & self-audit and external audit & No &
+  self-audit within 90 days & CT logs and external auditing \\
 Google KT~\cite{google-kt} & account keys & self-monitoring (experimental, archived 2024) & No & Not documented in the cited source & CONIKS map in a CT log \\
-Apple CKV~\cite{apple-ckv} & account + device keys + opt-in state & automatic device verification + E2E-encrypted CloudKit
+Apple CKV~\cite{apple-ckv} & account keys, device keys, and opt-in state & automatic device verification and E2E-encrypted CloudKit
   cross-check & No & Not documented in the cited source & on-device consistency + encrypted log-hash gossip + internal audit \\
 \bottomrule
 \end{tabular}

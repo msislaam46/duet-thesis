@@ -43,39 +43,40 @@ following the IETF KeyTrans model~\cite{ietf-keytrans-protocol}, an RFC~9162 app
 log~\cite{rfc9162}, and ECVRF-EDWARDS25519-SHA512-TAI~\cite{rfc9381}. It also includes DUET's
 dual-index construction, ACKA's CEA construction~\cite{dowling2023acka}, an HTTP server, and an
 independent auditor. The crates \texttt{sha2},
-\texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard primitives, so
-the ECVRF is the one primitive written by hand, and it is checked against the RFC~9381 vectors.
+\texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard primitives. The
+project implements the ECVRF directly and checks it against the RFC~9381 test vectors.
 \Cref{fig:impl-modules} shows the module structure, while \cref{tab:impl-modules} maps each module to
-its specification grounding and conformance evidence.
+its standards basis and conformance evidence.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-modules}
-\caption[Module structure of the \texttt{duet} crate.]{Module structure of the \texttt{duet} crate.
-The directory, log, and VRF modules are consumed by the server, the auditor, and the benchmark
-harness alike.}
+\caption[Core relationships in the Rust component.]{Core relationships in the Rust component. The
+directory service composes the authenticated data structures and signing components. Client-side
+constructions use the directory operations, while the independent auditor maintains a replica and
+checks signed heads, consistency proofs, and declared transitions.}
 \label{fig:impl-modules}
 \end{figure}
 
 \begin{table}[ht]
 \centering
-\caption{The \texttt{duet} crate's modules and their specification grounding.}
+\caption{The \texttt{duet} crate's modules and their standards basis and conformance evidence.}
 \label{tab:impl-modules}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{5.0cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
 \toprule
-Module & Specification implemented & Conformance evidence \\
+Module & Standards or design basis & Conformance evidence \\
 \midrule
 \texttt{hashing} & RFC~6962 Section~2.1 leaf/node domain tags~\cite{rfc6962} & domain-separation unit tests \\
 \texttt{merkle\_log} & RFC~9162 Sections~2.1.3 and~2.1.4 inclusion and consistency verifiers~\cite{rfc9162} & exhaustive inclusion + every $(m,n)$ consistency pair up to size 64, plus forgery rejection \\
 \texttt{prefix\_tree} & IETF KeyTrans sparse Merkle tree, path-compressed~\cite{ietf-keytrans-protocol} & client-side root recompute from compressed proof \\
 \texttt{vrf} & RFC~9381 ECVRF-EDWARDS25519-SHA512-TAI, suite \texttt{0x03}~\cite{rfc9381} & RFC~9381 App.~B.3 test vectors \\
-\texttt{dual\_index} & RFC~5869 HKDF-SHA256 label derivation~\cite{rfc5869} with warning-payload MAC (\cref{alg:dualindex}) & label derivation by cross-implementation vectors vs.\ TypeScript, MAC by cross-implementation sealed-payload vector vs.\ TypeScript plus roundtrip + injection-rejection unit tests, wired into both clients' warning write/read paths \\
-\texttt{server} & KeyTrans combined-tree semantics + Ed25519 STH~\cite{ietf-keytrans-protocol} with write-once raw-label policy + per-epoch declared update set (\cref{alg:server}) & STH signature happy/tamper/wrong-key, committed-snapshot search, write-once rejection, delta records inserts and rotations \\
+\texttt{dual\_index} & RFC~5869 HKDF-SHA256 label derivation~\cite{rfc5869} with warning-payload MAC (\cref{alg:dualindex}) & label derivation by cross-implementation vectors vs.\ TypeScript, MAC by cross-implementation sealed-payload vector vs.\ TypeScript plus round-trip and invalid-MAC rejection tests, wired into both clients' warning write/read paths \\
+\texttt{server} & KeyTrans combined-tree semantics + Ed25519 STH~\cite{ietf-keytrans-protocol} with write-once raw-label policy + per-epoch declared update set (\cref{alg:server}) & STH signature valid-signature, tampering, and wrong-key cases, committed-snapshot search, write-once rejection, delta records inserts and rotations \\
 \texttt{auditor} & cross-vantage fork detection + per-epoch transition audit (\cref{alg:auditor}) & append-only audit + equivocation tests, and transition audit catches undeclared deletion and modification \\
 \texttt{monitor} & writer-side persistence check + deletion-evidence bundle (\cref{alg:detect}) & persistence holds while committed, and deletion yields evidence that verifies against the server's signed heads \\
-\texttt{cea} & ACKA example CEA construction~\cite{dowling2023acka}, server-composed register/verify with sender pre-post check and advance-only-on-success (\cref{alg:cea}) & cross-implementation vectors vs.\ TypeScript, plus occupied-label and no-advance-on-fork/not-posted tests \\
+\texttt{cea} & ACKA example CEA construction~\cite{dowling2023acka}, server-composed register/verify with sender before-and-after write check and advance-only-on-success (\cref{alg:cea}) & cross-implementation vectors vs.\ TypeScript, plus occupied-label and no-advance-on-fork/not-posted tests \\
 \texttt{hook\_process\_\allowbreak prekey\_bundle} & documentation-only libsignal integration module, compiled with the crate but not invoked as an executable hook & marks where a production binding of the live X3DH secret could be inserted \\
 \bottomrule
 \end{tabular}
@@ -124,8 +125,8 @@ still occupy an unclaimed slot first.
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
 \caption[Per-epoch transition audit.]{Per-epoch transition audit. The auditor replays the declared
-insert and rotation set against its own replica and accepts the epoch only when the recomputed root
-equals the committed root.}
+insertions and rotations on an independent directory replica and accepts the epoch only when the
+recomputed root matches the committed root.}
 \label{fig:impl-transition-audit}
 \end{figure}
 
@@ -187,8 +188,8 @@ owner- and warning-slot checks.}
 \includegraphics[width=\textwidth]{figures/attacked_user.png}\\[8pt]
 \includegraphics[width=\textwidth]{figures/peer.png}
 \caption[Identity-slot warning on both clients (A1a).]{The affected client detects the substituted
-identity key and publishes a warning. The peer verifies the shared warning, and both clients display
-the red banner.}
+identity key and publishes a warning. The peer verifies the warning's directory proof and pair-bound
+MAC, and both clients display the red banner.}
 \label{fig:impl-screens}
 \end{figure}
 
@@ -197,14 +198,15 @@ the red banner.}
 \section{Cross-Implementation Testing and Parity}\label{sec:impl-tests}
 
 RFC~9381 test vectors~\cite{rfc9381} check the ECVRF implementation. Fixed cross-language vectors
-require byte-for-byte agreement for label derivation, warning payloads, and CEA evolution. A live wire-parity suite checks the TypeScript verifier against signed heads, VRF outputs,
-Merkle proofs, and consistency proofs produced by the Rust directory server. The Rust integration and
-cryptographic suites run against a real in-process \texttt{KTServer} rather than a mock, and the
-adversarial suite at \texttt{tests/adversarial.rs} covers A0,
-\hyperref[sc:threat-a1]{A1a and A1b}, \hyperref[sc:threat-a2]{A2},
-\hyperref[sc:threat-a3]{A3}, \hyperref[sc:threat-a4]{A4},
-\hyperref[sc:threat-a5]{A5}, and \hyperref[sc:threat-x1]{X1}. These tests
-establish agreement and expected behaviour for the specified inputs, not equivalence over every input.
+require byte-for-byte agreement for label derivation, warning payloads, and CEA evolution. A live
+wire-parity suite checks the TypeScript verifier against signed heads, VRF outputs, Merkle proofs, and
+consistency proofs produced by the Rust directory server. The Rust integration and cryptographic tests
+use an in-process \texttt{KTServer} rather than a mock. The adversarial suite covers the honest
+baseline (A0), global- and session-slot substitution (\hyperref[sc:threat-a1]{A1a and A1b}), warning
+censorship (\hyperref[sc:threat-a2]{A2}), first-contact bundle substitution
+(\hyperref[sc:threat-a3]{A3}), equivocation (\hyperref[sc:threat-a4]{A4}), key-rotation substitution
+(\hyperref[sc:threat-a5]{A5}), and endpoint compromise (\hyperref[sc:threat-x1]{X1}). These tests show
+agreement and the expected behaviour for the specified inputs, not equivalence over every input.
 \Cref{sec:tests-evidence} gives the complete counts, names, and outcomes.
 
 The Rust tests exhaustively cover every Merkle-log inclusion proof and consistency pair up to size 64,
@@ -243,7 +245,7 @@ remaining bundling, deterministic-state, and reset detail is described in
 \cref{sec:apiref-engineering}.
 
 Within the uncompromised-endpoint assumption in \cref{sec:threat-assumptions}, directory-response
-verification relies on the verifier, its cryptographic dependencies, the hand-written ECVRF, and the
+verification relies on the verifier, its cryptographic dependencies, the project's ECVRF implementation, and the
 operator's two public keys, which are fetched once at initialization. The verifier returns a rejecting
 verdict for invalid or absent signed heads, incorrect roots, missing inclusion proofs, mismatching labels,
 and invalid VRF bindings. Availability

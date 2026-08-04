@@ -122,8 +122,8 @@ lookup slots and shared warning slot.
 \caption[The dual-index scheme's three derived slots.]{Two lookup slots and a shared warning slot
 are derived from the conversation secret $\sharedS$. HKDF-Extract produces $\mathit{PRK}$.
 Three domain-separated HKDF-Expand operations then produce $\ell_{\mathsf{self}}$,
-$\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$. Alice and Bob share $\sharedS$, so they derive
-the same warning label and can read either party's warning. A different secret $\sharedS'$ produces
+$\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$. Alice and Bob share $\sharedS$, so both parties derive
+the same warning label and can read a warning stored at the shared slot. A different secret $\sharedS'$ produces
 a disjoint label set.}
 \label{fig:design-dualindex}
 \end{figure}
@@ -326,7 +326,7 @@ paragraphs below expand the three that most affect the system's behaviour.
 \small
 \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.7cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.3cm}@{}}
 \toprule
-Decision & Justification & Reference / precedent \\
+Decision & Justification & Basis \\
 \midrule
 Sparse binary Merkle tree & uniform node semantics, cheap first-class non-inclusion for the warning slot, small audit surface & CONIKS~\cite{melara2015coniks}, IETF KeyTrans~\cite{ietf-keytrans-protocol} \\
 ECVRF-EDWARDS25519-SHA512-TAI for global labels & publicly verifiable directory privacy, parity with Signal's deployed keytrans VRF & RFC~9381~\cite{rfc9381}, Signal keytrans~\cite{signal-kt-server} \\

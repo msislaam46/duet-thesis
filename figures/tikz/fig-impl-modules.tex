@@ -1,8 +1,9 @@
 % fig-impl-modules.tex — Rust architecture by ownership.
-% The server core (KTServer) depends only on the prefix tree, Merkle log, VRF and
-% Ed25519 signing over SHA-256. Dual-index derivation and CEA/monitoring are
-% client/reference components that CALL the server API; the auditor is a separate
-% process that consumes server data and keeps its own replica.
+% The server core (KTServer) composes the prefix tree, Merkle log, ECVRF, and the
+% Ed25519 signer; only the prefix tree and Merkle log hash through the project's
+% SHA-256 component. Client-side constructions (dual-index derivation feeding the
+% CEA registration/verification) call the server API; the auditor is a separate
+% process that keeps its own replica.
 % Label: \label{fig:impl-modules}
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
@@ -27,16 +28,17 @@
   % server dependency edges
   \draw[->] (api) -- (dir);
   \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (dir) -- (\n);}
-  \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (\n) -- (\n |- hash.north);}
+  \foreach \n in {ptree,mlog}{\draw[->] (\n) -- (\n |- hash.north);}
 
   % ---- client / reference utilities (right) : they CALL the API ----
   \node[cmp,minimum width=3.0cm] (didx) at (7.7,4.2) {Dual-index\\derivation};
-  \node[cmp,minimum width=3.0cm] (cea)  at (7.7,2.9) {CEA +\\continuous monitoring};
-  \node[grp,fit=(didx)(cea),label={[font=\footnotesize\itshape,text=black!55]above:client / reference}] (cg) {};
-  \draw[->,dashed] (cg.west) -- node[above,font=\scriptsize,pos=0.55]{call the API} (api.east);
+  \node[cmp,minimum width=3.0cm] (cea)  at (7.7,2.9) {CEA registration\\and verification};
+  \node[grp,fit=(didx)(cea),label={[font=\footnotesize\itshape,text=black!55]above:Client-side constructions}] (cg) {};
+  \draw[->,dashed] (didx) -- (cea);
+  \draw[->,dashed] (cea.west) -- node[above,font=\scriptsize,pos=0.55]{call the API} (api.east);
 
   % ---- independent auditor ----
-  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.7,6.0) {\textbf{Auditor} (own replica)\\independent process};
-  \draw[<->,dashed] (aud.west) -- node[above,align=center,font=\scriptsize,pos=0.55]{poll STH +\\consistency} (api.north east);
+  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.7,6.0) {\textbf{Independent auditor replica}\\separate process};
+  \draw[<->,dashed] (aud.west) -- node[above,align=center,font=\scriptsize,pos=0.55]{obtain signed heads,\\epoch deltas, and\\consistency proofs} (api.north east);
 \end{tikzpicture}%
 }

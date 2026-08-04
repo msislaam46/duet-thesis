@@ -62,7 +62,7 @@ fails to replay.
 \item \textbf{Persistence check.} Independently of any auditor, the writer of a warning retains the
 inclusion proof and signed tree head of the epoch at which its warning committed, and the persistence
 check re-verifies the warning's inclusion on a later head. In the prototype this check is implemented
-and unit-tested as a reference component; it is not wired into the live background monitor
+and separately unit-tested as a persistence component; it is not wired into the live background monitor
 (\cref{alg:detect}). If the leaf later disappears,
 the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
 $\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
@@ -81,7 +81,7 @@ unavailable check (amber, not red), without attributing its cause. The \hyperref
 signal proper is the key
 mismatch together with a \emph{proof-verified} absence of the warning. All three safeguards are
 represented in the prototype. The write-once policy and transition audit run live. The persistence
-check is implemented and unit-tested as a reference component but is not wired into the background
+check is implemented and separately unit-tested but is not wired into the background
 monitor (\cref{ch:impl}, \cref{alg:detect}).
 The prototype does not implement account-layer authentication of raw-label writes (proof of raw-label
 ownership). Without it, the write-once policy still binds an honest server and the transition audit
@@ -127,7 +127,7 @@ ID & Technique & Vector in KT & KT mitigation & Scen. \\
 \midrule
 T1557 & Adversary-in-the-Middle & network interception of X3DH & label mismatch (different secret $\Rightarrow$ different label) & \hyperref[sc:threat-a3]{A3} \\
 T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & shared-secret divergence & A3 \\
-T1565 & Data Manipulation & modify key bindings in the tree & Merkle inclusion-proof verification & A1,A3,\hyperref[sc:threat-a4]{A4} \\
+T1565 & Data Manipulation & modify key bindings in the tree & expected-key comparison, peer warning, and transition or cross-vantage checks & A1,A3,\hyperref[sc:threat-a4]{A4} \\
 T1565.002 & Transmitted Data Manipulation & replace a key in transit & label mismatch (different secret) + global VRF identity binding & A3 \\
 T1552.004 & Private Keys & extract insecurely stored private keys from a device & \emph{none}: KT boundary (endpoint compromise) & \hyperref[sc:threat-x1]{X1} \\
 \bottomrule
@@ -218,7 +218,7 @@ Threat & KT control & Residual \\
 \midrule
 Forge a VRF label & ECVRF-EDWARDS25519-SHA512-TAI binding & none (cryptographic) \\
 Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the PoC, so a first write can be planted; the owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorisation (\cref{ch:discussion}) \\
-Forge a Merkle proof & SHA-256 collision resistance & negligible ($2^{128}$) \\
+Forge a Merkle proof & SHA-256 collision resistance & approximately $2^{128}$ generic collision-security work \\
 Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \bottomrule
 \end{tabular}
@@ -252,7 +252,7 @@ Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (c
 Threat & KT control & Residual \\
 \midrule
 Deny a key change & each epoch commits a signed root, so any change to a committed history is detectable by inclusion/consistency proof & none for a committed change (cryptographic) \\
-Deny an attack occurred & warning entry + inclusion proof & none (cryptographic evidence) \\
+Deny that a warning record was committed & warning entry and inclusion proof & none (cryptographic evidence) \\
 Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under the configured key & none for a signed head (cryptographic) \\
 \bottomrule
 \end{tabular}
@@ -304,7 +304,7 @@ Flood with fake registrations & deployment-level rate limiting & \emph{not imple
 Threat & KT control & Residual \\
 \midrule
 Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
-Server fabricates a divergent tree head & \emph{detected}, not prevented: the server holds the STH key, so the signature does not stop it; a fabricated divergent head is caught by the append-only consistency check and the cross-vantage fork check & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
+Server fabricates a divergent tree head & \emph{detected}, not prevented: a head inconsistent with a pinned history is rejected locally, but detecting two internally consistent branches requires an honest independent vantage & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
 Client escalates to server writes & partly prevented, partly \emph{detected}: write-once cryptographically rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration; a first write to an empty slot by a party who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorisation on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
 \bottomrule
 \end{tabular}

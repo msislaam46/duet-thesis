@@ -3,7 +3,7 @@
 \begin{tikzpicture}[>=Stealth,font=\small,
    nd/.style={draw,circle,minimum size=8mm,inner sep=0pt},
    lf/.style={draw,rounded corners,minimum size=7mm,inner sep=1pt}]
-  \node[nd] (root) at (3,3) {$h_{0}$};
+  \node[nd] (root) at (3,3) {$h_{0123}$};
   \node[nd,fill=black!15] (n01) at (1.5,1.8) {$h_{01}$};
   \node[nd] (n23) at (4.5,1.8) {$h_{23}$};
   \node[lf] (l0) at (0.5,0.4) {$d_0$};
@@ -16,6 +16,6 @@
   \node[align=left,anchor=west,text width=5.4cm,font=\footnotesize] at (7.2,1.7)
     {Inclusion proof for $d_2$ (outlined leaf). Copath (shaded): the sibling
      hash $h_3$ and the subtree hash $h_{01}$; the verifier recomputes $h_{23}$
-     then $h_0$ from these. Each leaf stores data $d_i$, and its tree node is
+     then $h_{0123}$ from these. Each leaf stores data $d_i$, and its tree node is
      the leaf hash $H_{\mathrm{leaf}}(d_i)$.};
 \end{tikzpicture}
