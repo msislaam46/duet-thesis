@@ -208,10 +208,11 @@ live background monitor (\cref{alg:detect}).
 
 \begin{table}[ht]
 \centering
-\caption{Spoofing (4/4 addressed).}
+\caption{Spoofing (four of four addressed).}
 \label{tab:stride-s}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
+\setlength{\tabcolsep}{9pt}\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
@@ -226,16 +227,17 @@ Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 
 \begin{table}[ht]
 \centering
-\caption{Tampering (3/3 addressed).}
+\caption{Tampering (three of three addressed).}
 \label{tab:stride-t}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
+\setlength{\tabcolsep}{9pt}\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
 \midrule
 Modify a key at a label & owner's self-check detects the mismatch & scripted demonstration: observed within 1--2 epochs; not a protocol-wide latency bound \\
-Alter a historical entry & append-only log + consistency proofs & none (cryptographic) \\
+Alter a historical entry & append-only log and consistency proofs & none (cryptographic) \\
 Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (cryptographic) \\
 \bottomrule
 \end{tabular}
@@ -243,10 +245,11 @@ Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (c
 
 \begin{table}[ht]
 \centering
-\caption{Repudiation (3/3 addressed).}
+\caption{Repudiation (three of three addressed).}
 \label{tab:stride-r}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
+\setlength{\tabcolsep}{9pt}\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
@@ -264,6 +267,7 @@ Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under
 \label{tab:stride-i}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
+\setlength{\tabcolsep}{9pt}\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
@@ -281,6 +285,7 @@ Leak the shared secret from a label & HKDF-Expand (dual-index labels) and ECVRF 
 \label{tab:stride-d}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
+\setlength{\tabcolsep}{9pt}\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\
@@ -295,10 +300,11 @@ Flood with fake registrations & deployment-level rate limiting & \emph{not imple
 
 \begin{table}[ht]
 \centering
-\caption{Elevation of Privilege (3/3 addressed).}
+\caption{Elevation of Privilege (three of three addressed).}
 \label{tab:stride-e}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
+\setlength{\tabcolsep}{9pt}\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
 \toprule
 Threat & KT control & Residual \\

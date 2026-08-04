@@ -5,13 +5,13 @@
   \node[grp,fill=black!4,minimum width=7.6cm] (sd)
      {\textbf{Signal Desktop (TypeScript)}\\[2pt]{\scriptsize conversation UI \,\textbullet\, KT verifier \,\textbullet\, background monitor \,\textbullet\, hook layer}};
   \node[grp,fill=black!8,align=center,minimum width=8.0cm,minimum height=4.8cm,inner sep=9pt,below=1.1cm of sd] (srv)
-     {\textbf{\large Rust directory service and cryptographic core}\\[1pt]{\scriptsize standalone server + crate}\\[6pt]
+     {\textbf{\large Rust directory service and cryptographic core}\\[1pt]{\scriptsize standalone server and crate}\\[6pt]
       \footnotesize\renewcommand{\arraystretch}{1.35}\begin{tabular}{@{}l@{}}
       prefix tree\\ Merkle log\\ signed tree head\\ Ed25519 signer\\ ECVRF\\
       dual-index derivation\\ CEA registration and verification\\ HTTP API (\cref{app:apiref})
       \end{tabular}};
   \node[grp,minimum width=5.6cm,below=1.1cm of srv] (aud)
-     {\textbf{Cross-vantage auditor}\\[1pt]{\scriptsize independent process: poll STH + epoch deltas; verify append-only + transition; detect forks}};
-  \draw[<->] (sd) -- node[right,font=\scriptsize]{HTTP / JSON} (srv);
-  \draw[->,dashed] (aud) -- node[right,font=\scriptsize]{poll STH + epoch deltas + consistency proof} (srv);
+     {\textbf{Cross-vantage auditor}\\[1pt]{\scriptsize independent process: poll STH and epoch deltas; verify append-only and transition; detect forks}};
+  \draw[<->] (sd) -- node[right,font=\scriptsize]{HTTP and JSON} (srv);
+  \draw[->,dashed] (aud) -- node[right,font=\scriptsize]{poll STH, epoch deltas, and consistency proof} (srv);
 \end{tikzpicture}
