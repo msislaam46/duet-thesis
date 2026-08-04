@@ -9,10 +9,10 @@ the systems reviewed in this chapter.
 % ============================================================================
 \section{The Signal Protocol Stack}\label{sec:bg-signal}
 
-Signal is a widely used end-to-end encrypted messenger~\cite{signal-home,dowling2020nocompromise}. Its
+Signal is an end-to-end encrypted messenger~\cite{signal-home,dowling2020nocompromise}. Its
 protocol combines X3DH for asynchronous session establishment with the Double Ratchet for ongoing key
 evolution~\cite{x3dh,doubleratchet}. The messaging server supplies the public pre-key material needed to start a
-conversation while the recipient is offline~\cite{signaldocs}, so confidentiality depends on the
+conversation while the recipient is offline~\cite{x3dh}, so confidentiality depends on the
 authenticity of keys obtained from provider-operated infrastructure.
 
 \subsection{Key Material, Safety Numbers, and What They Cover}\label{ssec:bg-keymat}
