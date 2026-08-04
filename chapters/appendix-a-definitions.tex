@@ -303,7 +303,7 @@ $\mathsf{Register}(\lblself,\mathit{pk})$ binds the party's public key at its ow
 directory. $\mathsf{WriteWarning}(\lblwarn)$ writes a non-empty warning payload to the shared warning
 slot, authenticated by a MAC under a pair-bound key expanded from $\mathit{PRK}$ with the info string
 \texttt{"warn-mac"} and the canonically ordered identities, so that a reader can distinguish a
-peer-authored warning from operator-injected data (\cref{alg:dualindex}). The slot is write-once: an
+warning produced by a holder of the shared key from operator-injected data (\cref{alg:dualindex}). The slot is write-once: an
 occupied slot is left in place, since its value already alerts both monitors, and the directory's
 raw-label interface rejects overwrites (\cref{def:epoch-delta}). Once the write commits, the writer
 retains inclusion evidence for the persistence check (\cref{def:deletion-evidence}).
@@ -317,10 +317,10 @@ Both operations take effect at the next committed epoch (\cref{def:epoch}). Spec
 $\mathsf{CheckWarning}(\lblwarn,\STH_t)$ returns \textsc{Alert} if an inclusion proof binds a
 non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{Safe} if a non-inclusion proof
 (\cref{def:noninclusion}) establishes the slot is empty; a response with neither valid proof is
-rejected. The \textsc{Alert} verdict does not depend on the payload MAC of
-\cref{def:dualindex-write}: a value whose MAC verifies was produced by a holder of the shared conversation secret, while
-unauthenticated data at a slot only the two parties can derive is itself evidence of misbehaviour,
-so either alerts (\cref{alg:dualindex}). A peer key is accepted only when the peer-lookup proof
+rejected. \Cref{def:dualindex-write} defines the payload MAC. A valid MAC shows that a holder of the shared
+conversation secret produced the value. A non-empty value with an invalid MAC is itself evidence of
+misbehaviour because only the two parties should be able to derive the warning slot. Both cases
+therefore return \textsc{Alert} (\cref{alg:dualindex}). A peer key is accepted only when the peer-lookup proof
 verifies through the chain of \cref{ssec:design-verify} and $\mathsf{CheckWarning}$ returns
 \textsc{Safe}. Specified in \cref{ssec:design-verify}.
 \end{definition}
