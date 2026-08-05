@@ -4,8 +4,8 @@ This appendix summarizes the complete test corpus that backs the conformance cla
 The Rust core contains \num{134} tests: \num{97} unit and invariant tests across nine modules, the
 \num{8}-scenario adversarial integration suite, \num{25} tests in the \texttt{kt\_auditor} binary, and
 \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
-(\cref{ssec:eval-detection}), all run under \texttt{cargo test}. The TypeScript client has \num{116}
-standalone Jest tests in eleven suites and a further \num{16} embedded electron-mocha tests in four
+(\cref{ssec:eval-detection}), all run under \texttt{cargo test}. The TypeScript client has \num{180}
+standalone Jest tests in thirteen suites and a further \num{35} embedded electron-mocha tests in six
 Signal Desktop suites that drive realistic ACI strings through the integration boundary. A fixed set
 of cross-language vectors additionally requires the two implementations to produce byte-identical
 outputs.
@@ -222,25 +222,29 @@ Module & Test & Property checked \\
 % ----------------------------------------------------------------------------
 \section{TypeScript (Signal Desktop) Jest Suite}\label{sec:tests-ts}
 
-The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{116} Jest tests in
-eleven suites: a live-server wire-parity suite, an in-process integration suite, and nine unit suites.
+The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{180} Jest tests in
+thirteen suites: a live-server wire-parity suite, an in-process integration suite, a source-parity
+suite, and ten unit suites.
 Some catalogue rows represent parameterized cases (twelve decoder mutations, three status mappings,
 three VRF vectors), and the totals count executed tests.
 The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust directory
 server over the network. It is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
 to be running, and its five tests early-return as no-ops when the server is absent, so a bare
-\texttt{npm test} run does not by itself establish wire parity. The integration suite and the
+\texttt{npm test} run does not by itself establish wire parity. The \emph{source-parity} suite
+(\texttt{tree\_parity}) asserts that the shared verifier sources are byte-identical between the two
+TypeScript trees, one parameterized case per file across the twenty-seven shared files. The integration suite and the
 cryptographic unit suites (\texttt{remote\_kt\_client}, \texttt{cea}, \texttt{secret\_store}) run
 the verifier against a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF,
 and Ed25519 signer). The remaining unit suites use test doubles by design: \texttt{background\_monitor}
 and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to-event routing,
 \texttt{decoder\_validation} drives the DTO decoders through a mocked transport to check
-malformed-response rejection, and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
+malformed-response rejection, \texttt{kt\_log} checks the structured screenshot-readable log format,
+and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
 \texttt{pni\_silence} suites cover the ACI canonical-bytes boundary, display-string preservation, and
 PNI event-silence added with the canonical-identity fix. \Cref{tab:tests-jest-wire} lists the
 wire-parity and integration tests, and
-\cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list the nine unit suites.
-Beyond the standalone harness, \num{16} embedded electron-mocha tests run in four suites under Signal
+\cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list the ten unit suites.
+Beyond the standalone harness, \num{35} embedded electron-mocha tests run in six suites under Signal
 Desktop's own test runner (\cref{tab:tests-embedded}). They drive realistic ACI strings through the
 same integration boundary the live preload callers use, so a regression at that boundary fails an
 embedded test rather than passing silently.
@@ -330,7 +334,9 @@ Suite & Test \\
 \texttt{background\_monitor} & server unreachable $\to$ \texttt{kt:unreachable}, not a red MitM alert \\
 \texttt{background\_monitor} & error from a server that did respond $\to$ red (\texttt{kt:warning}) \\
 \texttt{background\_monitor} & own key replaced (\texttt{matches=false}) $\to$ red \\
-\texttt{background\_monitor} & own key intact (\texttt{matches=true}) $\to$ no alert at all \\
+\texttt{background\_monitor} & own key intact (\texttt{matches=true}), no conversation verdict $\to$ no alert \\
+\texttt{background\_monitor} & C5: a green verdict with a healthy own key dispatches \texttt{kt:verified} \\
+\texttt{background\_monitor} & C5: own-key mismatch with a green conversation dispatches \texttt{kt:warning}, never \texttt{kt:verified} \\
 \midrule
 \texttt{cea} & honest parties agree each epoch (fold secret $I$, authenticate public $T$) \\
 \texttt{cea} & labels evolve with the ratchet \\
@@ -405,7 +411,8 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Embedded electron-mocha tests: the ACI integration boundary in Signal Desktop (\num{16} tests).}
+\caption{Embedded electron-mocha tests at the Signal Desktop integration boundary (\num{35} tests in
+six suites; representative rows shown).}
 \label{tab:tests-embedded}
 \footnotesize
 \renewcommand{\arraystretch}{0.90}
@@ -432,6 +439,17 @@ Suite & Test \\
 \texttt{pni\_getkeys\_silence} & a PNI calls none of verify, dispatch, or record \\
 \texttt{pni\_getkeys\_silence} & an ACI drives verify, dispatch (\texttt{kt:verified}), and record \\
 \texttt{pni\_getkeys\_silence} & an ACI with no own identity key still verifies but does not record \\
+\midrule
+\texttt{ktStatusMachine} & the initial state is grey pending with no message \\
+\texttt{ktStatusMachine} & a matching \texttt{kt:verified} turns it green and clears the message \\
+\texttt{ktStatusMachine} & a matching \texttt{kt:warning} turns it red and stores the message \\
+\texttt{ktStatusMachine} & an unrelated \texttt{kt:verified} (peer or conversation mismatch) changes neither field \\
+\texttt{ktStatusMachine} & a \texttt{kt:warning} with a missing id is still shown (permissive) \\
+\midrule
+\texttt{peer\_sweep} & registers an active, keyed, not-yet-monitored peer \\
+\texttt{peer\_sweep} & forgets an inactive peer that is monitored (pruned) \\
+\texttt{peer\_sweep} & keeps monitoring an archived conversation while \texttt{active\_at} is set \\
+\texttt{peer\_sweep} & delete regression: a monitored active peer is forgotten once \texttt{active\_at} clears \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -507,7 +525,7 @@ the two cases that matter for soundness: that a genuine equivocation (one signer
 at one epoch) is reported as a fork, and that a divergent head with an invalid signature is
 correctly rejected rather than misclassified as a fork.
 
-On the \textbf{TypeScript} side, the standalone verifier harness contains 116 Jest tests. Live
+On the \textbf{TypeScript} side, the standalone verifier harness contains \num{180} Jest tests. Live
 Rust--TypeScript wire parity is a separate opt-in target that requires the Rust directory server, and a normal
 Jest run alone does not establish wire parity. When enabled, the wire-parity suite runs the client's
 full verification chain against the live Rust directory server, confirming multi-entry inclusion, proven
@@ -518,7 +536,7 @@ Ed25519 signer), so the client is checked against the implemented components rat
 the remaining unit suites use controlled test doubles. Together they cover key-substitution detection (the
 lookup verdicts \texttt{SAFE}, key mismatch, and proven not-in-log), the own-key self-check
 against a server overwrite, man-in-the-middle detection on a replaced lookup slot, and the
-availability-versus-integrity routing. Beyond this harness, sixteen embedded tests in four Signal Desktop suites run under the
+availability-versus-integrity routing. Beyond this harness, thirty-five embedded tests in six Signal Desktop suites run under the
 client's own test runner and drive realistic ACI strings through the same integration boundary the
 live callers use (\cref{sec:tests-ts}).
 
