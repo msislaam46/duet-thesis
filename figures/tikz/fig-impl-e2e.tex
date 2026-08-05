@@ -12,12 +12,13 @@
   % factor and the four lifelines land at the same x in (a) and (b).
   \useasboundingbox (-1.7,0.7) rectangle (12.3,-6.6);
   % ===== Panel (a): normal operation =====
-  \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{KT server}/S, 10.6/Auditor/U}{
+  \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{Directory server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
     \draw[dashed,black!45] (\x,-0.55) -- (\x,-6.3);}
   \node[font=\itshape,text=black!55,anchor=west,fill=white,inner sep=1.5pt] at (-0.95,-0.9) {(a) normal operation};
-  \draw[m] (0,-1.4) -- node[above,mlbl]{register Alice's key at $\ell_A$; commit epoch} (7.0,-1.4);
-  \draw[m] (3.4,-2.1) -- node[above,mlbl]{1. search peer slot $\ell_A$} (7.0,-2.1);
+  \draw[m] (0,-1.15) -- node[above,mlbl]{register Alice's key at $\ell_A$; commit} (7.0,-1.15);
+  \draw[m] (3.4,-1.68) -- node[above,mlbl]{register Bob's key at $\ell_B$; commit} (7.0,-1.68);
+  \draw[m] (3.4,-2.25) -- node[above,mlbl]{1. search peer slot $\ell_A$} (7.0,-2.25);
   \draw[m] (7.0,-2.6) -- node[above,mlbl]{value $+$ proof $+$ STH} (3.4,-2.6);
   \draw[m] (3.4,-3.3) -- node[above,mlbl]{2. search own slot $\ell_B$} (7.0,-3.3);
   \draw[m] (7.0,-3.8) -- node[above,mlbl]{own key $+$ proof} (3.4,-3.8);
@@ -42,7 +43,7 @@
   % Same bounding-box width as panel (a) so the lifelines align across panels.
   \useasboundingbox (-1.7,0.7) rectangle (12.3,-7.1);
   % ===== Panel (b): under attack (A1b) =====
-  \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{KT server}/S, 10.6/Auditor/U}{
+  \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{Directory server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
     \draw[dashed,black!45] (\x,-0.55) -- (\x,-6.6);}
   \node[font=\itshape,text=red!60!black,anchor=west,fill=white,inner sep=1.5pt] at (-0.95,-0.9)

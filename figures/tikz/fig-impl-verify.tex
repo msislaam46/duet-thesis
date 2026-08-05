@@ -5,19 +5,19 @@
    act/.style={draw,rounded corners,fill=black!4,align=center,font=\scriptsize,inner sep=3pt}]
   % lifeline heads
   \node[hd] (c) at (0,0) {\textbf{Client}\\{\scriptsize(\texttt{RemoteKTClient})}};
-  \node[hd] (s) at (7.4,0) {\textbf{Server}};
+  \node[hd] (s) at (7.4,0) {\textbf{Directory server}};
   \draw[dashed] (c.south) -- (0,-6.6);
   \draw[dashed] (s.south) -- (7.4,-6.6);
   % read own slot
   \draw[->] (0,-0.9) -- node[above,font=\scriptsize]{read own slot at $\ell_{\mathsf{self}}$} (7.4,-0.9);
   % response (label above the arrow, shortened, so it clears the lifeline + block)
-  \draw[<-] (0,-2.0) -- node[above,font=\scriptsize]{value $+$ proof chain $+$ signed STH} (7.4,-2.0);
+  \draw[<-] (0,-2.0) -- node[above,font=\scriptsize]{value, proof chain, and signed STH} (7.4,-2.0);
   % client-side verification
   \node[act] at (0,-3.05)
      {verify STH signature\\recompute + verify prefix proof\\verify log inclusion + label binding\\anchor head (append-only)};
   % read warning slot (only if own slot matched)
   \draw[->] (0,-4.25) -- node[above,font=\scriptsize]{if own slot matches: read $\ell_{\mathsf{warn}}$} (7.4,-4.25);
-  \draw[<-] (0,-5.1) -- node[below,font=\scriptsize]{proven (non-)inclusion} (7.4,-5.1);
+  \draw[<-] (0,-5.1) -- node[below,font=\scriptsize]{verified inclusion or non-inclusion} (7.4,-5.1);
   % verdict
-  \node[act,fill=black!8] at (0,-6.15) {return:\ \texttt{null} (safe) / \texttt{MitmWarning}};
+  \node[act,fill=black!8] at (0,-6.15) {return \texttt{null} (safe) or \texttt{MitmWarning}};
 \end{tikzpicture}

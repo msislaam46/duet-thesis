@@ -10,5 +10,5 @@
   \node[vstep,below=3mm of s4.south,anchor=north] (s5) {\textbf{5. Prefix root}: recompute the prefix-tree root from the proof (siblings $+$ 32-byte bitmap)};
   \node[vstep,below=3mm of s5.south,anchor=north] (s6) {\textbf{6. Log inclusion and latest-state binding}: check the recomputed root is a leaf under the signed log root, and that the inclusion covers the \emph{last} log leaf (inclusion of an older leaf does not establish the current directory state)};
   \foreach \a/\b in {s1/s2,s2/s3,s3/s4,s4/s5,s5/s6}{\draw[->] (\a) -- (\b);}
-  \node[note,below=3mm of s6.south,anchor=north] {The warning slot is checked by a separate invocation of this same chain (\textsf{CheckWarning}), so its proven (non-)inclusion is verified independently.};
+  \node[note,below=3mm of s6.south,anchor=north] {The warning slot is checked by a separate invocation of this same chain (\textsf{CheckWarning}), so its verified inclusion or non-inclusion is established independently.};
 \end{tikzpicture}

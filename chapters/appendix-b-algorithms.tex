@@ -252,6 +252,7 @@ and re-synchronize client state. In the implementation these are provided by mon
 (the background \texttt{monitorConversation} loop) rather than as one-to-one methods; \textsf{RetrieveKey}'s
 non-null requirement, for instance, is enforced by that composed monitor rather than by a standalone call.
 
+{\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
 \caption{Client Verification, Registration, Retrieval, Windowed Catch-Up}\label{alg:client}
 \KwData{$\mathit{last\_sth}\gets\bot$; per conversation, $\mathit{PRK}$ as extracted in Alg.~\ref{alg:dualindex}}
@@ -305,6 +306,7 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
   $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{signed-head growth and append-only consistency only; the owner, peer, and warning checks run in \textsf{BackgroundMonitor}}
 }
 \end{algorithm}
+}
 
 \clearpage
 \paragraph{Detection and persistence (Algorithm~\ref{alg:detect}).} This is the monitoring loop that

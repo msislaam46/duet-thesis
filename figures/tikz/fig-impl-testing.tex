@@ -7,7 +7,7 @@
    st/.style={draw,rounded corners,minimum width=4.6cm,minimum height=7mm,align=center}]
   \node[st] (rfc) {RFC test vectors (VRF, log proofs, HKDF)};
   \node[st,below=4mm of rfc] (unit) {unit + invariant tests (per module)};
-  \node[st,below=4mm of unit] (xl) {cross-language vectors (Rust $=$ TypeScript)};
+  \node[st,below=4mm of unit] (xl) {cross-language vectors and 27-file source-parity gate (Rust $=$ TypeScript)};
   \node[st,below=4mm of xl] (scen) {scenario suite (A0, A1a, A1b, A2--A5, X1)};
   \node[st,below=4mm of scen] (bench) {performance benchmarks (\cref{ch:eval})};
   \node[st,right=24mm of xl,fill=black!4] (ev) {implementation and\\evaluation evidence};
