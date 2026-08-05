@@ -27,7 +27,10 @@ endpoint security, and the need for an independent vantage to expose two interna
 \section{Limitations}\label{sec:disc-limitations}
 
 DUET's monitoring guarantee begins after a client pins a directory binding. It detects later changes
-but cannot establish whether that initial binding was authentic. The design covers pairwise,
+but cannot establish whether that initial binding was authentic. A proof-verified peer-slot absence
+is reported as pending and then, after a fail-closed timeout, as \texttt{NotPosted}; because that
+absence cannot be distinguished from a peer who has not yet run the client, timely peer-slot detection
+assumes peer participation. The design covers pairwise,
 single-device conversations rather than groups, MLS, Sender Keys, or complete multi-device warning
 propagation. It also cannot protect a compromised endpoint.
 
@@ -48,7 +51,9 @@ The implementation has further limitations. It runs on one machine, stores the d
 and deep-clones the current tree when committing an epoch. The Signal integration uses a deterministic
 conversation-secret stand-in and a seeded ratchet simulation. These exercise the code paths but do not
 establish label unpredictability or active-attacker security for live Signal state. The key-fetch
-integration reports a rejecting verdict without blocking session establishment. Simulated continuous
+integration reports a rejecting verdict without blocking session establishment. The writer-side
+warning-persistence component is implemented and unit-tested but is not wired into the live monitor,
+so a live run surfaces a silently deleted warning only through the transition audit. Simulated continuous
 mode also supplies the raw Diffie--Hellman output where ACKA's Signal mapping uses the derived chain
 key, and its synchronous state does not model skipped ratchet epochs. A production binding must obtain
 the live chain key and support explicit epoch indices and bounded skipped state.

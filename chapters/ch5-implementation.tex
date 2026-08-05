@@ -142,9 +142,10 @@ is in \cref{sec:bench-env}. The reproduction procedure is in \cref{sec:bench-rep
 \section{Signal Desktop Integration}\label{sec:impl-signal}
 
 The embedded TypeScript client verifies Rust directory responses and reports the result through a
-conversation badge and banner. The interface shows a green state after successful verification, an
-amber notice when a check is unavailable, and a red warning after a proof failure, key mismatch, or
-authenticated peer warning.
+conversation badge and banner. The interface starts grey (pending), turns green only when
+verification succeeds and the account-wide self-check is healthy, shows an amber notice when a check
+is unavailable, and shows a red warning after a proof failure, key mismatch, or authenticated peer
+warning.
 
 \subsection{Client Verification and Lifecycle}\label{ssec:impl-verifier}
 \label{ssec:impl-hooks}
