@@ -303,10 +303,14 @@ $\mathsf{Register}(\lblself,\mathit{pk})$ binds the party's public key at its ow
 directory. $\mathsf{WriteWarning}(\lblwarn)$ writes a non-empty warning payload to the shared warning
 slot, authenticated by a MAC under a pair-bound key expanded from $\mathit{PRK}$ with the info string
 \texttt{"warn-mac"} and the canonically ordered identities, so that a reader can distinguish a
-warning produced by a holder of the shared key from operator-injected data (\cref{alg:dualindex}). The slot is write-once: an
-occupied slot is left in place, since its value already alerts both monitors, and the directory's
-raw-label interface rejects overwrites (\cref{def:epoch-delta}). Once the write commits, the writer
-retains inclusion evidence for the persistence check (\cref{def:deletion-evidence}).
+warning produced by a holder of the shared key from operator-injected data (\cref{alg:dualindex}).
+Both slots are write-once and the directory's raw-label interface rejects overwrites
+(\cref{def:epoch-delta}), but the two conflicts mean different things. For a warning write, a
+verified non-empty read-back means a warning is already committed, and the slot is left in place
+since its value already alerts both monitors. For a registration write, a verified non-empty
+read-back proves only that the slot is occupied; whether it holds the client's own key is decided by
+the same-tick owner-slot comparison in the background monitor. Once a warning write commits, the
+writer retains inclusion evidence for the persistence check (\cref{def:deletion-evidence}).
 Both operations take effect at the next committed epoch (\cref{def:epoch}). Specified in
 \cref{ssec:design-detection}.
 \end{definition}

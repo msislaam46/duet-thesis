@@ -273,20 +273,22 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
 }
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
   $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-  $\mathit{server}.\textsf{UpdateRaw}(\lself,pk_{\mathit{self}})$\;
-  $\mathit{sth}\gets \mathit{server}.\textsf{CommitEpoch}()$ \tcp*{prototype only; a deployed client waits for the epoch boundary}
-  $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth})$;\ \ \Req $v=pk_{\mathit{self}}$\;
+  $\mathit{r}\gets \mathit{server}.\textsf{UpdateRaw}(\lself,pk_{\mathit{self}})$ \tcp*{success, or a typed 409 write-once conflict}
+  \uIf{$\mathit{r}$ succeeded}{$\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{fresh write: commit it (prototype only; a deployed client waits for the epoch boundary)}}
+  \uElseIf{$\mathit{r}$ is not a 409 write-once conflict}{\textbf{raise} $\mathit{r}$ \tcp*{transport / other failure propagates}}
+  \Else{\tcp{409: an unchanged secret re-derives the same occupied label; skip the commit and confirm by read-back}}
+  $\mathit{sth}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
+  $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth})$;\ \ \Req $v\ne\bot$ \tcp*{require a non-empty occupant by verified read-back; equality with $pk_{\mathit{self}}$ is left to the same-tick owner-slot check in \textsf{BackgroundMonitor}}
   $\mathit{last\_sth}\gets \mathit{sth}$\;
   \KwRet $(\lself,\lpeer,\lwarn)$\;
 }
 \Fn{\normalfont\textsf{RetrieveKey}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
   $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-  $(\mathit{id_A},\mathit{id_B})\gets(\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$\;
-  $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK},\mathit{id_A},\mathit{id_B})$ \tcp*{advance $\mathit{last\_sth}$ to the current verified head: every lookup binds to it}
-  $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$;\ \ \Req $pk\ne\bot$\;
+  $\textsf{WindowedCatchUp}(\mathit{server})$ \tcp*{advance $\mathit{last\_sth}$ to the current verified head: every lookup binds to it}
+  $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$ \tcp*{$pk=\bot$ is proven non-inclusion; the monitor decides pending / timeout / removal}
   \KwRet $pk$\;
 }
-\Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server},\lself,\lwarn,\mathit{PRK},\mathit{id_A},\mathit{id_B}$)}{
+\Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
   \uIf{$\mathit{last\_sth}=\bot$}{
     $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}); no history to check}
@@ -300,17 +302,19 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
       \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
     }
   }
-  \tcc{the self-key lookup and warning check below run on every tick, including an unchanged head}
-  $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth_{new}})$;\ \ \Req $v\ne\bot$\;
-  \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{sth_{new}},\mathit{PRK},\mathit{id_A},\mathit{id_B})=\textsc{Alert}$}{\textbf{raise} SecurityWarning}
-  $\mathit{last\_sth}\gets \mathit{sth_{new}}$\;
+  $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{signed-head growth and append-only consistency only; the owner, peer, and warning checks run in \textsf{BackgroundMonitor}}
 }
 \end{algorithm}
 
 \clearpage
 \paragraph{Detection and persistence (Algorithm~\ref{alg:detect}).} This is the monitoring loop that
 turns a substituted key into an alert. \textsf{DetectMitM} and \textsf{BackgroundMonitor} compare the
-retrieved key against the expected one and, on a mismatch, write the dual-index warning.
+retrieved key against the expected one and, on a mismatch, write the dual-index warning. A
+proof-verified peer-slot absence is not itself an alert: \textsf{BackgroundMonitor} reports it as
+\textsc{Pending} for the first two checks and as an operational \texttt{NotPosted} timeout on the
+third (a fail-closed operational outcome, distinct from the CEA verdict \textsc{NotPosted}), because
+the same absence can mean the peer has not yet run the client; a slot that was present and later
+disappears is an immediate alert.
 \textsf{RecordWarning} and \textsf{PersistenceCheck} retain verified evidence so that a later silent
 deletion of a committed warning becomes publishable proof rather than an unobservable loss; in this
 prototype they are implemented and separately unit-tested as a persistence component but are \emph{not} wired
@@ -320,7 +324,7 @@ persistence component, retained evidence.
 
 \begin{algorithm}[H]
 \caption{MitM Detection, Warning, and Warning Persistence}\label{alg:detect}
-\KwData{$\mathit{evidence}[]\gets[\,]$; per conversation, $\mathit{PRK}$ as extracted in Alg.~\ref{alg:dualindex}}
+\KwData{$\mathit{evidence}[]\gets[\,]$; $\mathit{registered}\gets\emptyset$; $\mathit{seen}\gets\emptyset$; $\mathit{absent}[\cdot]\gets 0$ (all keyed by the secret-derived label); per conversation, $\mathit{PRK}$ as extracted in Alg.~\ref{alg:dualindex}}
 \Fn{\normalfont\textsf{DetectMitM}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
@@ -349,26 +353,29 @@ persistence component, retained evidence.
   }
 }
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations},\mathit{id_{self}},\mathit{own\_pk}$)}{
-  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$ \tcp*{(a) global monitor: the client's own VRF entry; reports a warning even with no active conversations}
-  \If{$v_{\mathsf{vrf}}\ne\mathit{own\_pk}$}{
-    \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
-      $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-      $(\mathit{id_A},\mathit{id_B})\gets(\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$\;
-      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v_{\mathsf{vrf}},\mathit{ts}),\mathit{PRK},\mathit{id_A},\mathit{id_B})$ \tcp*{global substitution: trip every peer's slot}
-    }
-    \textbf{raise} SecurityAlert\;
+  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$;\ \ $\mathit{healthy}\gets(v_{\mathsf{vrf}}=\mathit{own\_pk})$ \tcp*{(1) global identity check: the client's own VRF entry, even with no active conversation. (2) an unreachable directory ends the tick before this point (availability, not attack)}
+  \If{$\neg\,\mathit{healthy}$}{
+    \lForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{$\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v_{\mathsf{vrf}},\mathit{ts}),\mathit{PRK},\mathit{id_A},\mathit{id_B})$}
+    \textbf{raise} SecurityAlert \tcp*{global substitution: trip every peer's slot}
   }
   \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
-    $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ \tcp*{(b) session monitor: the dual-index self slot the peer reads}
-    $(\mathit{id_A},\mathit{id_B})\gets(\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$\;
-    $\textsf{WindowedCatchUp}(\mathit{server},\lself,\lwarn,\mathit{PRK},\mathit{id_A},\mathit{id_B})$\;
-    $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$\;
-    \If{$v\ne\mathit{own\_pk}$}{
-      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"lookup-replaced"},v,\mathit{ts}),\mathit{PRK},\mathit{id_A},\mathit{id_B})$\;
-      \textbf{raise} SecurityAlert\;
+    $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $(\mathit{id_A},\mathit{id_B})\gets(\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$ \tcp*{(3) secret-bound labels}
+    \lIf{$\lself\notin \mathit{registered}$}{$\textsf{Register}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{own\_pk})$;\ \ $\mathit{registered}\gets \mathit{registered}\cup\{\lself\}$ \tcp*[f]{(4) once per derived label}}
+    $\textsf{WindowedCatchUp}(\mathit{server})$ \tcp*{(5) append-only + STH growth}
+    $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$ \tcp*{(6) owner slot}
+    \lIf{$v\ne\mathit{own\_pk}$}{$\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"lookup-replaced"},v,\mathit{ts}),\mathit{PRK},\mathit{id_A},\mathit{id_B})$;\ \ \textbf{raise} SecurityAlert}
+    $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$ \tcp*{(7) peer slot ($pk=\bot$ is proven non-inclusion)}
+    \uIf{$pk=\bot$}{
+      \uIf{$\lpeer\in \mathit{seen}$}{\textbf{raise} SecurityAlert \tcp*{(10) removal after prior presence: immediate red}}
+      \uElseIf{$\mathit{absent}[\lpeer]<2$}{$\mathit{absent}[\lpeer]\gets \mathit{absent}[\lpeer]+1$;\ \ \textbf{emit} \textsc{Pending};\ \ \textbf{continue} \tcp*{(8) checks 1--2: pending, no UI event}}
+      \Else{\textbf{raise} operational \texttt{NotPosted};\ \ \textbf{continue} \tcp*{(9) third check: fail-closed operational timeout, not cryptographic proof of an attack}}
+    }\Else{
+      $\mathit{absent}[\lpeer]\gets 0$;\ \ $\mathit{seen}\gets \mathit{seen}\cup\{\lpeer\}$ \tcp*{present: reset the counter and pin (as in \textsf{DetectMitM})}
     }
+    \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{last\_sth},\mathit{PRK},\mathit{id_A},\mathit{id_B})=\textsc{Alert}$}{\textbf{raise} SecurityWarning \tcp*[f]{(11) warning slot}}
+    \lIf{$\mathit{healthy}$}{\textbf{emit} \textsc{Green} \tcp*[f]{(12) green only when the global self-check is healthy}}
   }
-  $\textsf{PersistenceCheck}(\mathit{server})$ \tcp*{persistence step (tested in isolation); not wired into the prototype's live loop}
+  \tcp{\textsf{PersistenceCheck} is implemented and unit-tested as a separate component; it is not wired into this live loop}
 }
 \end{algorithm}
 

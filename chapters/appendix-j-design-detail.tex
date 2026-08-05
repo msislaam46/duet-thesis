@@ -68,8 +68,9 @@ label has already been uploaded to the log with a fingerprint, which would indic
 impersonation''~\cite{dowling2023acka}, and the sender advances its chain only after its write is
 confirmed in a committed head. Third, the receiver advances its chain only when a verification returns
 \textsc{Consistent}; a \textsc{Fork} verdict leaves the chain unadvanced over the disputed epoch and
-reports an in-band warning, and a pending lookup leaves the receiver's state untouched so the check
-can be retried without desynchronizing the chain.
+reports an in-band warning, and a \textsc{NotPosted} verdict (the per-epoch entry is absent, distinct
+from the UI's grey pending state) leaves the receiver's state untouched so the check can be retried
+without desynchronizing the chain.
 
 The two designs represent label history differently. ACKA's log stores a vector of fingerprints for
 each label, and its receiver treats two fingerprints at one label as evidence of impersonation. DUET
