@@ -63,7 +63,9 @@ key, and its synchronous state does not model skipped ratchet epochs. A producti
 the live chain key and support explicit epoch indices and bounded skipped state.
 
 The supporting evidence has a narrower scope. The security argument is an informal proof sketch
-supported by definitions, the same-head lemma, and the adversarial suite. The suite does not model
+supported by definitions, the same-head lemma, and the adversarial suite. A single combined proof
+binding the CEA fingerprint to its dual-index location, rather than the two separate constructions the
+design uses, remains future work. The suite does not model
 separate first-contact sessions with each party or a fabricated pre-key bundle kept consistent with a
 malicious directory entry. Timings measure local components rather than a complete networked monitor
 or audit, and the committed corpus contains aggregate statistics rather than raw Criterion samples.

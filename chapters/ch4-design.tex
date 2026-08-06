@@ -182,10 +182,6 @@ label cannot authenticate two different values, even if the conversation secret 
 warning publication, changes across epochs, offline catch-up, or equivocation. Those cases rely on
 warning persistence, transition auditing, windowed consistency, and cross-vantage comparison.
 
-CEA authenticates a fingerprint stored at an entry. The dual-index construction determines the
-conversation-derived locations at which entries and warnings are stored. A complete combined proof
-remains future work (\cref{ch:discussion}).
-
 \subsection{Session and Continuous Authentication Modes}\label{ssec:design-modes}
 
 In \emph{session mode}, labels derive from the initial X3DH or PQXDH secret, and each slot stores the
@@ -207,7 +203,9 @@ In \cref{eq:design-cea}, both parties derive the same $L_t$, while $F_t$ binds t
 checks that the label is empty before writing, and the receiver advances only after a
 \textsc{Consistent} verdict. An occupied label or mismatching fingerprint produces a warning and
 leaves the chain unchanged. \Cref{sec:design-detail-cea} gives the full operation ordering and explains
-how DUET's single-value directory implements ACKA's detection objective.
+how DUET's single-value directory implements ACKA's detection objective. In this division of labour,
+CEA authenticates a per-epoch fingerprint stored at an entry, while the dual-index construction
+determines the conversation-derived locations at which entries and warnings are stored.
 
 \begin{figure}[H]
 \centering
@@ -223,10 +221,8 @@ ratchet key $T_t$. The verifier advances only after a \textsc{Consistent} result
 \Cref{fig:design-modes} contrasts the two authentication modes. Session mode authenticates the
 identity binding with one write per signed-pre-key rotation.
 Continuous mode authenticates each ratchet epoch but writes once per epoch. Both share the directory,
-signed heads, and warning channel. The prototype uses a deterministic conversation-secret stand-in
-and a seeded ratchet simulation, and its synchronous CEA chain does not yet handle skipped
-ratchet epochs. Production integration must obtain Signal's live conversation secret and add explicit
-epoch and skipped-state handling (\cref{ch:discussion}).
+signed heads, and warning channel. \Cref{ch:discussion} discusses the prototype's simulated
+conversation secret and the production integration these modes require.
 
 % ============================================================================
 \FloatBarrier
