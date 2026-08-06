@@ -1,7 +1,5 @@
 \chapter{Algorithms}\label{app:algorithms}
 
-\newcommand{\Hleaf}{\Hash_{\mathsf{leaf}}}
-\newcommand{\Hnode}{\Hash_{\mathsf{node}}}
 \newcommand{\lself}{\ell_{\mathsf{self}}}
 \newcommand{\lpeer}{\ell_{\mathsf{peer}}}
 \newcommand{\lwarn}{\ell_{\mathsf{warn}}}
@@ -30,9 +28,9 @@ Algorithm & Purpose \\
 \midrule
 \ref{alg:merklelog}~Merkle Log Tree & append-only log with inclusion and consistency proofs \\
 \ref{alg:prefix}~Sparse Prefix Tree & label-keyed authenticated map with inclusion and non-inclusion proofs \\
-\ref{alg:server}~Directory Server & combines log and prefix tree; serves signed heads and proofs \\
+\ref{alg:server}~Directory Server & combines log and prefix tree, and serves signed heads and proofs \\
 \ref{alg:dualindex}~Dual-Index Derivation & derives lookup and warning labels from the shared secret \\
-\ref{alg:client}~Client Verification & verifies a lookup end to end; registers, retrieves, catches up \\
+\ref{alg:client}~Client Verification & verifies a lookup end to end, and registers, retrieves, and catches up \\
 \ref{alg:detect}~MitM Detection & raises and persists the dual-index warning \\
 \ref{alg:auditor}~Auditor & cross-vantage fork check and per-epoch transition audit \\
 \ref{alg:cea}~CEA Mode & per-ratchet continuous entity authentication \\
@@ -43,7 +41,7 @@ Algorithm & Purpose \\
 \paragraph{Notation.} $\Hash(\cdot)$ is SHA-256. Tree hashing is domain-separated per RFC 6962/9162~\cite{rfc6962,rfc9162}: a
 leaf hashes as $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and an internal node as
 $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. The operator $\concat$ denotes byte
-concatenation. Identities are fixed-width 16-byte service IDs; this is a precondition of the
+concatenation. Identities are fixed-width 16-byte service IDs. This is a precondition of the
 dual-index derivation (Algorithm~\ref{alg:dualindex}), since without a fixed width the
 $\mathit{id_{self}}\concat\mathit{id_{peer}}$ split would be ambiguous, and the Rust
 implementation enforces it at the API boundary.
@@ -95,7 +93,7 @@ build on. The $m=0$ case is accepted as the local trust-on-first-use convention.
   \KwRet $\mathit{sn}=0\wedge r=\mathit{root}$ \tcp*{rejects short/padded paths}
 }
 \Fn{\normalfont\textsf{ConsistencyProof}($m,n$)}{
-  \Req $0\le m\le n$ \tcp*{$m=0$ accepted as the local TOFU convention; RFC 9162 assumes $0<m<n$}
+  \Req $0\le m\le n$ \tcp*{$m=0$ accepted as the local TOFU convention, while RFC 9162 assumes $0<m<n$}
   \lIf{$m=0\vee m=n$}{\KwRet $[\,]$}
   \KwRet $\textsf{SUBPROOF}(m,D[0{:}n],\mathrm{true})$ \tcp*{RFC 9162 Section 2.1.4.1}
 }
@@ -162,7 +160,7 @@ non-inclusion proof establishes that a warning slot is empty rather than merely 
 key-transparency service: raw-label writes are write-once, \textsf{CommitEpoch} appends the prefix
 root to the log and signs the head (binding epoch, size, root, timestamp, and the policy
 commitment), and \textsf{Search} answers with the value plus the full proof chain a verifier needs.
-\textsf{SearchByUserId} adds the VRF step (ECVRF, RFC~9381~\cite{rfc9381}) that derives global labels privately.
+\textsf{SearchByUserId} adds the VRF step (ECVRF, RFC~9381~\cite{rfc9381}) that derives global labels through the server's ECVRF evaluation.
 \begin{algorithm}[H]
 \caption{Key-Transparency Directory Server}\label{alg:server}
 \KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$}
@@ -184,7 +182,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
   $i\gets \mathit{log}.\textsf{Append}(r)$ \tcp*{prefix root is a log leaf}
   $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
   freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
-  $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval}\concat \mathit{rawpolicy})$ \tcp*{policy commitment (CONIKS $P$); $\mathit{rawpolicy}$ binds the write-once/delta policy}
+  $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval}\concat \mathit{rawpolicy})$ \tcp*{policy commitment (CONIKS $P$), where $\mathit{rawpolicy}$ binds the write-once/delta policy}
   $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ e\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{ts}\concat \mathit{ch})$ \tcp*{88-byte LE}
   $\mathit{sth}\gets(e,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{ts},\mathit{ch},\sigma)$\;
   $\mathit{epoch}\gets \mathit{epoch}+1$ \tcp*{advance only after signing this epoch's head}
@@ -207,7 +205,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 label layer of \cref{sec:design-dual}: from each conversation's shared secret, HKDF~\cite{rfc5869} derives the two
 party-specific lookup labels and the canonically ordered shared warning label. \textsf{WriteWarning}
 publishes a MAC-authenticated warning payload and trusts neither an apparent success nor a write-once
-conflict, confirming publication by a verified read-back; \textsf{CheckWarning} raises
+conflict, confirming publication by a verified read-back. \textsf{CheckWarning} raises
 \textsc{Alert} on any proven non-empty slot.
 \begin{algorithm}[H]
 \caption{Dual-Index Label Derivation (HKDF-SHA256, RFC 5869)}\label{alg:dualindex}
@@ -228,7 +226,7 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
     $\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{the write landed: seal it into an epoch}
   }
   \uElseIf{\normalfont write-once conflict (typed 409)}{
-    \emph{skip} \textsf{CommitEpoch} \tcp*{slot claims occupied; tolerated, not trusted}
+    \emph{skip} \textsf{CommitEpoch} \tcp*{slot claims occupied, tolerated but not trusted}
   }
   \Else{
     \textbf{propagate} the error \tcp*{transport/other failure: availability, not censorship}
@@ -251,7 +249,7 @@ STH signature all verify, bind to the caller's pinned head, and carry the pinned
 commitment, and it fails closed on any mismatch.
 \textsf{Register}, \textsf{RetrieveKey}, and \textsf{WindowedCatchUp} build on it to establish, read,
 and re-synchronize client state. In the implementation these are provided by monitor-level composition
-(the background \texttt{monitorConversation} loop) rather than as one-to-one methods; \textsf{RetrieveKey}'s
+(the background \texttt{monitorConversation} loop) rather than as one-to-one methods. \textsf{RetrieveKey}'s
 non-null requirement, for instance, is enforced by that composed monitor rather than by a standalone call.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
@@ -271,41 +269,41 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
   \lIf{$\mathit{label}$ is a raw (dual-index / warning / CEA) label $\wedge\ v\ne\bot$}{\Req $\pi_{\mathrm{prefix}}.\mathit{kind}=\textsc{immutable}$ \tcp*[f]{raw path only: a present client-derived leaf is write-once}}
   $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
   \Req $\textsf{VerifyInclusion}(r,\pi_{\mathrm{incl}}.\mathit{index},\pi_{\mathrm{incl}}.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pi_{\mathrm{incl}}.\mathit{path})$\;
-  \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{current-snapshot binding: the proof must cover the last log leaf; an older leaf's inclusion also verifies (inclusion $\ne$ current-snapshot binding, RFC 9162)}
+  \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{current-snapshot binding: the proof must cover the last log leaf, and an older leaf's inclusion also verifies (inclusion $\ne$ current-snapshot binding, RFC 9162)}
   \KwRet $v$ \tcp*{$v$ may be $\bot$: proven non-inclusion}
 }
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
   $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   $\mathit{r}\gets \mathit{server}.\textsf{UpdateRaw}(\lself,pk_{\mathit{self}})$ \tcp*{success, or a typed 409 write-once conflict}
-  \uIf{$\mathit{r}$ succeeded}{$\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{fresh write: commit it (prototype only; a deployed client waits for the epoch boundary)}}
+  \uIf{$\mathit{r}$ succeeded}{$\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{fresh write: commit it (prototype only, since a deployed client waits for the epoch boundary)}}
   \uElseIf{$\mathit{r}$ is not a 409 write-once conflict}{\textbf{raise} $\mathit{r}$ \tcp*{transport / other failure propagates}}
-  \Else{\tcp{409: an unchanged secret re-derives the same occupied label; skip the commit and confirm by read-back}}
+  \Else{\tcp{409: an unchanged secret re-derives the same occupied label, so skip the commit and confirm by read-back}}
   $\mathit{sth}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
-  $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth})$;\ \ \Req $v\ne\bot$ \tcp*{require a non-empty occupant by verified read-back; equality with $pk_{\mathit{self}}$ is left to the same-tick owner-slot check in \textsf{BackgroundMonitor}}
+  $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{sth})$;\ \ \Req $v\ne\bot$ \tcp*{require a non-empty occupant by verified read-back, and equality with $pk_{\mathit{self}}$ is left to the same-tick owner-slot check in \textsf{BackgroundMonitor}}
   $\mathit{last\_sth}\gets \mathit{sth}$\;
   \KwRet $(\lself,\lpeer,\lwarn)$\;
 }
 \Fn{\normalfont\textsf{RetrieveKey}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
   $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   $\textsf{WindowedCatchUp}(\mathit{server})$ \tcp*{advance $\mathit{last\_sth}$ to the current verified head: every lookup binds to it}
-  $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$ \tcp*{$pk=\bot$ is proven non-inclusion; the monitor decides pending / timeout / removal}
+  $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$ \tcp*{$pk=\bot$ is proven non-inclusion, and the monitor decides pending / timeout / removal}
   \KwRet $pk$\;
 }
 \Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
   \uIf{$\mathit{last\_sth}=\bot$}{
-    $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}); no history to check}
+    $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}), no history to check}
   }\Else{
     \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch} \lor \mathit{sth_{new}}.\mathit{size}<\mathit{last\_sth}.\mathit{size}$}{\textbf{raise} Fork \tcp*[f]{an honest append-only head never regresses}}
     \uIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last\_sth}.\mathit{size}$}{
-      \Req $\mathit{sth_{new}}.\mathit{root}=\mathit{last\_sth}.\mathit{root}$ \tcp*{unchanged head: equal size with a differing root is same-epoch equivocation, else \textbf{raise} Fork; only the consistency proof is skipped}
+      \Req $\mathit{sth_{new}}.\mathit{root}=\mathit{last\_sth}.\mathit{root}$ \tcp*{unchanged head: equal size with a differing root is same-epoch equivocation, else \textbf{raise} Fork, and only the consistency proof is skipped}
     }\Else{
       $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
       \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi_{\mathrm{cons}})$\;
       \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
     }
   }
-  $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{signed-head growth and append-only consistency only; the owner, peer, and warning checks run in \textsf{BackgroundMonitor}}
+  $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{signed-head growth and append-only consistency only, while the owner, peer, and warning checks run in \textsf{BackgroundMonitor}}
 }
 \end{algorithm}
 }
@@ -317,10 +315,10 @@ retrieved key against the expected one and, on a mismatch, write the dual-index 
 proof-verified peer-slot absence is not itself an alert: \textsf{BackgroundMonitor} reports it as
 \textsc{Pending} for the first two checks and as an operational \texttt{NotPosted} timeout on the
 third (a fail-closed operational outcome, distinct from the CEA verdict \textsc{NotPosted}), because
-the same absence can mean the peer has not yet run the client; a slot that was present and later
+the same absence can mean the peer has not yet run the client. A slot that was present and later
 disappears is an immediate alert.
 \textsf{RecordWarning} and \textsf{PersistenceCheck} retain verified evidence so that a later silent
-deletion of a committed warning becomes publishable proof rather than an unobservable loss; in this
+deletion of a committed warning becomes publishable proof rather than an unobservable loss. In this
 prototype they are implemented and separately unit-tested as a persistence component but are \emph{not} wired
 into the live background monitor, which runs the detection and (confirmed) warning-publication path
 only. No path silences a genuine mismatch: the outcome is always a raised warning or, for the tested
@@ -329,13 +327,13 @@ persistence component, retained evidence.
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
 \caption{MitM Detection, Warning, and Warning Persistence}\label{alg:detect}
-\KwData{$\mathit{evidence}[]\gets[\,]$; $\mathit{registered}\gets\emptyset$; $\mathit{seen}\gets\emptyset$; $\mathit{absent}[\cdot]\gets 0$ (all keyed by the secret-derived label)}
+\KwData{$\mathit{evidence}[]\gets[\,]$; $\mathit{registered}\gets\emptyset$; $\mathit{seen}\gets\emptyset$; $\mathit{absent}[\cdot]\gets 0$ (keyed by the secret-derived label); $\mathsf{PeerPin}[\cdot]\gets\bot$ (keyed by peer identity)}
 \Fn{\normalfont\textsf{DetectMitM}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
     $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
     $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"peer-slot-replaced"},pk,\mathit{ts}),k_{\mathrm{mac}})$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"peer-slot-replaced"},k_{\mathrm{mac}})$\;
     \textbf{raise} SecurityAlert\;
   }
   \KwRet $pk$\;
@@ -362,7 +360,7 @@ persistence component, retained evidence.
   \If{$\neg\,\mathit{healthy}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v_{\mathsf{vrf}},\mathit{ts}),k_{\mathrm{mac}})$\;
+      $\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"key-replaced"},k_{\mathrm{mac}})$\;
     }
     \textbf{raise} SecurityAlert \tcp*{global substitution: trip every peer's slot}
   }
@@ -371,19 +369,22 @@ persistence component, retained evidence.
     \lIf{$\lself\notin \mathit{registered}$}{$\textsf{Register}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{own\_pk})$;\ \ $\mathit{registered}\gets \mathit{registered}\cup\{\lself\}$ \tcp*[f]{(4) once per derived label}}
     $\textsf{WindowedCatchUp}(\mathit{server})$ \tcp*{(5) append-only + STH growth}
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$ \tcp*{(6) owner slot}
-    \lIf{$v\ne\mathit{own\_pk}$}{$\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"lookup-replaced"},v,\mathit{ts}),k_{\mathrm{mac}})$;\ \ \textbf{raise} SecurityAlert}
+    \lIf{$v\ne\mathit{own\_pk}$}{$\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"lookup-replaced"},k_{\mathrm{mac}})$;\ \ \textbf{raise} SecurityAlert}
     $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$ \tcp*{(7) peer slot ($pk=\bot$ is proven non-inclusion)}
     \uIf{$pk=\bot$}{
       \uIf{$\lpeer\in \mathit{seen}$}{\textbf{raise} SecurityAlert \tcp*{(10) removal after prior presence: immediate red}}
       \uElseIf{$\mathit{absent}[\lpeer]<2$}{$\mathit{absent}[\lpeer]\gets \mathit{absent}[\lpeer]+1$;\ \ \textbf{emit} \textsc{Pending};\ \ \textbf{continue} \tcp*{(8) checks 1--2: pending, no UI event}}
       \Else{\textbf{emit} operational \texttt{NotPosted} for this conversation;\ \ \textbf{continue} \tcp*{(9) third check: fail-closed operational timeout, not cryptographic proof of an attack}}
     }\Else{
-      $\mathit{absent}[\lpeer]\gets 0$;\ \ $\mathit{seen}\gets \mathit{seen}\cup\{\lpeer\}$ \tcp*{present: reset the counter and pin (as in \textsf{DetectMitM})}
+      $\mathit{absent}[\lpeer]\gets 0$;\ \ $\mathit{seen}\gets \mathit{seen}\cup\{\lpeer\}$ \tcp*{present: reset the absence counter}
+      $\mathit{pinned}\gets\mathsf{PeerPin}[\mathit{id_{peer}}]$\;
+      \uIf{$\mathit{pinned}=\bot$}{$\mathsf{PeerPin}[\mathit{id_{peer}}]\gets pk$ \tcp*[f]{first sight: pin the peer key}}
+      \uElseIf{$pk\ne\mathit{pinned}$}{$\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"peer-slot-replaced"},k_{\mathrm{mac}})$;\ \ \textbf{raise} SecurityAlert \tcp*[f]{peer slot overwritten}}
     }
     \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{last\_sth},k_{\mathrm{mac}})=\textsc{Alert}$}{\textbf{raise} SecurityWarning \tcp*[f]{(11) warning slot}}
     \lIf{$\mathit{healthy}$}{\textbf{emit} \textsc{Green} \tcp*[f]{(12) green only when the global self-check is healthy}}
   }
-  \tcp{\textsf{PersistenceCheck} is implemented and unit-tested as a separate component; it is not wired into this live loop}
+  \tcp{\textsf{PersistenceCheck} is implemented and unit-tested as a separate component, not wired into this live loop}
 }
 \end{algorithm}
 }
@@ -510,7 +511,7 @@ the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
   $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
   \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{no advance}}
   \If{$v\ne F^{*}$}{
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t),k_{\mathrm{mac}})$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"ratchet-fork"},k_{\mathrm{mac}})$\;
     \KwRet \textsc{Fork} \tcp*{no advance}
   }
   $\textsf{CeaUpdate}(I)$ \tcp*{advance on \textsc{Consistent}}

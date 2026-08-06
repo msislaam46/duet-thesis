@@ -82,7 +82,7 @@ $10^6$ & 20 & 640 & 23 & 913 \\
 \bottomrule
 \end{tabular}
 
-\vspace{2pt}{\footnotesize The VRF lookup bytes are the single seeded-leaf path; at $10^6$ that leaf
+\vspace{2pt}{\footnotesize The VRF lookup bytes are the single seeded-leaf path. At $10^6$ that leaf
 sits at depth~23 (913\,B). The distribution median over \num{1000} random lookups is \num{817}\,bytes
 (\cref{tab:bench-scale}), the figure quoted in \cref{ssec:eval-sizes}.}
 \end{table}
@@ -186,8 +186,8 @@ rotation and epoch commit, the VRF in isolation, and the Rust lookup-verificatio
 \toprule
 Operation (baseline) & $N$ & Median & p95 \\
 \midrule
-M8 latency-derived lookup rate (dual-index) & $10^4$ & 111.9 & 137.2 \\
-M8 latency-derived update rate (dual-index) & $10^4$ & 139.8 & 166.0 \\
+M8 lookup latency used to derive the single-thread rate (dual-index) & $10^4$ & 111.9 & 137.2 \\
+M8 update latency used to derive the single-thread rate (dual-index) & $10^4$ & 139.8 & 166.0 \\
 M9 key rotation (dual-index)         & $10^3$ & 138.7 & 166.0 \\
 M9 key rotation (dual-index)         & $10^4$ & 140.3 & 163.0 \\
 M9 epoch commit (windowed)           & $10^3$ & 451.0 & 504.8 \\
@@ -382,7 +382,7 @@ Metric & Criterion group & CSV source \\
 M1  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M1}) \\
 M2  & \texttt{M2\_proof\_generation}   & \texttt{rust\_benchmark\_timings.csv} (\texttt{M2\_search\_gen}) \\
 M3  & \texttt{M3\_proof\_verification} & \texttt{rust\_benchmark\_timings.csv} (\texttt{M3\_prefix\_verify}, \texttt{M3\_vrf\_verify}, \texttt{M3\_full\_client\_verify}) \\
-M4  & \texttt{M4\_catchup\_cost}       & bandwidth: \texttt{rust\_benchmark\_results.csv} (\texttt{M4}); generation time: \texttt{rust\_benchmark\_timings.csv} (\texttt{M4\_catchup\_gen}; the $N$ column carries $W$) \\
+M4  & \texttt{M4\_catchup\_cost}       & bandwidth: \texttt{rust\_benchmark\_results.csv} (\texttt{M4}), and generation time: \texttt{rust\_benchmark\_timings.csv} (\texttt{M4\_catchup\_gen}, where the $N$ column carries $W$) \\
 M5  & \texttt{M5\_mitm\_detection}     & \texttt{rust\_benchmark\_timings.csv} (\texttt{M5\_detection}) \\
 M6  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M6}) \\
 M7  & \texttt{M7\_scale\_verification} & \texttt{rust\_benchmark\_m7.csv} (incl.\ \texttt{full\_client\_verify\_median}/\texttt{\_p95}) \\
@@ -391,11 +391,11 @@ M9  & \texttt{M9\_key\_rotation}       & \texttt{rust\_benchmark\_timings.csv} (
 M10 & \texttt{M10\_vrf\_isolation}     & \texttt{rust\_benchmark\_timings.csv} (\texttt{M10\_vrf\_prove}, \texttt{M10\_vrf\_verify}) \\
 M11 & \texttt{M11\_handshake\_overhead}& \texttt{rust\_benchmark\_timings.csv} (\texttt{M11\_handshake\_overhead}) \\
 M12 & \texttt{M12\_auditor}            & \texttt{rust\_benchmark\_timings.csv} (\texttt{M12\_audit\_epoch}, \texttt{M12\_detect\_fork}) \\
-M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (write counts); \texttt{rust\_benchmark\_timings.csv} (\texttt{M13\_session\_verify}, \texttt{M13\_continuous\_verify}) \\
+M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (write counts) and \texttt{rust\_benchmark\_timings.csv} (\texttt{M13\_session\_verify}, \texttt{M13\_continuous\_verify}) \\
 M14 & \texttt{M14\_history\_depth}      & \texttt{rust\_benchmark\_m14.csv} \\
-M15 & \texttt{M15\_deep\_chain}         & \texttt{rust\_benchmark\_m15.csv}; \texttt{rust\_benchmark\_m15\_writes.csv} (write-count grid) \\
+M15 & \texttt{M15\_deep\_chain}         & \texttt{rust\_benchmark\_m15.csv} and \texttt{rust\_benchmark\_m15\_writes.csv} (write-count grid) \\
 M16 & \texttt{M16\_detector\_branches}  & \texttt{rust\_benchmark\_m16.csv} \\
-M17 & (test) & \texttt{cargo test -{}-test clean\_path\_coverage} (functional; no CSV) \\
+M17 & (test) & \texttt{cargo test -{}-test clean\_path\_coverage} (functional, no CSV) \\
 \bottomrule
 \end{tabular}
 \end{table}

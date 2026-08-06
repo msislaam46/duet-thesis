@@ -39,8 +39,10 @@ prefix root's log inclusion, and the signed head have all verified.
 identifier to a pseudorandom label, attaching a proof that the label was computed
 correctly. A client verifies that proof against the operator's public key but cannot
 itself compute or predict any other label (\cref{ssec:bg-ct2kt}). The labels are thus
-deterministic for the operator yet unpredictable to outsiders, which prevents an
-observer from enumerating the directory.
+deterministic for the operator yet pseudorandom to an observer of the published directory, which
+prevents offline recovery of identities by traversing public labels. The prototype's public query
+endpoint still permits online tests of already-known identifiers, a residual returned to in
+\cref{ch:discussion}.
 
 \subsection{Epoch Lifecycle: Update, Commit, and the Signed Tree Head}\label{ssec:design-epoch}
 
@@ -56,8 +58,10 @@ The signed message is:
 \end{equation}
 where $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
 \mathit{pk}_{\mathsf{sth}} \concat \mathit{suite} \concat \mathit{version} \concat
-\mathit{epoch\_interval} \concat \mathit{raw\_label\_policy})$ binds the write-once raw-label policy so
-the server cannot silently relax it. In \cref{eq:design-sth}, the epoch, log size, root, timestamp,
+\mathit{epoch\_interval} \concat \mathit{raw\_label\_policy})$ commits the signed head to the declared
+write-once raw-label policy. A client with the expected configuration rejects a different commitment.
+The hash does not by itself prove that the server followed the policy, which the transition audit
+checks per epoch. In \cref{eq:design-sth}, the epoch, log size, root, timestamp,
 and configuration hash bind the head to one directory state and one parameter set. The client must
 additionally apply a freshness policy, which the prototype does not yet implement. The full field
 rationale and configuration-substitution cases are given in \cref{sec:design-detail-sth}.
@@ -184,6 +188,10 @@ warning persistence, transition auditing, windowed consistency, and cross-vantag
 
 \subsection{Session and Continuous Authentication Modes}\label{ssec:design-modes}
 
+DUET supports two authentication granularities. Session mode authenticates the identity binding for a
+conversation, while continuous mode uses ACKA's continuous entity authentication (CEA) to authenticate
+later public ratchet keys.
+
 In \emph{session mode}, labels derive from the initial X3DH or PQXDH secret, and each slot stores the
 identity key. A party re-registers when its signed pre-key rotates. The remaining handshake values are
 not logged separately, but they contribute to the shared secret from which the labels derive.
@@ -285,9 +293,8 @@ retains ACKA's per-epoch label-and-fingerprint construction.
 ACKA and DUET represent a label's history differently. ACKA detects impersonation when conflicting
 fingerprints appear at one label, whereas DUET stores one immutable value per label. DUET therefore
 detects an earlier adversarial post through the sender's occupancy check and a later overwrite through
-transition auditing. The receiver's per-epoch check alone does not cover the overwrite case, so that
-case depends on the audit. A complete proof that this representation preserves ACKA's guarantees
-remains future work.
+transition auditing. The receiver's per-epoch check alone does not cover a later overwrite, so the
+transition audit supplies that check.
 
 DUET additionally supplies conversation-derived lookup labels and a shared warning slot, windowed
 catch-up, and cross-vantage fork detection. These additions address malicious directory behaviour,
@@ -346,8 +353,8 @@ dependent on populated prefix depth, while binary branching avoids the wider cop
 an $n$-ary trie. Accumulators would make the required non-membership proof more expensive.
 
 \paragraph{Global-Label Derivation.} Global slots use ECVRF-EDWARDS25519-SHA512-TAI rather than a bare
-hash. The VRF therefore provides publicly verifiable outsider-enumeration resistance and matches Signal's deployed
-suite~\cite{rfc9381,signal-kt-server}.
+hash. The VRF therefore provides publicly verifiable resistance to offline identity recovery from
+published labels and matches Signal's deployed suite~\cite{rfc9381,signal-kt-server}.
 
 \paragraph{Combined Prefix-Plus-Log Stack.} The prefix tree authenticates the present directory,
 while the log authenticates its history. One structure alone would not provide both lookup proofs and

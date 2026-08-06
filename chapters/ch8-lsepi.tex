@@ -22,9 +22,11 @@ that the implementation falls within a particular exemption~\cite{uk-cryptonote,
 production release would require classification against the applicable control list and the guidance
 current at that time. The directory stores pseudonymised identifiers, public keys, and epoch metadata,
 never message content or plaintext identifiers. Pseudonymised data remains personal data under UK
-GDPR, so this design is treated as processing personal data rather than
-exempt~\cite{ico-pseudonymisation}. VRF-derived indices keep raw identifiers out of the published
-tree and reduce direct identifier exposure, but they do not make the records anonymous. Production
+GDPR, so this design is treated as processing personal data, not as
+exempt~\cite{ico-pseudonymisation}. The public registration and lookup endpoints also receive raw
+service identifiers, so the service processes account-linked data even though the tree stores only
+pseudonymised labels. VRF-derived indices keep raw identifiers out of the published tree but do not
+make the records anonymous. Production
 use would require a data-protection assessment, a documented processing purpose and lawful basis,
 restricted access to warning records, and defined retention periods~\cite{ico-data-principles}. Two residual exposures remain: the
 query pattern visible to the operator (\cref{ch:discussion}) and the density metadata a
@@ -50,9 +52,11 @@ testing, accessibility, escalation routes, and support paths are unaddressed her
 work in \cref{ch:discussion}. Warning records also reveal who was warned and when, creating additional
 metadata that requires protection.
 
-The evaluation used synthetic accounts and neither recruited participants nor intercepted live
-traffic (\cref{ssec:impl-demo}), so it was not a human-participant study. A deployment would need to
-assess the unmeasured infrastructure, energy, and access costs of an independent second vantage.
+The evaluation recruited no participants and intercepted no third-party traffic. The live demonstration
+used two researcher-controlled Signal accounts linked through Signal's production service, while the
+benchmark and attack inputs were synthetic (\cref{ssec:impl-demo}). It was therefore not a
+human-participant study. A deployment would need to assess the unmeasured infrastructure, energy, and
+access costs of an independent second vantage.
 
 % ============================================================================
 \section{Professional Issues and Codes of Conduct}\label{sec:lsepi-prof}
@@ -94,7 +98,7 @@ UK GDPR (pseudonymised account data) & a production directory would associate ke
 UK export controls (cryptographic software) & the design composes standard cryptographic primitives & classification depends on functionality, destination, and end use, and public specifications do not by themselves determine it & no export-control classification is attempted \\
 BCS Code of Conduct & public interest, competence, relevant authority, and profession & duties on security and privacy, competence, honesty to the supervisor, and not overstating results & established libraries, RFC test vectors, reproducible tests, supervisory review, and explicitly stated prototype limitations \\
 IET Rules of Conduct & accuracy and rigour, working within competence, and qualified opinions & reported results must state their limitations and stay within competence & adversarial tests, cross-language vectors, reproducibility measures, and explicit scope qualifications \\
-Research ethics (synthetic data) & adversarial functionality was tested in a local test harness & no live interception and no real users & synthetic accounts only, with no participant personal data processed \\
+Research ethics (controlled test accounts, synthetic benchmark inputs) & the demonstration used two researcher-controlled Signal accounts and the benchmarks used synthetic inputs & no third-party traffic intercepted and no participants recruited & not a human-participant study \\
 \bottomrule
 \end{tabularx}
 \end{table}

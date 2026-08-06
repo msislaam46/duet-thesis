@@ -83,10 +83,11 @@ affected client detects the unexpected binding, and an established peer can lear
 the shared warning slot. The evaluation (\cref{ch:eval}) instantiates A1a at the global
 identity slot and A1b at an immutable dual-index session slot.
 
-\phantomsection\label{sc:threat-a2}\paragraph{A2: Warning Censorship.} A2 concerns censorship before the warning commits. After
-detecting a key mismatch, the client verifies the warning slot. A proof-verified empty slot raises the
-compound A2 signal. If a committed warning later disappears, the transition audit detects the invalid
-directory transition. For a client using windowed catch-up, an in-window substitution is detected only
+\phantomsection\label{sc:threat-a2}\paragraph{A2: Warning Censorship.} A2 covers two
+warning-suppression routes. Before commitment, after detecting a key mismatch the client verifies the
+warning slot, and a proof-verified empty slot raises the compound A2 signal. After commitment, removal
+of a committed warning is an invalid directory transition detected by the transition audit, with the
+separate persistence component able to retain deletion evidence. For a client using windowed catch-up, an in-window substitution is detected only
 if the warning commits and remains present at the catch-up read (\cref{ssec:design-catchup}).
 
 \phantomsection\label{sc:threat-a3}\paragraph{A3: Network Man-in-the-Middle.} With no server collusion, a Dolev--Yao adversary may

@@ -4,7 +4,7 @@ This appendix documents the implementation-level interface details referenced fr
 \cref{ch:impl}: the directory server's REST API, the privileged testing interface, the
 Signal Desktop integration hooks and user-interface events, the repository layout, and the
 runner commands. None of it is needed to follow the design (\cref{ch:design}) or the
-evaluation (\cref{ch:eval}); it is provided for reproducibility and for readers who wish to
+evaluation (\cref{ch:eval}). It is provided for reproducibility and for readers who wish to
 run the system.
 
 % ----------------------------------------------------------------------------
@@ -27,7 +27,7 @@ that the client can run the full verification chain (\cref{ssec:design-verify}).
 Method & Path & Purpose \\
 \midrule
 GET  & \texttt{/sth} & current signed tree head \\
-GET  & \texttt{/search} & verified lookup by label; returns value, prefix proof, log-inclusion proof, and the signed STH \\
+GET  & \texttt{/search} & verified lookup by label, returning value, prefix proof, log-inclusion proof, and the signed STH \\
 GET  & \texttt{/search-by-user-id} & lookup by user identifier, with the VRF proof attached \\
 GET  & \texttt{/consistency} & consistency proof between two log sizes (\texttt{from}, \texttt{to}) \\
 GET  & \texttt{/epoch} & current epoch number \\
@@ -36,7 +36,7 @@ GET  & \texttt{/epoch-delta} & a committed epoch's declared update set and commi
 GET  & \texttt{/vrf-public-key} & operator VRF public key \\
 GET  & \texttt{/sth-public-key} & operator STH signing public key \\
 POST & \texttt{/register} & register a user's key (server derives the VRF label) \\
-POST & \texttt{/update-raw} & write a client-derived (dual-index) label$\to$value; the public surface is write-once, so an occupied label is rejected with \texttt{409 Conflict} (\cref{ssec:design-detection}) \\
+POST & \texttt{/update-raw} & write a client-derived (dual-index) label$\to$value. The public surface is write-once, so an occupied label is rejected with \texttt{409 Conflict} (\cref{ssec:design-detection}) \\
 POST & \texttt{/commit} & close the current epoch and sign a new STH \\
 GET  & \texttt{/health} & liveness probe \\
 GET  & \texttt{/dashboard}, \texttt{/internals}, \texttt{/integration}, \texttt{/threats} & served visualization and threat-model pages \\
@@ -49,7 +49,7 @@ GET  & \texttt{/dashboard}, \texttt{/internals}, \texttt{/integration}, \texttt{
 \section{Privileged Testing Interface}\label{sec:apiref-admin}
 
 A separate administrative API, bound to an internal-only port, is used exclusively by the
-adversarial scenario suite to stage attacks; it is not part of the protocol. In the
+adversarial scenario suite to stage attacks. It is not part of the protocol. In the
 prototype these endpoints are unauthenticated, and a production deployment would place them
 behind account-layer authorisation. \Cref{tab:apiref-admin} lists them.
 
@@ -63,7 +63,7 @@ behind account-layer authorisation. \Cref{tab:apiref-admin} lists them.
 \toprule
 Method & Path & Purpose \\
 \midrule
-POST & \texttt{/admin/update} & overwrite a slot's value, bypassing the public write-once policy; the overwrite is still declared in the epoch delta as a rotation (stages A1/A5 substitution) \\
+POST & \texttt{/admin/update} & overwrite a slot's value, bypassing the public write-once policy. The overwrite is still declared in the epoch delta as a rotation (stages A1/A5 substitution) \\
 POST & \texttt{/admin/delete} & remove a committed leaf \emph{without} declaring it in the epoch delta, so the auditor's transition replay fails (stages the suppression-by-deletion scenario) \\
 POST & \texttt{/admin/commit} & commit an epoch \\
 POST & \texttt{/admin/equivocate} & sign a second, divergent head at one epoch (stages A4) \\
@@ -110,7 +110,7 @@ pre-key-bundle processing & \texttt{hook\_process\_prekey\_bundle} & Rust (libsi
 \toprule
 State & Meaning & DOM event \\
 \midrule
-grey  & pending (initial; no result yet) & none (initial state; no event) \\
+grey  & pending (initial, no result yet) & none (initial state, no event) \\
 green & key verified & \texttt{kt:verified} \\
 amber & directory server unreachable & \texttt{kt:unreachable} \\
 red   & MitM warning or operational timeout & \texttt{kt:warning} \\
@@ -126,7 +126,7 @@ initial state and carries no event: a conversation for which no result has yet a
 remains grey. The three result states are delivered as DOM custom events on \texttt{window}. A
 green \texttt{kt:verified} event is bound to a specific peer and conversation and is honoured only
 when both match the conversation currently displayed, so a stale success cannot mask a later
-change; a red \texttt{kt:warning} is matched permissively and is never suppressed by such a
+change. A red \texttt{kt:warning} is matched permissively and is never suppressed by such a
 mismatch. The \texttt{kt:cea-inject} event fires once against the selected conversation to stage the
 continuous-mode demonstration and is not part of the production surface.
 
@@ -152,10 +152,11 @@ The system is driven by single commands: \texttt{cargo test} and \texttt{cargo b
 \texttt{demo/run.ps1} for the multi-actor demonstration. That script's native subcommands are
 \texttt{server}, \texttt{auditor}, \texttt{build}, \texttt{client1}, \texttt{client2},
 \texttt{attack}, \texttt{fork}, \texttt{delete}, \texttt{simulate-delete}, \texttt{stop-fork},
-\texttt{stop}, and \texttt{reset}; \texttt{client1} and \texttt{client2} launch the two Signal
+\texttt{stop}, and \texttt{reset}. \texttt{client1} and \texttt{client2} launch the two Signal
 instances the two-client demonstration needs, and \texttt{reset} (equivalently \texttt{demo/reset.ps1})
-wipes the log back to a fresh genesis tree between runs, which also consumes any staged one-shot CEA
-injection so that each demonstration starts clean. A self-contained walk-through of the client
+returns the directory server to a fresh genesis tree between runs. Both Signal instances must then be
+fully quit and relaunched so they re-register their keys and clear any staged in-memory one-shot CEA
+injection, so each demonstration starts clean. A self-contained walk-through of the client
 verifier, independent of Signal Desktop, runs from the \texttt{signal-desktop-kt/} package with
 \texttt{npm run demo}. A containerized path
 (\texttt{up}, \texttt{logs}, \texttt{down}) runs the server, auditor, and attacker under Docker
@@ -182,10 +183,10 @@ A1b attack workflows across the four roles.
 \centering
 \input{figures/tikz/fig-impl-signal}
 \caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript
-KT client communicates over HTTP with the Rust directory server. It verifies keys at the key-upload
-and peer-key-retrieval hooks and reports verdicts to the badge and banner. An independent auditor polls the server. The
-scripted attacker uses a privileged testing interface. \Cref{tab:apiref-hooks,tab:apiref-events} list the hook functions
-and verdict-event names.}
+KT client communicates over HTTP with the Rust directory server. It registers identity material at the
+key-upload hook and verifies peer material at the peer-key-retrieval hook, reporting verdicts to the
+badge and banner. An independent auditor polls the server. The attacker uses a privileged testing
+interface. \Cref{tab:apiref-hooks,tab:apiref-events} list the hook functions and verdict-event names.}
 \label{fig:impl-signal}
 \end{figure}
 
@@ -209,8 +210,10 @@ writes a warning that Bob later reads. The auditor separately rejects the immuta
 \end{figure}
 
 In \cref{fig:impl-e2e}, Alice and Bob each run an embedded verifier, while the directory server and auditor
-execute as separate processes. In the normal path Alice registers her key and commits. Bob's verifier
-then performs three label-bound, proof-verified lookups (the peer slot $\ell_A$ it retrieves Alice
+execute as separate processes. In the normal path Alice and Bob each register their session slot and
+commit. Bob's verifier
+then verifies the peer slot, its own owner slot, and the shared warning slot through three
+label-bound, proof-verified lookups (the peer slot $\ell_A$ it retrieves Alice
 from, its own slot $\ell_B$, and the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably
 empty) and returns \texttt{SAFE}, while the auditor polls and replays to \textsc{Consistent}. In the
 A1b branch the server overwrites Alice's own dual-index slot $\ell_A$ (which is also Bob's peer slot).
@@ -341,8 +344,8 @@ verdict or the signed head changes, so a screenshot of a stable run is not flood
 corresponds to the third-party auditor role in the IETF KeyTrans protocol~\cite{ietf-keytrans-protocol}.
 Independently of any auditor, the \texttt{monitor} module retains a writer-side persistence proof
 (the inclusion proof and signed tree head from the epoch in which a warning commits) as an available
-capability, so that a later removal yields a bundle verifying against the server's own signed heads;
-the client's live detection (\cref{alg:detect}) does not depend on it.
+capability, so that a later removal yields a bundle verifying against the server's own signed heads.
+The client's live detection (\cref{alg:detect}) does not depend on it.
 Authenticated ownership of raw-label writes is not implemented, so without account-layer authorisation a
 malicious client could occupy an unclaimed peer slot before its legitimate owner writes to it. The one
 core cost that is not sublinear is the epoch commit, which snapshots the tree by a deep clone.
@@ -365,7 +368,7 @@ listed in \cref{tab:apiref-hooks,tab:apiref-events}.
 \Cref{fig:impl-verify} illustrates the matching branch of the networked \texttt{RemoteKTClient.detectMitm}
 path: the client reads its own dual-index lookup slot $\ell_{\mathsf{self}}$, verifies the prefix
 proof, log-inclusion proof, and signed tree head, and only on a verified owner slot issues a second
-lookup for the shared warning slot. When both checks pass, the method returns \texttt{null}; it returns a
+lookup for the shared warning slot. When both checks pass, the method returns \texttt{null}. It returns a
 \texttt{MitmWarning} if the owner slot is absent or mismatched or the warning slot is occupied, and a
 proof or head-anchoring failure throws. The live background monitor implements the
 corresponding checks independently in \texttt{monitorConversation} (\cref{alg:detect}).
@@ -380,8 +383,8 @@ to the renderer, so objects injected through the console had no effect, whereas 
 \texttt{window} cross the boundary. The application's typed event bus and those DOM custom events were
 mismatched, resolved by dispatching on both. Several robustness issues appeared only end to end: a
 server that generated a fresh signing key on each launch invalidated cached public keys, fixed by
-deriving the server's keys deterministically from a seed; a panic on a freshly emptied log poisoned the
-shared mutex, resolved by bootstrapping a genesis epoch at initialization; and an administrative reset
+deriving the server's keys deterministically from a seed. A panic on a freshly emptied log poisoned the
+shared mutex, resolved by bootstrapping a genesis epoch at initialization. An administrative reset
 that rebuilds the server from its seed makes the demonstration repeatable.
 
 On the client, the trusted computing

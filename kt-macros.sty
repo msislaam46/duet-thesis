@@ -30,6 +30,8 @@
 
 % ── Crypto primitives ──
 \newcommand{\Hash}{\mathsf{H}}
+\newcommand{\Hleaf}{\Hash_{\mathsf{leaf}}}   % RFC 6962 leaf-domain hash (0x00 prefix)
+\newcommand{\Hnode}{\Hash_{\mathsf{node}}}   % RFC 6962 internal-node hash (0x01 prefix)
 \newcommand{\HKDFex}{\mathsf{HKDF\text{-}Extract}}      % RFC 5869 §2.2
 \newcommand{\HKDFexp}{\mathsf{HKDF\text{-}Expand}}      % RFC 5869 §2.3
 \newcommand{\KDF}{\mathsf{KDF}}

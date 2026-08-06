@@ -126,15 +126,13 @@ rests on two underlying mechanisms. First, the
 label from each conversation's shared secret. In an honestly established
 and subsequently monitored conversation, these enable automatic, in-band detection of key
 substitution by both parties without additional user interaction.
-Second, \emph{windowed consistency proofs} replace per-epoch catch-up with a single consistency
-proof between the last trusted and current tree heads, so a client requests and verifies one proof
-rather than one for each of the $W$ missed epochs, with size logarithmic in the endpoint log sizes
-rather than linear in the epochs it missed.
+Second, \emph{windowed consistency proofs} replace per-epoch catch-up with one proof between the last
+trusted and current tree heads. One proof covers all $W$ missed epochs, and its size grows
+logarithmically with the endpoint log sizes.
 
 Benchmark results show that, at a matched directory size, DUET's lookup proof is comparable in size
-to the corresponding proof in CONIKS. Median full client verification remains below
-\SI{150}{\micro\second} through ten million labels, and a month of missed epochs is covered by one
-short proof rather than one per epoch. A two-client Signal
+to the matched CONIKS proof. Median full client verification remains below \SI{150}{\micro\second}
+through ten million labels, and a month of missed epochs is covered by one short proof. A two-client Signal
 Desktop prototype runs verification automatically in the background and raises key-substitution
 warnings in band. An independent auditor checks the public-key directory for invalid changes and
 conflicting signed views.

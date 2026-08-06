@@ -14,7 +14,7 @@ SHA-256. The prefix tree and the log use these same leaf and node tags. Cross-tr
 exploitable here, since prefix roots appear only as log leaf data and log roots only in signed tree
 heads, but a production deployment should apply distinct per-structure tags as defence in depth.
 
-The prefix tree maps each 256-bit label to a value; for a user-identity entry the value is an identity
+The prefix tree maps each 256-bit label to a value. For a user-identity entry the value is an identity
 public key, and the label is derived rather than chosen. Labels come in two families: a global slot,
 computed server-side as a VRF over the user identifier, and the client-derived raw slots (the
 dual-index lookup and warning slots and, in continuous mode, the per-epoch CEA slots). Each committed
@@ -26,7 +26,7 @@ against which every lookup is ultimately checked.
 \paragraph{Signed-head field rationale.} Each field of the signed-head message
 (\cref{eq:design-sth}) is necessary for a different aspect of verification. The $\mathit{tree\_size}$
 is required by the inclusion and consistency verifiers. Signing the $\mathit{timestamp}$ means it
-cannot be altered without invalidating the signature; enforcing freshness additionally requires a
+cannot be altered without invalidating the signature. Enforcing freshness additionally requires a
 client-side maximum-age or publication-cadence policy, which the prototype does not implement. The
 trailing $\Hash(\mathit{config})$ is a CONIKS-style policy commitment (the field CONIKS calls $P$)
 that binds the provider's parameters into the signature. With it, the server cannot silently swap its
@@ -42,7 +42,7 @@ properties the figure does not make evident. First, global lookups require the V
 client-derived raw labels omit it and the requested-label binding stands on its own. Second, the
 signed head used for verification must be identical to the head the client independently obtained and
 verified, either the latest head it fetched or, during catch-up, the new head whose append-only
-consistency with its last trusted head it has just checked; the client rejects any response anchored
+consistency with its last trusted head it has just checked. The client rejects any response anchored
 to a different head, even one carrying a valid signature, which prevents stale-snapshot acceptance and
 an equivocating server from substituting another signed view. Third, inclusion is pinned to the latest
 leaf: because each commit appends the new directory root as the log's last leaf, verification requires
@@ -61,13 +61,13 @@ ratchet key keeps the chain unpredictable to an adversary that has compromised t
 the property the pre-use unpredictability and forgery-resistance arguments need. Before the secret is
 folded into the CEA chain, it is domain-separated as $\KDF(I_t, \text{\texttt{"CEA"}})$. In a faithful
 Signal integration $I_t$ is Signal's chain key $ck$, which also feeds the session-key derivation (the
-paper's $\KDF(I_t, \text{\texttt{"CKA"}})$); the distinct \texttt{"CEA"} and \texttt{"CKA"} tags keep
+paper's $\KDF(I_t, \text{\texttt{"CKA"}})$). The distinct \texttt{"CEA"} and \texttt{"CKA"} tags keep
 the transparency-chain value independent of the session key. Second, before posting, the sender checks
 that the label $L_t$ is unoccupied, since ACKA specifies that ``the sender will also check if the
 label has already been uploaded to the log with a fingerprint, which would indicate an
 impersonation''~\cite{dowling2023acka}, and the sender advances its chain only after its write is
 confirmed in a committed head. Third, the receiver advances its chain only when a verification returns
-\textsc{Consistent}; a \textsc{Fork} verdict leaves the chain unadvanced over the disputed epoch and
+\textsc{Consistent}. A \textsc{Fork} verdict leaves the chain unadvanced over the disputed epoch and
 reports an in-band warning, and a \textsc{NotPosted} verdict (the per-epoch entry is absent, distinct
 from the UI's grey pending state) leaves the receiver's state untouched so the check can be retried
 without desynchronizing the chain.
@@ -76,7 +76,7 @@ The two designs represent label history differently. ACKA's log stores a vector 
 each label, and its receiver treats two fingerprints at one label as evidence of impersonation. DUET
 stores one value at each label and implements the same detection objective through two checks: if the
 adversary posts first, the honest sender's pre-post check finds the label occupied and rejects the
-write; if the adversary later attempts to replace a committed fingerprint, the transition audit
+write. If the adversary later attempts to replace a committed fingerprint, the transition audit
 rejects the update, because each leaf hash records whether the leaf is mutable or immutable. The
 receiver's per-epoch check cannot detect this overwrite when the adversary controls the pre-shared
 state, so that case depends on the transition audit. Proving that ACKA's security argument carries
@@ -128,7 +128,7 @@ windowed check, including this one. A transient in-window substitution is profit
 only if it is used. A peer who initiates or continues the conversation during the window performs
 pinned-key lookups at the dual-index slots (\cref{ssec:design-detection}) and, on a mismatch, writes
 to the shared warning slot. DUET preserves detection only when that warning commits. The write-once
-policy blocks replacement through the honest interface; once committed, the warning either remains
+policy blocks replacement through the honest interface. Once committed, the warning either remains
 available for the returning client to read or its removal causes the transition audit to reject the
 epoch transition, and the separately specified persistence check can retain evidence of that removal.
 If the server censors the write (the \hyperref[sc:threat-a2]{A2} threat), the distant-head proof still

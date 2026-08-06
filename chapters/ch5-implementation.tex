@@ -157,7 +157,8 @@ identity-key path. Invalid or absent heads, proof failures, and key mismatches p
 verdicts. The integration reports the verdict but, by design in this prototype, does not block
 session establishment.
 
-Key-upload and retrieval paths register identity material. A background monitor first checks the
+The key-upload path registers identity material, while the peer-key-retrieval path verifies the
+fetched binding. A background monitor first checks the
 client's own global VRF-derived identity entry, then, per conversation, its owner, peer, and warning
 slots, emitting a green verdict only when the global self-check is healthy. A proof-verified
 peer-slot absence is reported as pending for the first checks and, after a fail-closed timeout, as
@@ -211,7 +212,7 @@ wire-parity suite checks the TypeScript verifier against signed heads, VRF outpu
 consistency proofs produced by the Rust directory server. The Rust integration and cryptographic tests
 use an in-process \texttt{KTServer} rather than a mock. The adversarial suite covers the honest
 baseline (A0), global- and session-slot substitution (\hyperref[sc:threat-a1]{A1a and A1b}), warning
-censorship (\hyperref[sc:threat-a2]{A2}), first-contact bundle substitution
+censorship (\hyperref[sc:threat-a2]{A2}), the first-contact substitution postcondition
 (\hyperref[sc:threat-a3]{A3}), equivocation (\hyperref[sc:threat-a4]{A4}), key-rotation substitution
 (\hyperref[sc:threat-a5]{A5}), and endpoint compromise (\hyperref[sc:threat-x1]{X1}). These tests show
 agreement and the expected behaviour for the specified inputs, not equivalence over every input.

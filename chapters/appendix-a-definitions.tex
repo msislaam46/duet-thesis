@@ -3,7 +3,7 @@
 This appendix defines the formal notions on which the design (\cref{ch:design}) and its
 analysis rest. Each is stated in the thesis's standard notation, and each records where it is
 used in the thesis. Definitions of standard primitives are given as they appear in the specifications
-they are drawn from and are cited accordingly; the dual-index scheme of \cref{sec:def-dualindex} is
+they are drawn from and are cited accordingly. The dual-index scheme of \cref{sec:def-dualindex} is
 the one construction original to this work.
 
 % ============================================================================
@@ -90,9 +90,9 @@ reconstructs both committed roots. Used in \cref{ssec:design-catchup}.
 position and even an \emph{absent} label has a provable (empty) location.}
 A sparse Merkle prefix tree is a binary Merkle tree of depth $256$ indexed by 256-bit labels
 $\ell$, in which a present leaf at position $\ell$ commits to
-$\Hash(\mathit{kind}\concat\ell\concat \mathit{value})$, where
+$\Hleaf(\mathit{kind}\concat\ell\concat \mathit{value})$, where
 $\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$ is bound into the hash and authenticates
-whether the slot may later be rotated (global VRF-indexed identity slots are \textsc{mutable}; raw
+whether the slot may later be rotated (global VRF-indexed identity slots are \textsc{mutable}, while raw
 dual-index, CEA, and warning slots are \textsc{immutable}), and every empty subtree collapses to a
 fixed default hash. Following the IETF Key Transparency
 draft~\cite{ietf-keytrans-protocol} and CONIKS~\cite{melara2015coniks}, the tree is path-compressed
@@ -106,11 +106,11 @@ $t$ is $\prefroot{t}$. Used in \cref{ssec:design-structures}.
 exhibiting the (default) contents of its slot, just as one proves presence.}
 A prefix-tree proof for label $\ell$ is the copath of sibling hashes from the leaf at position
 $\ell$ to the prefix root $\prefroot{t}$. An \emph{inclusion} proof recomputes $\prefroot{t}$ from
-$\Hash(\mathit{kind}\concat\ell\concat \mathit{value})$ and the copath. A \emph{non-inclusion} proof recomputes it from
+$\Hleaf(\mathit{kind}\concat\ell\concat \mathit{value})$ and the copath. A \emph{non-inclusion} proof recomputes it from
 the default (empty) leaf value at position $\ell$, establishing that no value is bound at $\ell$
 \cite{melara2015coniks,ietf-keytrans-protocol}. Proven non-inclusion of the warning slot is the
 component that, together with a key mismatch, makes warning censorship (A2) detectable as a compound
-signal (\cref{def:dualindex-check}); non-inclusion alone is not an alarm. Used in \cref{ssec:design-verify}.
+signal (\cref{def:dualindex-check}). Non-inclusion alone is not an alarm. Used in \cref{ssec:design-verify}.
 \end{definition}
 
 \begin{definition}[Signed tree head]\label{def:sth}
@@ -156,7 +156,7 @@ probabilistic polynomial-time adversary wins the experiment $\Expt{vrf\text{-}pr
 RFC~9381~\cite{rfc9381} with advantage non-negligible in $\secpar$: the adversary, given
 $\mathit{pk}$ and a $\VRFeval$ oracle, must distinguish the true challenge output $\beta^\star$, obtained as the
 first component of $\VRFeval(\mathit{sk},\alpha^\star)$ for a fresh $\alpha^\star$, from a uniform string. Uniqueness underlies label integrity
-in the verification chain (G1); pseudorandomness underlies
+in the verification chain (G1). Pseudorandomness underlies
 directory privacy (G3).
 \end{definition}
 
@@ -172,7 +172,7 @@ scheme of \cref{sec:design-windowed}.
 \intuition{A committed snapshot of the directory. Between snapshots the live tree is mutated, and a
 commit freezes one version into the public history.}
 An epoch is a committed version of the directory. An
-$\mathsf{update}(\ell,\mathit{value})$ mutates the live prefix tree in place; a
+$\mathsf{update}(\ell,\mathit{value})$ mutates the live prefix tree in place. A
 $\mathsf{commit}$ closes the epoch by appending the current prefix root $\prefroot{t}$ as one leaf
 of the log (\cref{def:merkle-log}) and publishing the signed tree head $\STH_t$ (\cref{def:sth}).
 Lookups are always served against the last committed epoch, never the live tree. Used in
@@ -180,7 +180,7 @@ Lookups are always served against the last committed epoch, never the live tree.
 \end{definition}
 
 \begin{definition}[Declared update set and transition audit]\label{def:epoch-delta}
-\intuition{Every commit publishes the exact list of changes it made; an auditor replays that list and
+\intuition{Every commit publishes the exact list of changes it made, and an auditor replays that list and
 checks it reproduces the committed directory, so a deletion, which the list cannot even express,
 is caught.}
 Each $\mathsf{commit}$ records a \emph{declared update set} $\Delta_t$ of two operation types.
@@ -189,12 +189,12 @@ directory. $\textsf{Rotate}(\ell,\mathit{value}_{\mathrm{old}},\mathit{value}_{\
 replaces the value at an existing \textsc{mutable} label and declares both the previous and the
 replacement values. The format contains no deletion operation. The \emph{transition auditor} starts
 from a clone of the directory committed by $\prefroot{t-1}$ and processes the operations in their
-declared order. Before applying an \textsf{Insert} it verifies that the label is absent; before
+declared order. Before applying an \textsf{Insert} it verifies that the label is absent. Before
 applying a \textsf{Rotate} it verifies that the label is present, is \textsc{mutable}, and holds the
 declared previous value. It accepts exactly when the resulting root equals $\prefroot{t}$. An
 undeclared modification or deletion causes the replayed root to differ, and an attempted rotation of
 an \textsc{immutable} dual-index, CEA, or warning label is rejected directly. Specified in
-\cref{ssec:design-detection}; implemented by \textsf{AuditTransition} (\cref{alg:auditor}).
+\cref{ssec:design-detection}. Implemented by \textsf{AuditTransition} (\cref{alg:auditor}).
 \end{definition}
 
 \begin{definition}[Windowed consistency proof]\label{def:windowed}
@@ -212,7 +212,7 @@ intervening epochs $W$.
 \end{lemma}
 \begin{proof}[Proof sketch]
 By the structure of the RFC~9162 consistency proof~\cite{rfc9162}, the proof comprises the subtree
-hashes needed to reconstruct both $\MTH(D[0{:}m])$ and $\MTH(D[0{:}n])$; the number of such nodes is
+hashes needed to reconstruct both $\MTH(D[0{:}m])$ and $\MTH(D[0{:}n])$. The number of such nodes is
 bounded by the depths of the two trees, $\lceil\lg m\rceil$ and $\lceil\lg n\rceil$. The bound
 depends only on the endpoint sizes $m$ and $n$, growing logarithmically with them rather than
 linearly with the $W$ epochs between the two visits, which is the property exploited in
@@ -243,7 +243,7 @@ his published pre-keys.}
 The Extended Triple Diffie--Hellman handshake~\cite{x3dh} derives a shared secret $\sharedS$ from a
 combination of Diffie--Hellman values over the parties' identity keys $\pkid{\cdot}$, Bob's signed
 pre-key $\spk{\B}$, an optional one-time pre-key $\opk{\B}{i}$, and Alice's ephemeral key
-$\ek{\A}$; the post-quantum variant PQXDH~\cite{pqxdh} augments this with a KEM. It is introduced and
+$\ek{\A}$. The post-quantum variant PQXDH~\cite{pqxdh} augments this with a KEM. It is introduced and
 diagrammed in \cref{ssec:bg-x3dh,fig:bg-x3dh}. In this thesis $\sharedS$ is the entropy source for
 the dual-index labels (\cref{def:dualindex-derive}), used in \cref{ssec:design-labels}. This
 thesis assumes the security of the X25519 Diffie--Hellman operation used by X3DH and does not
@@ -266,7 +266,7 @@ a notion of authenticating that stream continuously.}
 The Authenticated Continuous Key Agreement framework~\cite{dowling2023acka} models a ratcheting
 protocol as a continuous key agreement $\CKA$ producing a sequence of per-epoch keys, and defines a
 continuous entity authentication (CEA) notion, with security game $\CEAsec$, that captures detection of an active adversary who
-injects state mid-session. The framework leaves its append-only log component $\Log$ abstract (with security notion $\Logsec$); this
+injects state mid-session. The framework leaves its append-only log component $\Log$ abstract (with security notion $\Logsec$). This
 thesis instantiates that component with the structures of \cref{sec:def-structures} and provides
 continuous authentication through the continuous mode of \cref{ssec:design-modes}. The dual-index
 warning scheme below is an \emph{extension} of this idea (it authenticates by directory
@@ -302,11 +302,12 @@ directory. $\mathsf{WriteWarning}(\lblwarn)$ writes a non-empty warning payload 
 slot, authenticated by a MAC under a pair-bound key expanded from $\mathit{PRK}$ with the info string
 \texttt{"warn-mac"} and the canonically ordered identities, so that a reader can distinguish a
 warning produced by a holder of the shared key from operator-injected data (\cref{alg:dualindex}).
-Both slots are write-once and the directory's raw-label interface rejects overwrites
-(\cref{def:epoch-delta}), but the two conflicts mean different things. For a warning write, a
+Both slots are write-once: the directory's raw-label interface rejects overwrites
+(\cref{def:epoch-delta}), and a privileged operator bypass is instead detected by the transition
+audit. The two read-back conflicts nevertheless mean different things. For a warning write, a
 verified non-empty read-back means a warning is already committed, and the slot is left in place
 since its value already alerts both monitors. For a registration write, a verified non-empty
-read-back proves only that the slot is occupied; whether it holds the client's own key is decided by
+read-back proves only that the slot is occupied. Whether it holds the client's own key is decided by
 the same-tick owner-slot comparison in the background monitor. Once a warning write commits, the
 writer retains inclusion evidence for the persistence check (\cref{def:deletion-evidence}).
 Both operations take effect at the next committed epoch (\cref{def:epoch}). Specified in
@@ -318,7 +319,7 @@ Both operations take effect at the next committed epoch (\cref{def:epoch}). Spec
 \emph{and} the shared warning slot is provably empty.}
 $\mathsf{CheckWarning}(\lblwarn,\STH_t,k_{\mathrm{mac}})$ returns \textsc{Alert} if an inclusion proof binds a
 non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{Safe} if a non-inclusion proof
-(\cref{def:noninclusion}) establishes the slot is empty; a response with neither valid proof is
+(\cref{def:noninclusion}) establishes the slot is empty. A response with neither valid proof is
 rejected. The warning-MAC key $k_{\mathrm{mac}}$ is derived separately by $\mathsf{DeriveWarnMacKey}$
 (\cref{alg:dualindex}). \Cref{def:dualindex-write} defines the payload MAC. A valid MAC shows that a holder of the shared
 conversation secret produced the value. A non-empty value with an invalid MAC is itself evidence of
@@ -337,7 +338,7 @@ yields proven non-inclusion at $\lblwarn$, the bundle consisting of the retained
 under $\STH_w$, the non-inclusion proof under $\STH_t$, and the consistency proof
 $\pcons(\STH_w.\mathit{size},\STH_t.\mathit{size})$ verifies entirely against the operator's own
 signatures and constitutes publicly verifiable proof, attributable to the operator's signing key, that a committed leaf was removed.
-Specified in \cref{ssec:design-detection}; implemented by \textsf{PersistenceCheck}
+Specified in \cref{ssec:design-detection}. Implemented by \textsf{PersistenceCheck}
 (\cref{alg:detect}).
 \end{definition}
 
@@ -386,7 +387,7 @@ than on label secrecy.
 Warning censorship is handled in two cases. A dropped pre-commit write is caught by the verified
 read-back, where a key mismatch together with a proven-empty slot forms the A2 compound alarm. A
 post-commit deletion is caught by the transition audit and the retained persistence evidence, and the
-write-once policy prevents overwriting a committed warning. Split-view equivocation is handled by the
+write-once policy prevents an honest server from overwriting a committed warning. Split-view equivocation is handled by the
 cross-vantage auditor (\cref{ssec:design-detection}).
 
 A complete formal proof combining these properties remains future work (\cref{ch:discussion}).

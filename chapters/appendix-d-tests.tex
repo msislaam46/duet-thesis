@@ -44,16 +44,16 @@ correctness tests and the requirement each protects. Requirements G1--G4 are def
 \toprule
 Test & Component & Property checked & Why it matters \\
 \midrule
-exhaustive inclusion and forgery tests & \texttt{merkle\_log} & every leaf proof verifies; forged proofs rejected & a forged or uncommitted response cannot pass verification; detecting A1 then rests on comparing the proven value against the expected key \\
-exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (G2; rollback/rewrite rejection) \\
-RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & directory privacy follows from the VRF assumption (G3); the vectors establish implementation conformance \\
+exhaustive inclusion and forgery tests & \texttt{merkle\_log} & every leaf proof verifies, and forged proofs are rejected & a forged or uncommitted response cannot pass verification. Detecting A1 then rests on comparing the proven value against the expected key \\
+exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (G2, rollback/rewrite rejection) \\
+RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & directory privacy follows from the VRF assumption (G3). The vectors establish implementation conformance \\
 cross-implementation vectors & \texttt{dual\_index} & Rust and TypeScript derive identical labels & both parties must address one shared warning slot (G1) \\
 STH-signature acceptance, tampering, and wrong-key tests & \texttt{server} & only a correctly signed head is accepted & signed-head authenticity, the prerequisite of every downstream verdict \\
 equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\Rightarrow$ fork & split-view detection (A4, G4) \\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
 windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding: a stale or foreign signed head is rejected \\
 availability routing & monitor (TS) & an unreachable server yields amber, not red & distinguishes an unavailable check from an integrity alarm \\
-key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}; absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified \\
+key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}, while absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -93,7 +93,7 @@ Module & Test & Property checked \\
 \texttt{prefix\_tree} & \texttt{proof\_verifies\_multiple\_entries} & proofs verify with many populated leaves \\
 \texttt{prefix\_tree} & \texttt{non\_inclusion} & an absent label has a verifying non-inclusion proof \\
 \texttt{prefix\_tree} & \texttt{root\_hash\_deterministic} & the root is order-independent and reproducible \\
-\texttt{prefix\_tree} & \texttt{update\_overwrites\_value} & the tree-level insert overwrites a value; the write-once policy is enforced one layer above, in \texttt{update\_raw} (\cref{tab:tests-rust-server}) \\
+\texttt{prefix\_tree} & \texttt{update\_overwrites\_value} & the tree-level insert overwrites a value. The write-once policy is enforced one layer above, in \texttt{update\_raw} (\cref{tab:tests-rust-server}) \\
 \texttt{prefix\_tree} & \texttt{remove\_deletes\_leaf\_and\_restores\_sibling\_structure} & the admin-only removal leaves a structurally valid tree, so a deletion is detectable only by the transition audit, never by malformedness \\
 \texttt{prefix\_tree} & \texttt{chain\_memo\_is\_transparent} & the compressed-leaf chain memo is purely an optimization: warm and cold trees yield byte-identical roots and proofs across inserts, rotations, splits, removals, and non-inclusion lookups \\
 \texttt{prefix\_tree} & \texttt{update\_rejects\_short\_label} & \texttt{update} rejects a label shorter than 32 bytes (no aliasing to another slot) \\
@@ -199,7 +199,7 @@ Module & Test & Property checked \\
 \texttt{auditor} & \texttt{detect\_fork\_accepts\_consistent\_head} & a consistent cross-vantage head is not misreported \\
 \texttt{auditor} & \texttt{detect\_fork\_rejects\_unsigned\_head} & a divergent head with an invalid signature is not misclassified as a fork \\
 \texttt{auditor} & \texttt{equivocation\_is\_detected\_as\_fork} & the end-to-end A4 equivocation is caught \\
-\texttt{auditor} & \texttt{sth\_timestamp\_is\_signed} & the timestamp is inside the signed message, so freshness cannot be forged \\
+\texttt{auditor} & \texttt{sth\_timestamp\_is\_signed} & the timestamp is inside the signed message, so altering it invalidates the signature. Freshness still depends on a client policy \\
 \midrule
 \texttt{monitor} & \texttt{persistence\_check\_passes\_while\_warning\_persists} & a committed warning that remains present passes the persistence re-check \\
 \texttt{monitor} & \texttt{persistence\_check\_produces\_verifiable\_deletion\_evidence} & on deletion, the assembled bundle (inclusion + proven non-inclusion + consistency) verifies against the server's own signatures \\
@@ -260,7 +260,7 @@ Suite & Test \\
 \midrule
 \texttt{wire\_parity} & multi-entry dual-index inclusion proofs verify \\
 \texttt{wire\_parity} & proven non-inclusion verifies (value null, chain valid) \\
-\texttt{wire\_parity} & STH Ed25519 signature verifies; tamper is rejected \\
+\texttt{wire\_parity} & STH Ed25519 signature verifies and tamper is rejected \\
 \texttt{wire\_parity} & VRF path: \texttt{searchByUserId} proof verifies under the server VRF key \\
 \texttt{wire\_parity} & windowed consistency proof verifies across a gap \\
 \midrule
@@ -373,12 +373,12 @@ Suite & Test \\
 \texttt{getKeysForServiceId\_status} & \textsc{key\_not\_in\_log} never produces \texttt{kt:verified} \\
 \texttt{getKeysForServiceId\_status} & a thrown exception never produces \texttt{kt:verified} \\
 \midrule
-\texttt{decoder\_validation} & a well-formed \texttt{/search} response decodes; a non-object body is rejected \\
+\texttt{decoder\_validation} & a well-formed \texttt{/search} response decodes, and a non-object body is rejected \\
 \texttt{decoder\_validation} & inclusion path: non-array, non-hex element, and wrong-length element each rejected \\
 \texttt{decoder\_validation} & numeric fields (\texttt{leafIndex}, \texttt{treeSize}, \texttt{epoch}, \texttt{timestamp}) must be non-negative safe integers \\
-\texttt{decoder\_validation} & prefix proof: missing \texttt{kind} and non-array \texttt{siblings} rejected; bad-hex/short root and wrong-length signature rejected \\
+\texttt{decoder\_validation} & prefix proof: missing \texttt{kind} and non-array \texttt{siblings} rejected, and bad-hex/short root and wrong-length signature rejected \\
 \texttt{decoder\_validation} & STH \texttt{configHash} required as exactly 32 bytes (missing or wrong-length rejected) \\
-\texttt{decoder\_validation} & \texttt{/vrf-public-key}: non-object, invalid-hex, and wrong-length responses rejected; \texttt{/sth-public-key}: a malformed response rejected independently (valid VRF); both-valid accepted \\
+\texttt{decoder\_validation} & \texttt{/vrf-public-key}: non-object, invalid-hex, and wrong-length responses rejected. \texttt{/sth-public-key}: a malformed response rejected independently (valid VRF). Both-valid accepted \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -412,7 +412,7 @@ Suite & Test \\
 \begin{table}[H]
 \centering
 \caption{Embedded electron-mocha tests at the Signal Desktop integration boundary (\num{35} tests in
-six suites; representative rows shown).}
+six suites, representative rows shown).}
 \label{tab:tests-embedded}
 \footnotesize
 \renewcommand{\arraystretch}{0.90}
@@ -461,7 +461,7 @@ A fixed set of test vectors pins the HKDF dual-index derivation, the sealed warn
 CEA construction byte-for-byte across the Rust and TypeScript implementations: on the Rust side,
 \texttt{dual\_index::cross\_impl\_test\_vectors}, \texttt{dual\_index::warn\_mac\_cross\_impl\_vector},
 and \texttt{cea::cross\_impl\_test\_vectors}, the last pinning three ratchet epochs, not just the
-first (\cref{tab:tests-rust-prim,tab:tests-rust-system}); on the TypeScript side, the
+first (\cref{tab:tests-rust-prim,tab:tests-rust-system}). On the TypeScript side, the
 \texttt{kt\_integration} vectors v1, v3, and the warn-MAC vector, and the \texttt{cea} vector test
 (\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The Ed25519 and Merkle computations are checked to
 agree by the wire-parity suite, which verifies the Rust directory server's live outputs with the TypeScript
@@ -489,7 +489,7 @@ A0 & honest baseline & all checks pass & pass & n/a \\
 A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\
 A1b & substitute a dual-index session slot & self-check + peer warning & pass & 1--2 epochs \\
 A2 & substitute and censor the warning & compound signal (proven non-inclusion) & pass & 1--2 epochs \\
-A3 & MitM on the X3DH bundle & global VRF-bound identity check (honest directory) & pass & next lookup \\
+A3 & first-contact substitution postcondition (distinct secrets) & global VRF-bound identity check (honest directory) & pass & next lookup \\
 A4 & equivocate (split-view) & cross-vantage auditor & pass & 1 epoch \\
 A5 & substitute during a key rotation & identity re-fetch + cross-signature & pass & 1--2 epochs \\
 X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
@@ -508,10 +508,10 @@ out-of-scope boundary. The corresponding detection latencies are the ones report
 \section{Evidence Structure and Cross-Implementation Parity}\label{sec:tests-evidence}
 
 This section provides the detailed testing evidence summarized in \cref{sec:impl-tests}. Testing
-provides five forms of evidence: specification grounding states the required behaviour; unit and
-invariant tests assess individual components; cross-language vectors check agreement between the
-implementations; the adversarial scenario suite evaluates the combined system against the threat
-model; and performance benchmarks support the cost claims in \cref{ch:eval}.
+provides five forms of evidence: specification grounding states the required behaviour. Unit and
+invariant tests assess individual components. Cross-language vectors check agreement between the
+implementations. The adversarial scenario suite evaluates the combined system against the threat
+model. Performance benchmarks support the cost claims in \cref{ch:eval}.
 
 On the \textbf{Rust} side, the core is covered by unit tests run under \texttt{cargo test}.
 The Merkle log is tested exhaustively (every inclusion proof and every $(m,n)$ consistency

@@ -6,8 +6,9 @@ do not warn both peers. This thesis addresses that gap through DUET, which autom
 key substitution and provides an in-band peer-warning channel for honestly established and monitored
 conversations without changing lookup-proof asymptotics.
 
-DUET instantiates ACKA's abstract log component $\Log$ as a verifiable key directory that does not
-assume operator honesty (\cref{ch:design}). It adds a dual-index warning scheme for in-band peer
+DUET instantiates ACKA's abstract log component $\Log$ as a verifiable key directory designed to
+expose the malicious-operator behaviours specified in the threat model (\cref{ch:design}). It adds a
+dual-index warning scheme for in-band peer
 warnings and a windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
 and compares signed heads obtained from separate vantage points, providing the cross-vantage check
 used to detect equivocation. The Rust implementation provides the directory server, proof construction, and auditor. A Signal

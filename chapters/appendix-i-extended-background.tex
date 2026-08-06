@@ -137,7 +137,7 @@ Three limitations remain in ACKA's construction. Only the receiver detects a
 forgery, so no signal reaches the peer~\cite[p.~21]{dowling2023acka}. Verification proceeds
 sequentially each epoch and provides no windowed catch-up. Its consistency mechanism is not used for
 third-party auditing, which can instead be provided through the standard cross-vantage comparison
-(\cref{fig:bg-splitview}); DUET's concrete auditor is specified in \cref{alg:auditor}.
+(\cref{fig:bg-splitview}). DUET's concrete auditor is specified in \cref{alg:auditor}.
 
 % ============================================================================
 \section{Manual Verification Evidence}\label{sec:ext-usability}
@@ -389,8 +389,8 @@ warning targeted by this thesis.
 Signal's key-transparency deployment closely follows the emerging IETF standard and exposes Search,
 Monitor, and public audit interfaces~\cite{signal-kt-server}. Its directory covers the account identity
 key, the phone-number mapping, and a username-hash mapping. Its wire format pads every prefix proof to
-the full 256-sibling copath with stand-in hashes, giving a fixed-size 8{,}192-byte proof regardless of
-directory occupancy, the deployed baseline that \cref{ch:eval} compares against.
+the full 256-sibling copath with stand-in hashes, giving a fixed 8{,}192-byte sibling copath regardless
+of directory occupancy, the deployed baseline that \cref{ch:eval} compares against.
 
 \paragraph{Proton Mail Key Transparency.}
 ProtonKT applies a verifiable directory to email and reuses Certificate Transparency to support

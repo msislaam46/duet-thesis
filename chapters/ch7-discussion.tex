@@ -46,7 +46,10 @@ authenticated epoch disclosures, freshness and failure policies, and an independ
 second-vantage source.
 
 The prototype also lacks query privacy from the operator, write-rate limits, published-head timeouts,
-and gossip-based detection of omitted proofs. A malicious peer can publish a valid but false warning
+and gossip-based detection of omitted proofs. The VRF prevents offline recovery of identities from
+published labels, but the unauthenticated public query endpoint still permits online tests of known
+identifiers, so production requires authenticated access, rate limiting, or a private-lookup design.
+A malicious peer can publish a valid but false warning
 because the shared MAC shows only that a secret-holder produced the payload, not that the report is
 true or who wrote it. Deployment therefore requires
 authenticated writer identities, attributable warning records, and an abuse policy.
@@ -83,9 +86,10 @@ Ratchet chain key from libsignal. Replacing the current stand-ins changes the in
 label and CEA constructions rather than their downstream proof formats. The live conversation secret
 is necessary to support the \hyperref[sc:threat-a3]{A3} label-unpredictability claim.
 
-The raw-label interface must also authenticate the party authorised to make the first write, preventing
-a malicious client from occupying an empty conversation slot before its legitimate owner. Subsequent
-replacement and deletion remain governed by transition auditing and persistence evidence.
+The public registration and raw-label write interfaces must also authenticate the account or
+conversation party authorised to make the first write. This prevents an unauthorised client from
+planting a global binding or occupying an empty conversation slot. Later replacement and deletion
+remain subject to transition auditing and persistence evidence.
 
 The security argument also needs a formal detection game covering the KDF, VRF, signed heads, warning
 authentication, and append-only verification. Symbolic analysis and separate verification of the

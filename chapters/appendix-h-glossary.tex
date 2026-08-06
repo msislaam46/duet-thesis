@@ -1,33 +1,36 @@
 \chapter{Glossary}\label{app:glossary}
 
 This glossary defines the acronyms and recurring terms used in the thesis. Formal definitions of the
-cryptographic objects are in \cref{app:definitions}; this list is for quick reference.
+cryptographic objects are in \cref{app:definitions}. This list is for quick reference.
 
 \begin{description}
+\item[ACI] Account identifier: Signal's canonical account service identifier. The integration converts
+  an ACI string to its 16 raw UUID bytes before DUET uses those bytes as the VRF input and in
+  dual-index and CEA label derivation.
 \item[ACKA] Authenticated Continuous Key Agreement, the framework of Dowling and Hale whose abstract
   log component this work instantiates and measures (\cref{def:cka}).
-\item[AKV] Automatic Key Verification, Signal's deployed key-transparency lookup check; it verifies a
+\item[AKV] Automatic Key Verification, Signal's deployed key-transparency lookup check. It verifies a
   fetched key against the log but carries no peer-warning channel.
 \item[Auditor] An independent party that observes the log from a second vantage point, cross-checks
   signed tree heads (fork detection), and replays each epoch's declared update set against the
   committed root (the transition audit) (\cref{def:epoch-delta}, \cref{alg:auditor}).
 \item[Auditor replica] The auditor's independently reconstructed copy of the committed directory,
-  rebuilt by replaying each epoch's declared update set from epoch~0; the transition audit checks
+  rebuilt by replaying each epoch's declared update set from epoch~0. The transition audit checks
   each committed root against it rather than trusting server-supplied membership proofs
   (\cref{alg:auditor}).
 \item[Candidate replica] A temporary clone of the auditor replica onto which one epoch range is
-  replayed; it is committed back to the live replica only if the whole head passes every check, so a
+  replayed. It is committed back to the live replica only if the whole head passes every check, so a
   rejected epoch leaves the replica untouched (\cref{alg:auditor}).
 \item[CEA / CEAsec] Continuous entity authentication and its security notion within
-  ACKA; the continuous operating mode delivers detection in this style.
+  ACKA. The continuous operating mode delivers detection in this style.
 \item[CKA] Continuous Key Agreement, the abstraction of a ratcheting protocol as a stream of evolving
   keys, used by ACKA.
 \item[CONIKS] An early key-transparency system introducing VRF-derived labels and a sparse Merkle
-  directory; the closest published design point for proof size.
+  directory. The closest published design point for proof size.
 \item[Consistency proof] A short proof that a later log is an append-only extension of an earlier one
   (\cref{def:consistency}).
 \item[Declared update set (epoch delta)] The exact list of inserts and value-disclosing rotations a
-  commit made, published per epoch for auditor replay; the format cannot express a deletion
+  commit made, published per epoch for auditor replay. The format cannot express a deletion
   (\cref{def:epoch-delta}).
 \item[Deletion evidence] The verifiable bundle (inclusion proof at commit, later proven
   non-inclusion, and the consistency proof between the two heads) by which a warning's writer proves
@@ -36,16 +39,16 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
   modify, inject, delete, replay).
 \item[Double Ratchet] Signal's per-message key-ratcheting algorithm (\cref{def:doubleratchet}).
 \item[Dual-index warning scheme] This work's construction: two lookup labels and one shared warning
-  label per conversation, derived from the shared secret, with the warning label acting as the detection trigger
-  (\cref{sec:def-dualindex}).
-\item[ECVRF] Elliptic-Curve Verifiable Random Function; the suite used is
+  label per conversation, derived from the shared secret, with the shared warning label carrying an
+  authenticated notification after a substitution is detected (\cref{sec:def-dualindex}).
+\item[ECVRF] Elliptic-Curve Verifiable Random Function. The suite used is
   ECVRF-EDWARDS25519-SHA512-TAI (\cref{def:vrf}).
 \item[Ed25519] The EdDSA signature scheme used to sign the signed tree head (\cref{def:sig}).
 \item[ELEKTRA] A multi-device key-transparency system with device cross-signing.
-\item[Epoch] A committed version of the directory; a commit appends the prefix root to the log and
+\item[Epoch] A committed version of the directory. A commit appends the prefix root to the log and
   publishes a signed tree head (\cref{def:epoch}).
-\item[Equivocation / fork] A malicious server signing two divergent views at one epoch; caught by
-  cross-vantage auditing (attack A4; G4 (Fork Detection)).
+\item[Equivocation / fork] A malicious server signing two divergent views at one epoch, caught by
+  cross-vantage auditing (attack A4, G4 (Fork Detection)).
 \item[EUF-CMA] Existential unforgeability under chosen-message attack, the standard signature-security
   notion (\cref{def:sig}).
 \item[HKDF] HMAC-based key-derivation function (RFC~5869), used for the dual-index label derivation
@@ -56,28 +59,32 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
 \item[Merkle log] An append-only tamper-evident log whose root commits to every entry in order
   (\cref{def:merkle-log}).
 \item[MitM] Man-in-the-middle: an active adversary substituting keys in transit (attack A3).
-\item[MLS] Messaging Layer Security, the standardized group-messaging protocol; group support is
+\item[MLS] Messaging Layer Security, the standardized group-messaging protocol. Group support is
   future work.
-\item[Non-inclusion proof] A proof that a label is absent (its slot is provably empty)
-  (\cref{def:noninclusion}); the basis of censorship detection for the warning slot.
-\item[OPRF] Oblivious pseudorandom function (RFC~9497); proposed as future work for query privacy
+\item[Non-inclusion proof] A proof that a label is absent, its slot provably empty
+  (\cref{def:noninclusion}). Non-inclusion is a clean empty result on its own. Together with a key
+  mismatch, or after prior verified inclusion, it contributes to censorship or removal detection.
+\item[OPRF] Oblivious pseudorandom function (RFC~9497). Proposed as future work for query privacy
   from the operator.
 \item[Parakeet] A witness-quorum key-transparency system optimized for large-scale deployment.
+\item[PNI] Phone-number identifier: Signal's phone-number-scoped service identifier. The current DUET
+  integration excludes PNI inputs at the integration boundary, so they do not enter registration,
+  verification, background monitoring, or CEA processing.
 \item[Prefix tree] A sparse Merkle tree over the space of 256-bit labels, storing the current
   directory (\cref{def:prefix-tree}).
 \item[PQXDH] The post-quantum variant of X3DH, augmenting the handshake with a KEM.
 \item[Safety number] Signal's manual verification code: a 60-digit fingerprint of the two parties'
-  identity keys and account identifiers that users are expected to compare out of band; the ceremony
+  identity keys and account identifiers that users are expected to compare out of band. The ceremony
   the dual-index warning is intended to reduce or replace, for honestly established and monitored
   conversations.
-\item[SEEMless] A key-transparency system built on an append-only zero-knowledge set (aZKS); ships
+\item[SEEMless] A key-transparency system built on an append-only zero-knowledge set (aZKS). Ships
   multi-path lookup proofs.
 \item[STH] Signed Tree Head: the operator's signed commitment to the log root at an epoch
   (\cref{def:sth}).
 \item[STRIDE] A threat-elicitation framework (Spoofing, Tampering, Repudiation, Information
-  disclosure, Denial of service, Elevation of privilege); the coverage tables are in
+  disclosure, Denial of service, Elevation of privilege). The coverage tables are in
   \cref{sec:sec-stride}.
-\item[TOFU] Trust-on-first-use: the initial key is accepted on faith; a limitation inherited from the
+\item[TOFU] Trust-on-first-use: the initial key is accepted on faith, a limitation inherited from the
   underlying protocol.
 \item[Transition audit] The auditor's per-epoch replay of the declared update set against the
   previous committed root, which catches any undeclared mutation, in particular a deletion
@@ -92,5 +99,5 @@ cryptographic objects are in \cref{app:definitions}; this list is for quick refe
   dual-index, CEA, or warning label, so a committed value cannot be overwritten through the honest
   interface (\cref{def:epoch-delta}, \cref{ssec:design-detection}).
 \item[X3DH] Extended Triple Diffie--Hellman, Signal's asynchronous key-agreement handshake
-  (\cref{def:x3dh}); its shared secret is the entropy source for the dual-index labels.
+  (\cref{def:x3dh}). Its shared secret is the entropy source for the dual-index labels.
 \end{description}

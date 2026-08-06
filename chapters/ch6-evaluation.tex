@@ -68,8 +68,7 @@ isolate the remaining cause.
 The $N=10^{7}$ full-search tail remains unexplained. Its 95th percentile is
 \SI{4581.9}{\micro\second} against a median of \SI{441.7}{\micro\second}. The harness did not record
 operating-system paging activity, so the benchmark cannot determine whether memory pressure caused the
-tail. The tail is reported as part of the observed implementation behaviour rather than attributed to
-an unmeasured cause.
+tail. The tail is reported as observed implementation behaviour, without assigning an unmeasured cause.
 
 \subsection{Offline Catch-Up (M4)}\label{ssec:eval-catchup}
 
@@ -102,7 +101,7 @@ A verified lookup whose returned owner does not match the expected owner complet
 \SI{27.8}{\micro\second}. The clean two-lookup path fetches and verifies both the self label and the
 peer label and completes in \SI{31.1}{\micro\second}. These Rust reconstructions measure local
 verified-lookup work in the mismatch and clean paths. They exclude the TypeScript client, transport, polling,
-and registration and therefore bound the cryptographic component rather than user-visible latency.
+and registration, so they bound the local cryptographic component and do not represent user-visible latency.
 
 All seven specified clean workflows produce their expected clean verdicts (\cref{tab:bench-m17}), and no workflow produces a
 warning. The security outcomes are treated in \cref{sec:eval-security}.
@@ -122,7 +121,7 @@ Building the $N=10^{7}$ directory takes about 26 minutes at \SI{21.3}{\giga\byte
 evaluation host. The single-process research build holds the whole directory in memory behind one
 mutex, making memory use a primary deployment constraint.
 
-M12 measures two local verification operations rather than a complete networked audit. The first
+M12 measures two local verification operations. It does not measure a complete networked audit. The first
 combines an STH signature check with consistency-proof generation and verification and has a median
 of \SI{28.6}{\micro\second}. Because generation and verification are timed together, the \SI{28.6}{\micro\second} median includes
 more work than consistency verification alone. Conversely, it omits the transport, replay, scheduling,
@@ -137,7 +136,7 @@ and no ordering between the two is inferred from it. Verification cost is also s
 of catch-up epochs replayed, varying by at most \SI{0.5}{\micro\second} over
 $K \in \{1, 10, 100, 720\}$.
 
-The two modes differ in write cadence rather than in verification cost. Session mode writes once per
+The two modes have similar isolated verification costs, but their write cadences differ. Session mode writes once per
 signed-pre-key rotation, while continuous mode writes once per ratchet epoch. At $R = 720$ the
 modelled write counts differ by factors between 24 and 720 depending on the assumed activity level.
 That ratio is a property of the cadence model and the simulated input, and it is not a deployment
@@ -146,8 +145,8 @@ bound. The full mode table is in \cref{sec:bench-modes}.
 % ============================================================================
 \section{Comparison with Prior Systems}\label{sec:eval-compare}
 
-Cross-system comparison is only defensible when the compared quantities are constructed the same way,
-so each comparison below states its arithmetic rather than quoting a headline figure.
+The published systems use different implementations, hardware, and accounting conventions. Each
+comparison below therefore states the matched components and arithmetic.
 \Cref{tab:eval-compare} summarizes the resulting trade-offs.
 
 \begin{table}[ht]
@@ -157,7 +156,7 @@ so each comparison below states its arithmetic rather than quoting a headline fi
 \footnotesize
 \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
 \toprule
-Dimension & \textbf{DUET (measured)} & CONIKS~\cite{melara2015coniks} & Signal KT~\cite{signal-kt-server} \\
+Dimension & DUET (measured) & CONIKS~\cite{melara2015coniks} & Signal KT~\cite{signal-kt-server} \\
 \midrule
 Lookup proof size & 817\,B median at $10^6$ (max 945, prefix and VRF, excluding STH) & 1{,}216\,B at $2^{32}$, 768--832\,B at $10^6$ derived (proof with and without signature) & 8{,}192\,B fixed sibling copath only (256$\times$32, no VRF) \\
 Client lookup verification & $\approx$\SI{128}{\micro\second} at $10^3$--$10^4$, \SI{139.2}{\micro\second} at $10^7$ (including VRF and signed-head verification) & \SI{159}{\micro\second} for path verification at $10^7$ and approximately \SI{400}{\micro\second} for signature verification, giving a derived total of about \SI{559}{\micro\second}, excluding VRF & not published \\
@@ -165,7 +164,7 @@ Catch-up at $W{=}720$ & 320\,B (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB d
 Key-substitution detection & automatic in-band peer warning (established conversations)\newline global VRF-bound identity check, honest directory (first contact) & manual Safety Number comparison and self-monitoring & optional AKV lookup and self-monitoring\newline no peer warning \\
 Authenticated records & Identity-key bindings at global and session-derived slots, and per-epoch ratchet-key fingerprints in continuous mode & Identity-key bindings & Account-identifier, phone-number, and username-hash mappings \\
 Query privacy (operator) & No & No & No \\
-Outsider enumeration resistance (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF) \\
+Resists offline identity recovery (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF) \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -194,7 +193,7 @@ proof~\cite[Section~5.3]{melara2015coniks}, so a 720-epoch window costs $720 \ti
 bytes against DUET's \num{320}-byte windowed proof, a ratio of approximately 1{,}656. This comparison
 illustrates the bandwidth benefit of the windowed construction.
 
-Only an order-of-magnitude timing comparison is possible because the published measurements use different implementations and hardware. CONIKS reports a
+The published timings support only an order-of-magnitude comparison because the implementations and hardware differ. CONIKS reports a
 \SI{159}{\micro\second} path verification and an approximately \SI{400}{\micro\second} signature
 verification~\cite[Section~5.3]{melara2015coniks}, which sums to about \SI{559}{\micro\second}. That figure is derived rather than
 reported, and it includes no VRF timing, because CONIKS's published measurements do not isolate one.
@@ -241,11 +240,13 @@ independent vantage.
 \toprule
 Case & Control and requirement & Evidence & Result \\
 \midrule
-\hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5} key substitution & A1 self-check and warning. A3 global VRF-bound identity check (honest directory). A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite tests each route (\cref{tab:tests-adversarial}). & Detected at a scenario-dependent point in the test sequence. \\
-\hyperref[sc:threat-a2]{A2} warning censorship & Key mismatch together with proof-verified warning absence (extension of G1). & The A2 test checks the compound signal. & Detected. \\
+\hyperref[sc:threat-a1]{A1} server substitution & Owner self-check and dual-index warning (G1). & \cref{tab:tests-adversarial}. & Detected. \\
+\hyperref[sc:threat-a3]{A3} network MitM postcondition & Global VRF-bound identity check, honest directory (G1). & \cref{tab:tests-adversarial}. & Detected at the next lookup. \\
+\hyperref[sc:threat-a5]{A5} malicious rotation & Identity re-fetch and predecessor cross-signature (G1). & \cref{tab:tests-adversarial}. & Detected. \\
+\hyperref[sc:threat-a2]{A2} warning censorship & Pre-commit key mismatch with proof-verified warning absence, and post-commit removal caught as an invalid transition (extension of G1). & \cref{tab:tests-adversarial}. & Detected. \\
 \hyperref[sc:threat-a4]{A4} split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 signed-head fork comparison. & Detected at the next comparison. \\
 \midrule
-Directory enumeration (G3 property) & ECVRF-derived identity labels against outsider enumeration (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{tab:tests-rust-prim}). & Resisted against outsiders under the VRF pseudorandomness assumption. \\
+Offline identity recovery from published labels (G3) & ECVRF-derived labels resist offline recovery of identities by traversing public labels (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{tab:tests-rust-prim}). & Resisted offline under the VRF assumption. The public query endpoint still permits online membership tests. \\
 \hyperref[sc:threat-x1]{X1} key extraction & No directory control. & Endpoint compromise lies outside key transparency. & Out of scope. \\
 \bottomrule
 \end{tabularx}
@@ -266,11 +267,10 @@ it trusts live on the endpoint.
 % ============================================================================
 \section{Implications for Deployment}\label{sec:eval-deploy}
 
-The measured client costs support the feasibility of client-side verification at the tested scale.
-Median full verification remains below \SI{150}{\micro\second} through $10^7$ labels, and the
-measured proof body remains below one kilobyte. At a matched directory size, the proof is in the
-same size class as CONIKS. Detection reuses this format through additional label-bound lookups,
-not by enlarging an individual proof.
+The measured client costs support the feasibility of client-side verification at the tested scale:
+median full verification stays below \SI{150}{\micro\second} through $10^7$ labels, the proof body
+stays below one kilobyte, and detection reuses this format through additional label-bound lookups
+without enlarging an individual proof.
 
 Offline catch-up uses one proof for the missed window. At $W=720$, its \num{320} raw hash bytes
 compare with \num{222528} bytes across \num{720} proofs for the synthetic repeated-proof baseline.
@@ -284,5 +284,4 @@ in-memory tree becomes large at CONIKS scale. Persistent structural sharing, sto
 testing, and networked measurements remain necessary.
 
 Session and continuous modes have similar isolated verification costs but different write frequencies.
-Session mode writes on signed-pre-key rotation, while continuous mode writes at each ratchet epoch for
-finer-grained checking. Their measured ratio reflects the cadence model, not a fixed deployment value.
+Their measured ratio reflects the cadence model, not a fixed deployment value.

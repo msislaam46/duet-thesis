@@ -19,7 +19,7 @@ any epoch whose tree includes the warning leaf, the server cannot answer a warni
 non-inclusion proof against a root whose tree contains the leaf would require a hash collision.
 Across epochs, however, nothing in the log alone prevents a malicious server from building the
 \emph{next} epoch's prefix tree without a leaf that the previous epoch's tree contained, and then
-proving that leaf's non-inclusion honestly against the new committed root; every log consistency
+proving that leaf's non-inclusion honestly against the new committed root. Every log consistency
 proof would continue to verify, because the log records only that roots were appended, not that the
 directory evolved admissibly between them. Three safeguards close this gap.
 
@@ -27,25 +27,26 @@ directory evolved admissibly between them. Three safeguards close this gap.
 \item \textbf{Write-once labels.} Dual-index and CEA labels (\cref{ssec:design-modes}) are
 write-once: the server's update interface rejects a write to an occupied label in these families,
 and the honest interface never removes or modifies an occupied label in a subsequent epoch. The policy is bound into
-the signed configuration hash of \cref{eq:design-sth}, so a server that changes it breaks its own
-signature for any client that recomputes the commitment.
-\item \textbf{Transition audit.} The write-once policy binds an honest server; to bind a malicious
-one, the auditor verifies it per epoch. For each committed epoch the server discloses to the auditor
-the epoch's update set together with proofs against the previous committed root; the auditor
-recomputes the previous root, replays the declared operations (insertions of previously absent
-labels and, for key rotation, declared in-place rotations whose disclosed old value must match the
-leaf being replaced), verifies that nothing beyond the declared operations changed (the delta
-format cannot express a deletion), and checks that the result equals the newly committed root.
+the signed configuration hash of \cref{eq:design-sth}, so a server that changes the policy alters the
+signed commitment and is rejected by a client that checks the expected configuration.
+\item \textbf{Transition audit.} The write-once policy binds an honest server. To bind a malicious
+one, the auditor verifies each epoch. For each committed epoch the server discloses the ordered update
+set and the committed root. The auditor applies the declared operations to its own replica of the
+previous committed state (insertions of previously absent labels and, for key rotation, declared
+in-place rotations whose disclosed old value must match the leaf being replaced), verifies that nothing
+beyond the declared operations changed (the delta format cannot express a deletion), and accepts only
+when the recomputed root equals the committed root. The epoch root's inclusion in the append-only log
+binds the accepted transition to the signed history.
 Each leaf commits its \emph{kind}, \emph{mutable} (the global-VRF identity slots, which the server
 may rotate) or \emph{immutable} (the raw dual-index, CEA, and warning labels, which are write-once),
-bound into the leaf hash as $\Hash(\mathit{kind} \concat \mathit{label} \concat \mathit{value})$,
+bound into the leaf hash as $\Hleaf(\mathit{kind} \concat \mathit{label} \concat \mathit{value})$,
 so the kind is authenticated by the very inclusion proof that authenticates the value and the server
 cannot relabel it. The auditor therefore \emph{distinguishes} the two families: it accepts a declared
 in-place rotation only on a mutable leaf, and \textbf{rejects any rotation of an immutable leaf
 outright} (as well as any rotation that misdeclares the leaf's kind). An adversary that has
 compromised the pre-shared state and tries to overwrite a committed CEA fingerprint $F_t$ with one
 over its injected key must route the write through the privileged interface and declare it as a
-rotation; because the target leaf is immutable the transition audit rejects that rotation, so the
+rotation. Because the target leaf is immutable the transition audit rejects that rotation, so the
 epoch fails the auditor's validation and raises an alarm. Entry immutability is thus enforced
 \emph{as an auditor acceptance condition}: an immutable-leaf rotation is detected and rejected, not merely surfaced. The owner-side self-checks remain as defence
 in depth for the dual-index labels: a replaced lookup slot fails the owner's self-check and a
@@ -62,7 +63,7 @@ fails to replay.
 \item \textbf{Persistence check.} Independently of any auditor, the writer of a warning retains the
 inclusion proof and signed tree head of the epoch at which its warning committed, and the persistence
 check re-verifies the warning's inclusion on a later head. In the prototype this check is implemented
-and separately unit-tested as a persistence component; it is not wired into the live background monitor
+and separately unit-tested as a persistence component. It is not wired into the live background monitor
 (\cref{alg:detect}). If the leaf later disappears,
 the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
 $\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
@@ -76,8 +77,9 @@ epoch validation. With these safeguards in place, the server's only remaining su
 refusal. It can withhold the lookup, the epoch, or the auditor's disclosure, whether for all clients
 or selectively for the one revealed warning label. Either way the refusal is observable, since a
 client treats anything other than a proof-verified response as a failed check rather than a clean
-absence. A refusal therefore never masquerades as a verified absence. The prototype reports it as an
-unavailable check (amber, not red), without attributing its cause. The \hyperref[sc:threat-a2]{A2}
+absence. A refusal therefore never masquerades as a verified absence. The prototype reports an
+unreachable or withheld response as an unavailable check (amber), while a malformed, invalid, or
+mismatching response rejects as a failed check (red). Neither verdict attributes a specific cause. The \hyperref[sc:threat-a2]{A2}
 signal proper is the key
 mismatch together with a \emph{proof-verified} absence of the warning. All three safeguards are
 represented in the prototype. The write-once policy and transition audit run live. The persistence
@@ -136,7 +138,7 @@ T1552.004 & Private Keys & extract insecurely stored private keys from a device 
 \end{table}
 
 The techniques span the Collection, Credential Access, and Impact tactics. Every
-technique except T1552.004 is mitigated by a key-transparency control; T1552.004 is the deliberate
+technique except T1552.004 is mitigated by a key-transparency control. T1552.004 is the deliberate
 endpoint-compromise boundary, out of scope for any directory mechanism (\cref{ch:threat}). The table
 lists only techniques with a faithful ATT\&CK counterpart~\cite{mitre-attack}. Adversary behaviours
 specific to a malicious \emph{directory} have no precise Enterprise-technique match and
@@ -159,7 +161,7 @@ cross-vantage auditor. \Cref{tab:eval-stride} gives the summary, and
 the per-category detail follows in \cref{tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}.
 
 A threat is counted \emph{addressed} when an implemented control prevents or detects the principal
-attack outcome, even where a limitation remains; it is counted \emph{residual} when no implemented
+attack outcome, even where a limitation remains. It is counted \emph{residual} when no implemented
 control addresses that outcome. Observability of an availability failure (for instance, a client
 seeing that a server refuses to serve) does not by itself count as addressing it. The Residual column
 records both cases: the four counted residual threats are \emph{italicized}, while upright entries
@@ -219,7 +221,7 @@ live background monitor (\cref{alg:detect}).
 Threat & KT control & Residual \\
 \midrule
 Forge a VRF label & ECVRF-EDWARDS25519-SHA512-TAI binding & none (cryptographic) \\
-Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the prototype, so a first write can be planted; the owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorisation (\cref{ch:discussion}) \\
+Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the prototype, so a first write can be planted. The owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorisation (\cref{ch:discussion}) \\
 Forge a Merkle proof & SHA-256 collision resistance & approximately $2^{128}$ generic collision-security work \\
 Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \bottomrule
@@ -237,7 +239,7 @@ Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Modify a key at a label & owner's self-check detects the mismatch & scripted demonstration: observed within 1--2 epochs; not a protocol-wide latency bound \\
+Modify a key at a label & owner's self-check detects the mismatch & observed within 1--2 epochs, not a protocol-wide latency bound \\
 Alter a historical entry & append-only log and consistency proofs & none (cryptographic) \\
 Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (cryptographic) \\
 \bottomrule
@@ -255,7 +257,7 @@ Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (c
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Deny a key change & each epoch commits a signed root, so any change to a committed history is detectable by an inclusion or consistency proof & none for a committed change (cryptographic) \\
+Deny a key change & signed heads and inclusion evidence bind the old and new values to committed states, and consistency and transition evidence bind the change to the intervening history & none for a committed change (cryptographic) \\
 Deny that a warning record was committed & warning entry and inclusion proof & none (cryptographic evidence) \\
 Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under the configured key & none for a signed head (cryptographic) \\
 \bottomrule
@@ -274,7 +276,7 @@ Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under
 Threat & KT control & Residual \\
 \midrule
 Link a label to a user identity & VRF-derived pseudorandom labels & \emph{server knows the mapping (semi-trusted)} \\
-Enumerate registered users & 256-bit pseudorandom labels & none for outsiders (operator residual counted above) \\
+Enumerate registered users & 256-bit pseudorandom labels prevent offline recovery & none offline for outsiders. The prototype's unauthenticated query endpoint still permits online tests of known identifiers (operator residual counted above) \\
 Leak the shared secret from a label & HKDF-Expand outputs (dual-index labels) are pseudorandom and ECVRF outputs (identity labels) are pseudorandom without the VRF secret & none (cryptographic) \\
 \bottomrule
 \end{tabular}
@@ -291,8 +293,8 @@ Leak the shared secret from a label & HKDF-Expand outputs (dual-index labels) ar
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented; freshness alarm left to deployment} \\
-Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve; a refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the prototype; counted as an availability residual} \\
+Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented, freshness alarm left to deployment} \\
+Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve. A refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the prototype, counted as an availability residual} \\
 Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & \emph{surfacing beyond the prototype warning UI (for example an out-of-band alert) left to deployment} \\
 Flood with fake registrations & \emph{none}: no deployment rate limit is implemented in the prototype & deployment-level rate limiting, left to deployment (operational) \\
 \bottomrule
@@ -312,7 +314,7 @@ Threat & KT control & Residual \\
 \midrule
 Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
 Server fabricates a divergent tree head & \emph{detected}, not prevented: a head inconsistent with a pinned history is rejected locally, but detecting two internally consistent branches requires an honest independent vantage & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
-Client escalates to server writes & partly prevented, partly \emph{detected}: write-once cryptographically rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration; a first write to an empty slot by a party who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorisation on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
+Client escalates to server writes & partly prevented, partly \emph{detected}: the honest public interface rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration. A privileged operator bypass remains possible but is detected as an immutable-leaf rotation by the transition audit. A first write to an empty slot by a party who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorisation on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
 \bottomrule
 \end{tabular}
 \end{table}
