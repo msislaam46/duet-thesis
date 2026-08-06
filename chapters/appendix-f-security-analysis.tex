@@ -275,7 +275,7 @@ Threat & KT control & Residual \\
 \midrule
 Link a label to a user identity & VRF-derived pseudorandom labels & \emph{server knows the mapping (semi-trusted)} \\
 Enumerate registered users & 256-bit pseudorandom labels & none for outsiders (operator residual counted above) \\
-Leak the shared secret from a label & HKDF-Expand (dual-index labels) and ECVRF (identity labels) are one-way & none (cryptographic) \\
+Leak the shared secret from a label & HKDF-Expand outputs (dual-index labels) are pseudorandom and ECVRF outputs (identity labels) are pseudorandom without the VRF secret & none (cryptographic) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -294,7 +294,7 @@ Threat & KT control & Residual \\
 Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented; freshness alarm left to deployment} \\
 Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve; a refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the prototype; counted as an availability residual} \\
 Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & \emph{surfacing beyond the prototype warning UI (for example an out-of-band alert) left to deployment} \\
-Flood with fake registrations & deployment-level rate limiting & \emph{not implemented in the prototype (operational risk)} \\
+Flood with fake registrations & \emph{none}: no deployment rate limit is implemented in the prototype & deployment-level rate limiting, left to deployment (operational) \\
 \bottomrule
 \end{tabular}
 \end{table}

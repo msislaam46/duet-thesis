@@ -108,8 +108,9 @@ A prefix-tree proof for label $\ell$ is the copath of sibling hashes from the le
 $\ell$ to the prefix root $\prefroot{t}$. An \emph{inclusion} proof recomputes $\prefroot{t}$ from
 $\Hash(\mathit{kind}\concat\ell\concat \mathit{value})$ and the copath. A \emph{non-inclusion} proof recomputes it from
 the default (empty) leaf value at position $\ell$, establishing that no value is bound at $\ell$
-\cite{melara2015coniks,ietf-keytrans-protocol}. Proven non-inclusion of the warning slot is what
-makes warning censorship detectable (\cref{def:dualindex-check}). Used in \cref{ssec:design-verify}.
+\cite{melara2015coniks,ietf-keytrans-protocol}. Proven non-inclusion of the warning slot is the
+component that, together with a key mismatch, makes warning censorship (A2) detectable as a compound
+signal (\cref{def:dualindex-check}); non-inclusion alone is not an alarm. Used in \cref{ssec:design-verify}.
 \end{definition}
 
 \begin{definition}[Signed tree head]\label{def:sth}
@@ -318,10 +319,11 @@ Both operations take effect at the next committed epoch (\cref{def:epoch}). Spec
 \begin{definition}[Check-warning and the verification verdict]\label{def:dualindex-check}
 \intuition{A client accepts a peer key only if the peer's lookup slot verifies against a signed head
 \emph{and} the shared warning slot is provably empty.}
-$\mathsf{CheckWarning}(\lblwarn,\STH_t)$ returns \textsc{Alert} if an inclusion proof binds a
+$\mathsf{CheckWarning}(\lblwarn,\STH_t,k_{\mathrm{mac}})$ returns \textsc{Alert} if an inclusion proof binds a
 non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{Safe} if a non-inclusion proof
 (\cref{def:noninclusion}) establishes the slot is empty; a response with neither valid proof is
-rejected. \Cref{def:dualindex-write} defines the payload MAC. A valid MAC shows that a holder of the shared
+rejected. The warning-MAC key $k_{\mathrm{mac}}$ is derived separately by $\mathsf{DeriveWarnMacKey}$
+(\cref{alg:dualindex}). \Cref{def:dualindex-write} defines the payload MAC. A valid MAC shows that a holder of the shared
 conversation secret produced the value. A non-empty value with an invalid MAC is itself evidence of
 misbehaviour because only the two parties should be able to derive the warning slot. Both cases
 therefore return \textsc{Alert} (\cref{alg:dualindex}). A peer key is accepted only when the peer-lookup proof

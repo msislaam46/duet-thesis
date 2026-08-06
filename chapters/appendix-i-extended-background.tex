@@ -138,8 +138,8 @@ authentication secrets~\cite[pp.~5, 19--20, 23]{dowling2023acka}.
 Three limitations remain in ACKA's construction. Only the receiver detects a
 forgery, so no signal reaches the peer~\cite[p.~21]{dowling2023acka}. Verification proceeds
 sequentially each epoch and provides no windowed catch-up. Its consistency mechanism is not used for
-third-party auditing, which can instead be provided through the standard cross-vantage comparison in
-\cref{sec:design-acka}.
+third-party auditing, which can instead be provided through the standard cross-vantage comparison
+(\cref{fig:bg-splitview}); DUET's concrete auditor is specified in \cref{alg:auditor}.
 
 % ============================================================================
 \section{Manual Verification Evidence}\label{sec:ext-usability}
@@ -356,7 +356,9 @@ proving a version absent from an old set, it shows a key is the latest version i
 tree, combining a membership proof for the current version with a non-membership proof for the next,
 roughly halving storage and update costs~\cite[p.~4356]{optiks2024}. It is the most
 scalability-focused of the surveyed academic systems, yet soundness still requires the key's owner to
-run history checks, and it shares the no-in-band-peer-warning gap common to every system surveyed
+run history checks, and it shares the gap common to the surveyed systems: none delivers a
+conversation-specific in-band peer warning for an individual key substitution (ELEKTRA's
+unsuppressible warning fires on a full account reset, not an individual key)
 (\cref{ssec:bg-implications})~\cite[pp.~4357, 4360]{optiks2024}.
 
 \paragraph{PRISM.}

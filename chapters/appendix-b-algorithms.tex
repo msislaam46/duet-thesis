@@ -358,7 +358,7 @@ persistence component, retained evidence.
   }
 }
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations},\mathit{id_{self}},\mathit{own\_pk}$)}{
-  $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$;\ \ $\mathit{healthy}\gets(v_{\mathsf{vrf}}=\mathit{own\_pk})$ \tcp*{(1) global identity check: the client's own VRF entry, even with no active conversation. (2) an unreachable directory ends the tick before this point (availability, not attack)}
+  $(v_{\mathsf{vrf}},\mathit{healthy})\gets \textsf{CheckOwnVrfKey}()$ \tcp*{(1) global identity check: takes no arguments and performs its own remote lookup and verification of the client's own VRF entry, even with no active conversation, returning the logged value and the match flag. (2) an unreachable directory ends the tick before this point (availability, not attack)}
   \If{$\neg\,\mathit{healthy}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
@@ -376,7 +376,7 @@ persistence component, retained evidence.
     \uIf{$pk=\bot$}{
       \uIf{$\lpeer\in \mathit{seen}$}{\textbf{raise} SecurityAlert \tcp*{(10) removal after prior presence: immediate red}}
       \uElseIf{$\mathit{absent}[\lpeer]<2$}{$\mathit{absent}[\lpeer]\gets \mathit{absent}[\lpeer]+1$;\ \ \textbf{emit} \textsc{Pending};\ \ \textbf{continue} \tcp*{(8) checks 1--2: pending, no UI event}}
-      \Else{\textbf{raise} operational \texttt{NotPosted};\ \ \textbf{continue} \tcp*{(9) third check: fail-closed operational timeout, not cryptographic proof of an attack}}
+      \Else{\textbf{emit} operational \texttt{NotPosted} for this conversation;\ \ \textbf{continue} \tcp*{(9) third check: fail-closed operational timeout, not cryptographic proof of an attack}}
     }\Else{
       $\mathit{absent}[\lpeer]\gets 0$;\ \ $\mathit{seen}\gets \mathit{seen}\cup\{\lpeer\}$ \tcp*{present: reset the counter and pin (as in \textsf{DetectMitM})}
     }

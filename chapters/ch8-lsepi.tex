@@ -43,8 +43,9 @@ intended users at risk.
 
 Ambiguous, excessive, or privacy-revealing warnings can themselves cause harm. An uninterpretable
 warning causes alarm fatigue rather than protection. The interface
-therefore uses amber for an unavailable directory and red only for a verified mismatch. A red warning
-states that an integrity or consistency check failed without assigning a cause. Usability
+therefore uses amber for an unavailable directory and red both for a verified integrity or consistency
+mismatch and for the fail-closed operational timeout after three proof-verified peer-slot absences.
+That operational timeout reflects an unmet participation assumption, not proof of substitution. Usability
 testing, accessibility, escalation routes, and support paths are unaddressed here and named as future
 work in \cref{ch:discussion}. Warning records also reveal who was warned and when, creating additional
 metadata that requires protection.

@@ -6,7 +6,7 @@ The Rust core contains \num{134} tests: \num{97} unit and invariant tests across
 \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
 (\cref{ssec:eval-detection}), all run under \texttt{cargo test}. The TypeScript client has \num{180}
 standalone Jest tests in thirteen suites and a further \num{35} embedded electron-mocha tests in six
-Signal Desktop suites that drive realistic ACI strings through the integration boundary. A fixed set
+Signal Desktop suites that drive realistic account-identifier (ACI) strings through the integration boundary. A fixed set
 of cross-language vectors additionally requires the two implementations to produce byte-identical
 outputs.
 
@@ -483,7 +483,7 @@ than test assertions or protocol-wide bounds.
 \footnotesize
 \begin{tabular}{@{}lp{3.6cm}p{4.4cm}ll@{}}
 \toprule
-Scenario & Scripted attack & Detection mechanism & Observed & Latency \\
+Scenario & Scripted attack & Detection mechanism & Observed & Detection point \\
 \midrule
 A0 & honest baseline & all checks pass & pass & n/a \\
 A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\

@@ -94,8 +94,8 @@ replace Bob's identity key and signed pre-key with an attacker-controlled pair w
 verifies under the substituted identity. The attacker also replaces or withholds the optional
 one-time pre-key. The attacker can then derive the X3DH secret for the separate session established
 with Alice. By establishing separate sessions with Alice and Bob, the attacker causes the
-legitimate parties to hold different conversation secrets and derive disjoint dual-index
-labels. The substituted bundle also differs from the identity entry stored under Bob's global
+legitimate parties to hold different conversation secrets and so derive different dual-index
+labels, which coincide only with negligible collision probability. The substituted bundle also differs from the identity entry stored under Bob's global
 VRF-derived label. When the directory is honest, comparison with that global VRF-bound identity entry
 detects A3; labels derived from the two different conversation secrets provide supporting evidence,
 though on their own they surface only as a peer-slot absence.

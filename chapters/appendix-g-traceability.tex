@@ -24,7 +24,7 @@ contributions of \cref{sec:intro-contributions}.
 RQ & Design claim & Mechanism & Test or scenario & Benchmark & Evidence \\
 \midrule
 RQ1 & substitution is detected, in band (bidirectional for A1 and A5 after honest establishment; for A3, comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets) &
-dual-index warning scheme for A1; for A3, comparison with the peer's global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
+dual-index warning scheme for A1; for A3, comparison with the peer's global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{alg:auditor}) &
 scenarios A1--A5 (\cref{tab:tests-adversarial}); dual-index derivation tests (\cref{tab:tests-rust-prim}) &
 M17 & \cref{sec:eval-security}: scenarios A1--A5 produce the expected detection outcomes in the implemented suite; M17 asserts a clean verdict with no warning on every clean workflow \\
 RQ2 & detection does not enlarge an individual per-lookup proof; median full verification remains below \SI{150}{\micro\second} and grows far more slowly than $N$ &
@@ -41,7 +41,7 @@ Jest wire-parity and unit suites (\cref{sec:tests-ts}); live demonstration (\cre
 Not applicable & \cref{sec:impl-signal,ssec:impl-demo}: the verifier runs inside a fork of Signal Desktop with lifecycle hooks, and the live two-client run demonstrates integration in the Signal Desktop fork (cost under RQ2) \\
 \midrule
 Supporting & equivocation (split-view) is caught from a second vantage &
-cross-vantage auditor (\cref{sec:design-acka}) &
+cross-vantage auditor (\cref{alg:auditor}) &
 scenario A4; auditor equivocation tests (\cref{sec:tests-rust}) &
 M12 & \cref{ssec:eval-auditor}: \SI{27.1}{\micro\second} per check (median; local signed-head fork comparison) \\
 Supporting & continuous mode trades write volume for finer detection &

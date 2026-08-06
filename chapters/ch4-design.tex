@@ -15,9 +15,7 @@ The architecture combines three authenticated data structures, with each layer a
 one below (\cref{fig:design-arch}). The prefix tree stores the
 current directory state, the append-only log records every committed version of that state, and the
 signed tree head authenticates the latest log root. Together, they follow the combined-tree design of
-the IETF Key Transparency working group (\cref{ssec:bg-keytrans}). Lookups are served against the \emph{last
-committed epoch}, never the live tree. Only a committed prefix root has been appended to the log and
-can therefore be linked by an inclusion proof to a signed tree head.
+the IETF Key Transparency working group (\cref{ssec:bg-keytrans}).
 
 \begin{figure}[t]
 \centering
@@ -48,7 +46,8 @@ observer from enumerating the directory.
 
 An $\textsf{update}(\mathit{label},\mathit{value})$ changes one path in the current 256-level sparse
 tree. A later $\textsf{commit\_epoch}()$ appends the resulting root to the log, snapshots that state
-for lookups, and signs the new head. Lookups are served only against the last committed snapshot.
+for lookups, and signs the new head. Lookups are served only against the last committed snapshot,
+never the live tree, since only a committed root is provable by inclusion against a signed head.
 
 The signed message is:
 \begin{equation}\label{eq:design-sth}
@@ -89,7 +88,8 @@ binding in greater detail.
 The dual-index scheme meets the in-band peer-warning requirement of \cref{ssec:bg-implications} and so
 achieves G1 (Key-Substitution Detection) against the substitution attacks
 \hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5}. An in-band
-warning channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5).
+warning channel flags server-side substitution of the global or session slot (A1). Identity re-fetch
+and predecessor cross-signature verification detect a malicious rotation (A5).
 When the directory is honest, comparison with the peer's global VRF-bound identity entry detects a
 network man-in-the-middle (A3), because an attacker-controlled value cannot match the authenticated
 global key. Labels derived from the attacker's different shared secret provide supporting evidence
@@ -238,7 +238,7 @@ The windowed proof implements G2. A client returning after $W$ epochs requests o
 consistency proof between its last trusted log size $m$ and the current size $n$, rather than one
 proof for each intermediate epoch~\cite{rfc9162}. Its size is bounded by:
 \begin{equation}\label{eq:design-proofsize}
-  |\pcons(m, n)| \le \lceil \log_2 m \rceil + \lceil \log_2 n \rceil \quad\text{hashes},
+  |\pcons(m, n)| \le \lceil \log_2 m \rceil + \lceil \log_2 n \rceil \quad\text{hashes}.
 \end{equation}
 The bound in \cref{eq:design-proofsize} covers one consistency proof between the trusted and new
 heads. The client accepts only if the new signed head is an append-only extension of the trusted head. The
@@ -358,5 +358,6 @@ while the log authenticates its history. One structure alone would not provide b
 the consistency evidence required by windowed catch-up and cross-vantage fork detection. The extra
 cost is one log-inclusion path, quantified in \cref{ch:eval}. The combined stack provides one authenticated
 chain from a directory entry to a signed history and retains direct non-inclusion proofs for the
-warning slot. \Cref{sec:design-detail-alternatives} compares the alternatives, and
-\cref{tab:threat-goals} maps the choices to the security requirements.
+warning slot. \Cref{sec:design-detail-alternatives} compares the alternatives, and the traceability table
+\cref{tab:threat-goals} in \cref{app:traceability} maps each security requirement to its associated
+threat, mechanism, and evidence.
