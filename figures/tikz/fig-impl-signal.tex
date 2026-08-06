@@ -10,7 +10,7 @@
   \node[sub,text width=5.8cm] (hooks) at (0,0.85)
         {\textbf{key-flow hooks:} key upload \,|\, key lookup\\{\itshape session-establishment observation (reference only)}};
   \node[sub,minimum width=2.2cm] (client) at (-1.75,-0.75) {KT client\\(verifier)};
-  \node[sub,minimum width=2.0cm] (ui) at (1.8,-0.75) {Security UI\\(badge / banner)};
+  \node[sub,minimum width=2.0cm] (ui) at (1.8,-0.75) {Security UI\\(badge and banner)};
   \draw[edge] (client) -- node[above,font=\scriptsize]{verdicts} (ui);
   \node[box,minimum width=2.4cm,fill=black!8] (srv) at (7.0,0.4) {Rust directory\\server};
   \node[box,minimum width=2.0cm] (aud) at (5.0,-2.2) {auditor};

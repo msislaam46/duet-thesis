@@ -13,7 +13,7 @@
   nop/.style={term,draw=orange!80!black,fill=orange!4},
   go/.style={term,draw=green!50!black,fill=green!5}]
 
-  \node[proc] (a0) {\textbf{(a) head classification}\\receive new head; verify STH signature and well-formedness};
+  \node[proc] (a0) {\textbf{(a) head classification}\\receive new head, verify STH signature and well-formedness};
   \node[dec,below=of a0] (a1) {first head? (no recorded baseline)};
   \node[dec,below=of a1] (a2) {rollback, or equal size with a different root?};
   \node[dec,below=of a2] (a3) {log grew (new size $>$ baseline)?};
@@ -29,7 +29,7 @@
   \draw[edge] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
   \node[proc,right=12mm of a3,text width=3.7cm] (a3p) {verify RFC~9162 consistency proof};
   \draw[edge] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
-  \node[bad,below=5mm of a3p] (t3) {invalid proof: reject\\retain baseline; no replay};
+  \node[bad,below=5mm of a3p] (t3) {invalid proof: reject\\retain baseline, no replay};
   \draw[edge] (a3p) -- node[right,font=\tiny]{invalid} (t3);
   \node[nop,below=4mm of t3] (t4) {idempotent: no state change};
   \draw[edge] (a4.east) |- node[below,font=\tiny,pos=0.85]{yes} (t4.west);
@@ -55,8 +55,8 @@
   rtr/.style={term,draw=orange!80!black,fill=orange!4},
   good/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm,draw=green!50!black,fill=green!5}]
 
-  \node[proc] (b0) {\textbf{(b) transactional replay}\\(entered from (a))\\clone the committed replica into a candidate; $\mathit{cursor}\gets\mathit{audited\_epochs}$};
-  \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$\\ (cursor\,$\to$\,current, incl.\ $e{=}0$):\\ fetch delta$_e$; replay each\\ insertion or rotation (reject a\\ duplicate insert (A1) or an\\ immutable rotation); candidate root\\ must equal declared root$_e$};
+  \node[proc] (b0) {\textbf{(b) transactional replay}\\(entered from (a))\\clone the committed replica into a candidate, then set $\mathit{cursor}\gets\mathit{audited\_epochs}$};
+  \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$\\ (cursor\,$\to$\,current, incl.\ $e{=}0$):\\ fetch delta$_e$, replay each\\ insertion or rotation (reject a\\ duplicate insert (A1) or an\\ immutable rotation), and candidate root\\ must equal declared root$_e$};
   \node[cv,below=of b1] (bcv) {\textbf{cross-vantage:} valid second-vantage head available?};
   \node[cv,below=6mm of bcv] (bcmp) {same-epoch head with a different root at the same tree size (two validly signed roots)?};
   \node[cv,below=6mm of bcmp] (bcons) {between-vantage consistency proof present and valid?};

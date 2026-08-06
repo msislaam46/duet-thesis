@@ -23,7 +23,7 @@
   % bands
   \node[band] at (-5.2,5.3) {API};
   \node[band] at (-5.2,3.8) {server core};
-  \node[band,align=right] at (-5.2,2.1) {authenticated data\\structures and cryptography};
+  \node[band,align=right] at (-5.2,2.1) {authenticated\\structures};
   \node[band] at (-5.2,0.5) {hashing layer};
   % server dependency edges
   \draw[->] (api) -- (dir);
@@ -31,14 +31,14 @@
   \foreach \n in {ptree,mlog}{\draw[->] (\n) -- (\n |- hash.north);}
 
   % ---- client / reference utilities (right) : they CALL the API ----
-  \node[cmp,minimum width=3.0cm] (didx) at (7.7,4.2) {Dual-index\\derivation};
-  \node[cmp,minimum width=3.0cm] (cea)  at (7.7,2.9) {CEA registration\\and verification};
+  \node[cmp,minimum width=3.0cm] (didx) at (6.6,4.2) {Dual-index\\derivation};
+  \node[cmp,minimum width=3.0cm] (cea)  at (6.6,2.9) {CEA registration\\and verification};
   \node[grp,fit=(didx)(cea),label={[font=\footnotesize\itshape,text=black!70]above:Client-side constructions}] (cg) {};
   \draw[->,dashed] (didx) -- (cea);
   \draw[->,dashed] (cea.west) -- node[above,font=\scriptsize,pos=0.55]{call the API} (api.east);
 
   % ---- independent auditor ----
-  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.7,6.0) {\textbf{Independent auditor replica}\\separate process};
+  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.6,6.0) {\textbf{Independent auditor replica}\\separate process};
   \draw[<->,dashed] (aud.west) -- node[above,align=center,font=\scriptsize,pos=0.55]{obtain signed heads,\\epoch deltas, and\\consistency proofs} (api.north east);
 \end{tikzpicture}%
 }

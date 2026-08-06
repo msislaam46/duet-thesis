@@ -332,7 +332,7 @@ proof-omission. Each is a deployment-layer engineering task rather than a gap in
 % ----------------------------------------------------------------------------
 \section{Attack Routes and Detection Timeline}\label{sec:sec-routes}
 
-\Cref{fig:eval-attacktree} groups the evaluated scenarios by their role. Server substitution (A1), a
+\Cref{fig:eval-attacktree} is a threat-to-control map that groups the evaluated scenarios by their role. Server substitution (A1), a
 network man-in-the-middle attack (A3), and malicious rotation (\hyperref[sc:threat-a5]{A5}) are independent ways of causing a
 client to accept an attacker-controlled key. The OR relationship indicates that any one of these
 routes can expose message plaintext if the substitution succeeds. Each route is paired with the
@@ -350,10 +350,10 @@ rejecting verdict. Endpoint compromise (X1) remains outside the directory threat
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-attacktree}
-\caption[Attack routes and detection controls.]{Attack routes and detection controls. A1, A3,
-and A5 are independent key-substitution routes, while A2 and A4 attempt to evade detection. Each
-dashed arrow links an attack to the control that detects it. The A3 control assumes an honest
-directory.}
+\caption[Evaluated attack routes and controls.]{Evaluated attack routes and controls, drawn as a
+threat-to-control map. A1, A3, and A5 are independent key-substitution routes, while A2 and A4 attempt
+to evade detection. Each dashed arrow links an attack to the control that detects it. The A3 control
+assumes an honest directory.}
 \label{fig:eval-attacktree}
 \end{figure}
 
@@ -362,14 +362,14 @@ directory.}
 
 \Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1). The attack
 occurs at epoch $E$. The victim's self-check flags it at $E{+}1$, the warning commits at $E{+}2$,
-and the peer's monitor reads it at $E{+}3$. These epochs reflect the scripted polling schedule rather
-than a protocol-wide latency bound. Monitoring itself requires no user action.
+and the peer's monitor reads it at $E{+}3$. These epochs follow the demonstration's
+one-action-per-epoch schedule. Monitoring itself requires no user action.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-timeline}
-\caption[Detection timeline for a server-side key substitution.]{Detection timeline for the
-scripted A1 substitution. The epoch positions follow the demonstration's one-action-per-epoch
-schedule. Protocol-wide detection latency is outside the scope of this timeline.}
+\caption[Detection timeline for a server-side key substitution.]{Detection timeline for a
+server-side A1 substitution. The epoch positions follow the demonstration's one-action-per-epoch
+schedule.}
 \label{fig:eval-timeline}
 \end{figure}

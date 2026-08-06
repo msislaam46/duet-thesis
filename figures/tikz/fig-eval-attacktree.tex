@@ -13,13 +13,9 @@
   oos/.style={draw,dashed,rounded corners,draw=orange!80!black,align=center,minimum height=8mm,inner sep=4pt}]
   \hyphenpenalty=10000\exhyphenpenalty=10000  % no mid-word breaks in the boxes
 
-  % goal (over the substitution group)
-  \node[goal] (g) at (-2.0, 5.3) {Goal: client accepts an attacker-controlled key};
-
   % two parallel, matching group headers at the same level
   \node[hdr] (orG)   at (-2.0, 3.7) {OR: any one substitution route};
   \node[hdr] (rhead) at ( 4.8, 3.7) {Detection-evasion attempts};
-  \draw[->,black!45] (g) -- (orG);
 
   % attack rows (uniform boxes)
   \node[atk] (a1) at (-4.7, 2.0) {A1\\server substitution};
@@ -32,7 +28,7 @@
   \draw[->,black!45] (rhead) -- (a4);
 
   % detection rows (uniform boxes, short labels)
-  \node[det] (d1) at (-4.7,-0.2) {pinned-key self-check};
+  \node[det] (d1) at (-4.7,-0.2) {owner self-check or established-peer pin};
   \node[det] (d3) at (-2.0,-0.2) {global VRF identity comparison};
   \node[det] (d5) at ( 0.7,-0.2) {identity re-fetch and predecessor cross-signature};
   \node[det] (d2) at ( 3.5,-0.2) {key mismatch and proven warning absence};
