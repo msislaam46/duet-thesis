@@ -221,15 +221,12 @@ linearly with the $W$ epochs between the two visits, which is the property explo
 
 \begin{remark}[Relation to prior systems]
 The windowed proof is a \emph{standard} RFC~9162 consistency proof between two distant heads, not a
-new cryptographic object. The idea of collapsing unchanged epochs is not itself new.
-CONIKS~\cite[Section~6.3]{melara2015coniks} explicitly \emph{proposes} skipping missed epochs when a
-history structure proves no change, SEEMless makes monitoring cost depend on the number of key updates
-rather than on elapsed epochs, and OPTIKS reduces unchanged-key monitoring to a single proof. The
-contribution here is an \emph{offline-client} instantiation using one consistency proof from the
-client's last checkpoint to the current head, together with the measured saving reported in
-\cref{ch:eval}. The saving is linear in the window, since the windowed proof replaces $W$ proofs with
-one, a reduction in the number of proofs rather than an improvement in the asymptotic complexity of an
-individual proof.
+new cryptographic object. Related systems also reduce repeated history checks. SEEMless makes
+monitoring cost depend chiefly on key updates, and OPTIKS reduces unchanged-key monitoring to a single
+proof. The contribution here is an \emph{offline-client} instantiation using one consistency proof from
+the client's last checkpoint to the current head, together with the measured saving reported in
+\cref{ch:eval}. It replaces $W$ proofs with one. The reduction is in the number of proofs, and the
+asymptotic complexity of an individual proof is unchanged.
 \end{remark}
 
 % ============================================================================

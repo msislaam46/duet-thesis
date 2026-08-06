@@ -89,11 +89,9 @@ and derives the per-message encryption keys.
 % ============================================================================
 \section{Double Ratchet Mechanics}\label{sec:ext-ratchet}
 
-Once the shared secret $\sharedS$ has been established by X3DH or PQXDH, Signal
-hands control to the Double Ratchet protocol. Whereas X3DH is responsible for
-bootstrapping trust and deriving an initial secret, the Double Ratchet protocol
-is responsible for maintaining confidentiality throughout the remainder of the
-conversation. It combines a Diffie--Hellman ``ratchet'', in which the parties
+Once X3DH or PQXDH derives the shared secret $\sharedS$ from the supplied identity and pre-key
+material, Signal passes that secret to the Double Ratchet. The Double Ratchet then evolves the session
+state throughout the conversation. It combines a Diffie--Hellman ``ratchet'', in which the parties
 periodically exchange new ephemeral public keys, with symmetric key-derivation
 chains that advance a root key into per-message keys~\cite{doubleratchet}. This construction provides
 forward secrecy and post-compromise security. \emph{Forward secrecy} means that compromise of a current key
@@ -245,20 +243,18 @@ VRF-derived labels rather than usernames, two components recur: authenticated Me
 and zero-knowledge sets (ZKS).
 
 \paragraph{Merkle Prefix Trees.} Most VKDs store bindings in a sparse
-authenticated dictionary indexed by these labels. Conceptually the structure is
-a sparse binary Merkle tree whose leaves correspond to the whole space of
-possible labels. Because only a tiny fraction of labels are occupied,
-implementations represent it as a \emph{Merkle prefix tree}, materializing only
-the nodes on paths to existing entries. A label's bits give the path from the
-root to its leaf, so a membership proof is the authentication path to that leaf
-and a non-membership proof is the path to an empty (default) position. CONIKS
-introduced this representation for key transparency~\cite[Section~3.1]{melara2015coniks}.
-Later systems commonly add \emph{Patricia-style path compression}, collapsing
-chains of single-child internal nodes into a single edge. This preserves the
-tree's authentication properties while reducing storage. The terms \emph{Merkle
-prefix tree}, \emph{Patricia trie}, \emph{Merkle Patricia trie}, and \emph{sparse
-Merkle tree} thus name closely related authenticated dictionaries that differ
-chiefly in whether, and how, the tree is path-compressed.
+authenticated dictionary indexed by VRF-derived labels. Conceptually the
+structure is a sparse binary Merkle tree whose leaves correspond to the whole
+space of possible labels, but because only a tiny fraction of labels are
+occupied, implementations materialize only the nodes on paths to existing
+entries. A label's bits give the path from the root to its leaf, so a membership
+proof is the authentication path to that leaf and a non-membership proof is the
+path to an empty (default) position. CONIKS introduced this representation for
+key transparency~\cite[Section~3.1]{melara2015coniks}. This thesis uses
+\emph{path-compressed prefix tree} when single-child chains are elided. Related
+constructions use different terms and encodings: SEEMless uses a persistent
+Patricia trie, while the IETF draft specifies a prefix tree with its own proof
+encoding~\cite{chase2019seemless,ietf-keytrans-protocol}.
 
 \paragraph{Zero-Knowledge Sets.} Merkle trees provide authenticated membership
 and non-membership proofs, but they do not by themselves provide directory
@@ -277,7 +273,8 @@ every observer received the same state. A malicious server may maintain two inte
 histories, presenting tree head $\logroot{A}$ to Alice and a different $\logroot{B}$ to Bob while
 supplying each with a different key for the other. Their local inclusion and consistency checks may
 all succeed. Detecting this split view requires commitments observed from different vantage points
-to be compared through client gossip, an independent transparency log, or external auditors. This
+to be compared through client gossip, an independent transparency log, or external
+auditors~\cites[Section~4.1.4]{melara2015coniks}[Section~10.2]{ietf-keytrans-protocol}. This
 distinction between local verifiability and global consistency motivates the equivocation requirement
 in \cref{ssec:bg-implications}. \Cref{fig:bg-splitview} depicts the two divergent views.
 
@@ -311,11 +308,9 @@ privacy-preserving, and the
 hash-chained STRs support \emph{non-equivocation} once views are compared: any auditor or client that compares STRs obtains publicly verifiable
 evidence of the fork, attributable to the provider's signing key~\cite[p.~3]{melara2015coniks}. Three
 limitations are significant. First, monitoring is linear in the offline period: a
-client absent for $\ell$ epochs must perform $\Theta(\ell)$ work, because a
-provider could insert a malicious binding and later revert it. The proposed remedy, a per-leaf version history, would
-require an auditor to perform $\Theta(n)$ work each epoch, and the authors doubt that a party
-willing to perform this auditing for free will exist in every
-deployment~\cite[p.~12]{melara2015coniks}. Second,
+client absent for $\ell$ epochs must perform $\Theta(\ell)$ checks, because a
+provider could insert a malicious binding and later revert
+it~\cite[pp.~7--8]{melara2015coniks}. Second,
 the client-to-client gossip that would let peers cross-check STRs is left as
 future work~\cite[p.~7]{melara2015coniks}. Third, CONIKS exposes an attack but cannot deter a provider
 willing to attack its users openly~\cite[p.~2]{melara2015coniks}.
@@ -324,11 +319,11 @@ willing to attack its users openly~\cite[p.~2]{melara2015coniks}.
 SEEMless turned CONIKS's design pattern into a formally defined \emph{verifiable key directory}
 primitive, with precise completeness, soundness, and simulation-based privacy
 definitions~\cite[p.~2]{chase2019seemless}. Its \emph{append-only zero-knowledge set} (aZKS) stores
-versioned labels so that proving a key is the current version costs only logarithmically in the number
-of epochs, and it makes auditing a public role checkable by any party~\cite[Section~4.2]{chase2019seemless}.
-Detection nonetheless remains self-monitoring: through \texttt{KeyHistory} the client retrieves its
-verified key-version history and must reconcile it against the updates it actually made, and commitment
-consistency is deferred to an external gossip or blockchain mechanism~\cite[p.~5]{chase2019seemless}.
+versioned labels. A \texttt{KeyHistory} proof grows with the user's key updates, while the marker checks
+that exclude implausibly high versions add overhead logarithmic in the number of
+epochs~\cite[Section~4.2]{chase2019seemless}. Detection remains self-monitoring: the client must
+reconcile the verified key-version history against the updates it actually made, and commitment
+consistency is delegated to an external gossip or blockchain mechanism~\cite[p.~5]{chase2019seemless}.
 
 \paragraph{Parakeet.}
 Parakeet introduces compaction to bound the storage growth caused by append-only
