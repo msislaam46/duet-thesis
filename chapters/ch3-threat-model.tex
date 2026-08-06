@@ -63,12 +63,12 @@ address (X1). Each scenario is evaluated experimentally in \cref{ch:eval}.
 Scenario & Adversary & Objective & Required outcome \\
 \midrule
 A0 & none & honest baseline & all checks pass \\
-\hyperref[sc:threat-a1]{A1} & malicious directory operator & substitute a user's key & substitution detected by the affected client and, for established pairs, reported to the peer \\
+\hyperref[sc:threat-a1]{A1} & malicious directory operator & substitute a user's key (A1a at the global identity slot, A1b at a dual-index session slot) & substitution detected by the affected client and, for established pairs, reported to the peer \\
 \hyperref[sc:threat-a2]{A2} & malicious directory operator & substitute a key and censor the warning & censorship leaves a detectable key mismatch or a failed check, never successful verification \\
 \hyperref[sc:threat-a3]{A3} & network (Dolev--Yao) & perform a coordinated key substitution in transit & in-transit substitution detected \\
 \hyperref[sc:threat-a4]{A4} & malicious directory operator & equivocate (split-view) & conflicting signed heads exposed \\
 \hyperref[sc:threat-a5]{A5} & malicious directory operator & substitute during a key rotation & unauthorised rotation must not be accepted as authentic \\
-\hyperref[sc:threat-x1]{X1} & endpoint attacker & impersonate using the victim's key & outside the directory boundary \\
+\hyperref[sc:threat-x1]{X1} & endpoint attacker & impersonate using the victim's key & no detection requirement, since endpoint compromise is outside the threat model \\
 \bottomrule
 \end{tabularx}
 \end{table}

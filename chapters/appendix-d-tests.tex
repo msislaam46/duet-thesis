@@ -543,6 +543,6 @@ live callers use (\cref{sec:tests-ts}).
 The adversarial scenario suite runs the attack taxonomy of \cref{ch:threat} against the
 implemented crate. Implemented as the Rust integration test \texttt{tests/adversarial.rs}, it
 covers A0, A1a, A1b, A2--A5, and X1 and asserts the
-expected security outcome for each, with the A1 variants additionally pinning the warning epoch. These totals
-are distinct from one another and from the opt-in wire-parity target, and must not be presented as one
-interchangeable figure.
+expected security outcome for each, with the A1 variants additionally pinning the warning epoch. The
+standalone Jest, embedded electron-mocha, and opt-in wire-parity totals are separate figures, each
+counted independently.
