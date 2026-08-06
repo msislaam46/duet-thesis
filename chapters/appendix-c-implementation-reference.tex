@@ -110,10 +110,10 @@ pre-key-bundle processing & \texttt{hook\_process\_prekey\_bundle} & Rust (libsi
 \toprule
 State & Meaning & DOM event \\
 \midrule
-grey  & pending (initial; no result yet) & --- (initial state; no event) \\
+grey  & pending (initial; no result yet) & none (initial state; no event) \\
 green & key verified & \texttt{kt:verified} \\
 amber & directory server unreachable & \texttt{kt:unreachable} \\
-red   & warning / man-in-the-middle detected & \texttt{kt:warning} \\
+red   & MitM warning or operational timeout & \texttt{kt:warning} \\
 \midrule
 \multicolumn{3}{@{}p{12cm}@{}}{\emph{demonstration only:} inject a one-shot CEA ratchet fork into the
 selected conversation \hfill \texttt{kt:cea-inject}} \\

@@ -4,9 +4,10 @@
 % node rather than feeding one into the next.
 % Label: \label{fig:impl-testing}
 \begin{tikzpicture}[>=Stealth,font=\footnotesize,
-   st/.style={draw,rounded corners,minimum width=4.6cm,minimum height=7mm,align=center}]
+   st/.style={draw,rounded corners,minimum width=4.6cm,text width=4.3cm,minimum height=7mm,align=center,inner sep=3pt}]
+  \hyphenpenalty=10000\exhyphenpenalty=10000  % no mid-word breaks in the boxes
   \node[st] (rfc) {RFC test vectors (VRF, log proofs, HKDF)};
-  \node[st,below=4mm of rfc] (unit) {unit + invariant tests (per module)};
+  \node[st,below=4mm of rfc] (unit) {unit and invariant tests (per module)};
   \node[st,below=4mm of unit] (xl) {cross-language vectors (Rust $=$ TypeScript) and 27-file source-parity gate (standalone $=$ embedded TS)};
   \node[st,below=4mm of xl] (scen) {scenario suite (A0, A1a, A1b, A2--A5, X1)};
   \node[st,below=4mm of scen] (bench) {performance benchmarks (\cref{ch:eval})};

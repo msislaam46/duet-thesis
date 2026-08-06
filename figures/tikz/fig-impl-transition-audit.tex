@@ -70,7 +70,7 @@
   \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard candidate, retry (not a fork)};
   \draw[edge] (b1.east) -- node[above,font=\tiny,fill=white,inner sep=1pt]{replay fail} (r2.west);
   \draw[edge] (b1.north east) -- node[above,font=\tiny,fill=white,inner sep=1pt,pos=0.4]{fetch fail} (r1.west);
-  \node[bad,right=12mm of bcmp] (r3) {\textsc{Fork}: two validly signed roots at one tree size --- reject};
+  \node[bad,right=12mm of bcmp] (r3) {\textsc{Fork}: two validly signed roots at one tree size, reject};
   \draw[edge] (bcmp.east) -- node[above,font=\tiny]{yes} (r3.west);
   \node[rtr,right=12mm of bcons] (r4) {\textsc{ConsistencyUnverified}: retain baseline (no G4 verdict)};
   \draw[edge] (bcons.east) -- node[above,font=\tiny]{no} (r4.west);

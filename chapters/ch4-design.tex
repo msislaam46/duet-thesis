@@ -125,8 +125,8 @@ lookup slots and shared warning slot.
 are derived from the conversation secret $\sharedS$. HKDF-Extract produces $\mathit{PRK}$.
 Three domain-separated HKDF-Expand operations then produce $\ell_{\mathsf{self}}$,
 $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$. Alice and Bob share $\sharedS$, so both parties derive
-the same warning label and can read a warning stored at the shared slot. A different secret $\sharedS'$ produces
-a disjoint label set.}
+the same warning label and can read a warning stored at the shared slot. A different secret produces different
+labels except with negligible collision probability.}
 \label{fig:design-dualindex}
 \end{figure}
 \FloatBarrier

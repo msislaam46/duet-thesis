@@ -144,8 +144,8 @@ is in \cref{sec:bench-env}. The reproduction procedure is in \cref{sec:bench-rep
 The embedded TypeScript client verifies Rust directory responses and reports the result through a
 conversation badge and banner. The interface starts grey (pending), turns green only when
 verification succeeds and the account-wide self-check is healthy, shows an amber notice when a check
-is unavailable, and shows a red warning after a proof failure, key mismatch, or authenticated peer
-warning.
+is unavailable, and shows a red warning after a proof failure, key mismatch, authenticated peer
+warning, or the fail-closed operational timeout.
 
 \subsection{Client Verification and Lifecycle}\label{ssec:impl-verifier}
 \label{ssec:impl-hooks}
@@ -218,7 +218,7 @@ agreement and the expected behaviour for the specified inputs, not equivalence o
 \Cref{sec:tests-evidence} gives the complete counts, names, and outcomes.
 
 The Rust tests exhaustively cover every Merkle-log inclusion proof and consistency pair up to size 64,
-including forged-proof rejection, rather than sampling that input space. Auditor tests reject invalid
+with forged-proof rejection, not sampling. Auditor tests reject invalid
 fork evidence and report genuine equivocation as \textsc{Fork}, while a divergent head with an invalid
 signature is rejected rather than misclassified.
 
@@ -269,8 +269,8 @@ demonstration setup.
 % ============================================================================
 \section{Reproducibility}\label{sec:impl-repro}
 
-Fixed seeds determine the VRF key, label placement, sampled users, and fresh server state for each
-benchmark, preventing state from carrying between runs. The live demonstration instead uses the
-administrative reset. The environment record identifies the hardware, operating system, compiler, and
-toolchain versions. \Cref{sec:apiref-repo} gives the \texttt{cargo test} and \texttt{cargo bench}
-commands, repository layout, and runner scripts.
+Fixed seeds set the VRF key, label placement, sampled users, and fresh server state per benchmark, so
+no state carries between runs, while the live demonstration uses the administrative reset. The
+environment record captures the hardware, operating system, compiler, and toolchain versions, and
+\cref{sec:apiref-repo} gives the \texttt{cargo test} and \texttt{cargo bench} commands, repository
+layout, and runner scripts.

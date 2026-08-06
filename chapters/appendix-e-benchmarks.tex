@@ -2,9 +2,9 @@
 
 This appendix reproduces the complete aggregate benchmark tables summarized in \cref{ch:eval}. All reported values are
 from recorded runs on the single environment below: the $10^7$ run supplies the timing
-corpus and M7, and the full-grid run supplies the M14--M16 families; sizes are exact and
+corpus and M7, and the full-grid run supplies the M14--M16 families. Sizes are exact and
 seed-deterministic, and timings are reported as the median and 95th percentile. The metric families M1--M17 are as defined by the
-measurement map in \cref{sec:eval-method} (\cref{tab:bench-repro}); baselines are named, not coded
+measurement map in \cref{sec:eval-method} (\cref{tab:bench-repro}). Baseline methods are identified by name rather than by benchmark identifiers
 (\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed}) and mean the same
 thing here as in the chapter. Where a row is qualified \emph{(dual-index)}, it reports the
 VRF-indexed \texttt{search\_by\_user\_id} lookup recorded under the historical configuration identifier
@@ -40,7 +40,7 @@ Lookup-sampling seed & \texttt{StdRng} seed 42 (fixed) \\
 
 Several methodology caveats were recorded with the run. The server is in-memory, with no network and
 no database. Proof sizes in the M1 and M7 families are measured on a single-epoch log, so a deployed
-$E$-epoch log adds up to $32\lceil\lg E\rceil$ bytes to each lookup proof; the M14 sweep measures that
+$E$-epoch log adds up to $32\lceil\lg E\rceil$ bytes to each lookup proof. The M14 sweep measures that
 multi-epoch term directly (\cref{sec:bench-newfamilies}). Memory is resident set size after build, not peak.
 The operation-rate figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
 portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to
@@ -109,7 +109,7 @@ $W$ (epochs) & synthetic sequential (bytes) & windowed (bytes) & Ratio \\
 \end{table}
 
 M6, retained as superseded provenance, recorded $0$ alarms over $1{,}000$ clean deterministic
-sessions; the current clean-path evidence is the M17 coverage map in \cref{sec:bench-newfamilies}
+sessions. The current clean-path evidence is the M17 coverage map in \cref{sec:bench-newfamilies}
 (a spurious collision at a 256-bit HKDF-derived warning label is cryptographically negligible in any
 case).
 
@@ -151,7 +151,7 @@ M3 VRF verify (dual-index)           & $10^4$ & 75.0  & 92.0 \\
 \medskip\noindent\emph{The marginal warning-slot lookup (M5) is the cost of the warning-slot read on top
 of a lookup the client already verifies. This is \emph{not} the detector: it is an unverified read,
 taken in clean state, whereas the detector performs one or two proof-carrying lookups (the owner slot
-always, and the warning slot only when the owner check passes; \cref{ssec:eval-detection}). The read's underlying cost is data-dependent (a compressed-leaf sibling on the
+always, and the warning slot only when the owner check passes, \cref{ssec:eval-detection}). The read's underlying cost is data-dependent (a compressed-leaf sibling on the
 copath implies a subtree-hash chain of up to \num{256} levels), but the implementation memoizes
 each leaf's chain top (\cref{sec:impl-modules}), so the sampled check reads
 ${\approx}$\SI{1.6}{\micro\second} independent of $N$, with only a cold leaf's first touch paying
@@ -179,7 +179,7 @@ rotation and epoch commit, the VRF in isolation, and the Rust lookup-verificatio
 
 \begin{table}[H]
 \centering
-\caption[M8--M11: single-thread rates and verification cost.]{M8--M11: single-thread rates, key rotation, epoch commit, the VRF in isolation, and the Rust lookup-verification component.}
+\caption[M8--M11: single-thread rates and verification cost.]{M8--M11: operation rates and maintenance costs.}
 \label{tab:bench-maint}
 \small
 \begin{tabular}{@{}L{6.2cm}lrr@{}}
@@ -264,7 +264,7 @@ than the typical one. The proof itself does not explain it: the verification ste
 proof (prefix, VRF) show no comparable tail. The harness records no page-fault, paging, or
 memory-pressure counters, so the source of the tail was not instrumented and is not established here.
 A plausible candidate, given a \num{21309}\,MB working set on a \num{31.7}\,GB machine, is occasional
-stalls as the resident set approaches available memory; a deployment on persistent, sharded storage
+stalls as the resident set approaches available memory. A deployment on persistent, sharded storage
 would have a different memory profile, though whether that removes the tail is untested. The median is
 the figure the chapter quotes.
 \end{tablenotes}
@@ -297,14 +297,14 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 \end{table}
 
 Per-check verification cost is $27.3\,\si{\micro\second}$ in session mode and
-$27.7\,\si{\micro\second}$ in continuous mode (medians; both include server-side proof generation).
+$27.7\,\si{\micro\second}$ in continuous mode (medians, both including server-side proof generation).
 The medians differ by $0.4\,\si{\micro\second}$, within run-to-run variation, and that ordering is not
-interpreted; no equivalence claim is made either, since no equivalence margin was defined or tested.
+interpreted. No equivalence claim is made either, since no equivalence margin was defined or tested.
 The chain memoization flattens the compressed-leaf cost that previously separated them.
 Both modes are timed under the identical label-bound proof
 verifier (\texttt{verify\_search\_result\_raw\_for}), so the two medians are directly comparable under the same local verifier. The
 continuous-mode setup folds a simulated per-epoch ratchet secret that is distinct from the
-authenticated public ratchet key (ACKA's $I$ versus $T$); it is a stand-in for a live Double-Ratchet
+authenticated public ratchet key (ACKA's $I$ versus $T$). It is a stand-in for a live Double-Ratchet
 DH output, so the figure captures the transparency-layer cost of an epoch, not the ratchet's own key
 agreement.
 
@@ -325,7 +325,7 @@ the M16 detection-path cost, each path a synthetic Rust reconstruction of the co
 detection path.
 
 M17 is functional coverage rather than a timed family. \Cref{tab:bench-m17} maps each listed honest
-state to the test that asserts its expected clean verdict. The clean-path predicate exercised by
+state to the test that asserts its expected clean verdict. The clean-path predicate checked by
 the two new cases is a Rust reimplementation of the detector's clean-path logic, not the production
 TypeScript detector.
 
@@ -342,8 +342,8 @@ Honest state & Test source \\
 \midrule
 First registration, empty owner slot & \texttt{clean\_path\_coverage.rs} (new case) \\
 Repeated re-verification of a valid state & \texttt{clean\_path\_coverage.rs} (new case) \\
-Established session, expected key & \texttt{clean\_path\_coverage.rs}; adversarial A0 \\
-Empty warning slot (proven absent) & \texttt{clean\_path\_coverage.rs}; M16 clean-match \\
+Established session, expected key & \texttt{clean\_path\_coverage.rs} (adversarial A0) \\
+Empty warning slot (proven absent) & \texttt{clean\_path\_coverage.rs} (M16 clean-match) \\
 Valid log growth + consistency proof & \texttt{auditor}:\newline \texttt{honest\_server\_audits\_clean\_across\_epochs} \\
 Multiple honest continuous-mode epochs & \texttt{cea}:\newline \texttt{honest\_parties\_agree\_each\_epoch} \\
 Agreeing cross-vantage heads & \texttt{auditor}:\newline \texttt{detect\_fork\_accepts\_consistent\_head} \\
@@ -357,9 +357,9 @@ Agreeing cross-vantage heads & \texttt{auditor}:\newline \texttt{detect\_fork\_a
 
 \Cref{tab:bench-repro} maps every metric family to the Criterion benchmark group that times it and the
 CSV file/column that records the exact values, so any row above can be regenerated and located. The
-harness lives in \texttt{benches/kt\_bench.rs}; run it via \texttt{run-benches.ps1} (the scale family
+harness lives in \texttt{benches/kt\_bench.rs}. Run it via \texttt{run-benches.ps1} (the scale family
 M7 runs only with \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes are seed-deterministic
-and must reproduce byte-for-byte; timings reproduce within noise.
+and must reproduce byte-for-byte, and timings reproduce within noise.
 
 \medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The Criterion
 groups and CSV keys below are frozen provenance identifiers, so some retain historical names.

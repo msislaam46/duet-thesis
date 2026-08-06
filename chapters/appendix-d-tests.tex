@@ -6,7 +6,7 @@ The Rust core contains \num{134} tests: \num{97} unit and invariant tests across
 \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
 (\cref{ssec:eval-detection}), all run under \texttt{cargo test}. The TypeScript client has \num{180}
 standalone Jest tests in thirteen suites and a further \num{35} embedded electron-mocha tests in six
-Signal Desktop suites that drive realistic account-identifier (ACI) strings through the integration boundary. A fixed set
+Signal Desktop suites that drive realistic account identifier (ACI) strings through the integration boundary. A fixed set
 of cross-language vectors additionally requires the two implementations to produce byte-identical
 outputs.
 
@@ -116,7 +116,7 @@ Module & Test & Property checked \\
 \texttt{dual\_index} & \texttt{label\_symmetry} & Alice and Bob agree on the two lookup slots ($A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and vice versa) \\
 \texttt{dual\_index} & \texttt{warning\_labels\_symmetric} & both parties derive the identical shared warning label \\
 \texttt{dual\_index} & \texttt{warning\_label\_differs\_across\_pairs} & distinct conversation pairs derive distinct warning labels \\
-\texttt{dual\_index} & \texttt{different\_secrets\_different\_labels} & distinct shared secrets give disjoint labels \\
+\texttt{dual\_index} & \texttt{different\_secrets\_different\_labels} & the tested distinct secrets produce different labels \\
 \texttt{dual\_index} & \texttt{hkdf\_deterministic} & the HKDF derivation is reproducible \\
 \texttt{dual\_index} & \texttt{warning\_mac\_roundtrip\_and\_shared\_key\_verification} & a warning MAC under the pair-bound key verifies for either party \\
 \texttt{dual\_index} & \texttt{warning\_mac\_rejects\_injected\_or\_tampered\_payload} & an injected or tampered warning payload fails MAC verification (but still alerts, \cref{ssec:design-detection}) \\
@@ -473,7 +473,7 @@ verifier of the Rust directory server's outputs (\cref{sec:impl-tests}).
 
 The suite runs against the real \texttt{duet} crate and asserts the expected security outcome for A0,
 A1a, A1b, A2--A5, and X1. The A1 variants additionally assert the warning epoch. The other latency
-entries in \cref{tab:tests-adversarial} describe the scripted schedule of this demonstration rather
+entries in \cref{tab:tests-adversarial} describe the fixed test schedule of this demonstration rather
 than test assertions or protocol-wide bounds.
 
 \begin{table}[H]
@@ -483,13 +483,13 @@ than test assertions or protocol-wide bounds.
 \footnotesize
 \begin{tabular}{@{}lp{3.6cm}p{4.4cm}ll@{}}
 \toprule
-Scenario & Scripted attack & Detection mechanism & Observed & Detection point \\
+Scenario & Attack scenario & Detection mechanism & Observed & Detection point \\
 \midrule
 A0 & honest baseline & all checks pass & pass & n/a \\
 A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\
 A1b & substitute a dual-index session slot & self-check + peer warning & pass & 1--2 epochs \\
 A2 & substitute and censor the warning & compound signal (proven non-inclusion) & pass & 1--2 epochs \\
-A3 & MitM on the X3DH bundle & comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets & pass & next lookup \\
+A3 & MitM on the X3DH bundle & global VRF-bound identity check (honest directory) & pass & next lookup \\
 A4 & equivocate (split-view) & cross-vantage auditor & pass & 1 epoch \\
 A5 & substitute during a key rotation & identity re-fetch + cross-signature & pass & 1--2 epochs \\
 X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\

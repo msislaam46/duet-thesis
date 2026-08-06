@@ -17,12 +17,15 @@ The Rust harness measures local cryptographic work in process. It excludes HTTP,
 and network costs. Manual-harness medians and 95th percentiles use \num{2000} sequential iterations,
 while the scale experiment samples \num{1000} lookups per directory size. Proof sizes are exact for the recorded
 seeds. Values near timer resolution are treated as coarse observations, and cross-system timings are
-interpreted only as order-of-magnitude comparisons. The host and software versions are in
-\cref{sec:bench-env}. \Cref{sec:bench-repro} maps every metric to its complete table and reproduction
-command.
+interpreted only as order-of-magnitude comparisons. \Cref{app:benchmarks} provides the complete
+benchmark tables, measurement environment, and reproduction instructions. Its metric map in
+\cref{sec:bench-repro} links each metric to the corresponding table and command.
 
 % ============================================================================
 \section{Measured Results}\label{sec:eval-micro}
+
+The following subsections present the measured proof sizes and verification costs, offline catch-up
+results, and detection-path costs. Each result is stated with the scope of its measurement.
 
 
 \subsection{Proof Size and Verification (M1--M3, M14)}\label{ssec:eval-sizes}\label{ssec:eval-latency}
@@ -159,7 +162,7 @@ Dimension & \textbf{DUET (measured)} & CONIKS~\cite{melara2015coniks} & Signal K
 Lookup proof size & 817\,B median at $10^6$ (max 945, prefix and VRF, excluding STH) & 1{,}216\,B at $2^{32}$, 768--832\,B at $10^6$ derived (proof with and without signature) & 8{,}192\,B fixed sibling copath only (256$\times$32, no VRF) \\
 Client lookup verification & $\approx$\SI{128}{\micro\second} at $10^3$--$10^4$, \SI{139.2}{\micro\second} at $10^7$ (including VRF and signed-head verification) & \SI{159}{\micro\second} for path verification at $10^7$ and approximately \SI{400}{\micro\second} for signature verification, giving a derived total of about \SI{559}{\micro\second}, excluding VRF & not published \\
 Catch-up at $W{=}720$ & 320\,B (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB derived & Monitoring endpoint\newline No published byte figure \\
-Key-substitution detection & automatic in-band peer warning (established conversations)\newline comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets (first contact) & manual Safety Number comparison and self-monitoring & optional AKV lookup and self-monitoring\newline no peer warning \\
+Key-substitution detection & automatic in-band peer warning (established conversations)\newline global VRF-bound identity check, honest directory (first contact) & manual Safety Number comparison and self-monitoring & optional AKV lookup and self-monitoring\newline no peer warning \\
 Authenticated records & Identity-key bindings at global and session-derived slots, and per-epoch ratchet-key fingerprints in continuous mode & Identity-key bindings & Account-identifier, phone-number, and username-hash mappings \\
 Query privacy (operator) & No & No & No \\
 Outsider enumeration resistance (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF) \\
@@ -191,7 +194,7 @@ proof~\cite[Table~1]{melara2015coniks}, so a 720-epoch window costs $720 \times 
 bytes against DUET's \num{320}-byte windowed proof, a ratio of approximately 1{,}656. This comparison
 illustrates the bandwidth benefit of the windowed construction.
 
-Verification time admits only an order-of-magnitude comparison. CONIKS reports a
+Only an order-of-magnitude timing comparison is possible because the published measurements use different implementations and hardware. CONIKS reports a
 \SI{159}{\micro\second} path verification and an approximately \SI{400}{\micro\second} signature
 verification~\cite[Section~5.3]{melara2015coniks}, which sums to about \SI{559}{\micro\second}. That figure is derived rather than
 reported, and it includes no VRF timing, because CONIKS's published measurements do not isolate one.
@@ -223,7 +226,7 @@ outcome for each scenario. Every listed scenario
 produces its expected outcome, and the seven clean workflows produce their expected clean verdicts
 with no warnings.
 
-The scripted schedule performs one action per epoch, so the table's epoch counts describe the harness
+The test schedule performs one action per epoch, so the table's epoch counts describe the harness
 rather than detection latency. The outcomes hold under the assumptions defined in
 \cref{sec:threat-assumptions}, in particular an uncompromised endpoint and an auditor with an
 independent vantage.
@@ -238,9 +241,9 @@ independent vantage.
 \toprule
 Case & Control and requirement & Evidence & Result \\
 \midrule
-\hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5} key substitution & A1 self-check and warning. A3 comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets. A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite tests each route (\cref{tab:tests-adversarial}). & Detected at a scenario-dependent point in the scripted sequence. \\
+\hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5} key substitution & A1 self-check and warning. A3 global VRF-bound identity check (honest directory). A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite tests each route (\cref{tab:tests-adversarial}). & Detected at a scenario-dependent point in the test sequence. \\
 \hyperref[sc:threat-a2]{A2} warning censorship & Key mismatch together with proof-verified warning absence (extension of G1). & The A2 test checks the compound signal. & Detected. \\
-\hyperref[sc:threat-a4]{A4} split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 signed-head fork comparison. & Detected at the next scripted comparison. \\
+\hyperref[sc:threat-a4]{A4} split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 signed-head fork comparison. & Detected at the next comparison. \\
 \midrule
 Directory enumeration (G3 property) & ECVRF-derived identity labels against outsider enumeration (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{tab:tests-rust-prim}). & Resisted against outsiders under the VRF pseudorandomness assumption. \\
 \hyperref[sc:threat-x1]{X1} key extraction & No directory control. & Endpoint compromise lies outside key transparency. & Out of scope. \\
@@ -249,14 +252,14 @@ Directory enumeration (G3 property) & ECVRF-derived identity labels against outs
 \end{table}
 
 The supporting analysis maps the scenarios to STRIDE~\cite{stride} in \cref{sec:sec-stride}, to MITRE ATT\&CK~\cite{mitre-attack} in
-\cref{sec:sec-mitre}, and to attack routes in \cref{sec:sec-routes}. The scripted
+\cref{sec:sec-mitre}, and to attack routes in \cref{sec:sec-routes}. The
 detection sequence is in \cref{ssec:eval-timeline}.
 
 \subsection{Residual Risks and Security Position}\label{ssec:eval-posture}
 
 A rejecting verdict shows that an integrity or consistency check failed without identifying its cause
 or attributing it to the directory operator. An unavailable directory server raises an amber notice,
-while a verified mismatch raises a red
+while a verified mismatch or the fail-closed operational timeout raises a red
 warning. Endpoint compromise defeats every mechanism evaluated here because the verifier and the keys
 it trusts live on the endpoint.
 
