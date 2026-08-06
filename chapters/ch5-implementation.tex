@@ -164,7 +164,7 @@ peer-slot absence is reported as pending for the first checks and, after a fail-
 \texttt{NotPosted}, since it can also mean the peer has not yet run the client. A periodic sweep
 drops conversations that have gone inactive, as on deletion, while retaining archived ones. A warning
 payload carries an HKDF-derived MAC over the conversation secret,
-so a client can tell a payload from a secret-holder from one injected by the operator. Since both
+so a client can tell a secret-holder's payload apart from one injected by the operator. Since both
 parties derive the same MAC key, the MAC does not identify the writer. Signal service-ID strings are
 converted to canonical 16-byte account identifiers at the integration boundary, and phone-number
 identifiers are excluded. Verdicts cross Electron's isolated contexts through DOM events. The exact

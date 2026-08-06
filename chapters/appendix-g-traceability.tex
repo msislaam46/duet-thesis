@@ -23,8 +23,8 @@ contributions of \cref{sec:intro-contributions}.
 \toprule
 RQ & Design claim & Mechanism & Test or scenario & Benchmark & Evidence \\
 \midrule
-RQ1 & substitution is detected, in band (bidirectional for A1 and A5 after honest establishment; honest-directory global VRF comparison, with local label divergence corroborating, for A3) &
-dual-index warning scheme for A1; the honest-directory global VRF-anchored identity entry, with local label divergence corroborating, for A3 (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
+RQ1 & substitution is detected, in band (bidirectional for A1 and A5 after honest establishment; honest-directory VRF identity comparison, supported by different secret-derived labels, for A3) &
+dual-index warning scheme for A1; the honest-directory global VRF-bound identity entry, supported by different secret-derived labels, for A3 (\cref{sec:design-dual}); identity re-fetch and predecessor cross-signature for A5; cross-vantage auditor for A4 (\cref{sec:design-acka}) &
 scenarios A1--A5 (\cref{tab:tests-adversarial}); dual-index derivation tests (\cref{tab:tests-rust-prim}) &
 M17 & \cref{sec:eval-security}: scenarios A1--A5 produce the expected detection outcomes in the implemented suite; M17 asserts a clean verdict with no warning on every clean workflow \\
 RQ2 & detection does not enlarge an individual per-lookup proof; median full verification remains below \SI{150}{\micro\second} and grows far more slowly than $N$ &
@@ -70,7 +70,7 @@ Contribution & Output & Primary evidence \\
 Conceptual & dual-index warning scheme; ACKA-log instantiation (\cref{sec:design-dual,sec:design-acka}) & expected in-band verdicts in the listed dual-index warning cases; the implemented directory and auditor exercise ACKA's secure-log interface (\cref{sec:eval-security}) \\
 Cryptographic & windowed consistency proof: RFC~9162 distant-head proof applied to offline monitoring, size bound (\cref{lem:windowed-size}); dual-index same-head consistency lemma as supporting analysis (\cref{lem:dualindex-consistency}) & same-head label consistency shown from proof soundness and collision resistance; a complete formal security proof remains future work; \num{320}\,B raw path bytes at $W{=}720$, one proof rather than $W$, size logarithmic in endpoint log sizes (\cref{ssec:eval-catchup}) \\
 Systems & Rust \texttt{duet} crate, directory server process, and independent auditor; TypeScript verifier in Signal Desktop (\cref{ch:impl}) & agreement between the Rust and TypeScript implementations on the shared vectors; live cross-process demonstration (\cref{ssec:impl-demo}) \\
-Empirical & benchmark evaluation M1--M17; STRIDE/MITRE evaluation (\cref{ch:eval,app:security}) & per-lookup proof not enlarged by detection (the warning check reuses the same prefix-tree and log-proof structure without the VRF component); median verify below \SI{150}{\micro\second} (\cref{sec:eval-micro}); at system level, the expected detection verdict across the full adversarial suite A1--A5, which draws on the additional divergent-label/VRF, re-fetch, cross-signature, and cross-vantage controls (\cref{sec:eval-security}) \\
+Empirical & benchmark evaluation M1--M17; STRIDE/MITRE evaluation (\cref{ch:eval,app:security}) & per-lookup proof not enlarged by detection (the warning check reuses the same prefix-tree and log-proof structure without the VRF component); median verify below \SI{150}{\micro\second} (\cref{sec:eval-micro}); at system level, the expected detection verdict across the full adversarial suite A1--A5, which draws on the additional global-VRF, re-fetch, cross-signature, and cross-vantage controls (\cref{sec:eval-security}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -91,7 +91,7 @@ associated threats and the mechanisms developed in \cref{ch:design}.
 \toprule
 Requirement & Associated threat & Security mechanism & Auditor? \\
 \midrule
-G1 key-substitution detection & A1, A3, A5 & A1 and A5 use self-checks and the dual-index warning.\newline A3 uses the honest-directory global VRF-bound identity entry, with divergent labels corroborating.\newline A5 also uses identity re-fetch and predecessor cross-signature. & no \\
+G1 key-substitution detection & A1, A3, A5 & A1 and A5 use self-checks and the dual-index warning.\newline A3 uses the honest-directory VRF identity comparison, supported by different secret-derived labels.\newline A5 also uses identity re-fetch and predecessor cross-signature. & no \\
 G2 offline-window consistency & general rewriting & windowed consistency proofs & no \\
 G3 directory privacy & directory enumeration & VRF-derived labels & no \\
 G4 fork detection & A4 & cross-vantage auditor & yes ($\geq 1$ honest) \\

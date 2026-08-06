@@ -241,9 +241,9 @@ and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to
 malformed-response rejection, \texttt{kt\_log} checks the structured screenshot-readable log format,
 and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
 \texttt{pni\_silence} suites cover the ACI canonical-bytes boundary, display-string preservation, and
-PNI event-silence added with the canonical-identity fix. \Cref{tab:tests-jest-wire} lists the
+phone-number-identifier (PNI) event-silence added with the canonical-identity fix. \Cref{tab:tests-jest-wire} lists the
 wire-parity and integration tests, and
-\cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list the ten unit suites.
+\cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list nine of the ten unit suites (\texttt{kt\_log} is described above but not separately tabulated).
 Beyond the standalone harness, \num{35} embedded electron-mocha tests run in six suites under Signal
 Desktop's own test runner (\cref{tab:tests-embedded}). They drive realistic ACI strings through the
 same integration boundary the live preload callers use, so a regression at that boundary fails an
@@ -489,7 +489,7 @@ A0 & honest baseline & all checks pass & pass & n/a \\
 A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\
 A1b & substitute a dual-index session slot & self-check + peer warning & pass & 1--2 epochs \\
 A2 & substitute and censor the warning & compound signal (proven non-inclusion) & pass & 1--2 epochs \\
-A3 & MitM on the X3DH bundle & honest-directory VRF-anchor comparison (secret-derived labels also diverge) & pass & next lookup \\
+A3 & MitM on the X3DH bundle & honest-directory VRF identity comparison, supported by different secret-derived labels & pass & next lookup \\
 A4 & equivocate (split-view) & cross-vantage auditor & pass & 1 epoch \\
 A5 & substitute during a key rotation & identity re-fetch + cross-signature & pass & 1--2 epochs \\
 X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\

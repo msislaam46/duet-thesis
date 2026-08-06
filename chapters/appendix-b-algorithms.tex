@@ -211,16 +211,19 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
 \textsc{Alert} on any proven non-empty slot.
 \begin{algorithm}[H]
 \caption{Dual-Index Label Derivation (HKDF-SHA256, RFC 5869)}\label{alg:dualindex}
-\KwIn{shared secret $\sharedS$ from X3DH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width); the canonically ordered pair $(\mathit{id_A},\mathit{id_B})=(\min,\max)$ of the two identities is passed explicitly to \textsf{WriteWarning}/\textsf{CheckWarning}}
+\KwIn{shared secret $\sharedS$ from X3DH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width). The warning-MAC key is derived separately by \textsf{DeriveWarnMacKey}, which orders the identities canonically}
 \Fn{\normalfont\textsf{DeriveLabels}($\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
   $\mathit{PRK}\gets \textsf{HKDF-Extract}(\text{salt}=\texttt{"duet-dual-index"},\ \sharedS)$\;
   $\lself\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"lookup"}\concat \mathit{id_{self}}\concat \mathit{id_{peer}},32)$\;
   $\lpeer\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"lookup"}\concat \mathit{id_{peer}}\concat \mathit{id_{self}},32)$\;
-  $\lwarn\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warning"}\concat \min(\mathit{id_{self}},\mathit{id_{peer}})\concat \max(\mathit{id_{self}},\mathit{id_{peer}}),32)$ \tcp*{canonical order (warning only), the same $\min/\max$ used by \textsf{WriteWarning}}
-  \KwRet $(\lself,\lpeer,\lwarn,\mathit{PRK})$ \tcp*{$\mathit{PRK}$ returned so warning writers need no ambient state}\;
+  $\lwarn\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warning"}\concat \min(\mathit{id_{self}},\mathit{id_{peer}})\concat \max(\mathit{id_{self}},\mathit{id_{peer}}),32)$ \tcp*{canonical order (warning only), the same $\min/\max$ used by \textsf{DeriveWarnMacKey}}
+  \KwRet $(\lself,\lpeer,\lwarn)$\;
 }
-\Fn{\normalfont\textsf{WriteWarning}($\mathit{server},\lwarn,\mathit{alert},\mathit{PRK},\mathit{id_A},\mathit{id_B}$)}{
-  $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$ \tcp*{canonical identities bind $k_{\mathrm{mac}}$ to the pair}
+\Fn{\normalfont\textsf{DeriveWarnMacKey}($\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
+  $\mathit{PRK}\gets \textsf{HKDF-Extract}(\text{salt}=\texttt{"duet-dual-index"},\ \sharedS)$\;
+  \KwRet $\textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_{self}},\mathit{id_{peer}})\concat\max(\mathit{id_{self}},\mathit{id_{peer}}),32)$ \tcp*{canonical order; both parties derive the same key}\;
+}
+\Fn{\normalfont\textsf{WriteWarning}($\mathit{server},\lwarn,\mathit{alert},k_{\mathrm{mac}}$)}{
   \uIf{$\mathit{server}.\textsf{UpdateRaw}(\lwarn,\ \mathit{alert}\concat\textsf{MAC}(k_{\mathrm{mac}},\mathit{alert}))$ succeeds}{
     $\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{the write landed: seal it into an epoch}
   }
@@ -233,10 +236,9 @@ conflict, confirming publication by a verified read-back; \textsf{CheckWarning} 
   $\mathit{sth}\gets \mathit{server}.\textsf{GetCurrentSTH}()$ \tcp*{confirm the write under a fresh validated head}
   \lIf{$\textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ rejects or returns $\bot$}{\textbf{alarm} \textsc{WarningCensored} \tcp*[f]{no provable committed warning: an invalid proof or a proven absence}}
 }
-\Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth},\mathit{PRK},\mathit{id_A},\mathit{id_B}$)}{
+\Fn{\normalfont\textsf{CheckWarning}($\mathit{server},\lwarn,\mathit{sth},k_{\mathrm{mac}}$)}{
   $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{sth})$ \tcp*{proof required (Alg.~\ref{alg:client})}
   \lIf{$v=\bot$}{\KwRet \textsc{Safe}}
-  $k_{\mathrm{mac}}\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"warn-mac"}\concat\min(\mathit{id_A},\mathit{id_B})\concat\max(\mathit{id_A},\mathit{id_B}),32)$\;
   \lIf{$\textsf{MAC-Verify}(k_{\mathrm{mac}},v)$}{\KwRet \textsc{Alert} \tcp*[f]{valid pair-bound MAC from a shared-key holder}}
   \KwRet \textsc{Alert} \tcp*{unauthenticated data at an unpredictable slot: itself evidence of misbehaviour}
 }
@@ -273,7 +275,7 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
   \KwRet $v$ \tcp*{$v$ may be $\bot$: proven non-inclusion}
 }
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
-  $(\lself,\lpeer,\lwarn,\mathit{PRK})\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+  $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   $\mathit{r}\gets \mathit{server}.\textsf{UpdateRaw}(\lself,pk_{\mathit{self}})$ \tcp*{success, or a typed 409 write-once conflict}
   \uIf{$\mathit{r}$ succeeded}{$\mathit{server}.\textsf{CommitEpoch}()$ \tcp*{fresh write: commit it (prototype only; a deployed client waits for the epoch boundary)}}
   \uElseIf{$\mathit{r}$ is not a 409 write-once conflict}{\textbf{raise} $\mathit{r}$ \tcp*{transport / other failure propagates}}
@@ -284,7 +286,7 @@ non-null requirement, for instance, is enforced by that composed monitor rather 
   \KwRet $(\lself,\lpeer,\lwarn)$\;
 }
 \Fn{\normalfont\textsf{RetrieveKey}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
-  $(\lself,\lpeer,\lwarn,\mathit{PRK})\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+  $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   $\textsf{WindowedCatchUp}(\mathit{server})$ \tcp*{advance $\mathit{last\_sth}$ to the current verified head: every lookup binds to it}
   $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$ \tcp*{$pk=\bot$ is proven non-inclusion; the monitor decides pending / timeout / removal}
   \KwRet $pk$\;
@@ -331,9 +333,9 @@ persistence component, retained evidence.
 \Fn{\normalfont\textsf{DetectMitM}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
-    $(\lself,\lpeer,\lwarn,\mathit{PRK})\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
-    $(\mathit{id_A},\mathit{id_B})\gets(\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$\;
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"peer-slot-replaced"},pk,\mathit{ts}),\mathit{PRK},\mathit{id_A},\mathit{id_B})$\;
+    $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+    $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"peer-slot-replaced"},pk,\mathit{ts}),k_{\mathrm{mac}})$\;
     \textbf{raise} SecurityAlert\;
   }
   \KwRet $pk$\;
@@ -359,17 +361,17 @@ persistence component, retained evidence.
   $v_{\mathsf{vrf}}\gets \textsf{CheckOwnVrfKey}(\mathit{server},\mathit{id_{self}},\mathit{last\_sth})$;\ \ $\mathit{healthy}\gets(v_{\mathsf{vrf}}=\mathit{own\_pk})$ \tcp*{(1) global identity check: the client's own VRF entry, even with no active conversation. (2) an unreachable directory ends the tick before this point (availability, not attack)}
   \If{$\neg\,\mathit{healthy}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
-      $(\lself,\lpeer,\lwarn,\mathit{PRK})\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $(\mathit{id_A},\mathit{id_B})\gets(\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$\;
-      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v_{\mathsf{vrf}},\mathit{ts}),\mathit{PRK},\mathit{id_A},\mathit{id_B})$\;
+      $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
+      $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"key-replaced"},v_{\mathsf{vrf}},\mathit{ts}),k_{\mathrm{mac}})$\;
     }
     \textbf{raise} SecurityAlert \tcp*{global substitution: trip every peer's slot}
   }
   \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
-    $(\lself,\lpeer,\lwarn,\mathit{PRK})\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $(\mathit{id_A},\mathit{id_B})\gets(\min(\mathit{id_{self}},\mathit{id_{peer}}),\max(\mathit{id_{self}},\mathit{id_{peer}}))$ \tcp*{(3) secret-bound labels}
+    $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ \tcp*{(3) secret-bound labels + warn-MAC key}
     \lIf{$\lself\notin \mathit{registered}$}{$\textsf{Register}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{own\_pk})$;\ \ $\mathit{registered}\gets \mathit{registered}\cup\{\lself\}$ \tcp*[f]{(4) once per derived label}}
     $\textsf{WindowedCatchUp}(\mathit{server})$ \tcp*{(5) append-only + STH growth}
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself,\mathit{last\_sth})$ \tcp*{(6) owner slot}
-    \lIf{$v\ne\mathit{own\_pk}$}{$\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"lookup-replaced"},v,\mathit{ts}),\mathit{PRK},\mathit{id_A},\mathit{id_B})$;\ \ \textbf{raise} SecurityAlert}
+    \lIf{$v\ne\mathit{own\_pk}$}{$\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"lookup-replaced"},v,\mathit{ts}),k_{\mathrm{mac}})$;\ \ \textbf{raise} SecurityAlert}
     $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer,\mathit{last\_sth})$ \tcp*{(7) peer slot ($pk=\bot$ is proven non-inclusion)}
     \uIf{$pk=\bot$}{
       \uIf{$\lpeer\in \mathit{seen}$}{\textbf{raise} SecurityAlert \tcp*{(10) removal after prior presence: immediate red}}
@@ -378,7 +380,7 @@ persistence component, retained evidence.
     }\Else{
       $\mathit{absent}[\lpeer]\gets 0$;\ \ $\mathit{seen}\gets \mathit{seen}\cup\{\lpeer\}$ \tcp*{present: reset the counter and pin (as in \textsf{DetectMitM})}
     }
-    \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{last\_sth},\mathit{PRK},\mathit{id_A},\mathit{id_B})=\textsc{Alert}$}{\textbf{raise} SecurityWarning \tcp*[f]{(11) warning slot}}
+    \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,\mathit{last\_sth},k_{\mathrm{mac}})=\textsc{Alert}$}{\textbf{raise} SecurityWarning \tcp*[f]{(11) warning slot}}
     \lIf{$\mathit{healthy}$}{\textbf{emit} \textsc{Green} \tcp*[f]{(12) green only when the global self-check is healthy}}
   }
   \tcp{\textsf{PersistenceCheck} is implemented and unit-tested as a separate component; it is not wired into this live loop}
@@ -478,8 +480,8 @@ its chain only after confirming that the write committed. The receiver advances 
 
 \begin{algorithm}[H]
 \caption{ACKA Continuous Entity Authentication Mode}\label{alg:cea}
-\KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and $\mathit{PRK}$
-from Alg.~\ref{alg:dualindex} (the label uses canonical $\min/\max$ id order: one slot per epoch;
+\KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and warn-MAC key
+$k_{\mathrm{mac}}\gets\textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ (Alg.~\ref{alg:dualindex}; the label uses canonical $\min/\max$ id order: one slot per epoch;
 the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id_A},\mathit{id_B}$)}{
   $k\gets \KDF(\mathit{pss},\min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B}))$;\ \ $t\gets 0$\;
@@ -508,8 +510,7 @@ the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
   $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
   \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{no advance}}
   \If{$v\ne F^{*}$}{
-    $(\mathit{id_A},\mathit{id_B})\gets(\min(\mathit{id_{sender}},\mathit{id_{self}}),\max(\mathit{id_{sender}},\mathit{id_{self}}))$\;
-    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t),\mathit{PRK},\mathit{id_A},\mathit{id_B})$\;
+    $\textsf{WriteWarning}(\mathit{server},\lwarn,(\texttt{"ratchet-fork"},v,t),k_{\mathrm{mac}})$\;
     \KwRet \textsc{Fork} \tcp*{no advance}
   }
   $\textsf{CeaUpdate}(I)$ \tcp*{advance on \textsc{Consistent}}

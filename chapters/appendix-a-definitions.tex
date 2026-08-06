@@ -284,7 +284,7 @@ The following definitions specify the construction original to this work
 \begin{definition}[Dual-index derivation]\label{def:dualindex-derive}
 \intuition{From one shared secret, two parties independently derive the same three directory slots:
 one lookup slot each and one shared warning slot.}
-$\mathsf{DeriveIndices}(\sharedS, \mathit{id}_{\mathsf{self}}, \mathit{id}_{\mathsf{peer}})$ first
+$\mathsf{DeriveLabels}(\sharedS, \mathit{id}_{\mathsf{self}}, \mathit{id}_{\mathsf{peer}})$ first
 extracts $\mathit{PRK}=\HKDFex(\text{salt}=\text{\texttt{"duet-dual-index"}},\ \sharedS)$ and then returns the three 256-bit labels
 \begin{align*}
   \lblself &= \HKDFexp(\mathit{PRK},\ \texttt{"lookup"}\concat \mathit{id}_{\mathsf{self}}\concat \mathit{id}_{\mathsf{peer}},\ 32),\\
