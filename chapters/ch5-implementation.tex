@@ -23,7 +23,7 @@ KeyTrans design, but no Go interoperability is claimed because Signal and DUET d
 different prefix-proof encodings~\cite{ietf-keytrans-protocol,signal-kt-server}.
 
 The Rust service is an in-memory, single-machine prototype. The Signal integration uses a deterministic
-conversation-secret stand-in and a seeded Double Ratchet simulation, which exercise the construction and
+conversation-secret stand-in and a seeded Double Ratchet simulation, which cover the construction and
 wire format but not secrecy-dependent label unpredictability or real-ratchet security. The identity-key
 path is not simulated: the verifier runs at Signal Desktop's real peer-key-retrieval
 boundary. Production integration must obtain the live conversation secret and ratchet state from libsignal
@@ -110,7 +110,7 @@ An \texttt{axum} and \texttt{tokio} server holds the directory behind a single
 one of the constraints \cref{ch:discussion} returns to. The server exposes public lookup and monitoring
 operations plus a privileged unchecked-overwrite interface used only by the adversarial harness.
 Write-once enforcement returns 409 Conflict when a dual-index, warning, or CEA label is already
-occupied, so a replacement is refused rather than silently applied. A separate \texttt{ureq} auditor
+occupied, so a replacement is refused, never silently applied. A separate \texttt{ureq} auditor
 binary obtains signed heads from its own vantage.
 
 Every commit publishes a declared set of inserts and rotations at an epoch-delta endpoint, and each
@@ -118,7 +118,7 @@ rotation discloses its prior value. \Cref{fig:impl-transition-audit} shows the r
 auditor applies the declared set to a candidate replica and accepts only if the recomputed root equals
 the committed root, which mirrors the \texttt{AuditorUpdate} role in the IETF architecture. Deletion is
 not expressible in the delta format, so an omitted warning or an immutable-slot replacement makes the
-roots diverge and is reported rather than absorbed. A tested writer-side persistence component can
+roots diverge and is reported, not absorbed. A tested writer-side persistence component can
 additionally combine an original inclusion proof, a later non-inclusion proof, and consistency between
 the two signed heads into independently verifiable deletion evidence, but it is not yet wired into the
 live monitor. Initial ownership of an empty raw label is not authenticated, so a malicious client can
@@ -222,7 +222,7 @@ including forged-proof rejection, rather than sampling that input space. Auditor
 fork evidence and report genuine equivocation as \textsc{Fork}, while a divergent head with an invalid
 signature is rejected rather than misclassified.
 
-The TypeScript harness contains 180 Jest tests. Thirty-five embedded tests across six suites exercise
+The TypeScript harness contains 180 Jest tests. Thirty-five embedded tests across six suites drive
 realistic account identifiers through Signal Desktop's own integration boundary. The standalone,
 embedded, and opt-in wire-parity suites are separate test
 classes rather than one aggregate total. \Cref{sec:impl-repro} provides the complete reproduction

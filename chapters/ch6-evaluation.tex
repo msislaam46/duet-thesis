@@ -39,11 +39,11 @@ where $h$ is the number of non-empty siblings on the queried label's path and $h
 the log-inclusion path length. The \num{177}-byte constant comprises the \num{80}-byte ECVRF proof, a
 label, a value, a leaf-kind commitment, and a sibling bitmap. Raw-label warning responses omit the VRF
 component. The median lookup proof is \num{817} bytes at $N=10^{6}$ and \num{945} bytes at
-$N=10^{7}$, and the growth between them is the $\lceil \lg N \rceil$ term rather than any change in the
+$N=10^{7}$, and the growth between them is the $\lceil \lg N \rceil$ term, not any change in the
 fixed component. The full component breakdown and distribution table are in \cref{sec:bench-sizes}.
 
 Detection does not change this format. A dual-index or CEA check performs another lookup against the
-same directory and signed head rather than enlarging an individual proof.
+same directory and signed head without enlarging an individual proof.
 
 M14 isolates the history-depth term. Across $E\in\{1,16,256,1024\}$, log inclusion adds
 \num{0}, \num{128}, \num{256}, and \num{320} bytes, matching the
@@ -76,7 +76,7 @@ rather than one proof per epoch. At $W = 720$ the windowed proof is \num{320} ra
 \num{222528} bytes for the synthetic repeated-proof baseline, a ratio of \num{695.4}.
 \Cref{fig:eval-catchup-plot} shows how the two curves separate as the window grows. The baseline is
 synthetic and is constructed by repeating the implemented single-epoch proof, so it measures what
-this system would cost without windowing rather than what any deployed system does cost. Both figures
+this system would cost without windowing, not what any deployed system does cost. Both figures
 count raw path hashes and not serialized network traffic. Verifying adjacent epoch transitions would
 use smaller individual proofs, so the exact ratio is specific to this baseline even though the
 one-proof-versus-$W$-proof comparison remains. Generation timings for the same experiment
@@ -110,9 +110,9 @@ warning. The security outcomes are treated in \cref{sec:eval-security}.
 \subsection{Scale, Maintenance, and Auditing (M7, M9, M12)}\label{ssec:eval-scale}\label{ssec:eval-throughput}\label{ssec:eval-auditor}
 
 Rotation costs between \SI{138.7}{\micro\second} and \SI{140.3}{\micro\second} across the measured
-sizes, which is consistent with a fixed-cost VRF dominating the per-label work rather than with any
+sizes, which is consistent with a fixed-cost VRF dominating the per-label work, not any
 dependence on directory size. Epoch commit moves from \SI{451.0}{\micro\second} at $N=10^3$ to
-\SI{6.73}{\milli\second} at $N=10^4$. The increase is caused by deep-cloning the current tree into the committed snapshot rather than by the tree update itself. These two points do not establish an asymptote, but they identify epoch commit as the component
+\SI{6.73}{\milli\second} at $N=10^4$. The increase is caused by deep-cloning the current tree into the committed snapshot, not the tree update itself. These two points do not establish an asymptote, but they identify epoch commit as the component
 most likely to require engineering attention at deployment scale.
 
 Building the $N=10^{7}$ directory takes about 26 minutes at \SI{21.3}{\giga\byte} resident set on the
@@ -212,10 +212,12 @@ on any dimension other than the stated arithmetic is made.
 % ============================================================================
 \section{Security Evaluation}\label{sec:eval-security}
 
-The adversarial suite exercises the scenarios defined in \cref{ch:threat}. They comprise the honest
-baseline A0, \hyperref[sc:threat-a1]{A1a and A1b}, \hyperref[sc:threat-a2]{A2},
-\hyperref[sc:threat-a3]{A3}, \hyperref[sc:threat-a4]{A4}, \hyperref[sc:threat-a5]{A5}, and the
-\hyperref[sc:threat-x1]{X1} endpoint-compromise boundary. The suite
+This section reports whether the implemented controls detect each modelled attack. The adversarial
+suite runs the scenarios of \cref{ch:threat}: the honest baseline A0, key substitution
+(\hyperref[sc:threat-a1]{A1a and A1b}), warning censorship (\hyperref[sc:threat-a2]{A2}), network
+man-in-the-middle (\hyperref[sc:threat-a3]{A3}), split-view equivocation (\hyperref[sc:threat-a4]{A4}),
+malicious rotation (\hyperref[sc:threat-a5]{A5}), and the excluded endpoint-compromise case
+(\hyperref[sc:threat-x1]{X1}). The suite
 records the integrity, consistency, and warning behaviour observed for each. \Cref{tab:eval-security} reports the relevant security requirement, detection evidence, and observed
 outcome for each scenario. Every listed scenario
 produces its expected outcome, and the seven clean workflows produce their expected clean verdicts
@@ -234,12 +236,13 @@ independent vantage.
 \renewcommand{\arraystretch}{1.3}\setlength{\extrarowheight}{3pt}
 \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{3.5cm}X>{\raggedright\arraybackslash}p{2.0cm}@{}}
 \toprule
-Attack & Control and requirement & Evidence & Result \\
+Case & Control and requirement & Evidence & Result \\
 \midrule
 \hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5} key substitution & A1 self-check and warning. A3 comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets. A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite tests each route (\cref{tab:tests-adversarial}). & Detected at a scenario-dependent point in the scripted sequence. \\
 \hyperref[sc:threat-a2]{A2} warning censorship & Key mismatch together with proof-verified warning absence (extension of G1). & The A2 test checks the compound signal. & Detected. \\
 \hyperref[sc:threat-a4]{A4} split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 signed-head fork comparison. & Detected at the next scripted comparison. \\
-Directory enumeration & ECVRF-derived identity labels against outsider enumeration (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{tab:tests-rust-prim}). & Resisted against outsiders under the VRF pseudorandomness assumption. \\
+\midrule
+Directory enumeration (G3 property) & ECVRF-derived identity labels against outsider enumeration (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{tab:tests-rust-prim}). & Resisted against outsiders under the VRF pseudorandomness assumption. \\
 \hyperref[sc:threat-x1]{X1} key extraction & No directory control. & Endpoint compromise lies outside key transparency. & Out of scope. \\
 \bottomrule
 \end{tabularx}
@@ -263,13 +266,13 @@ it trusts live on the endpoint.
 The measured client costs support the feasibility of client-side verification at the tested scale.
 Median full verification remains below \SI{150}{\micro\second} through $10^7$ labels, and the
 measured proof body remains below one kilobyte. At a matched directory size, the proof is in the
-same size class as CONIKS. Detection reuses this format through additional label-bound lookups
-rather than enlarging an individual proof.
+same size class as CONIKS. Detection reuses this format through additional label-bound lookups,
+not by enlarging an individual proof.
 
 Offline catch-up uses one proof for the missed window. At $W=720$, its \num{320} raw hash bytes
 compare with \num{222528} bytes across \num{720} proofs for the synthetic repeated-proof baseline.
 Both figures exclude serialization overhead. The baseline models this implementation without
-windowing rather than a deployed system.
+windowing, not a deployed system.
 
 M16 measures the Rust lookup work for the mismatch path and the clean two-lookup path. These
 component timings exclude combined bandwidth and end-to-end background-monitor latency. The directory server measurements expose two
@@ -279,4 +282,4 @@ testing, and networked measurements remain necessary.
 
 Session and continuous modes have similar isolated verification costs but different write frequencies.
 Session mode writes on signed-pre-key rotation, while continuous mode writes at each ratchet epoch for
-finer-grained checking. Their measured ratio reflects the cadence model rather than a fixed deployment value.
+finer-grained checking. Their measured ratio reflects the cadence model, not a fixed deployment value.

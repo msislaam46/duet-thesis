@@ -11,7 +11,7 @@ assume operator honesty (\cref{ch:design}). It adds a dual-index warning scheme 
 warnings and a windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
 and compares signed heads obtained from separate vantage points, providing the cross-vantage check
 used to detect equivocation. The Rust implementation provides the directory server, proof construction, and auditor. A Signal
-Desktop verifier exercises the client-verification path (\cref{ch:impl}).
+Desktop verifier runs the client-verification path (\cref{ch:impl}).
 
 \Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an
 individual lookup proof. At a matched directory size, the implemented VRF-indexed lookup

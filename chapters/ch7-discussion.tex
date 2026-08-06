@@ -53,7 +53,7 @@ authenticated writer identities, attributable warning records, and an abuse poli
 
 The implementation runs on one machine, stores the directory in memory,
 and deep-clones the tree when committing an epoch. The Signal integration uses a deterministic
-conversation-secret stand-in and a seeded ratchet simulation, which exercise the code paths but do not
+conversation-secret stand-in and a seeded ratchet simulation, which cover the code paths but do not
 establish label unpredictability or active-attacker security for live Signal state. The key-fetch
 integration reports a rejecting verdict without blocking session establishment. The writer-side
 warning-persistence component is implemented and unit-tested but is not wired into the live monitor,
