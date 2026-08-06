@@ -180,9 +180,9 @@ of an immutable conversation slot causes the affected client to publish a warnin
 from the shared slot, and the auditor independently fails its transition audit for that replacement,
 since an immutable slot cannot be rotated. In \hyperref[sc:threat-a1]{A1a}, the global identity slot
 is mutable, so the auditor accepts the declared rotation and client
-self-checks provide the detection instead. \Cref{fig:impl-screens} shows both clients displaying the
-A1a warning. The runs use synthetic accounts in an isolated harness and do not intercept live Signal
-traffic.
+self-checks detect it instead. \Cref{fig:impl-screens} shows both clients displaying the
+A1a warning. The runs use two researcher-controlled Signal accounts linked through Signal's production
+service and intercept no third-party traffic.
 
 \begin{figure}[htbp]
 \centering
