@@ -351,8 +351,9 @@ core cost that is not sublinear is the epoch commit, which snapshots the tree by
 
 The integration uses key-upload and peer-key-retrieval hooks together with a background monitor.
 Peer identity material is recorded during key retrieval and through a periodic identity-record
-sweep. That sweep enumerates the active direct conversations and prunes archived or deleted ones,
-so monitoring tracks only conversations the user still holds. No live session-establishment hook
+sweep. That sweep tracks the still-active direct conversations, dropping those that have gone
+inactive (their last-active marker cleared, as when a conversation is deleted) while continuing to
+monitor archived ones, which keep that marker set. No live session-establishment hook
 exposes the X3DH shared secret. The
 peer-key-retrieval hook runs the full verification chain
 (\cref{ssec:design-verify}) on a peer's key at the retrieval boundary and reports the verdict without

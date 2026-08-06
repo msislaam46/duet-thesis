@@ -96,8 +96,9 @@ one-time pre-key. The attacker can then derive the X3DH secret for the separate 
 with Alice. By establishing separate sessions with Alice and Bob, the attacker causes the
 legitimate parties to hold different conversation secrets and derive disjoint dual-index
 labels. The substituted bundle also differs from the identity entry stored under Bob's global
-VRF-derived label. The affected client can therefore detect A3 through both label divergence
-and the comparison with the honest directory entry.
+VRF-derived label. With an honest directory, the affected client therefore detects A3 by the
+comparison against that honest entry; the divergent dual-index labels corroborate but on their own
+surface only as a peer-slot absence.
 
 A post-compromise variant of A3 motivates continuous mode. An adversary that has already
 compromised a session may inject a forged ratchet key while the directory itself continues to

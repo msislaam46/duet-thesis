@@ -86,7 +86,8 @@ monitor (\cref{ch:impl}, \cref{alg:detect}).
 The prototype does not implement account-layer authentication of raw-label writes (proof of raw-label
 ownership). Without it, the write-once policy still binds an honest server and the transition audit
 still binds a malicious one, but a malicious client could pre-emptively occupy a currently empty peer
-slot (\cref{ch:discussion}).
+slot, which the owner's label-bound self-check and the resulting peer warning then catch after the
+fact (\cref{ch:discussion}).
 
 Detection is bidirectional, which matters for the offline case. The victim's own-key self-check
 publishes the warning when the victim notices the wrong key under its own name. In addition, a peer
@@ -125,8 +126,8 @@ boundary X1.}
 \toprule
 ID & Technique & Vector in KT & KT mitigation & Scen. \\
 \midrule
-T1557 & Adversary-in-the-Middle & network interception of X3DH & label mismatch (different secret $\Rightarrow$ different label) & \hyperref[sc:threat-a3]{A3} \\
-T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & shared-secret divergence & \hyperref[sc:threat-a3]{A3} \\
+T1557 & Adversary-in-the-Middle & network interception of X3DH & honest-directory global VRF identity comparison, with secret-derived label divergence corroborating & \hyperref[sc:threat-a3]{A3} \\
+T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & honest-directory global VRF identity comparison (shared-secret divergence corroborates) & \hyperref[sc:threat-a3]{A3} \\
 T1565 & Data Manipulation & modify key bindings in the tree & expected-key comparison, peer warning, and transition or cross-vantage checks & \hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a4]{A4} \\
 T1565.002 & Transmitted Data Manipulation & replace a key in transit & label mismatch (different secret) and global VRF identity binding & \hyperref[sc:threat-a3]{A3} \\
 T1552.004 & Private Keys & extract insecurely stored private keys from a device & \emph{none}: KT boundary (endpoint compromise) & \hyperref[sc:threat-x1]{X1} \\

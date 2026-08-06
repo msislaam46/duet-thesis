@@ -258,7 +258,7 @@ independent vantage.
 \toprule
 Attack & Control and requirement & Evidence & Result \\
 \midrule
-\hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5} key substitution & A1 self-check and warning. A3 divergent-label and global-VRF identity comparison. A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite tests each route (\cref{tab:tests-adversarial}). & Detected at a scenario-dependent point in the scripted sequence. \\
+\hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5} key substitution & A1 self-check and warning. A3 honest-directory global-VRF identity comparison, with divergent labels corroborating. A5 identity re-fetch and predecessor cross-signature (G1). & The scenario suite tests each route (\cref{tab:tests-adversarial}). & Detected at a scenario-dependent point in the scripted sequence. \\
 \hyperref[sc:threat-a2]{A2} warning censorship & Key mismatch together with proof-verified warning absence (extension of G1). & The A2 test checks the compound signal. & Detected. \\
 \hyperref[sc:threat-a4]{A4} split-view equivocation & Cross-vantage auditor (G4). & Equivocation test and the M12 signed-head fork comparison. & Detected at the next scripted comparison. \\
 Directory enumeration & ECVRF-derived identity labels against outsider enumeration (G3). & VRF assumption. RFC~9381 vectors check implementation conformance (\cref{tab:tests-rust-prim}). & Resisted against outsiders under the VRF pseudorandomness assumption. \\

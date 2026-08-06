@@ -327,7 +327,7 @@ Suite & Test \\
 \texttt{remote\_kt\_client} & \texttt{writeWarning}: a proof failure on the confirmation read is censorship (throws) \\
 \texttt{remote\_kt\_client} & caller guard: a censored publication leaves the guard unset (retried next tick) \\
 \texttt{remote\_kt\_client} & caller guard: a confirmed publication sets the guard, suppressing re-writes \\
-\texttt{remote\_kt\_client} & session caller guard: \texttt{sessionWarnedPeers} advances only on a confirmed \texttt{lookup-replaced} write \\
+\texttt{remote\_kt\_client} & session caller guard: \texttt{sessionWarnedLabels} advances only on a confirmed \texttt{lookup-replaced} write \\
 \midrule
 \texttt{background\_monitor} & \texttt{emitToSignalUI} emits \texttt{kt:warning} (DOM) and does not touch the Whisper bus \\
 \texttt{background\_monitor} & \texttt{emitOfflineToSignalUI} emits \texttt{kt:unreachable} only (never a MitM alert) \\
@@ -489,7 +489,7 @@ A0 & honest baseline & all checks pass & pass & n/a \\
 A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\
 A1b & substitute a dual-index session slot & self-check + peer warning & pass & 1--2 epochs \\
 A2 & substitute and censor the warning & compound signal (proven non-inclusion) & pass & 1--2 epochs \\
-A3 & MitM on the X3DH bundle & label divergence + VRF anchor & pass & next lookup \\
+A3 & MitM on the X3DH bundle & honest-directory VRF-anchor comparison (secret-derived labels also diverge) & pass & next lookup \\
 A4 & equivocate (split-view) & cross-vantage auditor & pass & 1 epoch \\
 A5 & substitute during a key rotation & identity re-fetch + cross-signature & pass & 1--2 epochs \\
 X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\

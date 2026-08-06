@@ -30,7 +30,10 @@ DUET's monitoring guarantee begins after a client pins a directory binding. It d
 but cannot establish whether that initial binding was authentic. A proof-verified peer-slot absence
 is reported as pending and then, after a fail-closed timeout, as \texttt{NotPosted}; because that
 absence cannot be distinguished from a peer who has not yet run the client, timely peer-slot detection
-assumes peer participation. The design covers pairwise,
+assumes peer participation. Monitoring is scoped to conversations the client still holds, keyed by
+per-conversation label in memory: a deleted conversation is dropped from the sweep (archived ones are
+retained), and the per-label state is not persisted, so a substitution during an unmonitored gap is
+not caught retrospectively. The design covers pairwise,
 single-device conversations rather than groups, MLS, Sender Keys, or complete multi-device warning
 propagation. It also cannot protect a compromised endpoint.
 
@@ -43,13 +46,13 @@ second-vantage source.
 
 The prototype also lacks query privacy from the operator, write-rate limits, published-head timeouts,
 and gossip-based detection of omitted proofs. A malicious peer can publish a valid but false warning
-because the shared MAC shows only that a holder of the conversation secret produced the payload. It
-does not establish that the report is true or identify the writer. Deployment therefore requires
+because the shared MAC shows only that a secret-holder produced the payload, not that the report is
+true or who wrote it. Deployment therefore requires
 authenticated writer identities, attributable warning records, and an abuse policy.
 
-The implementation has further limitations. It runs on one machine, stores the directory in memory,
-and deep-clones the current tree when committing an epoch. The Signal integration uses a deterministic
-conversation-secret stand-in and a seeded ratchet simulation. These exercise the code paths but do not
+The implementation runs on one machine, stores the directory in memory,
+and deep-clones the tree when committing an epoch. The Signal integration uses a deterministic
+conversation-secret stand-in and a seeded ratchet simulation, which exercise the code paths but do not
 establish label unpredictability or active-attacker security for live Signal state. The key-fetch
 integration reports a rejecting verdict without blocking session establishment. The writer-side
 warning-persistence component is implemented and unit-tested but is not wired into the live monitor,
@@ -65,7 +68,7 @@ malicious directory entry. Timings measure local components rather than a comple
 or audit, and the committed corpus contains aggregate statistics rather than raw Criterion samples.
 M11 repeats the Rust lookup-verification component rather than timing the TypeScript key-fetch path.
 M12 measures local signature and consistency work rather than network transfer, epoch-delta retrieval,
-or full transition replay. These limits prevent the component results from being interpreted as an
+or full transition replay. These limits prevent interpreting the component results as an
 end-to-end deployment measurement.
 
 % ============================================================================

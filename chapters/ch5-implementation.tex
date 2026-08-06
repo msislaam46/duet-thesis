@@ -23,9 +23,9 @@ KeyTrans design, but no Go interoperability is claimed because Signal and DUET d
 different prefix-proof encodings~\cite{ietf-keytrans-protocol,signal-kt-server}.
 
 The Rust service is an in-memory, single-machine prototype. The Signal integration uses a deterministic
-conversation-secret stand-in and a seeded Double Ratchet simulation. These exercise the construction and wire format but do not
-demonstrate secrecy-dependent label unpredictability or real-ratchet security. The identity-key path
-itself is not simulated, because the verifier is invoked at Signal Desktop's real peer-key-retrieval
+conversation-secret stand-in and a seeded Double Ratchet simulation, which exercise the construction and
+wire format but not secrecy-dependent label unpredictability or real-ratchet security. The identity-key
+path is not simulated: the verifier runs at Signal Desktop's real peer-key-retrieval
 boundary. Production integration must obtain the live conversation secret and ratchet state from libsignal
 (\cref{ch:discussion}).
 
@@ -151,20 +151,24 @@ warning.
 \label{ssec:impl-hooks}
 
 Node's cryptographic provider supplies SHA-256, SHA-512, HMAC-SHA256, Ed25519, and X25519, while the
-ECVRF arithmetic is implemented in TypeScript. The client performs the complete verification chain in
-\cref{ssec:design-verify} at Signal Desktop's own peer-key-retrieval boundary, using the real
-identity-key path rather than a simulation. Invalid or absent signed heads, proof failures, and mismatching
-keys produce rejecting verification verdicts. The current integration reports the verdict but does not block
-session establishment, which is a deliberate prototype choice rather than an oversight.
+ECVRF arithmetic is implemented in TypeScript. The client performs the complete verification chain of
+\cref{ssec:design-verify} at Signal Desktop's own peer-key-retrieval boundary, on the real
+identity-key path. Invalid or absent heads, proof failures, and key mismatches produce rejecting
+verdicts. The integration reports the verdict but, by design in this prototype, does not block
+session establishment.
 
-Key-upload and retrieval paths register identity material, and a background monitor checks owner,
-peer, and warning slots. A warning payload carries an HKDF-derived MAC over the conversation secret,
-so a client can distinguish a payload produced by a holder of that secret from a value injected by the
-operator. Since both parties derive the same MAC key, the MAC does not identify the writer. Signal
-service-ID strings are converted to canonical 16-byte account identifiers at the integration boundary,
-and phone-number identifiers are excluded. Verdicts cross Electron's isolated contexts through DOM
-events. The exact functions, interfaces, and event names are in \cref{sec:apiref-hooks}. The extended
-engineering record is in \cref{sec:apiref-engineering}.
+Key-upload and retrieval paths register identity material. A background monitor first checks the
+client's own global VRF-derived identity entry, then, per conversation, its owner, peer, and warning
+slots, emitting a green verdict only when the global self-check is healthy. A proof-verified
+peer-slot absence is reported as pending for the first checks and, after a fail-closed timeout, as
+\texttt{NotPosted}, since it can also mean the peer has not yet run the client. A periodic sweep
+drops conversations that have gone inactive, as on deletion, while retaining archived ones. A warning
+payload carries an HKDF-derived MAC over the conversation secret,
+so a client can tell a payload from a secret-holder from one injected by the operator. Since both
+parties derive the same MAC key, the MAC does not identify the writer. Signal service-ID strings are
+converted to canonical 16-byte account identifiers at the integration boundary, and phone-number
+identifiers are excluded. Verdicts cross Electron's isolated contexts through DOM events. The exact
+functions, event names, and engineering record are in \cref{sec:apiref-hooks,sec:apiref-engineering}.
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
@@ -172,9 +176,9 @@ The demonstration runs two Signal Desktop clients with the Rust directory server
 scripted attacker. \Cref{fig:impl-baseline} shows a proof-verified clean state. In
 \hyperref[sc:threat-a1]{A1b}, replacement
 of an immutable conversation slot causes the affected client to publish a warning that the peer reads
-from the shared slot, and the auditor independently returns \textsc{ImmutableRotation} for that
-replacement. In \hyperref[sc:threat-a1]{A1a}, the global identity slot is mutable, so the auditor returns \textsc{Consistent}
-for the declared rotation and client
+from the shared slot, and the auditor independently fails its transition audit for that replacement,
+since an immutable slot cannot be rotated. In \hyperref[sc:threat-a1]{A1a}, the global identity slot
+is mutable, so the auditor accepts the declared rotation and client
 self-checks provide the detection instead. \Cref{fig:impl-screens} shows both clients displaying the
 A1a warning. The runs use synthetic accounts in an isolated harness and do not intercept live Signal
 traffic.
@@ -183,7 +187,7 @@ traffic.
 \centering
 \includegraphics[width=\textwidth]{figures/normal.png}
 \caption[Verified state before an attack.]{The client displays a verified state after successful
-owner- and warning-slot checks.}
+owner-, peer-, and warning-slot checks.}
 \label{fig:impl-baseline}
 \end{figure}
 
