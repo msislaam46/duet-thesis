@@ -24,28 +24,6 @@ command.
 % ============================================================================
 \section{Measured Results}\label{sec:eval-micro}
 
-\begin{table}[H]
-\centering
-\caption{Headline evaluation results and their scope.}
-\label{tab:eval-headlines}
-\footnotesize
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.4cm}@{}}
-\toprule
-Claim & Result & Scope \\
-\midrule
-Lookup proof size & a median of \num{817} bytes at $N=10^6$ and \num{945} bytes at $N=10^7$ & VRF-indexed identity lookup excluding the signed head. Detailed distributions are in \cref{tab:bench-scale} \\
-Full client verification & \SI{139.2}{\micro\second} median at $N=10^7$ and below \SI{150}{\micro\second} at every measured size & Local Rust verification including VRF, log inclusion, and signed-head verification \\
-Offline catch-up & \num{320} raw hash bytes for one proof at $W=720$, against \num{222528} bytes for the synthetic repeated-proof baseline & Raw path hashes, not serialized network traffic. The ratio is \num{695.4} for this baseline \\
-Detection paths & \SI{27.8}{\micro\second} for a verified lookup that detects an owner-slot mismatch and \SI{31.1}{\micro\second} for the clean two-lookup path & Rust reconstruction excluding TypeScript, transport, polling, and registration \\
-Authentication modes & Similar isolated label-bound verification cost. Continuous mode writes once per ratchet epoch rather than once per signed-pre-key rotation & Simulated continuous-mode input and cadence model \\
-Security outcomes & Expected outcomes for the A0 baseline, \hyperref[sc:threat-a1]{A1a and A1b},
-\hyperref[sc:threat-a2]{A2}, \hyperref[sc:threat-a3]{A3}, \hyperref[sc:threat-a4]{A4},
-\hyperref[sc:threat-a5]{A5}, and \hyperref[sc:threat-x1]{X1}, with seven clean workflows producing
-their expected clean verdicts and no warnings & Implemented adversarial and functional suites under
-the stated assumptions \\
-\bottomrule
-\end{tabularx}
-\end{table}
 
 \subsection{Proof Size and Verification (M1--M3, M14)}\label{ssec:eval-sizes}\label{ssec:eval-latency}
 
@@ -178,10 +156,10 @@ so each comparison below states its arithmetic rather than quoting a headline fi
 \toprule
 Dimension & \textbf{DUET (measured)} & CONIKS~\cite{melara2015coniks} & Signal KT~\cite{signal-kt-server} \\
 \midrule
-Lookup proof size & \textbf{817\,B median at $10^6$} (max 945, prefix and VRF, excluding STH) & 1{,}216\,B at $2^{32}$, 768--832\,B at $10^6$ derived (proof with and without signature) & 8{,}192\,B fixed sibling copath only (256$\times$32, no VRF) \\
-Client lookup verification & \textbf{$\approx$\SI{128}{\micro\second} at $10^3$--$10^4$, \SI{139.2}{\micro\second} at $10^7$} (including VRF and signed-head verification) & \SI{159}{\micro\second} for path verification at $10^7$ and approximately \SI{400}{\micro\second} for signature verification, giving a derived total of about \SI{559}{\micro\second}, excluding VRF & not published \\
-Catch-up at $W{=}720$ & \textbf{320\,B} (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB derived & Monitoring endpoint\newline No published byte figure \\
-Key-substitution detection & \textbf{automatic in-band peer warning (established conversations)\newline comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets (first contact)} & manual Safety Number comparison and self-monitoring & optional AKV lookup and self-monitoring\newline no peer warning \\
+Lookup proof size & 817\,B median at $10^6$ (max 945, prefix and VRF, excluding STH) & 1{,}216\,B at $2^{32}$, 768--832\,B at $10^6$ derived (proof with and without signature) & 8{,}192\,B fixed sibling copath only (256$\times$32, no VRF) \\
+Client lookup verification & $\approx$\SI{128}{\micro\second} at $10^3$--$10^4$, \SI{139.2}{\micro\second} at $10^7$ (including VRF and signed-head verification) & \SI{159}{\micro\second} for path verification at $10^7$ and approximately \SI{400}{\micro\second} for signature verification, giving a derived total of about \SI{559}{\micro\second}, excluding VRF & not published \\
+Catch-up at $W{=}720$ & 320\,B (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB derived & Monitoring endpoint\newline No published byte figure \\
+Key-substitution detection & automatic in-band peer warning (established conversations)\newline comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets (first contact) & manual Safety Number comparison and self-monitoring & optional AKV lookup and self-monitoring\newline no peer warning \\
 Authenticated records & Identity-key bindings at global and session-derived slots, and per-epoch ratchet-key fingerprints in continuous mode & Identity-key bindings & Account-identifier, phone-number, and username-hash mappings \\
 Query privacy (operator) & No & No & No \\
 Outsider enumeration resistance (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF) \\
