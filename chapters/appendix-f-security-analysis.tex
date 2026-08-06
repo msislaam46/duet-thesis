@@ -126,10 +126,10 @@ boundary X1.}
 \toprule
 ID & Technique & Vector in KT & KT mitigation & Scen. \\
 \midrule
-T1557 & Adversary-in-the-Middle & network interception of X3DH & honest-directory VRF identity comparison, supported by different secret-derived labels & \hyperref[sc:threat-a3]{A3} \\
-T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & honest-directory VRF identity comparison, supported by different secret-derived labels & \hyperref[sc:threat-a3]{A3} \\
+T1557 & Adversary-in-the-Middle & network interception of X3DH & comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets & \hyperref[sc:threat-a3]{A3} \\
+T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets & \hyperref[sc:threat-a3]{A3} \\
 T1565 & Data Manipulation & modify key bindings in the tree & expected-key comparison, peer warning, and transition or cross-vantage checks & \hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a4]{A4} \\
-T1565.002 & Transmitted Data Manipulation & replace a key in transit & honest-directory VRF identity comparison, supported by different secret-derived labels & \hyperref[sc:threat-a3]{A3} \\
+T1565.002 & Transmitted Data Manipulation & replace a key in transit & comparison with the global VRF-bound identity entry when the directory is honest, supported by labels derived from different conversation secrets & \hyperref[sc:threat-a3]{A3} \\
 T1552.004 & Private Keys & extract insecurely stored private keys from a device & \emph{none}: KT boundary (endpoint compromise) & \hyperref[sc:threat-x1]{X1} \\
 \bottomrule
 \end{tabular}

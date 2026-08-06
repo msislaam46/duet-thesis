@@ -92,9 +92,10 @@ achieves G1 (Key-Substitution Detection) against the substitution attacks
 warning channel flags a server-side slot substitution (A1) and its continuous-mode counterpart (A5).
 When the directory is honest, comparison with the peer's global VRF-bound identity entry detects a
 network man-in-the-middle (A3), because an attacker-controlled value cannot match the authenticated
-global key. Labels derived from the attacker's different shared secret provide supporting evidence:
-they are disjoint, so the proof-verified lookup returns non-inclusion. The same VRF-bound comparison
-also detects pre-emptive occupation of the expected slot.
+global key. Labels derived from the attacker's different shared secret provide supporting evidence
+because, except with negligible collision probability, the expected peer-slot lookup returns
+proof-verified non-inclusion. The global identity binding also supplies the expected key against
+which pre-emptive occupation of the session slot is detected.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
 

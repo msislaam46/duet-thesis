@@ -24,7 +24,7 @@
   \node[atk] (a5) at (-1.0,2.0) {A5 malicious\\rotation};
   \foreach \n in {a1,a3,a5}{\draw[->,black!45] (orG) -- (\n);}
   \node[det] (d1) at (-6.4,0.3) {victim pinned-key self-check $\to$ warning};
-  \node[det] (d3) at (-3.7,0.3) {honest-dir.\ VRF identity comparison, supported by different secret-derived labels};
+  \node[det] (d3) at (-3.7,0.3) {global VRF identity comparison\\when the directory is honest\\different session labels support the result};
   \node[det] (d5) at (-1.0,0.3) {identity re-fetch: predecessor cross-signature fails $\to$ warning};
   \foreach \a/\d in {a1/d1,a3/d3,a5/d5}{\draw[->,green!45!black,dashed] (\a) -- (\d);}
 
