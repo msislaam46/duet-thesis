@@ -58,18 +58,18 @@ behind account-layer authorisation. \Cref{tab:apiref-admin} lists them.
 \label{tab:apiref-admin}
 \setlength{\extrarowheight}{2pt}
 \small
-\begin{tabular}{@{}llp{7.8cm}@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{4.0cm}>{\raggedright\arraybackslash}X@{}}
 \toprule
 Method & Path & Purpose \\
 \midrule
-POST & \texttt{/admin/update} & overwrite a slot's value, bypassing the public write-once policy. The overwrite is still declared in the epoch delta as a rotation (stages A1/A5 substitution) \\
+POST & \texttt{/admin/update} & overwrite a slot's value, bypassing the public write-once policy. The overwrite is still declared in the epoch delta as a rotation (stages an A1 or A5 substitution) \\
 POST & \texttt{/admin/delete} & remove a committed leaf \emph{without} declaring it in the epoch delta, so the auditor's transition replay fails (stages the suppression-by-deletion scenario) \\
 POST & \texttt{/admin/commit} & commit an epoch \\
 POST & \texttt{/admin/equivocate} & sign a second, divergent head at one epoch (stages A4) \\
 POST & \texttt{/admin/stop-equivocate} & clear the forked head \\
 POST & \texttt{/admin/reset} & rebuild the server from its fixed seed with a fresh genesis epoch, for repeatable demonstrations \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 % ----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ pre-key-bundle processing & \texttt{hook\_process\_prekey\_bundle} & Rust (libsi
 \caption{User-interface outcomes and their DOM events.}
 \label{tab:apiref-events}
 \small
-\begin{tabularx}{\textwidth}{@{}p{3.1cm}X p{3.2cm}@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.5cm}X p{3.2cm}@{}}
 \toprule
 Presentation & Meaning & DOM event \\
 \midrule
@@ -171,8 +171,7 @@ The implementation is organized as follows:
   \item \texttt{crate/}: the Rust \texttt{duet} crate, with library modules
   (\cref{tab:impl-modules}), the standalone server and auditor binaries, and the benchmark
   harness.
-  \item \texttt{demo/}: the server, auditor, and attacker orchestration together with
-  the served visualization and threat-model pages.
+  \item \texttt{demo/}: the PowerShell and Docker orchestration for the server, auditor, clients, and scripted attacks.
   \item \texttt{signal-desktop/ts/kt/}: the embedded TypeScript client, whose shared
   verifier modules are mirrored byte-for-byte by the standalone \texttt{signal-desktop-kt/}
   package, while integration wiring and test scaffolding differ between the two.
@@ -289,7 +288,7 @@ expected pending result before the peer entry appears and is then verified.}
 \caption[Commands staging A1a and A1b.]{Commands used to stage A1a and A1b in one controlled run.
 The first replaces the mutable VRF-derived identity entry and commits epoch 5. The second replaces
 the immutable per-conversation lookup slot and commits epoch 7. The corresponding auditor outcomes
-appear in \cref{fig:impl-auditor}, left.}
+appear in \cref{fig:impl-auditor}, upper panel.}
 \label{fig:demo-cmd}
 \end{figure}
 
@@ -323,7 +322,7 @@ the red warning state for the selected conversation.}
 \includegraphics[width=0.86\textwidth]{figures/cmd-equivocation.png}
 \caption[Staging A4 equivocation.]{Staging A4 equivocation. The privileged testing endpoint signs a
 second root at the current tree size. The cross-vantage auditor detects the two validly signed roots,
-as shown in \cref{fig:impl-auditor}, right.}
+as shown in \cref{fig:impl-auditor}, lower panel.}
 \label{fig:demo-equivocation}
 \end{figure}
 
@@ -337,10 +336,10 @@ as shown in \cref{fig:impl-auditor}, right.}
 \par\smallskip
 \small (b) A4 cross-vantage fork verdict
 \caption[Auditor outcomes for A1a, A1b, and A4.]{Auditor outcomes for the controlled attacks. The
-left capture belongs to the run in \cref{fig:demo-cmd}. The auditor verifies the declared history
+upper capture belongs to the run in \cref{fig:demo-cmd}. The auditor verifies the declared history
 through epoch 6, including the mutable identity-entry rotation and the subsequent valid update. It
 then rejects the immutable-slot replacement at epoch 7 because replay does not reproduce the
-committed state. The right capture shows A4 in a separate reset run, where two validly signed roots
+committed state. The lower capture shows A4 in a separate reset run, where two validly signed roots
 exist at one tree size.}
 \label{fig:impl-auditor}
 \end{figure}
