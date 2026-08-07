@@ -58,7 +58,7 @@ behind account-layer authorisation. \Cref{tab:apiref-admin} lists them.
 \label{tab:apiref-admin}
 \setlength{\extrarowheight}{2pt}
 \small
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{4.0cm}>{\raggedright\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}X@{}}
 \toprule
 Method & Path & Purpose \\
 \midrule
@@ -288,7 +288,7 @@ expected pending result before the peer entry appears and is then verified.}
 \caption[Commands staging A1a and A1b.]{Commands used to stage A1a and A1b in one controlled run.
 The first replaces the mutable VRF-derived identity entry and commits epoch 5. The second replaces
 the immutable per-conversation lookup slot and commits epoch 7. The corresponding auditor outcomes
-appear in \cref{fig:impl-auditor}, upper panel.}
+appear in the upper panel of \cref{fig:impl-auditor}.}
 \label{fig:demo-cmd}
 \end{figure}
 
@@ -322,7 +322,7 @@ the red warning state for the selected conversation.}
 \includegraphics[width=0.86\textwidth]{figures/cmd-equivocation.png}
 \caption[Staging A4 equivocation.]{Staging A4 equivocation. The privileged testing endpoint signs a
 second root at the current tree size. The cross-vantage auditor detects the two validly signed roots,
-as shown in \cref{fig:impl-auditor}, lower panel.}
+as shown in the lower panel of \cref{fig:impl-auditor}.}
 \label{fig:demo-equivocation}
 \end{figure}
 
