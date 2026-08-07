@@ -1,4 +1,4 @@
-% references.bib — every reference cited in the thesis.
+% references.bib — bibliography records maintained for the thesis.
 
 % ── Signal specifications ──
 @misc{signaldocs,
@@ -12,18 +12,21 @@
   title  = {The {X3DH} Key Agreement Protocol},
   year   = {2016},
   url    = {https://signal.org/docs/specifications/x3dh/},
+  note   = {Revision 1, 4 November 2016},
 }
 @misc{doubleratchet,
-  author = {Perrin, Trevor and Marlinspike, Moxie},
+  author = {Perrin, Trevor and Marlinspike, Moxie and Schmidt, Rolfe},
   title  = {The Double Ratchet Algorithm},
-  year   = {2016},
+  year   = {2025},
   url    = {https://signal.org/docs/specifications/doubleratchet/},
+  note   = {Revision 4, 4 November 2025; Trevor Perrin is editor and Rolfe Schmidt contributed Revision 3 and later},
 }
 @misc{pqxdh,
   author = {Kret, Ehren and Schmidt, Rolfe},
   title  = {The {PQXDH} Key Agreement Protocol},
   year   = {2023},
   url    = {https://signal.org/docs/specifications/pqxdh/},
+  note   = {Revision 3, 24 May 2023; specification page last updated 23 January 2024},
 }
 @misc{safetynumbers,
   author = {Marlinspike, Moxie},
@@ -44,6 +47,7 @@
   title  = {libsignal: the {Signal} Protocol and supporting cryptographic primitives},
   year   = {2026},
   url    = {https://github.com/signalapp/libsignal},
+  urldate = {2026-08-07},
   note   = {Rust core with Java, Swift, and TypeScript wrappers; the pre-key-bundle path was hooked for integration},
 }
 @misc{signal-desktop,
@@ -51,6 +55,7 @@
   title  = {{Signal-Desktop}},
   year   = {2026},
   url    = {https://github.com/signalapp/Signal-Desktop},
+  urldate = {2026-08-07},
   note   = {The official Electron client; the prototype embeds its {TypeScript} key-transparency client in a fork of this application},
 }
 
@@ -74,7 +79,8 @@
   title  = {Automatic Key Verification},
   year   = {2024},
   url    = {https://support.signal.org/hc/en-us/articles/10223569377562},
-  note   = {Signal Support article; accessed July 2026},
+  urldate = {2026-08-07},
+  note   = {Signal Support article},
 }
 @misc{signal-protocol-impact,
   author = {{Signal Foundation}},
@@ -89,6 +95,7 @@
   title  = {Signal Messenger: Speak Freely},
   year   = {2026},
   url    = {https://signal.org/},
+  urldate = {2026-08-07},
   note   = {Official Signal product page},
 }
 @misc{signal-foundation-structure,
@@ -116,7 +123,8 @@
   title  = {Contributor License Agreement},
   year   = {2026},
   url    = {https://signal.org/cla/},
-  note   = {Contribution terms; accessed July 2026},
+  urldate = {2026-08-07},
+  note   = {Contribution terms},
 }
 @misc{uk-cryptonote,
   author = {{UK Export Control Joint Unit}},
@@ -136,7 +144,8 @@
   author = {{Signal Support}},
   title  = {How Can I Report a Security Vulnerability?},
   url    = {https://support.signal.org/hc/en-us/articles/360007320791-How-can-I-report-a-security-vulnerability},
-  note   = {Official vulnerability-reporting channel; accessed August 2026},
+  urldate = {2026-08-07},
+  note   = {Official vulnerability-reporting channel},
 }
 @misc{uk-export-lists,
   author = {{Export Control Joint Unit} and {Department for Business and Trade}},
@@ -209,23 +218,28 @@
   title  = {Key Transparency Architecture},
   howpublished = {Internet-Draft draft-ietf-keytrans-architecture-09, IETF},
   year   = {2026},
-  url    = {https://datatracker.ietf.org/doc/draft-ietf-keytrans-architecture/},
-  note   = {Work in progress},
+  url    = {https://datatracker.ietf.org/doc/html/draft-ietf-keytrans-architecture-09},
+  note   = {Internet-Draft, version 09, work in progress},
 }
 
 % ── Key transparency systems ──
 @inproceedings{melara2015coniks,
   author    = {Melara, Marcela S. and Blankstein, Aaron and Bonneau, Joseph and Felten, Edward W. and Freedman, Michael J.},
   title     = {{CONIKS}: Bringing Key Transparency to End Users},
-  booktitle = {24th USENIX Security Symposium},
+  booktitle = {24th USENIX Security Symposium ({USENIX} Security 15)},
   pages     = {383--398},
   year      = {2015},
+  publisher = {USENIX Association},
+  isbn      = {978-1-939133-11-3},
+  url       = {https://www.usenix.org/conference/usenixsecurity15/technical-sessions/presentation/melara},
 }
 @inproceedings{chase2019seemless,
   author    = {Chase, Melissa and Deshpande, Apoorvaa and Ghosh, Esha and Malvai, Harjasleen},
   title     = {{SEEMless}: Secure End-to-End Encrypted Messaging with less Trust},
   booktitle = {ACM CCS},
+  pages     = {1639--1656},
   year      = {2019},
+  doi       = {10.1145/3319535.3363202},
   note      = {ePrint 2018/607},
 }
 @inproceedings{chase2016overlays,
@@ -234,70 +248,88 @@
   booktitle = {ACM CCS},
   pages     = {168--179},
   year      = {2016},
+  doi       = {10.1145/2976749.2978404},
 }
 @inproceedings{malvai2023parakeet,
   author    = {Malvai, Harjasleen and Kokoris-Kogias, Lefteris and Sonnino, Alberto and Ghosh, Esha and {\"O}zt{\"u}rk, Ercan and Lewi, Kevin and Lawlor, Sean},
   title     = {Parakeet: Practical Key Transparency for End-to-End Encrypted Messaging},
   booktitle = {NDSS},
   year      = {2023},
+  doi       = {10.14722/ndss.2023.24545},
 }
 @inproceedings{len2023elektra,
   author    = {Len, Julia and Chase, Melissa and Ghosh, Esha and Jost, Daniel and Kesavan, Balachandar and Marcedone, Antonio},
   title     = {{ELEKTRA}: Efficient Lightweight multi-dEvice Key TRAnsparency},
   booktitle = {ACM CCS},
+  pages     = {2915--2929},
   year      = {2023},
+  doi       = {10.1145/3576915.3623161},
 }
 @inproceedings{hu2021merkle2,
   author    = {Hu, Yuncong and Hooshmand, Kian and Kalidhindi, Harika and Yang, Seung Jin and Popa, Raluca Ada},
   title     = {Merkle\textsuperscript{2}: A Low-Latency Transparency Log System},
   booktitle = {IEEE S\&P},
+  pages     = {285--303},
   year      = {2021},
+  doi       = {10.1109/SP40001.2021.00088},
 }
 @inproceedings{optiks2024,
   author    = {Len, Julia and Chase, Melissa and Ghosh, Esha and Laine, Kim and Cruz Moreno, Radames},
   title     = {{OPTIKS}: An Optimized Key Transparency System},
-  booktitle = {33rd USENIX Security Symposium},
+  booktitle = {33rd USENIX Security Symposium ({USENIX} Security 24)},
+  pages     = {4355--4372},
   year      = {2024},
+  publisher = {USENIX Association},
+  isbn      = {978-1-939133-44-1},
+  url       = {https://www.usenix.org/conference/usenixsecurity24/presentation/len},
 }
 @misc{nccgroup2023akd,
   author = {{NCC Group}},
-  title  = {Public Report: {WhatsApp} Auditable Key Directory ({AKD}) Implementation Review},
+  title  = {Public Report -- {WhatsApp} Auditable Key Directory ({AKD}) Implementation Review},
   year   = {2023},
   url    = {https://www.nccgroup.com/research/public-report-whatsapp-auditable-key-directory-akd-implementation-review/},
 }
 @misc{facebook-akd,
-  author = {Meta},
-  title  = {akd: An Auditable Key Directory Library},
+  author = {{Meta Platforms, Inc.}},
+  title  = {{AKD}: An Implementation of an Auditable Key Directory},
   url    = {https://github.com/facebook/akd},
   year   = {2023},
 }
 @misc{apple-ckv,
-  author = {{Apple Security Engineering and Architecture}},
-  title  = {{iMessage} Contact Key Verification},
+  author = {{Apple Security Engineering and Architecture (SEAR)}},
+  title  = {Advancing {iMessage} security: {iMessage} Contact Key Verification},
   year   = {2023},
+  month  = oct,
   url    = {https://security.apple.com/blog/imessage-contact-key-verification/},
+  note   = {Published 27 October 2023},
 }
 
 % ── Attacks and usability ──
 @misc{yadav2020poster,
-  author = {Yadav, Tarun Kumar and Gosain, Devashish and Seamons, Kent and Zappala, Daniel},
+  author = {Yadav, Tarun Kumar and Gosain, Devashish and Zappala, Daniel and Seamons, Kent},
   title  = {Automatic Detection and Prevention of Fake Key Attacks in {Signal}},
   howpublished = {NDSS 2020 Poster},
   year   = {2020},
+  url    = {https://www.ndss-symposium.org/wp-content/uploads/2020/02/NDSS2020posters_paper_24.pdf},
 }
 @inproceedings{yadav2022fakekey,
   author    = {Yadav, Tarun Kumar and Gosain, Devashish and Herzberg, Amir and Zappala, Daniel and Seamons, Kent},
   title     = {Automatic Detection of Fake Key Attacks in Secure Messaging},
   booktitle = {ACM CCS},
+  pages     = {3019--3032},
   year      = {2022},
+  doi       = {10.1145/3548606.3560588},
   note      = {arXiv:2210.09940},
 }
 @inproceedings{vaziripour2017,
-  author    = {Vaziripour, Elham and Wu, Justin and O'Neill, Mark and Whitehead, Jordan and Heidbrink, Scott and Seamons, Kent and Zappala, Daniel},
+  author    = {Vaziripour, Elham and Wu, Justin and O'Neill, Mark and Clinton, Ray and Whitehead, Jordan and Heidbrink, Scott and Seamons, Kent and Zappala, Daniel},
   title     = {Is that you, {Alice}? A Usability Study of the Authentication Ceremony of Secure Messaging Applications},
-  booktitle = {SOUPS},
+  booktitle = {Thirteenth Symposium on Usable Privacy and Security ({SOUPS} 2017)},
   pages     = {29--47},
   year      = {2017},
+  publisher = {USENIX Association},
+  isbn      = {978-1-931971-39-3},
+  url       = {https://www.usenix.org/conference/soups2017/technical-sessions/presentation/vaziripour},
 }
 
 % ── Theory (supervisor's line of work) ──
@@ -319,7 +351,9 @@
   author    = {Dowling, Benjamin and Hale, Britta},
   title     = {Secure Messaging Authentication against Active Man-in-the-Middle Attacks},
   booktitle = {IEEE European Symposium on Security and Privacy (EuroS\&P)},
+  pages     = {54--70},
   year      = {2021},
+  doi       = {10.1109/EuroSP51992.2021.00015},
   note      = {META security model; MoDUSA construction},
 }
 
@@ -328,7 +362,9 @@
   author    = {Chen, Brian and Dodis, Yevgeniy and Ghosh, Esha and Goldin, Eli and Kesavan, Balachandar and Marcedone, Antonio and Mou, Merry Ember},
   title     = {Rotatable Zero Knowledge Sets: Post-Compromise Secure Auditable Dictionaries with Application to Key Transparency},
   booktitle = {ASIACRYPT},
+  pages     = {547--580},
   year      = {2022},
+  doi       = {10.1007/978-3-031-22969-5_19},
 }
 @misc{pusch2025prism,
   author = {Pusch, Sebastian and Ford, Ryan Quinn and von zur Gathen, Joachim and Markowetz, Alexander},
@@ -338,7 +374,7 @@
   url    = {https://eprint.iacr.org/2025/2026},
 }
 @misc{whatsapp2023whitepaper,
-  author = {{WhatsApp/Meta}},
+  author = {{WhatsApp LLC}},
   title  = {{WhatsApp} Key Transparency Overview},
   howpublished = {Whitepaper v1},
   year   = {2023},
@@ -392,5 +428,6 @@
   title     = {Threat Modeling: Designing for Security},
   publisher = {Wiley},
   year      = {2014},
+  isbn      = {978-1-118-80999-0},
   note      = {STRIDE threat-classification framework},
 }
