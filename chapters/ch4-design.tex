@@ -41,7 +41,7 @@ correctly. A client verifies that proof against the operator's public key but ca
 itself compute or predict any other label (\cref{ssec:bg-ct2kt}). The labels are thus
 deterministic for the operator yet pseudorandom to an observer of the published directory, which
 prevents offline recovery of identities by traversing public labels. The prototype's public query
-endpoint still permits online tests of already-known identifiers, a residual returned to in
+endpoint still permits online tests of already-known identifiers, a residual risk revisited in
 \cref{ch:discussion}.
 
 \subsection{Epoch Lifecycle: Update, Commit, and the Signed Tree Head}\label{ssec:design-epoch}
@@ -74,7 +74,7 @@ labels begin with the requested-label binding. The returned head must equal the 
 verified current head or the new head accepted during catch-up. The prefix root must also be the
 latest log leaf under that head, preventing acceptance of a stale committed snapshot.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-verify}
 \caption[The six-step client verification chain.]{The six-step client verification chain. Every lookup is checked locally
@@ -89,13 +89,12 @@ binding in greater detail.
 % ============================================================================
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}
 
-The dual-index scheme meets the in-band peer-warning requirement of \cref{ssec:bg-implications} and so
-achieves G1 (Key-Substitution Detection) against the substitution attacks
-\hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a5]{A5}. An in-band
-warning channel flags server-side substitution of the global or session slot (A1). Identity re-fetch
-and predecessor cross-signature verification detect a malicious rotation (A5).
+The dual-index scheme provides the in-band peer-warning channel required by \cref{ssec:bg-implications}
+and supports G1 (Key-Substitution Detection). An in-band warning channel flags server-side
+substitution of the global or session slot (\hyperref[sc:threat-a1]{A1}). Identity re-fetch and
+predecessor cross-signature verification detect a malicious rotation (\hyperref[sc:threat-a5]{A5}).
 When the directory is honest, comparison with the peer's global VRF-bound identity entry detects a
-network man-in-the-middle (A3), because an attacker-controlled value cannot match the authenticated
+network man-in-the-middle (\hyperref[sc:threat-a3]{A3}), because an attacker-controlled value cannot match the authenticated
 global key. Labels derived from the attacker's different shared secret provide supporting evidence
 because, except with negligible collision probability, the expected peer-slot lookup returns
 proof-verified non-inclusion. The global identity binding also supplies the expected key against
@@ -317,6 +316,7 @@ $\Log$ & abstract append-only secure log, required to be $\Logsec$-secure & DUET
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
 % ============================================================================
 \section{Design Decisions and Alternatives}\label{sec:design-decisions}
 

@@ -190,7 +190,7 @@ interface. \Cref{tab:apiref-hooks,tab:apiref-events} list the hook functions and
 \label{fig:impl-signal}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \input{figures/tikz/fig-impl-verify}
 \caption[Owner-slot and warning-slot verification.]{Matching branch of
@@ -209,6 +209,7 @@ writes a warning that Bob later reads. The auditor separately rejects the immuta
 \label{fig:impl-e2e}
 \end{figure}
 
+\FloatBarrier
 In \cref{fig:impl-e2e}, Alice and Bob each run an embedded verifier, while the directory server and auditor
 execute as separate processes. In the normal path Alice and Bob each register their session slot and
 commit. Bob's verifier

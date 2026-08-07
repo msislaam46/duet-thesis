@@ -8,7 +8,7 @@ security consequences remain in the main chapter.
 \section{Signed-Head Fields and Verification Details}\label{sec:design-detail-sth}
 
 \paragraph{Domain separation and structure roles.} Hashing is domain-separated in the manner of
-RFC~6962: $\Hash_{\mathsf{leaf}}(x) = \Hash(\mathtt{0x00} \concat x)$ and
+RFC~6962~\cite[Section~2.1]{rfc6962}: $\Hash_{\mathsf{leaf}}(x) = \Hash(\mathtt{0x00} \concat x)$ and
 $\Hash_{\mathsf{node}}(l, r) = \Hash(\mathtt{0x01} \concat l \concat r)$, with $\Hash$ instantiated as
 SHA-256. The prefix tree and the log use these same leaf and node tags. Cross-tree confusion is not
 exploitable here, since prefix roots appear only as log leaf data and log roots only in signed tree
@@ -28,7 +28,7 @@ against which every lookup is ultimately checked.
 is required by the inclusion and consistency verifiers. Signing the $\mathit{timestamp}$ means it
 cannot be altered without invalidating the signature. Enforcing freshness additionally requires a
 client-side maximum-age or publication-cadence policy, which the prototype does not implement. The
-trailing $\Hash(\mathit{config})$ is a CONIKS-style policy commitment (the field CONIKS calls $P$)
+trailing $\Hash(\mathit{config})$ is a CONIKS-style policy commitment (the field CONIKS calls $P$)~\cite[Section~3.3]{melara2015coniks}
 that binds the provider's parameters into the signature. With it, the server cannot silently swap its
 VRF key, its signing key, the ciphersuite, the protocol version, or the epoch cadence, nor serve
 different parameters to different clients, because any client that recomputes $\Hash(\mathit{config})$
@@ -120,7 +120,8 @@ Ephemeral key ($\ek{}$) & No & Not independently logged, contributes to $\shared
 
 The key-transparency literature identifies a soundness risk when clients skip intermediate epochs.
 CONIKS's monitoring cost is linear in the offline period precisely because a malicious provider could
-insert a false binding at some epoch inside the window and revert it before the client returns. A
+insert a false binding at some epoch inside the window and revert it before the client
+returns~\cite[pp.~7--8]{melara2015coniks}. A
 client that verifies only the consistency of the two endpoint heads and the current value at its own
 label would miss such a transient substitution, which is why CONIKS concludes that inspecting only the
 latest signed root is unsound (\cref{sec:ext-vkd-survey}). That objection applies verbatim to any

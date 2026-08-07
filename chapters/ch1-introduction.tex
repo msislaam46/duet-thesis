@@ -49,7 +49,7 @@ shared slot to which either party can write an authenticated warning payload. Fo
 monitored conversation, a malicious server cannot predict and pre-position that slot before the label
 is first used. Before the warning commits, a censored write is detected through a key mismatch
 alongside a proof-verified empty slot. After the warning commits, the transition audit detects any
-removal as an invalid directory transition. The resulting signal allows both parties to detect the
+removal as an invalid directory transition. The committed warning allows both parties to detect the
 substitution automatically and in band (\cref{sec:design-dual}).
 
 \paragraph{Cryptographic.} The cryptographic contribution applies an RFC~9162~\cite{rfc9162}
@@ -66,7 +66,7 @@ comprising the \texttt{duet} crate, an HTTP directory server, and a cross-vantag
 TypeScript verifier is integrated into a fork of Signal Desktop~(\cref{ch:impl}). Shared protocol
 operations are checked for byte-for-byte agreement using cross-language test vectors.
 
-\paragraph{Empirical.} The benchmark evaluation, covering metrics M1--M17, yields four principal
+\paragraph{Empirical.} The benchmark evaluation, covering metrics M1--M17, yields four main
 findings. At a matched directory size, the implemented VRF-indexed lookup proof is roughly comparable
 in size to the corresponding CONIKS proof~\cite{melara2015coniks}. Detection uses additional
 label-bound lookups with the same proof format rather than enlarging an individual proof. Median full client verification remains below \SI{150}{\micro\second}

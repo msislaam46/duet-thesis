@@ -61,9 +61,9 @@ state, yet both retain a user-initiated comparison or an assumed secure
 log~\cite{dowling2021meta,dowling2023acka}. The supporting measurements are reported in
 \cref{sec:ext-usability}.
 
-Three requirements follow. Authentication should detect coordinated substitution of
-session-establishment keys, detection should not depend on a rarely completed ceremony, and a detected
-substitution should reach the peer rather than remain local to the key owner.
+These limitations lead to three requirements for DUET. It must detect coordinated substitution of
+session-establishment keys, avoid reliance on a rarely completed verification ceremony, and communicate
+a detected substitution to the peer instead of leaving the result local to the key owner.
 
 % ============================================================================
 \section{Secure Transparency Logs}\label{sec:bg-logs}
@@ -151,8 +151,8 @@ deployment condition rather than removing the peer-warning gap.
 Production systems demonstrate that these constructions can operate at messaging scale. WhatsApp,
 Signal, Proton, Google, and Apple use different combinations of monitoring, auditing, and commitment
 comparison~\cite{whatsapp2023whitepaper,signal-kt-server,goebel2023proton,google-kt,apple-ckv}, and an
-independent review of the Meta implementation reports no break of its transparency
-guarantees~\cite{nccgroup2023akd}. None of the cited deployments provides the peer-warning channel
+independent review of Meta's AKD implementation reports that all identified findings were fixed at
+retest~\cite{nccgroup2023akd}. None of the cited deployments provides the peer-warning channel
 defined in this thesis. The per-system mechanisms, limitations, and citations are examined further in
 \cref{sec:ext-vkd-survey} and summarized in \cref{tab:bg-compare}.
 

@@ -3,13 +3,50 @@
 This appendix reproduces the complete aggregate benchmark tables summarized in \cref{ch:eval}. All reported values are
 from recorded runs on the single environment below: the $10^7$ run supplies the timing
 corpus and M7, and the full-grid run supplies the M14--M16 families. Sizes are exact and
-seed-deterministic, and timings are reported as the median and 95th percentile. The metric families M1--M17 are as defined by the
-measurement map in \cref{sec:eval-method} (\cref{tab:bench-repro}). Baseline methods are identified by name rather than by benchmark identifiers
-(\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed}) and mean the same
-thing here as in the chapter. Where a row is qualified \emph{(dual-index)}, it reports the
-VRF-indexed \texttt{search\_by\_user\_id} lookup recorded under the historical configuration identifier
-\texttt{dual\_index} (see the baseline definitions in \cref{sec:eval-method}). The code$\to$group$\to$CSV mapping for reproducing each row is given in
+seed-deterministic, and timings are reported as the median and 95th percentile. The metric families M1--M17 and the baseline configurations (\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed}) are defined in \hyperref[sec:bench-defs]{the definitions below}. The code$\to$group$\to$CSV mapping for reproducing each row is given in
 \cref{sec:bench-repro}.
+
+\phantomsection\label{sec:bench-defs}
+\section*{Metric and Baseline Definitions}
+
+The seventeen metric families referenced throughout \cref{ch:eval} are as follows.
+
+\begin{description}\itemsep2pt
+\item[M1] Lookup proof size in bytes and path length in hashes.
+\item[M2] Server-side latency for generating a lookup proof.
+\item[M3] Client-side lookup verification latency, reported as prefix-only, VRF-only,
+  and full signed-head lookup verification.
+\item[M4] Sequential and windowed catch-up proof bytes and proof-generation latency
+  as a function of $W$.
+\item[M5] The marginal cost of one unverified warning-slot read, reported as a component
+  measurement.
+\item[M6] Clean-session false-alarm count from the original deterministic experiment,
+  retained for reproducibility.
+\item[M7] Proof-size and verification distributions, together with resident set size
+  after build, over $1{,}000$ random lookups at $N=10^{6}$ and $N=10^{7}$.
+\item[M8] Per-operation lookup and update latency, from which a single-thread rate is derived.
+\item[M9] Maintenance cost: key rotation and epoch commit.
+\item[M10] VRF prove and verify in isolation.
+\item[M11] One signed-head lookup verification corresponding to the verification performed
+  at the peer-key-retrieval boundary.
+\item[M12] STH signature verification, consistency-proof generation and verification, and
+  a fork check against one observed head.
+\item[M13] Session-mode versus continuous-mode write counts and verification cost.
+\item[M14] The history-depth term in proof size and verification latency.
+\item[M15] Continuous-mode verification over ratchet depth and the analytic
+  write-amplification grid.
+\item[M16] Synthetic Rust component timings for the early-return and clean-match
+  detection paths.
+\item[M17] Clean-session verdict coverage (functional, no timing).
+\end{description}
+
+\medskip\noindent
+The measurements use four baseline configurations. \emph{No-KT floor} denotes
+M11's local identity-key hash operation without a key-transparency lookup.
+\emph{Single-index} denotes the Merkle-log-only comparison, with no prefix
+tree or warning slot. \emph{Dual-index} denotes the prefix-tree-and-log
+configuration used for the lookup and warning mechanisms.
+\emph{Windowed} adds the consistency proofs used for offline catch-up.
 
 % ----------------------------------------------------------------------------
 \section{Measurement Environment}\label{sec:bench-env}
@@ -57,7 +94,7 @@ portable. The proof sizes, being computed rather than timed, are hardware-indepe
 Lookup proof size against directory size is reported in \cref{tab:bench-m1}, and offline
 catch-up raw consistency-path hash bytes against the window in \cref{tab:bench-m4}.
 
-Proof \emph{generation} was timed separately from the byte counts above. At $W = 720$ the windowed
+Proof \emph{generation} was timed separately from the byte counts in \cref{sec:bench-sizes}. At $W = 720$ the windowed
 proof has a median proof-generation time of \SI{0.3}{\micro\second} against
 \SI{197.0}{\micro\second} for the repeated current-head-anchored baseline. The quotient is only
 approximate because the windowed value is close to the reporting resolution of the harness. The
@@ -116,7 +153,7 @@ case).
 % ----------------------------------------------------------------------------
 \section{Latency, Operation Rates, and Maintenance (M2, M3, M5, M8--M12)}\label{sec:bench-timings}
 
-The timing families are reported below one per table, each preceded by a one-line statement of what it
+The timing families are reported below one per table, each preceded by a short statement of what it
 measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the marginal
 warning-slot lookup cost (\cref{tab:bench-detection}), operation rates and the maintenance operations
 (\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). All values are
@@ -134,7 +171,7 @@ produce a proof and the client-side cost to check it, broken into its pieces.}
 \small
 \begin{tabular}{@{}L{6.2cm}lrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 \\
+Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
 M2 search generation (dual-index)    & $10^3$ & 111.2 & 136.7 \\
 M2 search generation (dual-index)    & $10^4$ & 111.6 & 130.8 \\
@@ -142,8 +179,8 @@ M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.2 \\
 M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.1 \\
 M3 VRF verify (dual-index)           & $10^3$ & 75.0  & 92.0 \\
 M3 VRF verify (dual-index)           & $10^4$ & 75.0  & 92.0 \\
-\textbf{M3 full signed-head lookup verification (windowed baseline)} & $10^3$ & \textbf{128.7} & 155.8 \\
-\textbf{M3 full signed-head lookup verification (windowed baseline)} & $10^4$ & \textbf{128.9} & 146.3 \\
+M3 full signed-head lookup verification (windowed baseline) & $10^3$ & 128.7 & 155.8 \\
+M3 full signed-head lookup verification (windowed baseline) & $10^4$ & 128.9 & 146.3 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -167,7 +204,7 @@ distribution covers \num{1000} sampled conversations and measures one unverified
 \small
 \begin{tabular}{@{}llrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 \\
+Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
 M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
 \bottomrule
@@ -184,7 +221,7 @@ rotation and epoch commit, the VRF in isolation, and the Rust lookup-verificatio
 \small
 \begin{tabular}{@{}L{6.2cm}lrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 \\
+Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
 M8 lookup latency used to derive the single-thread rate (dual-index) & $10^4$ & 111.9 & 137.2 \\
 M8 update latency used to derive the single-thread rate (dual-index) & $10^4$ & 139.8 & 166.0 \\
@@ -220,7 +257,7 @@ verification, it is an upper estimate of verification alone.}
 \small
 \begin{tabular}{@{}llrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median & p95 \\
+Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
 M12 audit epoch (windowed)  & $10^4$ & 28.6 & 34.7 \\
 M12 detect fork (windowed)  & $10^4$ & 27.1 & 33.1 \\
@@ -251,7 +288,7 @@ Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
 Server full search (median / p95, \si{\micro\second}) & 132.7 / 148.8 & 441.7 / 4581.9\tnote{$\dagger$} \\
 Prefix verify (median / p95, \si{\micro\second}) & 26.3 / 26.6 & 26.4 / 30.6 \\
 VRF verify (median / p95, \si{\micro\second}) & 84.0 / 99.7 & 85.8 / 212.9 \\
-\textbf{Full signed-head lookup verification (median / p95, \si{\micro\second})} & \textbf{133.6} / 161.1 & \textbf{139.2} / 171.1 \\
+Full signed-head lookup verification (median / p95, \si{\micro\second}) & 133.6 / 161.1 & 139.2 / 171.1 \\
 Build time & 150.5\,s & 1{,}558.0\,s \\
 RSS after build & 2{,}810\,MB & 21{,}309\,MB \\
 \bottomrule
@@ -361,10 +398,8 @@ harness lives in \texttt{benches/kt\_bench.rs}. Run it via \texttt{run-benches.p
 M7 runs only with \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes are seed-deterministic
 and must reproduce byte-for-byte, and timings reproduce within noise.
 
-\medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The Criterion
-groups and CSV keys below are frozen provenance identifiers, so some retain historical names.
-\texttt{windowed\_full\_client\_verify} is the M3 full signed-head lookup verification and does not
-time a catch-up proof. \texttt{M8\_throughput} records per-operation latencies from which a
+\medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The Criterion group and CSV names below match the committed benchmark corpus, so some differ from the terminology used in the thesis.
+The \texttt{windowed\_full\_client\_verify} measurement covers one full signed-head lookup verification. Windowed catch-up proof generation is measured separately under M4. The M1 values stored under \texttt{dual\_index} measure the VRF-indexed \texttt{search\_by\_user\_id} lookup. \texttt{M8\_throughput} records per-operation latencies from which a
 single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures, in Rust, one signed-head lookup
 verification corresponding to the verification performed at the peer-key-retrieval boundary. It
 excludes X3DH/PQXDH, network transfer, and session establishment.

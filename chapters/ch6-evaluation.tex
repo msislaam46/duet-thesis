@@ -15,11 +15,14 @@ questions to proof size, latency, catch-up, scale, operating modes, and security
 
 The Rust harness measures local cryptographic work in process. It excludes HTTP, Electron, database,
 and network costs. Manual-harness medians and 95th percentiles use \num{2000} sequential iterations,
-while the scale experiment samples \num{1000} lookups per directory size. Proof sizes are exact for the recorded
-seeds. Values near timer resolution are treated as coarse observations, and cross-system timings are
-interpreted only as order-of-magnitude comparisons. \Cref{app:benchmarks} provides the complete
-benchmark tables, measurement environment, and reproduction instructions. Its metric map in
-\cref{sec:bench-repro} links each metric to the corresponding table and command.
+while the scale experiment samples \num{1000} lookups per directory size. All DUET timings reported
+in this chapter were measured on the Windows x86\_64 host described in \cref{sec:bench-env} (12th Gen
+Intel Core i7-12700H, 31.7\,GB RAM). Under the worked parameterization of
+\cref{ssec:design-param}, epochs are hourly, so a window of $W=720$ epochs spans 30 days. Proof sizes are exact for the recorded
+seeds. Values near timer resolution are treated as coarse observations. Cross-system timing comparisons
+are approximate because the published implementations and hardware differ. \Cref{app:benchmarks} defines the metric families
+and baseline configurations and provides the complete tables, measurement environment, and
+reproduction instructions.
 
 % ============================================================================
 \section{Measured Results}\label{sec:eval-micro}
@@ -56,17 +59,17 @@ $32\lceil\lg E\rceil$ bound. Median full verification remains below
 the measured proof size.
 
 Full client verification, which covers the VRF, the log inclusion path, and the signed head, has a
-median of \SI{133.6}{\micro\second} at $N=10^{6}$ and \SI{139.2}{\micro\second} at $N=10^{7}$. At
-$N=10^{3}$ the median is \SI{128.7}{\micro\second}. The increase to \SI{139.2}{\micro\second} at
-$N=10^{7}$ is \SI{10.5}{\micro\second}, or 8.2 percent, while $N$ grows by four orders of magnitude.
-The supported conclusion is that verification grows far more slowly than the directory, not that it
-is invariant. Prefix-only verification moves from \SI{25.9}{\micro\second} to
-\SI{26.4}{\micro\second} across the same range. The measurements therefore do not attribute most of
-the \SI{10.5}{\micro\second} increase to prefix-proof reconstruction, and this benchmark does not
-isolate the remaining cause.
+median of \SI{128.7}{\micro\second} at $N=10^{3}$ in the manual harness. Within the scale experiment
+(\cref{tab:bench-scale}), the median rises from \SI{133.6}{\micro\second} at $N=10^{6}$ to
+\SI{139.2}{\micro\second} at $N=10^{7}$, an increase of \SI{5.6}{\micro\second}, or 4.2 percent, for a
+tenfold larger directory. The result supports slow growth relative to directory size. Prefix-only
+verification moves from \SI{26.3}{\micro\second} to \SI{26.4}{\micro\second} over the same range,
+accounting for little of the full-verification increase. The benchmark does not isolate the remaining
+cause.
 
-The $N=10^{7}$ full-search tail remains unexplained. Its 95th percentile is
-\SI{4581.9}{\micro\second} against a median of \SI{441.7}{\micro\second}. The harness did not record
+The 95th-percentile tail for server-side search at $N=10^{7}$ remains unexplained. It is
+\SI{4581.9}{\micro\second}, compared with a median of \SI{441.7}{\micro\second}
+(\cref{tab:bench-scale}). The harness did not record
 operating-system paging activity, so the benchmark cannot determine whether memory pressure caused the
 tail. The tail is reported as observed implementation behaviour, without assigning an unmeasured cause.
 
@@ -121,12 +124,12 @@ Building the $N=10^{7}$ directory takes about 26 minutes at \SI{21.3}{\giga\byte
 evaluation host. The single-process research build holds the whole directory in memory behind one
 mutex, making memory use a primary deployment constraint.
 
-M12 measures two local verification operations. It does not measure a complete networked audit. The first
-combines an STH signature check with consistency-proof generation and verification and has a median
-of \SI{28.6}{\micro\second}. Because generation and verification are timed together, the \SI{28.6}{\micro\second} median includes
-more work than consistency verification alone. Conversely, it omits the transport, replay, scheduling,
-persistence, and multi-vantage work required by a deployed audit. The second checks for a fork against one observed head. Its median is
-\SI{27.1}{\micro\second}, and its 95th percentile is \SI{33.1}{\micro\second}.
+M12 measures two local verification operations, not a complete networked audit. The first combines an
+STH signature check with consistency-proof generation and verification. Its median is
+\SI{28.6}{\micro\second}. This includes proof generation but excludes transport, replay, scheduling,
+persistence, and the cross-vantage comparison required by a deployed audit. The second checks for a fork
+against one observed head. Its median is \SI{27.1}{\micro\second}, and its 95th percentile is
+\SI{33.1}{\micro\second}.
 
 \subsection{Session and Continuous Modes (M13, M15)}\label{ssec:eval-modes}
 
@@ -138,7 +141,7 @@ $K \in \{1, 10, 100, 720\}$.
 
 The two modes have similar isolated verification costs, but their write cadences differ. Session mode writes once per
 signed-pre-key rotation, while continuous mode writes once per ratchet epoch. At $R = 720$ the
-modelled write counts differ by factors between 24 and 720 depending on the assumed activity level.
+modelled write counts differ by factors between 24 and 720 depending on the modelled number of epochs.
 That ratio is a property of the cadence model and the simulated input, and it is not a deployment
 bound. The full mode table is in \cref{sec:bench-modes}.
 
@@ -149,7 +152,7 @@ The published systems use different implementations, hardware, and accounting co
 comparison below therefore states the matched components and arithmetic.
 \Cref{tab:eval-compare} summarizes the resulting trade-offs.
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \caption{DUET compared with prior systems using published figures.}
 \label{tab:eval-compare}
@@ -164,7 +167,7 @@ Catch-up at $W{=}720$ & 320\,B (1 windowed proof) & $\Theta(W)$, $\sim$530\,kB d
 Key-substitution detection & automatic in-band peer warning (established conversations)\newline global VRF-bound identity check, honest directory (first contact) & manual Safety Number comparison and self-monitoring & optional AKV lookup and self-monitoring\newline no peer warning \\
 Authenticated records & Identity-key bindings at global and session-derived slots, and per-epoch ratchet-key fingerprints in continuous mode & Identity-key bindings & Account-identifier, phone-number, and username-hash mappings \\
 Query privacy (operator) & No & No & No \\
-Resists offline identity recovery (VRF) & Yes (ECVRF, 80\,B) & Yes (DL-VRF, 96\,B) & Yes (ECVRF) \\
+Resists offline identity recovery (VRF) & Yes (ECVRF, 80\,B) & Yes (discrete-log-based VRF, 96\,B) & Yes (ECVRF) \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -190,40 +193,39 @@ constructions account for different proof components.
 
 For offline catch-up the difference is larger. CONIKS reports an approximately 736-byte per-epoch
 proof~\cite[Section~5.3]{melara2015coniks}, so a 720-epoch window costs $720 \times 736 = 529{,}920$
-bytes against DUET's \num{320}-byte windowed proof, a ratio of approximately 1{,}656. This comparison
-illustrates the bandwidth benefit of the windowed construction.
+bytes against DUET's \num{320}-byte windowed proof, a ratio of approximately 1{,}656. CONIKS
+prescribes a separate proof of the client's binding for every missed epoch. DUET's \num{320}-byte
+figure measures the returning client's consistency proof. Peer warnings and transition auditing are
+separate mechanisms, and their costs are excluded from this ratio.
 
-The published timings support only an order-of-magnitude comparison because the implementations and hardware differ. CONIKS reports a
-\SI{159}{\micro\second} path verification and an approximately \SI{400}{\micro\second} signature
-verification~\cite[Section~5.3]{melara2015coniks}, which sums to about \SI{559}{\micro\second}. That figure is derived rather than
-reported, and it includes no VRF timing, because CONIKS's published measurements do not isolate one.
-The matched DUET figure is the \SI{139.2}{\micro\second} full verification at $N = 10^{7}$, not the
-approximately \SI{128}{\micro\second} small-directory value, because the CONIKS figures are quoted at
-large directory sizes. The two comparisons have different scopes and neither is a superset of the other. The proof-size
-comparison excludes signed heads and signatures on both sides. The timing comparison includes them on
-both sides, because DUET's \SI{139.2}{\micro\second} is a full verification including the signed head
-and the CONIKS sum includes its separately reported signature verification.
+For client verification, CONIKS reports a \SI{159}{\micro\second} path verification and an approximately
+\SI{400}{\micro\second} signature verification~\cite[Section~5.3]{melara2015coniks}, giving a derived
+total of about \SI{559}{\micro\second}. CONIKS publishes no separate VRF timing, so that component is
+absent from the total. The matched DUET figure is the \SI{139.2}{\micro\second} full verification at
+$N=10^{7}$, aligning the comparison at a large directory size. The proof-size comparison excludes
+signed heads and signatures on both sides. The timing comparison includes them on both sides. DUET's
+figure includes signed-head verification, and the CONIKS total includes its reported signature
+verification.
 
 \begin{quote}\small\noindent\textbf{Comparability note.}
 The figures above are drawn from published results measured on different hardware, with different
-implementations, and under different workloads. They are used to establish order of magnitude and to
-locate DUET within a design space. They are not a controlled benchmark, and no claim of superiority
+implementations, and under different workloads. They provide broad context and locate DUET within the
+design space. They are not a controlled benchmark, and no claim of superiority
 on any dimension other than the stated arithmetic is made.
 \end{quote}
 
 % ============================================================================
 \section{Security Evaluation}\label{sec:eval-security}
 
-This section reports whether the implemented controls detect each modelled attack. The adversarial
-suite runs the scenarios of \cref{ch:threat}: the honest baseline A0, key substitution
-(\hyperref[sc:threat-a1]{A1a and A1b}), warning censorship (\hyperref[sc:threat-a2]{A2}), network
-man-in-the-middle (\hyperref[sc:threat-a3]{A3}), split-view equivocation (\hyperref[sc:threat-a4]{A4}),
-malicious rotation (\hyperref[sc:threat-a5]{A5}), and the excluded endpoint-compromise case
-(\hyperref[sc:threat-x1]{X1}). The suite
-records the integrity, consistency, and warning behaviour observed for each. \Cref{tab:eval-security} reports the relevant security requirement, detection evidence, and observed
-outcome for each scenario. Every listed scenario
-produces its expected outcome, and the seven clean workflows produce their expected clean verdicts
-with no warnings.
+The adversarial suite includes tests for the scenarios defined in \cref{ch:threat}: the honest baseline
+A0, key substitution (\hyperref[sc:threat-a1]{A1a and A1b}), warning censorship
+(\hyperref[sc:threat-a2]{A2}), network man-in-the-middle (\hyperref[sc:threat-a3]{A3}), split-view
+equivocation (\hyperref[sc:threat-a4]{A4}), malicious rotation (\hyperref[sc:threat-a5]{A5}), and the
+excluded endpoint-compromise case (\hyperref[sc:threat-x1]{X1}). \Cref{tab:eval-security} summarizes
+the attack families, their controls, and the observed outcomes. \Cref{tab:tests-adversarial} records
+each scenario individually, and \cref{tab:bench-m17} records the seven clean workflows. Every scenario
+produces its expected outcome, and the clean workflows produce their expected clean verdicts with no
+warnings.
 
 The test schedule performs one action per epoch, so the table's epoch counts describe the harness
 rather than detection latency. The outcomes hold under the assumptions defined in
@@ -236,11 +238,11 @@ independent vantage.
 \label{tab:eval-security}
 \footnotesize
 \renewcommand{\arraystretch}{1.3}\setlength{\extrarowheight}{3pt}
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{3.5cm}X>{\raggedright\arraybackslash}p{2.0cm}@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{3.5cm}X>{\raggedright\arraybackslash}p{3.6cm}@{}}
 \toprule
 Case & Control and requirement & Evidence & Result \\
 \midrule
-\hyperref[sc:threat-a1]{A1} server substitution & Owner self-check and dual-index warning (G1). & \cref{tab:tests-adversarial}. & Detected. \\
+Key substitution (\hyperref[sc:threat-a1]{A1a and A1b}) & Owner self-check and dual-index warning (G1). & \cref{tab:tests-adversarial}. & Detected. \\
 \hyperref[sc:threat-a3]{A3} network MitM postcondition & Global VRF-bound identity check, honest directory (G1). & \cref{tab:tests-adversarial}. & Detected at the next lookup. \\
 \hyperref[sc:threat-a5]{A5} malicious rotation & Identity re-fetch and predecessor cross-signature (G1). & \cref{tab:tests-adversarial}. & Detected. \\
 \hyperref[sc:threat-a2]{A2} warning censorship & Pre-commit key mismatch with proof-verified warning absence, and post-commit removal caught as an invalid transition (extension of G1). & \cref{tab:tests-adversarial}. & Detected. \\
@@ -278,9 +280,9 @@ Both figures exclude serialization overhead. The baseline models this implementa
 windowing, not a deployed system.
 
 M16 measures the Rust lookup work for the mismatch path and the clean two-lookup path. These
-component timings exclude combined bandwidth and end-to-end background-monitor latency. The directory server measurements expose two
+component timings exclude network transfer and end-to-end background-monitor latency. The directory server measurements expose two
 further constraints. Epoch commit deep-clones the current tree into the committed snapshot, and the
-in-memory tree becomes large at CONIKS scale. Persistent structural sharing, storage, concurrency
+in-memory tree becomes large at $10^{7}$ entries. Persistent structural sharing, storage, concurrency
 testing, and networked measurements remain necessary.
 
 Session and continuous modes have similar isolated verification costs but different write frequencies.

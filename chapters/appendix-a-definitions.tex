@@ -222,11 +222,11 @@ linearly with the $W$ epochs between the two visits, which is the property explo
 \begin{remark}[Relation to prior systems]
 The windowed proof is a \emph{standard} RFC~9162 consistency proof between two distant heads, not a
 new cryptographic object. Related systems also reduce repeated history checks. SEEMless makes
-monitoring cost depend chiefly on key updates, and OPTIKS reduces unchanged-key monitoring to a single
-proof. The contribution here is an \emph{offline-client} instantiation using one consistency proof from
+monitoring cost depend chiefly on key updates~\cite[Section~4.2]{chase2019seemless}, and OPTIKS reduces
+unchanged-key monitoring to a single proof~\cite[p.~4356]{optiks2024}. The contribution here is an
+\emph{offline-client} instantiation that replaces $W$ separate consistency proofs with one proof from
 the client's last checkpoint to the current head, together with the measured saving reported in
-\cref{ch:eval}. It replaces $W$ proofs with one. The reduction is in the number of proofs, and the
-asymptotic complexity of an individual proof is unchanged.
+\cref{ch:eval}. The asymptotic complexity of the individual proof remains unchanged.
 \end{remark}
 
 % ============================================================================

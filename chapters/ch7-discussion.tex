@@ -6,9 +6,9 @@ completing, deploying, and extending the system.
 % ============================================================================
 \section{Discussion}\label{sec:disc-discussion}
 
-DUET adds automatic in-band substitution detection through additional label-bound lookups rather than
-a new proof family. Each lookup therefore retains the same asymptotic proof size and verification cost. The
-guarantee depends on domain-separated labels, proof-verified absence, warning persistence, and
+DUET adds automatic in-band substitution detection through additional label-bound lookups without
+introducing a new proof family. Each lookup therefore retains the same asymptotic proof size and verification cost. The
+detection guarantee depends on domain-separated labels, proof-verified absence, warning persistence, and
 transition validation. Under \hyperref[sc:threat-a3]{A3}, when the directory is honest the global
 VRF-bound identity entry supplies the detecting comparison, and labels derived from the two different
 conversation secrets provide supporting evidence.
@@ -18,7 +18,7 @@ matched CONIKS proof, detection paths reuse raw-label proofs, and distant-head c
 a proof per missed epoch with one proof. These measurements characterize component costs rather than
 production throughput.
 
-The construction applies beyond Signal wherever a messenger supplies a semi-trusted directory and a
+The construction could apply beyond Signal wherever a messenger supplies a semi-trusted directory and a
 conversation secret, with continuous mode additionally needing public ratchet keys and secret epoch
 inputs. Session mode has the smaller integration and write surface, while continuous mode
 authenticates each ratchet epoch at a higher write rate. Both remain bounded by trust on first use,

@@ -9,6 +9,8 @@ cryptographic objects are in \cref{app:definitions}. This list is for quick refe
   dual-index and CEA label derivation.
 \item[ACKA] Authenticated Continuous Key Agreement, the framework of Dowling and Hale whose abstract
   log component this work instantiates and measures (\cref{def:cka}).
+\item[AKD] Auditable Key Directory, Meta's deployed key-transparency design for
+  WhatsApp~\cite{whatsapp2023whitepaper}.
 \item[AKV] Automatic Key Verification, Signal's deployed key-transparency lookup check. It verifies a
   fetched key against the log but carries no peer-warning channel.
 \item[Auditor] An independent party that observes the log from a second vantage point, cross-checks
@@ -25,6 +27,8 @@ cryptographic objects are in \cref{app:definitions}. This list is for quick refe
   ACKA. The continuous operating mode delivers detection in this style.
 \item[CKA] Continuous Key Agreement, the abstraction of a ratcheting protocol as a stream of evolving
   keys, used by ACKA.
+\item[CKV] Contact Key Verification, Apple's key-transparency mechanism for
+  iMessage~\cite{apple-ckv}.
 \item[CONIKS] An early key-transparency system introducing VRF-derived labels and a sparse Merkle
   directory. The closest published design point for proof size.
 \item[Consistency proof] A short proof that a later log is an append-only extension of an earlier one
@@ -56,6 +60,9 @@ cryptographic objects are in \cref{app:definitions}. This list is for quick refe
 \item[Inclusion proof] A proof that a value is present at a position in the log or prefix tree
   (\cref{def:inclusion,def:noninclusion}).
 \item[KT] Key transparency: making a key directory's contents publicly and verifiably consistent.
+\item[MAC] Message authentication code: a shared-key tag that authenticates a message and detects
+  modification. The warning payload carries a MAC under a key derived from the conversation secret
+  (\cref{sec:design-dual}).
 \item[Merkle log] An append-only tamper-evident log whose root commits to every entry in order
   (\cref{def:merkle-log}).
 \item[MitM] Man-in-the-middle: an active adversary substituting keys in transit (attack A3).
@@ -73,6 +80,8 @@ cryptographic objects are in \cref{app:definitions}. This list is for quick refe
 \item[Prefix tree] A sparse Merkle tree over the space of 256-bit labels, storing the current
   directory (\cref{def:prefix-tree}).
 \item[PQXDH] The post-quantum variant of X3DH, augmenting the handshake with a KEM.
+\item[PRF] Pseudorandom function: a keyed function whose outputs are indistinguishable from random
+  without knowledge of the key. HMAC-SHA256 serves as the PRF in the continuous-mode state update.
 \item[Safety number] Signal's manual verification code: a 60-digit fingerprint of the two parties'
   identity keys and account identifiers that users are expected to compare out of band. The ceremony
   the dual-index warning is intended to reduce or replace, for honestly established and monitored

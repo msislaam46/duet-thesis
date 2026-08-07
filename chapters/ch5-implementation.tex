@@ -233,7 +233,7 @@ commands and environment.
 \FloatBarrier
 \section{System-Wide Engineering Challenges}\label{sec:impl-challenges}
 
-Three problems materially changed the implementation. First, the initial TypeScript label stand-in
+Three areas required substantial implementation changes. First, the initial TypeScript label stand-in
 could not agree with Rust's RFC~9381 ECVRF, because the two encode-to-curve steps differed. Both
 clients were aligned on the ECVRF-EDWARDS25519-SHA512-TAI suite and checked against the published
 vectors. Signed heads were also bound to each lookup response, preventing a valid proof
