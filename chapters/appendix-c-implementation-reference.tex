@@ -39,7 +39,6 @@ POST & \texttt{/register} & register a user's key (server derives the VRF label)
 POST & \texttt{/update-raw} & write a client-derived (dual-index) label$\to$value. The public surface is write-once, so an occupied label is rejected with \texttt{409 Conflict} (\cref{ssec:design-detection}) \\
 POST & \texttt{/commit} & close the current epoch and sign a new STH \\
 GET  & \texttt{/health} & liveness probe \\
-GET  & \texttt{/dashboard}, \texttt{/internals}, \texttt{/integration}, \texttt{/threats} & served visualization and threat-model pages \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -78,8 +77,8 @@ POST & \texttt{/admin/reset} & rebuild the server from its fixed seed with a fre
 \section{Signal Desktop Integration Hooks and Events}\label{sec:apiref-hooks}
 
 \Cref{tab:apiref-hooks} maps the integration concepts of \cref{sec:impl-signal} to the
-corresponding prototype functions, and \cref{tab:apiref-events} maps the four
-user-interface verdict states to their DOM event names. The live client attaches only at key upload and
+corresponding prototype functions, and \cref{tab:apiref-events} maps the user-interface
+outcomes to their DOM event names. The live client attaches only at key upload and
 peer-key retrieval and records peer identity through a periodic sweep. The session-establishment and
 pre-key-bundle rows are documentation-only integration sketches that mark where a production binding
 of the live X3DH secret would attach.
@@ -103,32 +102,64 @@ pre-key-bundle processing & \texttt{hook\_process\_prekey\_bundle} & Rust (libsi
 
 \begin{table}[ht]
 \centering
-\caption{User-interface verdict states and their DOM events.}
+\caption{User-interface outcomes and their DOM events.}
 \label{tab:apiref-events}
 \small
-\begin{tabular}{@{}lll@{}}
+\begin{tabularx}{\textwidth}{@{}p{3.1cm}X p{3.2cm}@{}}
 \toprule
-State & Meaning & DOM event \\
+Presentation & Meaning & DOM event \\
 \midrule
-grey  & pending (initial, no result yet) & none (initial state, no event) \\
-green & key verified & \texttt{kt:verified} \\
-amber & directory server unreachable & \texttt{kt:unreachable} \\
-red   & MitM warning or operational timeout & \texttt{kt:warning} \\
-\midrule
-\multicolumn{3}{@{}p{12cm}@{}}{\emph{demonstration only:} inject a one-shot CEA ratchet fork into the
-selected conversation \hfill \texttt{kt:cea-inject}} \\
+grey badge & verification pending & none \\
+green badge & key verified & \texttt{kt:verified} \\
+amber banner & directory server unreachable with the badge unchanged & \texttt{kt:unreachable} \\
+red badge and banner & verified warning or operational timeout & \texttt{kt:warning} \\
+demonstration control & stage one CEA fork for the selected conversation & \texttt{kt:cea-inject} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
-The four verdict states drive the conversation-header badge and banner. Grey is the renderer's
-initial state and carries no event: a conversation for which no result has yet arrived simply
-remains grey. The three result states are delivered as DOM custom events on \texttt{window}. A
-green \texttt{kt:verified} event is bound to a specific peer and conversation and is honoured only
-when both match the conversation currently displayed, so a stale success cannot mask a later
-change. A red \texttt{kt:warning} is matched permissively and is never suppressed by such a
-mismatch. The \texttt{kt:cea-inject} event fires once against the selected conversation to stage the
-continuous-mode demonstration and is not part of the production surface.
+The badge starts grey and changes to green only after a proof-backed \texttt{kt:verified} event for
+the displayed conversation. Strict peer matching prevents an unattributable or stale green event
+from clearing another conversation's warning. A \texttt{kt:warning} event uses the permissive warning
+matcher and changes the badge to red while presenting the warning banner. The global
+\texttt{kt:unreachable} event displays a separate amber availability banner without changing the
+badge verdict. The demonstration-only \texttt{kt:cea-inject} event stages one CEA fork for the
+selected conversation. \Cref{fig:apiref-ui-components} shows the five rendered components.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[t]{0.30\textwidth}
+  \centering
+  \includegraphics[height=0.75cm]{figures/ui-component-pending.png}
+  \par\smallskip
+  \small (a) Pending badge
+\end{minipage}\hfill
+\begin{minipage}[t]{0.30\textwidth}
+  \centering
+  \includegraphics[height=0.75cm]{figures/ui-component-verified.png}
+  \par\smallskip
+  \small (b) Verified badge
+\end{minipage}\hfill
+\begin{minipage}[t]{0.30\textwidth}
+  \centering
+  \includegraphics[height=0.46cm]{figures/ui-component-inject-fork.png}
+  \par\smallskip
+  \small (c) Demonstration control
+\end{minipage}
+\par\medskip
+\includegraphics[width=0.64\textwidth]{figures/ui-component-unreachable.png}
+\par\smallskip
+\small (d) Availability banner
+\par\medskip
+\includegraphics[width=0.64\textwidth]{figures/ui-component-warning.png}
+\par\smallskip
+\small (e) Warning badge and banner
+\caption[DUET user-interface components.]{DUET user-interface components. The header badge is grey
+while verification is pending, green after a proof-backed result, and red after a warning. The amber
+banner reports temporary directory unavailability without changing that verdict. The
+demonstration-only control stages one CEA fork for the selected conversation.}
+\label{fig:apiref-ui-components}
+\end{figure}
 
 % ----------------------------------------------------------------------------
 \FloatBarrier
@@ -227,72 +258,94 @@ client path alone. The live run in \cref{ssec:impl-demo} shows this inside the r
 \FloatBarrier
 \section{Demonstration Gallery}\label{sec:apiref-demo}
 
-The supporting captures for the demonstration of \cref{ssec:impl-demo} show the
-honest baseline before any attack, the attacker-side terminals that stage each scenario, the
-global-VRF and continuous-mode detection fronts, and the auditor outputs. The composite two-client
-warning capture that carries the RQ4 evidence remains in \cref{ssec:impl-demo}
-(\cref{fig:impl-screens}). In that capture the two DevTools consoles record the bidirectional
-detection at one shared slot. The affected client logs a warning-slot write, and the peer logs a read
-at the identical label. The honest baseline is shown in \cref{fig:demo-baseline}, the attacker
-terminals in \cref{fig:demo-cmd}, the staged equivocation in \cref{fig:demo-equivocation}, the
-global-VRF and CEA fronts in \cref{fig:impl-screens-fronts}, and the auditor outputs in
-\cref{fig:impl-auditor}.
+The supporting captures for the demonstration in \cref{ssec:impl-demo} show the honest baseline,
+the privileged commands used to stage the attacks, the client-side detection paths, and the auditor
+verdicts. The main-body figure presents the user-facing outcomes without developer tooling. The
+captures here provide the corresponding console and terminal evidence. \Cref{fig:demo-baseline}
+shows the clean A0 baseline, \cref{fig:demo-cmd} shows the A1a and A1b commands,
+\cref{fig:impl-screens-fronts,fig:impl-cea-front} show the client-side detection paths,
+\cref{fig:demo-equivocation} shows the A4 command, and \cref{fig:impl-auditor} shows the auditor
+verdicts. The A4 command and auditor captures come from separate reset runs, so their epoch values
+do not form one timeline.
 
-\begin{figure}[ht]
+\begin{figure}[p]
 \centering
-\screenshotplaceholder{0.49\textwidth}{figures/ui-baseline-self.png}\hfill
-\screenshotplaceholder{0.49\textwidth}{figures/ui-baseline-contact.png}
-\caption[Honest baseline (scenario A0).]{Honest baseline for scenario A0. Two linked Signal Desktop
-clients verify keys against a clean directory and display no warning banner. This state provides the
-reference for the later attack captures.}
+\includegraphics[width=0.90\textwidth]{figures/Alice-normal-appendix.png}
+\par\smallskip
+\small (a) Alice's client viewing Bob
+\par\medskip
+\includegraphics[width=0.90\textwidth]{figures/Bob-normal-appendix.png}
+\par\smallskip
+\small (b) Bob's client viewing Alice
+\caption[Honest baseline (A0).]{Honest A0 baseline. Both clients display the green verified badge
+after the account-wide identity check and conversation check succeed. Bob's console also records one
+expected pending result before the peer entry appears and is then verified.}
 \label{fig:demo-baseline}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
-\screenshotplaceholder{0.49\textwidth}{figures/cmd-dualindex.png}\hfill
-\screenshotplaceholder{0.49\textwidth}{figures/cmd-vrf.png}
-\caption[Attacker terminals staging the two substitutions.]{Attacker terminals staging two
-substitutions. The left capture shows \texttt{attack.mjs --label <hex>} overwriting the
-per-conversation lookup slot. The right capture shows \texttt{attack.mjs} with a target user ID
-overwriting the VRF-derived identity entry.}
+\includegraphics[width=0.86\textwidth]{figures/auditor-rotations-attack.png}
+\caption[Commands staging A1a and A1b.]{Commands used to stage A1a and A1b in one controlled run.
+The first replaces the mutable VRF-derived identity entry and commits epoch 5. The second replaces
+the immutable per-conversation lookup slot and commits epoch 7. The corresponding auditor outcomes
+appear in \cref{fig:impl-auditor}, left.}
 \label{fig:demo-cmd}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[p]
 \centering
-\screenshotplaceholder{0.62\textwidth}{figures/cmd-equivocation.png}
-\caption[Staging an equivocation (scenario A4).]{Staging an equivocation in scenario A4. The
-privileged testing endpoint signs a second, divergent tree head at the same epoch. The
-cross-vantage auditor detects the divergence (\cref{fig:impl-auditor}, right).}
-\label{fig:demo-equivocation}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\screenshotplaceholder{0.49\textwidth}{figures/ui-vrf.png}\hfill
-\screenshotplaceholder{0.49\textwidth}{figures/ui-cea.png}
-\caption[Global-VRF and CEA detection paths.]{Global-VRF and CEA detection paths. The left capture
-shows the account-wide monitor detecting replacement of the VRF-derived identity entry in scenario
-A1a. Its console reports \texttt{[KT][self] [ALERT] identity entry does not match the local key}. The
-right capture shows continuous CEA mode detecting a conflicting per-epoch fingerprint after a
-one-shot ratchet-key injection into the selected conversation. Both paths raise the red warning
-banner.}
+\includegraphics[width=0.90\textwidth]{figures/Bob-vrf-attacked-appendix.png}
+\par\smallskip
+\small (a) Bob's account-wide self-check
+\par\medskip
+\includegraphics[width=0.90\textwidth]{figures/alice-vrf-attacked-appendix.png}
+\par\smallskip
+\small (b) Alice's verification of the peer warning
+\caption[A1a self-detection and peer propagation.]{A1a client-side evidence. Bob's account-wide
+self-check detects that his global identity entry no longer matches the local key and publishes the
+pair-bound warning. Alice then verifies that warning for the conversation. Both clients display the
+red warning state.}
 \label{fig:impl-screens-fronts}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
-\screenshotplaceholder{0.49\textwidth}{figures/auditor-rotations.png}\hfill
-\screenshotplaceholder{0.49\textwidth}{figures/auditor-fork.png}
-\caption[Auditor outputs for A1a, A1b, and A4.]{Auditor outputs for three attacks. In the left
-capture, A1a is a permitted declared rotation of a \textsc{mutable} identity slot, so the auditor
-reports \texttt{verified: append-only history and the independent vantage agree} and the client
-self-check provides detection. The same capture shows A1b, an immutable-slot rotation, producing
-\texttt{[alert] transition audit failed: replay did not reproduce the committed state}. In the
-right capture, A4 raises \texttt{[alert] fork: two validly signed roots exist at one tree size}.}
+\includegraphics[width=0.90\textwidth]{figures/cea-bob-appendix.png}
+\caption[CEA fork detection and warning.]{Continuous CEA detection after a one-shot ratchet-key
+injection. The verifier reports \textsc{Fork}, writes the authenticated in-band warning, and displays
+the red warning state for the selected conversation.}
+\label{fig:impl-cea-front}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.86\textwidth]{figures/cmd-equivocation.png}
+\caption[Staging A4 equivocation.]{Staging A4 equivocation. The privileged testing endpoint signs a
+second root at the current tree size. The cross-vantage auditor detects the two validly signed roots,
+as shown in \cref{fig:impl-auditor}, right.}
+\label{fig:demo-equivocation}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.88\textwidth]{figures/auditor-rotations.png}
+\par\smallskip
+\small (a) A1a and A1b transition-audit run
+\par\medskip
+\includegraphics[width=0.88\textwidth]{figures/auditor-fork.png}
+\par\smallskip
+\small (b) A4 cross-vantage fork verdict
+\caption[Auditor outcomes for A1a, A1b, and A4.]{Auditor outcomes for the controlled attacks. The
+left capture belongs to the run in \cref{fig:demo-cmd}. The auditor verifies the declared history
+through epoch 6, including the mutable identity-entry rotation and the subsequent valid update. It
+then rejects the immutable-slot replacement at epoch 7 because replay does not reproduce the
+committed state. The right capture shows A4 in a separate reset run, where two validly signed roots
+exist at one tree size.}
 \label{fig:impl-auditor}
 \end{figure}
+
+\FloatBarrier
 
 % ============================================================================
 \section{Implementation Detail and Engineering Record}\label{sec:apiref-engineering}

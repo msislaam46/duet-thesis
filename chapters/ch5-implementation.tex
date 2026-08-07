@@ -173,32 +173,47 @@ functions, event names, and engineering record are in \cref{sec:apiref-hooks,sec
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
-The demonstration runs two Signal Desktop clients with the Rust directory server, auditor, and
-scripted attacker. \Cref{fig:impl-baseline} shows a proof-verified clean state. In
-\hyperref[sc:threat-a1]{A1b}, replacement
-of an immutable conversation slot causes the affected client to publish a warning that the peer reads
-from the shared slot, and the auditor independently fails its transition audit for that replacement,
-since an immutable slot cannot be rotated. In \hyperref[sc:threat-a1]{A1a}, the global identity slot
-is mutable, so the auditor accepts the declared rotation and client
-self-checks detect it instead. \Cref{fig:impl-screens} shows both clients displaying the
-A1a warning. The runs use two researcher-controlled Signal accounts linked through Signal's production
-service and intercept no third-party traffic.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\textwidth]{figures/normal.png}
-\caption[Verified state before an attack.]{The client displays a verified state after successful
-owner-, peer-, and warning-slot checks.}
-\label{fig:impl-baseline}
-\end{figure}
+The demonstration uses two Signal Desktop clients with the Rust directory server, auditor, and
+privileged attack tool. In \hyperref[sc:threat-a1]{A1b}, replacement of an immutable conversation
+slot causes the affected client to publish a warning that the peer reads from the shared slot. The
+auditor independently rejects that replacement because an immutable slot cannot be rotated. In
+\hyperref[sc:threat-a1]{A1a}, the global identity slot is mutable, so the auditor accepts the declared
+rotation while client self-checks detect the substitution. \Cref{fig:impl-screens} shows the clean
+state and the A1a warning in both clients. The runs use two researcher-controlled Signal accounts
+linked through Signal's production service and intercept no third-party traffic. Additional console,
+command, and auditor evidence is provided in \cref{sec:apiref-demo}.
 
 \begin{figure}[p]
 \centering
-\includegraphics[width=\textwidth]{figures/attacked_user.png}\\[8pt]
-\includegraphics[width=\textwidth]{figures/peer.png}
-\caption[Identity-slot warning on both clients (A1a).]{The affected client detects the substituted
-identity key and publishes a warning. The peer verifies the warning's directory proof and pair-bound
-MAC, and both clients display the red banner.}
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/normal-alice-main.png}
+  \par\smallskip
+  \small (a) Alice before A1a
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/normal-bob-main.png}
+  \par\smallskip
+  \small (b) Bob before A1a
+\end{minipage}
+\par\medskip
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/attacked-alice-main.png}
+  \par\smallskip
+  \small (c) Alice after A1a
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/attacked-bob-main.png}
+  \par\smallskip
+  \small (d) Bob after A1a
+\end{minipage}
+\caption[Clean and warning states in the A1a demonstration.]{End-to-end A1a demonstration. The
+upper panels show both views of the conversation after proof-backed verification. The lower panels
+show the same views after Bob's global identity entry is replaced and the authenticated warning
+reaches both clients.}
 \label{fig:impl-screens}
 \end{figure}
 
