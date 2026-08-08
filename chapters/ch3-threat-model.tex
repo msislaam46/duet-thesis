@@ -138,7 +138,7 @@ one honest auditor with an independent view, whereas the client checks for
 
 DUET's monitoring guarantee begins only after a client pins a directory binding while the directory
 is honest.\label{sec:threat-fair} If a malicious operator controls the first value, later monitoring
-detects changes but cannot establish its authenticity. With an honest directory, first-contact A3
+detects changes but cannot establish its authenticity. With an honest directory, a first-contact A3 substitution
 remains detectable because the substituted pre-key bundle conflicts with the identity key under the
 user's global VRF-derived label.
 \Cref{ch:discussion} discusses the remaining trust-on-first-use limitation.
@@ -150,8 +150,8 @@ user's global VRF-derived label.
 The adversary model and assumptions give four security requirements, denoted G1--G4.
 
 \paragraph{G1: Key-Substitution Detection.} Any public-key substitution by the server (A1, A5) or a
-network adversary (A3) must be detected by the affected client. For an established A1 or A5
-conversation, the peer must receive an in-band warning, or suppression must cause verification to fail.
+network adversary (A3) must be detected by the affected client. For an established conversation
+affected by an A1 or A5 substitution, the peer must receive an in-band warning, or suppression must cause verification to fail.
 
 \paragraph{G2: Consistency Across Offline Windows.} A returning client must verify that the current
 log extends its last trusted state without processing every missed epoch.
@@ -159,6 +159,6 @@ log extends its last trusted state without processing every missed epoch.
 \paragraph{G3: Directory Privacy.} It must be computationally infeasible for anyone other than the
 directory operator to map a public directory label back to the corresponding user identifier.
 
-\paragraph{G4: Fork Detection.} An honest auditor detects A4 by comparing the client-observed head
+\paragraph{G4: Fork Detection.} An honest auditor detects A4 split-view equivocation by comparing the client-observed head
 with a different valid head for the same epoch from an independent vantage. G4 alone depends on this
 independent vantage.

@@ -35,7 +35,7 @@ different parameters to different clients, because any client that recomputes $\
 from the parameters it expects will reject the mismatch. A parameter substitution thus becomes a
 signed, monitorable act: a uniform mismatch is rejected by any client that recomputes the commitment,
 and serving different parameter sets to different clients is equivocation on the configuration
-commitment, exposed by the same cross-vantage comparison as \hyperref[sc:threat-a4]{A4}.
+commitment, exposed by the same cross-vantage comparison used to detect \hyperref[sc:threat-a4]{A4} split-view equivocation.
 
 \paragraph{Verification-chain current-snapshot binding.} The verification chain of \cref{ssec:design-verify} has three
 properties the figure does not make evident. First, global lookups require the VRF check, while

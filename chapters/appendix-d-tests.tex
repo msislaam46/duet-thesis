@@ -471,8 +471,8 @@ verifier of the Rust directory server's outputs (\cref{sec:impl-tests}).
 % ----------------------------------------------------------------------------
 \section{Adversarial Scenario Suite}\label{sec:tests-adversarial}
 
-The suite runs against the real \texttt{duet} crate and asserts the expected security outcome for A0,
-A1a, A1b, A2--A5, and X1. The A1 variants additionally assert the warning epoch. The other latency
+The suite runs against the real \texttt{duet} crate and asserts the expected security outcome for all
+eight scenarios defined in \cref{ch:threat} (A0, A1a, A1b, A2--A5, and X1). The A1 variants additionally assert the warning epoch. The other latency
 entries in \cref{tab:tests-adversarial} describe the fixed test schedule of this demonstration rather
 than test assertions or protocol-wide bounds.
 
@@ -500,9 +500,8 @@ X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 The suite is the Rust integration test \texttt{tests/adversarial.rs}, run with
 \texttt{cargo test --test adversarial}. Each scenario asserts its expected security outcome, and the
 A1 variants additionally assert the warning epoch, while a narrated walkthrough of the same scenarios
-is provided by the \texttt{kt\_attack\_demo} binary. All eight scenarios pass: the A0 baseline, the
-six detection scenarios A1a, A1b and A2--A5, and the X1 endpoint-compromise case asserted as an
-out-of-scope boundary. The corresponding detection latencies are the ones reported in \cref{ch:eval}.
+is provided by the \texttt{kt\_attack\_demo} binary. All eight cases produce their expected outcomes. The A0 baseline and the six detection scenarios
+A1a, A1b, and A2--A5 pass, while X1 confirms the endpoint-compromise boundary as out of scope. The corresponding detection latencies are the ones reported in \cref{ch:eval}.
 
 % ============================================================================
 \section{Evidence Structure and Cross-Implementation Parity}\label{sec:tests-evidence}

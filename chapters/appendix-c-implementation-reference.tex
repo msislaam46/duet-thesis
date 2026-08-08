@@ -65,7 +65,7 @@ Method & Path & Purpose \\
 POST & \texttt{/admin/update} & overwrite a slot's value, bypassing the public write-once policy. The overwrite is still declared in the epoch delta as a rotation (stages an A1 or A5 substitution) \\
 POST & \texttt{/admin/delete} & remove a committed leaf \emph{without} declaring it in the epoch delta, so the auditor's transition replay fails (stages the suppression-by-deletion scenario) \\
 POST & \texttt{/admin/commit} & commit an epoch \\
-POST & \texttt{/admin/equivocate} & sign a second, divergent head at one epoch (stages A4) \\
+POST & \texttt{/admin/equivocate} & sign a second, divergent head at one epoch (stages the A4 split-view equivocation scenario) \\
 POST & \texttt{/admin/stop-equivocate} & clear the forked head \\
 POST & \texttt{/admin/reset} & rebuild the server from its fixed seed with a fresh genesis epoch, for repeatable demonstrations \\
 \bottomrule
@@ -247,7 +247,7 @@ then verifies the peer slot, its own owner slot, and the shared warning slot thr
 label-bound, proof-verified lookups (the peer slot $\ell_A$ it retrieves Alice
 from, its own slot $\ell_B$, and the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably
 empty) and returns \texttt{SAFE}, while the auditor polls and replays to \textsc{Consistent}. In the
-A1b branch the server overwrites Alice's own dual-index slot $\ell_A$ (which is also Bob's peer slot).
+branch for the A1b session-slot substitution, the server overwrites Alice's own dual-index slot $\ell_A$ (which is also Bob's peer slot).
 Alice's monitor reads the substituted value against her pinned key, finds a mismatch, and writes the
 shared warning slot. Bob's monitor then reads that warning and both clients go red. Independently, the
 auditor's transition replay rejects the declared immutable rotation, so detection does not rest on the
@@ -261,9 +261,9 @@ The supporting captures for the demonstration in \cref{ssec:impl-demo} show the 
 the privileged commands used to stage the attacks, the client-side detection paths, and the auditor
 verdicts. The main-body figure presents the user-facing outcomes without developer tooling. The
 captures here provide the corresponding console and terminal evidence. \Cref{fig:demo-baseline}
-shows the clean A0 baseline, \cref{fig:demo-cmd} shows the A1a and A1b commands,
+shows the clean A0 baseline, \cref{fig:demo-cmd} shows the commands used to stage the A1a global-slot and A1b session-slot substitutions,
 \cref{fig:impl-screens-fronts,fig:impl-cea-front} show the client-side detection paths,
-\cref{fig:demo-equivocation} shows the A4 command, and \cref{fig:impl-auditor} shows the auditor
+\cref{fig:demo-equivocation} shows the A4 equivocation command, and \cref{fig:impl-auditor} shows the auditor
 verdicts. The A4 command and auditor captures come from separate reset runs, so their epoch values
 do not form one timeline.
 
@@ -285,7 +285,7 @@ expected pending result before the peer entry appears and is then verified.}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.86\textwidth]{figures/auditor-rotations-attack.png}
-\caption[Commands staging A1a and A1b.]{Commands used to stage A1a and A1b in one controlled run.
+\caption[Commands staging the A1a global-slot and A1b session-slot substitutions.]{Commands used to stage the A1a global-slot and A1b session-slot substitutions in one controlled run.
 The first replaces the mutable VRF-derived identity entry and commits epoch 5. The second replaces
 the immutable per-conversation lookup slot and commits epoch 7. The corresponding auditor outcomes
 appear in the upper panel of \cref{fig:impl-auditor}.}
@@ -301,7 +301,7 @@ appear in the upper panel of \cref{fig:impl-auditor}.}
 \includegraphics[width=0.90\textwidth]{figures/alice-vrf-attacked-appendix.png}
 \par\smallskip
 \small (b) Alice's verification of the peer warning
-\caption[A1a self-detection and peer propagation.]{A1a client-side evidence. Bob's account-wide
+\caption[A1a self-detection and peer propagation.]{Client-side evidence for the A1a global-slot substitution. Bob's account-wide
 self-check detects that his global identity entry no longer matches the local key and publishes the
 pair-bound warning. Alice then verifies that warning for the conversation. Both clients display the
 red warning state.}
@@ -339,7 +339,7 @@ as shown in the lower panel of \cref{fig:impl-auditor}.}
 upper capture belongs to the run in \cref{fig:demo-cmd}. The auditor verifies the declared history
 through epoch 6, including the mutable identity-entry rotation and the subsequent valid update. It
 then rejects the immutable-slot replacement at epoch 7 because replay does not reproduce the
-committed state. The lower capture shows A4 in a separate reset run, where two validly signed roots
+committed state. The lower capture shows the A4 equivocation in a separate reset run, where two validly signed roots
 exist at one tree size.}
 \label{fig:impl-auditor}
 \end{figure}

@@ -152,9 +152,9 @@ first use the operator can associate a conversation's labels, and those conseque
 the write-once policy, the transition audit, and the persistence check (\cref{ssec:design-detection}).
 
 \paragraph{Scope of the Warning Channel.} The shared warning channel applies only after an honest
-X3DH/PQXDH handshake has established a common secret. It covers A1 and A5 for established pairs.
-When the directory is honest, comparison with the peer's global VRF-bound identity entry detects
-first-contact A3. Labels derived from different conversation secrets provide supporting evidence. A
+X3DH/PQXDH handshake has established a common secret. For established pairs, it covers the A1 key-substitution scenario and the A5 malicious key-rotation scenario.
+When the directory is honest, comparison with the peer's global VRF-bound identity entry detects a
+first-contact A3 substitution. Labels derived from different conversation secrets provide supporting evidence. A
 substitution that predates an honest baseline remains the TOFU boundary
 (\cref{sec:threat-fair}).
 

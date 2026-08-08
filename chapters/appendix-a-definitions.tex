@@ -385,7 +385,7 @@ separate global VRF-indexed path rests on the uniqueness of the VRF (\cref{def:v
 than on label secrecy.
 
 Warning censorship is handled in two cases. A dropped pre-commit write is caught by the verified
-read-back, where a key mismatch together with a proven-empty slot forms the A2 compound alarm. A
+read-back, where a key mismatch together with a proven-empty slot forms the compound warning-censorship signal for A2. A
 post-commit deletion is caught by the transition audit and the retained persistence evidence, and the
 write-once policy prevents an honest server from overwriting a committed warning. Split-view equivocation is handled by the
 cross-vantage auditor (\cref{ssec:design-detection}).

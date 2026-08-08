@@ -9,9 +9,9 @@ completing, deploying, and extending the system.
 DUET adds automatic in-band substitution detection through additional label-bound lookups without
 introducing a new proof family. Each lookup therefore retains the same asymptotic proof size and verification cost. The
 detection guarantee depends on domain-separated labels, proof-verified absence, warning persistence, and
-transition validation. Under \hyperref[sc:threat-a3]{A3}, when the directory is honest the global
-VRF-bound identity entry supplies the detecting comparison, and labels derived from the two different
-conversation secrets provide supporting evidence.
+transition validation. When the directory is honest, the global VRF-bound identity entry supplies the detecting comparison
+for the \hyperref[sc:threat-a3]{A3 network man-in-the-middle scenario}. Labels derived from the two
+different conversation secrets provide supporting evidence.
 
 The evaluation supports this separation of costs. Identity proofs remain roughly comparable with the
 matched CONIKS proof, detection paths reuse raw-label proofs, and distant-head consistency replaces
@@ -38,8 +38,8 @@ not caught retrospectively. The design covers pairwise,
 single-device conversations rather than groups, MLS, Sender Keys, or complete multi-device warning
 propagation. It also cannot protect a compromised endpoint.
 
-The design also depends on an honest auditor for transition validation. Detecting
-\hyperref[sc:threat-a4]{A4} additionally requires a valid signed head obtained from an independent
+The design also depends on an honest auditor for transition validation. Detection of
+\hyperref[sc:threat-a4]{A4} split-view equivocation further requires a valid signed head obtained from an independent
 vantage. A client can reject a head that does not extend its pinned baseline, but it cannot expose two
 internally consistent branches extending a common prefix. Production deployment therefore requires
 authenticated epoch disclosures, freshness and failure policies, and an independent gossip or
@@ -84,7 +84,7 @@ end-to-end deployment measurement.
 Production integration must obtain the live X3DH or PQXDH conversation secret and the live Double
 Ratchet chain key from libsignal. Replacing the current stand-ins changes the inputs to the existing
 label and CEA constructions rather than their downstream proof formats. The live conversation secret
-is necessary to support the \hyperref[sc:threat-a3]{A3} label-unpredictability claim.
+is necessary for the label-unpredictability argument used in the \hyperref[sc:threat-a3]{A3} network man-in-the-middle analysis.
 
 The public registration and raw-label write interfaces must also authenticate the account or
 conversation party authorised to make the first write. This prevents an unauthorised client from

@@ -80,8 +80,8 @@ client treats anything other than a proof-verified response as a failed check ra
 absence. A refusal therefore never masquerades as a verified absence. The prototype reports an
 unreachable or withheld response as an unavailable check (amber), while a malformed, invalid, or
 mismatching response rejects as a failed check (red). Neither verdict attributes a specific cause. The \hyperref[sc:threat-a2]{A2}
-signal proper is the key
-mismatch together with a \emph{proof-verified} absence of the warning. All three safeguards are
+warning-censorship signal combines a key
+mismatch with \emph{proof-verified} warning absence. All three safeguards are
 represented in the prototype. The write-once policy and transition audit run live. The persistence
 check is implemented and separately unit-tested but is not wired into the background
 monitor (\cref{ch:impl}, \cref{alg:detect}).
@@ -142,7 +142,7 @@ technique except T1552.004 is mitigated by a key-transparency control. T1552.004
 endpoint-compromise boundary, out of scope for any directory mechanism (\cref{ch:threat}). The table
 lists only techniques with a faithful ATT\&CK counterpart~\cite{mitre-attack}. Adversary behaviours
 specific to a malicious \emph{directory} have no precise Enterprise-technique match and
-are the thesis's own A1/A2/A4 threats, analysed through the STRIDE threat analysis and the attack
+are the thesis's own A1, A2, and A4 threats, analysed through the STRIDE threat analysis and the attack
 scenarios of \cref{ch:threat} instead. These behaviours include observing registration patterns,
 operating a parallel encrypted channel, abusing the server's own write authority, selectively
 censoring writes, and presenting divergent signed views (equivocation).
@@ -203,7 +203,7 @@ The other three residuals concern availability. The prototype does not implement
 limiting, a published-epoch staleness timeout, or a gossip transport that exposes proof omission.
 These are deployment tasks discussed in \cref{ch:discussion}.
 
-A2 is different from those residuals. If a warning write is censored before commitment, a key
+The A2 warning-censorship scenario differs from these availability residuals. If a warning write is censored before commitment, a key
 mismatch together with proof-verified warning absence raises the compound alarm. If a committed
 warning later disappears, the invalid transition is detected by the transition audit. The separate
 persistence component can retain evidence of that disappearance, although it is not wired into the
@@ -339,12 +339,12 @@ client to accept an attacker-controlled key. The OR relationship indicates that 
 routes can expose message plaintext if the substitution succeeds. Each route is paired with the
 control that detects it.
 
-A2 and A4 instead attempt to conceal an attack. A2 suppresses the shared warning, while A4 presents
+The A2 warning-censorship scenario and A4 split-view equivocation are concealment attempts. A2 suppresses the shared warning, while A4 presents
 different signed heads to different vantage points. A key mismatch together with proof-verified
 warning absence exposes A2. Comparing signed heads from independent vantage points exposes A4.
 
 These guarantees depend on the assumptions of \cref{ch:threat}. The warning-channel cases require
-honest establishment and active monitoring. Detecting A4 additionally requires a valid head from an
+honest establishment and active monitoring. Detection of A4 split-view equivocation also requires a valid head from an
 honest independent vantage. Under these conditions every attack route covered by the threat model produces a warning or
 rejecting verdict. Endpoint compromise (X1) remains outside the directory threat model.
 
