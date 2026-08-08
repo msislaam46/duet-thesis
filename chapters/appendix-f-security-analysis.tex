@@ -1,11 +1,12 @@
 \chapter{Security Analysis}\label{app:security}
 
-This appendix presents the security analysis supporting the main text. \Cref{sec:sec-suppression}
-gives the full warning-suppression argument summarized in \cref{sec:design-dual}.
-The MITRE ATT\&CK technique-to-mitigation matrix is in \cref{sec:sec-mitre}. The complete STRIDE
-threat analysis is in \cref{sec:sec-stride}. The corresponding attack scenarios and outcomes are summarized in \cref{sec:eval-security}. The
-material in this appendix draws on the attack scenarios of \cref{ch:threat} and the mechanisms of
-\cref{ch:design}, and corresponds to the runnable adversarial suite of \cref{sec:impl-tests}. The MITRE identifiers are real ATT\&CK Enterprise
+This appendix expands the security analysis supporting the main text.
+\Cref{sec:sec-suppression} gives the full warning-suppression argument summarized in
+\cref{sec:design-dual}. The appendix also provides the MITRE ATT\&CK mapping in
+\cref{sec:sec-mitre} and the STRIDE analysis in \cref{sec:sec-stride}. The corresponding scenarios
+and outcomes are evaluated in \cref{sec:eval-security}. These analyses apply the threat model of
+\cref{ch:threat} to the mechanisms of \cref{ch:design} and the runnable adversarial suite described
+in \cref{sec:impl-tests}. The MITRE identifiers are real ATT\&CK Enterprise
 technique IDs, mapped to how each manifests against a key directory and the key-transparency control
 that answers it.
 
@@ -195,19 +196,18 @@ in \cref{sec:def-structures}. The endpoint, auditor, and trust-on-first-use assu
 \cref{sec:threat-assumptions}. Key substitution is detected by the controls evaluated in
 \cref{sec:eval-security}.
 
-One residual follows from the semi-trusted-server model. The operator learns the association between
-an account and its VRF-derived identity label. This query-privacy limitation is also present in the
-surveyed key-transparency deployments, including CONIKS~\cite{melara2015coniks}. ACKA does not address
-it because its security model abstracts the log behind the $\Log$ interface~\cite{dowling2023acka}.
-The other three residuals concern availability. The prototype does not implement write rate
-limiting, a published-epoch staleness timeout, or a gossip transport that exposes proof omission.
-These are deployment tasks discussed in \cref{ch:discussion}.
+The four residuals arise from the trust model and deployment requirements. One follows from the
+semi-trusted-server model: the operator learns the association between an account and its VRF-derived
+identity label. This limitation also appears in CONIKS~\cite{melara2015coniks} and the IETF Key
+Transparency architecture~\cite{ietf-keytrans-protocol}, while ACKA abstracts the log behind its
+secure-log interface~\cite{dowling2023acka}. The other three concern availability: write flooding,
+published-epoch staleness, and omitted proofs. These deployment tasks are discussed in
+\cref{ch:discussion}.
 
-The A2 warning-censorship scenario differs from these availability residuals. If a warning write is censored before commitment, a key
-mismatch together with proof-verified warning absence raises the compound alarm. If a committed
-warning later disappears, the invalid transition is detected by the transition audit. The separate
-persistence component can retain evidence of that disappearance, although it is not wired into the
-live background monitor (\cref{alg:detect}).
+The \hyperref[sc:threat-a2]{A2 warning-censorship scenario} is distinct from those availability
+residuals. Its pre-commit compound signal and transition-audit detection are established in
+\cref{sec:sec-suppression}. \Cref{alg:detect} shows the separately tested persistence component,
+which is not wired into the live background monitor.
 
 \begin{table}[ht]
 \centering
@@ -318,16 +318,6 @@ Client escalates to server writes & partly prevented, partly \emph{detected}: th
 \bottomrule
 \end{tabular}
 \end{table}
-
-The four residual risks are of two kinds, and none is a cryptographic weakness. One is inherent to the
-semi-trusted-server model: the operator necessarily learns the label-to-user mapping (Information
-Disclosure), a residual shared by the standard key-transparency literature (CONIKS~\cite{melara2015coniks},
-the IETF Key Transparency architecture~\cite{ietf-keytrans-protocol}) and not addressed by
-ACKA~\cite{dowling2023acka}, which abstracts the log behind a security definition rather than
-building a distrusted one. The other three are availability functions the prototype does not
-implement: write rate-limiting, a published-epoch staleness timeout, and a gossip transport for
-proof-omission. Each is a deployment-layer engineering task rather than a gap in the scheme
-(\cref{ch:discussion}).
 
 \FloatBarrier
 % ----------------------------------------------------------------------------

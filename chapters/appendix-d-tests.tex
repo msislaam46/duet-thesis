@@ -500,9 +500,9 @@ X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 
 The suite is the Rust integration test \texttt{tests/adversarial.rs}, run with
 \texttt{cargo test --test adversarial}. Each scenario asserts its expected security outcome, and the
-A1 variants additionally assert the warning epoch, while a narrated walkthrough of the same scenarios
-is provided by the \texttt{kt\_attack\_demo} binary. All eight cases produce their expected outcomes. The A0 baseline and the six detection scenarios
-A1a, A1b, and A2--A5 pass, while X1 confirms the endpoint-compromise boundary as out of scope. The corresponding detection latencies are the ones reported in \cref{ch:eval}.
+A1 variants additionally assert the warning epoch. The \texttt{kt\_attack\_demo} binary provides a
+narrated walkthrough. All eight cases produce their expected outcomes: the A0 baseline and six
+detection scenarios pass, while X1 confirms that endpoint compromise is outside the threat model.
 
 % ============================================================================
 \section{Evidence Structure and Cross-Implementation Parity}\label{sec:tests-evidence}
@@ -530,12 +530,7 @@ Rust--TypeScript wire parity is a separate opt-in target that requires the Rust 
 Jest run alone does not establish wire parity. When enabled, the wire-parity suite runs the client's
 full verification chain against the live Rust directory server, confirming multi-entry inclusion, proven
 non-inclusion, the Ed25519 signed-tree-head check (and its rejection of a tampered head), the VRF
-path, and windowed consistency. The integration suite and the cryptographic unit suites run the
-verifier against a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF, and
-Ed25519 signer), so the client is checked against the implemented components rather than stubs, while
-the remaining unit suites use controlled test doubles. Together they cover key-substitution detection (the
-lookup verdicts \texttt{SAFE}, key mismatch, and proven not-in-log), the own-key self-check
-against a server overwrite, man-in-the-middle detection on a replaced lookup slot, and the
+path, and windowed consistency. These suites cover key-substitution detection, the own-key self-check, replaced-slot detection, and
 availability-versus-integrity routing. Beyond this harness, thirty-five embedded tests in six Signal Desktop suites run under the
 client's own test runner and drive realistic ACI strings through the same integration boundary the
 live callers use (\cref{sec:tests-ts}).

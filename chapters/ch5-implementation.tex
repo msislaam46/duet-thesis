@@ -108,9 +108,8 @@ are provided in \cref{sec:apiref-engineering}.
 \subsection{Server, Auditor, and Benchmark Boundary}\label{ssec:impl-core-server}
 \label{ssec:impl-bench}
 
-An \texttt{axum} and \texttt{tokio} server holds the directory behind a single
-\texttt{Arc<Mutex<KTServer>>} with no sharding, which is adequate for a single-machine prototype and is
-one of the constraints \cref{ch:discussion} returns to. The server exposes public lookup and monitoring
+A server built with \texttt{axum} and \texttt{tokio} holds the directory behind a single
+\texttt{Arc<Mutex<KTServer>>}, with no sharding, matching the single-machine prototype scope. The server exposes public lookup and monitoring
 operations plus a privileged unchecked-overwrite interface used only by the adversarial harness.
 Write-once enforcement returns 409 Conflict when a dual-index, warning, or CEA label is already
 occupied, so a replacement is refused, never silently applied. A separate \texttt{ureq} auditor
@@ -138,7 +137,8 @@ recomputed root matches the committed root.}
 
 The benchmark harness invokes the Rust server in process. Its timings measure local
 cryptographic work and exclude HTTP, Electron, database, and network costs. The measurement environment
-is in \cref{sec:bench-env}. The reproduction procedure is in \cref{sec:bench-repro}.
+is given in \cref{sec:bench-env}, while
+\cref{sec:bench-repro} provides the reproduction procedure.
 \FloatBarrier
 
 % ============================================================================

@@ -93,7 +93,7 @@ hardware-independent.
 Lookup proof size against directory size is reported in \cref{tab:bench-m1}, and offline
 catch-up raw consistency-path hash bytes against the window in \cref{tab:bench-m4}.
 
-Proof \emph{generation} was timed separately from the byte counts in \cref{sec:bench-sizes}. At $W = 720$ the windowed
+The corresponding proof-generation timings were measured separately. At $W = 720$ the windowed
 proof has a median proof-generation time of \SI{0.3}{\micro\second} against
 \SI{197.0}{\micro\second} for the repeated current-head-anchored baseline. The quotient is only
 approximate because the windowed value is close to the reporting resolution of the harness. The

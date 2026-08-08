@@ -11,11 +11,8 @@ defines the primitives and encodings used below.
 % ============================================================================
 \section{Architecture}\label{sec:design-arch}
 
-The architecture combines three authenticated data structures, with each layer authenticating the
-one below (\cref{fig:design-arch}). The prefix tree stores the
-current directory state, the append-only log records every committed version of that state, and the
-signed tree head authenticates the latest log root. Together, they follow the combined-tree design of
-the IETF Key Transparency working group (\cref{ssec:bg-keytrans}).
+DUET follows the IETF Key Transparency combined-tree design described in
+\cref{ssec:bg-keytrans}. \Cref{fig:design-arch} shows its three-layer commitment chain.
 
 \begin{figure}[t]
 \centering
@@ -89,16 +86,9 @@ binding in greater detail.
 % ============================================================================
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}
 
-The dual-index scheme provides the in-band peer-warning channel required by \cref{ssec:bg-implications}
-and supports G1 (Key-Substitution Detection). An in-band warning channel flags server-side
-substitution of the global or session slot (\hyperref[sc:threat-a1]{A1}). Identity re-fetch and
-predecessor cross-signature verification detect a malicious rotation (\hyperref[sc:threat-a5]{A5}).
-When the directory is honest, comparison with the peer's global VRF-bound identity entry detects a
-network man-in-the-middle (\hyperref[sc:threat-a3]{A3}), because an attacker-controlled value cannot match the authenticated
-global key. Labels derived from the attacker's different shared secret provide supporting evidence
-because, except with negligible collision probability, the expected peer-slot lookup returns
-proof-verified non-inclusion. The global identity binding also supplies the expected key against
-which pre-emptive occupation of the session slot is detected.
+The dual-index scheme provides the in-band peer-warning channel required by
+\cref{ssec:bg-implications} and supports G1 (Key-Substitution Detection) for established
+conversations.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
 
@@ -152,11 +142,14 @@ first use the operator can associate a conversation's labels, and those conseque
 the write-once policy, the transition audit, and the persistence check (\cref{ssec:design-detection}).
 
 \paragraph{Scope of the Warning Channel.} The shared warning channel applies only after an honest
-X3DH/PQXDH handshake has established a common secret. For established pairs, it covers the A1 key-substitution scenario and the A5 malicious key-rotation scenario.
-When the directory is honest, comparison with the peer's global VRF-bound identity entry detects a
-first-contact A3 substitution. Labels derived from different conversation secrets provide supporting evidence. A
-substitution that predates an honest baseline remains the TOFU boundary
-(\cref{sec:threat-fair}).
+X3DH/PQXDH handshake has established a common secret. For established pairs, it covers the
+\hyperref[sc:threat-a1]{A1 key-substitution scenario} and the
+\hyperref[sc:threat-a5]{A5 malicious key-rotation scenario}. When the directory is honest,
+comparison with the peer's global VRF-bound identity entry detects a first-contact
+\hyperref[sc:threat-a3]{A3 substitution}. Labels derived from different conversation secrets provide
+supporting evidence. The global identity binding also supplies the expected key used to detect
+pre-emptive occupation of a session slot. A substitution that predates an honest baseline remains
+the TOFU boundary (\cref{sec:threat-fair}).
 
 \subsection{Detection and the Bidirectional Warning}\label{ssec:design-detection}
 
@@ -297,8 +290,7 @@ transition audit supplies that check.
 
 DUET additionally supplies conversation-derived lookup labels and a shared warning slot, windowed
 catch-up, and cross-vantage fork detection. These additions address malicious directory behaviour,
-peer notification, and offline recovery beyond ACKA's assumed log. The complete
-component mapping is in \cref{tab:design-acka}.
+peer notification, and offline recovery beyond ACKA's assumed log.
 
 \begin{table}[htbp]
 \centering
