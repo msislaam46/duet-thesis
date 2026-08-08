@@ -433,8 +433,8 @@ dynamic import for the key-transparency code was removed and the whole layer now
 with the networked path made opt-in and its failure caught separately. Second, with context isolation
 enabled, property assignments to \texttt{window} in the preload world are not visible to the renderer,
 so objects injected through the console had no effect, whereas DOM custom events on \texttt{window}
-cross the boundary. Finally, the application's typed event bus and those DOM custom events were
-mismatched, which was resolved by dispatching on both. Several robustness issues appeared only end to end: a
+cross the boundary. Finally, the application exposes both a typed event bus and DOM custom events.
+Dispatching verdicts through both interfaces resolved the delivery mismatch. Several robustness issues appeared only end to end: a
 server that generated a fresh signing key on each launch invalidated cached public keys, fixed by
 deriving the server's keys deterministically from a seed. A panic on a freshly emptied log poisoned the
 shared mutex, resolved by bootstrapping a genesis epoch at initialization. An administrative reset

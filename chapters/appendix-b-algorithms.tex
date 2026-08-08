@@ -248,9 +248,9 @@ trust boundary: every value it accepts is checked against a signed tree head bef
 STH signature all verify, bind to the caller's pinned head, and carry the pinned configuration
 commitment, and it fails closed on any mismatch.
 \textsf{Register}, \textsf{RetrieveKey}, and \textsf{WindowedCatchUp} build on it to establish, read,
-and re-synchronize client state. In the implementation these are provided by monitor-level composition
-(the background \texttt{monitorConversation} loop) rather than as one-to-one methods. \textsf{RetrieveKey}'s
-non-null requirement, for instance, is enforced by that composed monitor rather than by a standalone call.
+and re-synchronize client state. In the implementation, the background \texttt{monitorConversation} loop composes these operations
+instead of mapping each one to a separate method. The same monitor enforces
+\textsf{RetrieveKey}'s non-null requirement.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]

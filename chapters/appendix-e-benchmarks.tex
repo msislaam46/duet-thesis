@@ -79,14 +79,13 @@ Several methodology caveats were recorded with the run. The server is in-memory,
 no database. Proof sizes in the M1 and M7 families are measured on a single-epoch log, so a deployed
 $E$-epoch log adds up to $32\lceil\lg E\rceil$ bytes to each lookup proof. The M14 sweep measures that
 multi-epoch term directly (\cref{sec:bench-newfamilies}). Memory is resident set size after build, not peak.
-The operation-rate figures are single-thread per-operation costs. The SHA-NI row is recorded because it bears on
-portability rather than being incidental hardware detail: the SHA-256 implementation dispatches to
+The operation-rate figures are single-thread per-operation costs. The SHA-NI row is reported because it affects portability: the SHA-256 implementation dispatches to
 the hardware instruction at run time, so a host without it takes a software path for every hash, and
 the hash-bound operations (the prefix and full verify, detection, the M8 update, M9, and M13)
 would be materially slower there, while the VRF-bound operations, where SHA-256 is off the critical
-path, would be largely unaffected. The timings below are therefore reported as measurements of this
-configuration rather than as properties of the scheme, and pinning the toolchain does not make them
-portable. The proof sizes, being computed rather than timed, are hardware-independent.
+path, would be largely unaffected. The timings below characterize this configuration, and pinning the
+toolchain does not make them portable. The proof sizes are computed quantities and are therefore
+hardware-independent.
 
 % ----------------------------------------------------------------------------
 \section{Proof Sizes (M1) and Catch-Up Path Bytes (M4)}\label{sec:bench-sizes}
@@ -98,7 +97,7 @@ Proof \emph{generation} was timed separately from the byte counts in \cref{sec:b
 proof has a median proof-generation time of \SI{0.3}{\micro\second} against
 \SI{197.0}{\micro\second} for the repeated current-head-anchored baseline. The quotient is only
 approximate because the windowed value is close to the reporting resolution of the harness. The
-proof-count reduction follows from the windowed construction rather than from these timings. The
+windowed construction establishes the proof-count reduction. The
 timings show that the reduction is not purchased with a generation cost that would offset the
 bandwidth saving.
 
@@ -361,7 +360,7 @@ resolution through $K=720$ ratchet epochs, not interpreted as a distinct mechani
 the M16 detection-path cost, each path a synthetic Rust reconstruction of the corresponding
 detection path.
 
-M17 is functional coverage rather than a timed family. \Cref{tab:bench-m17} maps each listed honest
+M17 records functional coverage, with no associated timings. \Cref{tab:bench-m17} maps each listed honest
 state to the test that asserts its expected clean verdict. The clean-path predicate checked by
 the two new cases is a Rust reimplementation of the detector's clean-path logic, not the production
 TypeScript detector.

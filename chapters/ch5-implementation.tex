@@ -90,17 +90,20 @@ Module & Standards or design basis & Conformance evidence \\
 \label{ssec:impl-core-crypto}
 
 The directory materializes only populated prefix paths and bitmap-compresses proofs. A compressed leaf
-terminates the otherwise fixed 256-bit walk. Empty-sibling hashes below that leaf are memoized lazily
-rather than recomputed and omitted from the transmitted proof, which carries about
-$\lceil \lg N \rceil$ non-empty sibling hashes. Proof transmission and update cost have different
+terminates the otherwise fixed 256-bit walk. The implementation lazily memoizes a small window of each
+compressed leaf's empty-sibling hash chain, avoiding repeated computation. Empty siblings are omitted
+from the transmitted proof, which carries about $\lceil \lg N \rceil$ non-empty sibling hashes. Proof transmission and update cost have different
 bounds. With the trie depth fixed at $d=256$, copying the affected paths for $k$ modified labels
 costs $O(kd)$, which is $O(k)$ in $k$ and independent of $N$.
 
 A committed epoch freezes a snapshot, appends its root to the log, and signs the resulting head.
-Client recomputation checks each response without trusting the directory operator. Dual-index labels use
-HKDF-SHA256, while global identity labels use the RFC ECVRF. The main non-linear implementation cost
-is epoch commit, which deep-clones the current tree into the committed snapshot. The full
-module and data-structure detail is described in \cref{sec:apiref-engineering}.
+Client recomputation checks each response without trusting the directory operator. HKDF-SHA256 derives
+the two conversation-specific lookup labels and the shared warning label from the conversation secret
+and the parties' service identifiers~\cite{rfc5869}. For global identity entries, the RFC~9381 ECVRF
+derives a pseudorandom label from the user identifier and supplies a proof of correct
+evaluation~\cite{rfc9381}. Epoch commitment deep-clones the current tree to form the committed
+snapshot, so its copy cost grows with the directory size. Further module and data-structure details
+are provided in \cref{sec:apiref-engineering}.
 
 \subsection{Server, Auditor, and Benchmark Boundary}\label{ssec:impl-core-server}
 \label{ssec:impl-bench}
@@ -133,8 +136,8 @@ recomputed root matches the committed root.}
 \label{fig:impl-transition-audit}
 \end{figure}
 
-The benchmark harness invokes the Rust server in process. Its timings therefore measure local
-cryptographic work rather than HTTP, Electron, database, or network cost. The measurement environment
+The benchmark harness invokes the Rust server in process. Its timings measure local
+cryptographic work and exclude HTTP, Electron, database, and network costs. The measurement environment
 is in \cref{sec:bench-env}. The reproduction procedure is in \cref{sec:bench-repro}.
 \FloatBarrier
 
@@ -250,10 +253,10 @@ commands and environment.
 \FloatBarrier
 \section{System-Wide Engineering Challenges}\label{sec:impl-challenges}
 
-Three areas required substantial implementation changes. First, the initial TypeScript label stand-in
-could not agree with Rust's RFC~9381 ECVRF, because the two encode-to-curve steps differed. Both
-clients were aligned on the ECVRF-EDWARDS25519-SHA512-TAI suite and checked against the published
-vectors. Signed heads were also bound to each lookup response, preventing a valid proof
+Three areas required substantial implementation changes. First, the initial TypeScript label stand-in did not agree with Rust's RFC~9381 ECVRF because their
+encode-to-curve steps differed. Both implementations were aligned on the
+ECVRF-EDWARDS25519-SHA512-TAI suite and checked against the RFC test
+vectors~\cite[Appendix~B.3]{rfc9381}. Signed heads were also bound to each lookup response, preventing a valid proof
 from being paired with an unsigned or unrelated head.
 
 Second, registration and lookup originally encoded Signal account identifiers differently. Converting
@@ -265,8 +268,9 @@ auditor compare a proof against the wrong upper bound.
 
 Third, Electron integration blocked reliable interface delivery. Dynamic imports split the
 key-transparency code, so it was kept in one bundle. Context isolation blocked assignments to
-\texttt{window} but allowed DOM events across the preload and renderer boundary. The typed event bus
-and DOM events also differed, so dispatching on both resolved the mismatch. The remaining bundling,
+\texttt{window} but allowed DOM events across the preload and renderer boundary. The application
+exposes both a typed event bus and DOM custom events. Dispatching verdicts through both interfaces
+resolved the delivery mismatch. The remaining bundling,
 deterministic-state, and reset detail is described in \cref{sec:apiref-engineering}.
 
 Within the uncompromised-endpoint assumption in \cref{sec:threat-assumptions}, directory-response
@@ -280,8 +284,8 @@ session-blocking policy to future work.
 
 Seeded server keys, a genesis epoch, and an administrative reset make the demonstration repeatable and
 prevent an empty-log failure from leaving shared state unusable. The harness also recovers from a
-poisoned mutex. Production handlers would still need explicit lock-failure recovery rather than the
-demonstration setup.
+poisoned mutex. Production handlers would still need explicit lock-failure recovery beyond these
+demonstration safeguards.
 
 % ============================================================================
 \section{Reproducibility}\label{sec:impl-repro}

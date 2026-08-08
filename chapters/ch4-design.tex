@@ -262,7 +262,7 @@ logarithmic in the log size.}
 \Cref{fig:design-windowed} contrasts one windowed proof with repeated per-epoch proofs. Endpoint
 consistency alone cannot expose a substitution inserted and reverted inside the offline window.
 Detection of such a transient attack therefore depends on a peer observing the substituted key and
-committing a warning. Once a warning commits, three safeguards protect it: write-once enforcement
+committing a warning. After a warning is committed, three safeguards protect it: write-once enforcement
 prevents replacement of an occupied slot through the honest interface, the transition audit rejects
 an invalid declared change, and persistence evidence exposes a later removal from the committed
 history. If the operator censors the write before commitment, the distant-head proof still establishes
