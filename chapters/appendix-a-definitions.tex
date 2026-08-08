@@ -377,18 +377,22 @@ $\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$ cannot carry two verifyin
 of the prefix and inclusion proofs and collision resistance of $\Hash$ (\cref{def:hash}). This holds
 even if the adversary knows $\sharedS$.
 
-G1 in the full model of \cref{ch:threat} additionally relies on three properties with distinct
-adversary scopes, each argued separately. The raw dual-index labels must be unpredictable to the
-operator before first use, which needs HKDF (\cref{def:hkdf}) as a PRF keyed by an unknown,
-high-entropy $\sharedS$. Warning authenticity against operator injection needs the unforgeability of the warning-MAC. The
-separate global VRF-indexed path rests on the uniqueness of the VRF (\cref{def:vrf-security}) rather
-than on label secrecy.
+G1 in the full model of \cref{ch:threat} additionally depends on three properties with distinct
+adversary scopes. First, pre-use unpredictability of the raw dual-index labels relies on HKDF
+(\cref{def:hkdf}) acting as a PRF keyed by an unknown, high-entropy $\sharedS$. Second, warning
+authenticity against operator injection depends on the unforgeability of the warning-MAC. Finally, the
+global VRF-indexed identity path derives its security from VRF uniqueness
+(\cref{def:vrf-security}), independently of label secrecy.
 
-Warning censorship is handled in two cases. A dropped pre-commit write is caught by the verified
-read-back, where a key mismatch together with a proven-empty slot forms the compound warning-censorship signal for A2. A
-post-commit deletion is caught by the transition audit and the retained persistence evidence, and the
-write-once policy prevents an honest server from overwriting a committed warning. Split-view equivocation is handled by the
-cross-vantage auditor (\cref{ssec:design-detection}).
+For the established-conversation G1 cases that use the shared warning channel to notify the peer, the
+argument also depends on the A2 censorship safeguards. First, if the operator drops a warning before
+commitment, the client observes the existing key mismatch together with proof-verified absence at the
+warning slot. Second, if the operator removes a warning after commitment, the transition audit detects
+the invalid change and the retained persistence evidence records the removal. The write-once policy
+also prevents an honest server from overwriting a committed warning.
+
+Separately, the cross-vantage auditor handles A4 split-view equivocation
+(\cref{ssec:design-detection}).
 
 A complete formal proof combining these properties remains future work (\cref{ch:discussion}).
 \end{definition}

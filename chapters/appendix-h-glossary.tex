@@ -29,8 +29,8 @@ cryptographic objects are in \cref{app:definitions}. This list is for quick refe
   keys, used by ACKA.
 \item[CKV] Contact Key Verification, Apple's key-transparency mechanism for
   iMessage~\cite{apple-ckv}.
-\item[CONIKS] An early key-transparency system introducing VRF-derived labels and a sparse Merkle
-  directory. The closest published design point for proof size.
+\item[CONIKS] An early key-transparency system that introduced VRF-derived labels and a sparse Merkle
+  directory. It is the closest published design point for proof size.
 \item[Consistency proof] A short proof that a later log is an append-only extension of an earlier one
   (\cref{def:consistency}).
 \item[Declared update set (epoch delta)] The exact list of inserts and value-disclosing rotations a
@@ -83,11 +83,11 @@ cryptographic objects are in \cref{app:definitions}. This list is for quick refe
 \item[PRF] Pseudorandom function: a keyed function whose outputs are indistinguishable from random
   without knowledge of the key. HMAC-SHA256 serves as the PRF in the continuous-mode state update.
 \item[Safety number] Signal's manual verification code: a 60-digit fingerprint of the two parties'
-  identity keys and account identifiers that users are expected to compare out of band. The ceremony
-  the dual-index warning is intended to reduce or replace, for honestly established and monitored
-  conversations.
-\item[SEEMless] A key-transparency system built on an append-only zero-knowledge set (aZKS). Ships
-  multi-path lookup proofs.
+  identity keys and account identifiers that users are expected to compare out of band. DUET's
+  dual-index warning is intended to reduce or replace this ceremony for honestly established and
+  monitored conversations.
+\item[SEEMless] A key-transparency system built on an append-only zero-knowledge set (aZKS). It
+  provides multi-path lookup proofs.
 \item[STH] Signed Tree Head: the operator's signed commitment to the log root at an epoch
   (\cref{def:sth}).
 \item[STRIDE] A threat-elicitation framework (Spoofing, Tampering, Repudiation, Information

@@ -74,13 +74,13 @@ without desynchronizing the chain.
 
 The two designs represent label history differently. ACKA's log stores a vector of fingerprints for
 each label, and its receiver treats two fingerprints at one label as evidence of impersonation. DUET
-stores one value at each label and implements the same detection objective through two checks: if the
-adversary posts first, the honest sender's pre-post check finds the label occupied and rejects the
-write. If the adversary later attempts to replace a committed fingerprint, the transition audit
-rejects the update, because each leaf hash records whether the leaf is mutable or immutable. The
-receiver's per-epoch check cannot detect this overwrite when the adversary controls the pre-shared
-state, so that case depends on the transition audit. Proving that ACKA's security argument carries
-over to this directory representation remains future work.
+stores one value at each label and implements the same detection objective through two checks. First,
+if the adversary occupies the label before the honest sender writes, the sender's pre-post check finds
+it occupied and rejects the write. Second, if the adversary attempts to replace a committed
+fingerprint, the transition audit rejects the update because each leaf hash records whether the leaf
+is mutable or immutable. The receiver's per-epoch check cannot detect this overwrite when the
+adversary controls the pre-shared state, so that case depends on the transition audit. Proving that
+ACKA's security argument carries over to this directory representation remains future work.
 
 For per-epoch CEA verification, detection follows ACKA. An active man-in-the-middle that injects a
 forged ratchet key $T'$ either posts under a label the impersonated party never derives (a different

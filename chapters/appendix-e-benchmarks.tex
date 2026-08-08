@@ -349,10 +349,10 @@ agreement.
 \FloatBarrier
 \section{History Depth, Ratchet Depth, and Detection Paths (M14--M17)}\label{sec:bench-newfamilies}
 
-The four families M14--M17 extend the microbenchmarks with the two axes and the two costs the
-single-epoch measurements above set aside. The tables in this section are \emph{generated} directly
-from the benchmark CSVs by the benchmark-generation script, so they cannot drift from the
-corpus. \Cref{tab:bench-m14} is the M14 history-depth sweep: at each directory size the log-inclusion
+The M14--M17 families cover history depth (M14), ratchet depth and analytic write amplification
+(M15), synthetic detection-path component cost (M16), and clean-session verdict coverage (M17). The
+tables in this section are \emph{generated} directly from the benchmark CSVs by the
+benchmark-generation script, so they cannot drift from the corpus. \Cref{tab:bench-m14} is the M14 history-depth sweep: at each directory size the log-inclusion
 sibling count tracks $\lceil\lg E\rceil$ and the serialized proof grows by $32$ bytes per sibling, the
 history term the single-epoch rows report as zero. \Cref{tab:bench-m15} is the M15 deep-chain
 experiment: both median series vary by at most \SI{0.5}{\micro\second} across the tested values of $K$, and their pointwise difference stays within the timer

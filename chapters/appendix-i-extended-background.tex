@@ -133,11 +133,11 @@ man-in-the-middle controlling the communication channel. This adversary may lear
 state, control the sender's randomness, inject forged ratchet key-shares, and possess the long-term
 authentication secrets~\cite[pp.~5, 19--20, 23]{dowling2023acka}.
 
-Three limitations remain in ACKA's construction. Only the receiver detects a
-forgery, so no signal reaches the peer~\cite[p.~21]{dowling2023acka}. Verification proceeds
-sequentially each epoch and provides no windowed catch-up. Its consistency mechanism is not used for
+Three limitations remain in ACKA's construction. First, only the receiver detects a forgery, so no
+signal reaches the peer~\cite[p.~21]{dowling2023acka}. Second, verification proceeds sequentially
+each epoch and provides no windowed catch-up. Finally, its consistency mechanism is not used for
 third-party auditing, which can instead be provided through the standard cross-vantage comparison
-(\cref{fig:bg-splitview}). DUET's concrete auditor is specified in \cref{alg:auditor}.
+(\cref{fig:bg-splitview}). DUET's auditor is specified in \cref{alg:auditor}.
 
 % ============================================================================
 \section{Manual Verification Evidence}\label{sec:ext-usability}

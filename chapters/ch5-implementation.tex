@@ -263,12 +263,11 @@ exposed a time-of-check race between reading the head and using it to bound a pr
 consistency proof to the already validated head size prevents a later commit from making the client or
 auditor compare a proof against the wrong upper bound.
 
-Third, three Electron bundling and context-isolation problems blocked reliable interface delivery.
-Dynamic imports split the key-transparency code, so it was kept in one bundle. Context isolation
-blocked assignments to \texttt{window} but allowed DOM events across the preload and renderer
-boundary. Dispatching on both the typed event bus and the DOM events resolved their mismatch. The
-remaining bundling, deterministic-state, and reset detail is described in
-\cref{sec:apiref-engineering}.
+Third, Electron integration blocked reliable interface delivery. Dynamic imports split the
+key-transparency code, so it was kept in one bundle. Context isolation blocked assignments to
+\texttt{window} but allowed DOM events across the preload and renderer boundary. The typed event bus
+and DOM events also differed, so dispatching on both resolved the mismatch. The remaining bundling,
+deterministic-state, and reset detail is described in \cref{sec:apiref-engineering}.
 
 Within the uncompromised-endpoint assumption in \cref{sec:threat-assumptions}, directory-response
 verification relies on the verifier, its cryptographic dependencies, the project's ECVRF implementation, and the

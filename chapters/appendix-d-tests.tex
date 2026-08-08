@@ -457,13 +457,14 @@ Suite & Test \\
 % ----------------------------------------------------------------------------
 \section{Cross-Language Equivalence Vectors}\label{sec:tests-xlang}
 
-A fixed set of test vectors pins the HKDF dual-index derivation, the sealed warning MAC, and the
-CEA construction byte-for-byte across the Rust and TypeScript implementations: on the Rust side,
-\texttt{dual\_index::cross\_impl\_test\_vectors}, \texttt{dual\_index::warn\_mac\_cross\_impl\_vector},
-and \texttt{cea::cross\_impl\_test\_vectors}, the last pinning three ratchet epochs, not just the
-first (\cref{tab:tests-rust-prim,tab:tests-rust-system}). On the TypeScript side, the
-\texttt{kt\_integration} vectors v1, v3, and the warn-MAC vector, and the \texttt{cea} vector test
-(\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The Ed25519 and Merkle computations are checked to
+A fixed set of test vectors pins the HKDF dual-index derivation, the sealed warning MAC, and the CEA
+construction byte-for-byte across the Rust and TypeScript implementations. On the Rust side, the
+vectors are \texttt{dual\_index::cross\_impl\_test\_vectors},
+\texttt{dual\_index::warn\_mac\_cross\_impl\_vector}, and
+\texttt{cea::cross\_impl\_test\_vectors}. The last pins three ratchet epochs, not only the first
+(\cref{tab:tests-rust-prim,tab:tests-rust-system}). On the TypeScript side, the corresponding evidence
+comes from the \texttt{kt\_integration} v1, v3, and warning-MAC vectors and the \texttt{cea} vector
+test (\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The Ed25519 and Merkle computations are checked to
 agree by the wire-parity suite, which verifies the Rust directory server's live outputs with the TypeScript
 verifiers. Together these are the contract that licenses the TypeScript client as a faithful
 verifier of the Rust directory server's outputs (\cref{sec:impl-tests}).
@@ -507,7 +508,7 @@ A1a, A1b, and A2--A5 pass, while X1 confirms the endpoint-compromise boundary as
 \section{Evidence Structure and Cross-Implementation Parity}\label{sec:tests-evidence}
 
 This section provides the detailed testing evidence summarized in \cref{sec:impl-tests}. Testing
-provides five forms of evidence: specification grounding states the required behaviour. Unit and
+provides five forms of evidence. Specification grounding states the required behaviour. Unit and
 invariant tests assess individual components. Cross-language vectors check agreement between the
 implementations. The adversarial scenario suite evaluates the combined system against the threat
 model. Performance benchmarks support the cost claims in \cref{ch:eval}.

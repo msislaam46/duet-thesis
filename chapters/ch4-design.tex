@@ -260,14 +260,14 @@ logarithmic in the log size.}
 \end{figure}
 
 \Cref{fig:design-windowed} contrasts one windowed proof with repeated per-epoch proofs. Endpoint
-consistency alone cannot expose a substitution inserted and reverted inside the offline
-window. Detection of such a transient attack therefore depends on a peer observing the substituted
-key and committing a warning. A committed warning is protected by three safeguards. Write-once enforcement prevents replacement of
-an occupied slot, the transition audit rejects an invalid declared change, and persistence evidence
-exposes a later removal from the committed history. If the operator censors the write in the first
-place, the distant-head proof still establishes append-only consistency but cannot exclude that
-transient substitution. The complete argument is given in
-\cref{sec:design-detail-window}.
+consistency alone cannot expose a substitution inserted and reverted inside the offline window.
+Detection of such a transient attack therefore depends on a peer observing the substituted key and
+committing a warning. Once a warning commits, three safeguards protect it: write-once enforcement
+prevents replacement of an occupied slot through the honest interface, the transition audit rejects
+an invalid declared change, and persistence evidence exposes a later removal from the committed
+history. If the operator censors the write before commitment, the distant-head proof still establishes
+append-only consistency but cannot exclude that transient substitution. The complete argument is
+given in \cref{sec:design-detail-window}.
 
 \subsection{Worked Parameterization}\label{ssec:design-param}
 
