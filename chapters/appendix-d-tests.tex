@@ -4,8 +4,8 @@ This appendix summarizes the complete test corpus that backs the conformance cla
 The Rust core contains \num{134} tests: \num{97} unit and invariant tests across nine modules, the
 \num{8}-scenario adversarial integration suite, \num{25} tests in the \texttt{kt\_auditor} binary, and
 \num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
-(\cref{ssec:eval-detection}), all run under \texttt{cargo test}. The TypeScript client has \num{180}
-standalone Jest tests in thirteen suites and a further \num{35} embedded electron-mocha tests in six
+(\cref{ssec:eval-detection}), all run under \texttt{cargo test}. The standalone TypeScript verifier harness has \num{180}
+Jest tests in thirteen suites and a further \num{35} embedded electron-mocha tests in six
 Signal Desktop suites that drive realistic account identifier (ACI) strings through the integration boundary. A fixed set
 of cross-language vectors additionally requires the two implementations to produce byte-identical
 outputs.
@@ -251,7 +251,7 @@ embedded test rather than passing silently.
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: wire parity against the live Rust directory server, and the integration suite (\num{36} tests).}
+\caption{Jest tests: wire parity against the live directory server implemented in Rust, and the integration suite (\num{36} tests).}
 \label{tab:tests-jest-wire}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}
@@ -466,8 +466,8 @@ vectors are \texttt{dual\_index::cross\_impl\_test\_vectors},
 comes from the \texttt{kt\_integration} v1, v3, and warning-MAC vectors and the \texttt{cea} vector
 test (\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The Ed25519 and Merkle computations are checked to
 agree by the wire-parity suite, which verifies the Rust directory server's live outputs with the TypeScript
-verifiers. Together these are the contract that licenses the TypeScript client as a faithful
-verifier of the Rust directory server's outputs (\cref{sec:impl-tests}).
+verifiers. Together these are the contract that supports treating the TypeScript verifier implementation as a faithful
+checker of the Rust directory-server implementation's outputs (\cref{sec:impl-tests}).
 
 % ----------------------------------------------------------------------------
 \section{Adversarial Scenario Suite}\label{sec:tests-adversarial}
@@ -528,7 +528,7 @@ correctly rejected rather than misclassified as a fork.
 On the \textbf{TypeScript} side, the standalone verifier harness contains \num{180} Jest tests. Live
 Rust--TypeScript wire parity is a separate opt-in target that requires the Rust directory server, and a normal
 Jest run alone does not establish wire parity. When enabled, the wire-parity suite runs the client's
-full verification chain against the live Rust directory server, confirming multi-entry inclusion, proven
+full verification chain against the live directory server implemented in Rust, confirming multi-entry inclusion, proven
 non-inclusion, the Ed25519 signed-tree-head check (and its rejection of a tampered head), the VRF
 path, and windowed consistency. These suites cover key-substitution detection, the own-key self-check, replaced-slot detection, and
 availability-versus-integrity routing. Beyond this harness, thirty-five embedded tests in six Signal Desktop suites run under the

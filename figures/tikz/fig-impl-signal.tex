@@ -12,7 +12,7 @@
   \node[sub,minimum width=2.2cm] (client) at (-1.75,-0.75) {KT client\\(verifier)};
   \node[sub,minimum width=2.0cm] (ui) at (1.8,-0.75) {Security UI\\(badge and banner)};
   \draw[edge] (client) -- node[above,font=\scriptsize]{verdicts} (ui);
-  \node[box,minimum width=2.4cm,fill=black!8] (srv) at (7.0,0.4) {Rust directory\\server};
+  \node[box,minimum width=2.4cm,fill=black!8] (srv) at (7.0,0.4) {DUET directory\\server\\[1pt]{\scriptsize\itshape Rust implementation}};
   \node[box,minimum width=2.0cm] (aud) at (5.0,-2.2) {auditor};
   \node[box,minimum width=2.0cm,draw=red!60!black] (atk) at (8.4,-2.2) {attacker};
   \draw[both] (app.east) -- node[above,font=\scriptsize]{HTTP} (srv.west);

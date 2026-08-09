@@ -35,7 +35,7 @@ The seventeen metric families referenced throughout \cref{ch:eval} are as follow
 \item[M14] The history-depth term in proof size and verification latency.
 \item[M15] Continuous-mode verification over ratchet depth and the analytic
   write-amplification grid.
-\item[M16] Synthetic Rust component timings for the early-return and clean-match
+\item[M16] Synthetic timings in the Rust implementation for the early-return and clean-match
   detection paths.
 \item[M17] Clean-session verdict coverage (functional, no timing).
 \end{description}
@@ -211,7 +211,7 @@ M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
 \end{table}
 
 \medskip\noindent\emph{Operation rates and maintenance (M8--M11): latency-derived single-thread rates, key
-rotation and epoch commit, the VRF in isolation, and the Rust lookup-verification component corresponding to the verification performed at the peer-key-retrieval boundary.}
+rotation and epoch commit, the VRF in isolation, and lookup verification in the Rust implementation corresponding to the verification performed at the peer-key-retrieval boundary.}
 
 \begin{table}[H]
 \centering
@@ -361,9 +361,8 @@ the M16 detection-path cost, each path a synthetic Rust reconstruction of the co
 detection path.
 
 M17 records functional coverage, with no associated timings. \Cref{tab:bench-m17} maps each listed honest
-state to the test that asserts its expected clean verdict. The clean-path predicate checked by
-the two new cases is a Rust reimplementation of the detector's clean-path logic, not the production
-TypeScript detector.
+state to the test that asserts its expected clean verdict. The two new cases reconstruct the production Signal Desktop detector's clean-path logic in Rust. The
+production Signal Desktop path is outside these timings.
 
 \input{chapters/appendix-e-v2-tables}
 

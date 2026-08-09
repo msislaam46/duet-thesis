@@ -30,7 +30,7 @@
   \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (dir) -- (\n);}
   \foreach \n in {ptree,mlog}{\draw[->] (\n) -- (\n |- hash.north);}
 
-  % ---- client / reference utilities (right) : they CALL the API ----
+  % ---- client-side constructions (right) : they CALL the API ----
   \node[cmp,minimum width=3.0cm] (didx) at (6.6,4.2) {Dual-index\\derivation};
   \node[cmp,minimum width=3.0cm] (cea)  at (6.6,2.9) {CEA registration\\and verification};
   \node[grp,fit=(didx)(cea),label={[font=\footnotesize\itshape,text=black!70]above:Client-side constructions}] (cg) {};

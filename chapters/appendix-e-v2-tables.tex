@@ -76,11 +76,11 @@ $K$ (ratchet epochs) & $R{=}60$ & $R{=}168$ & $R{=}720$ & $R{=}2880$ \\
 \begin{table}[ht]
 \centering
 \caption[M16: verified detection-path latency.]{M16 detection-path cost at
-$N=10^4$: synthetic Rust reconstructions of the two branches of
-\texttt{KTClient.detectMitm}, timing the same verified operations (raw-label
-search, proof verification, and value comparison) rather than the TypeScript
-runtime. Local, in-process component costs, excluding HTTP transport, polling, and
-registration.}
+$N=10^4$: synthetic reconstructions in Rust of the two branches of
+\texttt{KTClient.detectMitm}. They time the same verified operations (raw-label
+search, proof verification, and value comparison). The production Signal Desktop
+runtime is outside this measurement. These local, in-process measurements exclude
+HTTP transport, polling, and registration.}
 \label{tab:bench-m16}
 \small
 \begin{tabular}{@{}lrr@{}}

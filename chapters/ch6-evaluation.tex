@@ -103,7 +103,7 @@ proof remains a few hundred bytes and grows logarithmically (\cref{sec:bench-siz
 A verified lookup whose returned owner does not match the expected owner completes in
 \SI{27.8}{\micro\second}. The clean two-lookup path fetches and verifies both the self label and the
 peer label and completes in \SI{31.1}{\micro\second}. These Rust reconstructions measure local
-verified-lookup work in the mismatch and clean paths. They exclude the TypeScript client, transport, polling,
+verified-lookup work in the mismatch and clean paths. They exclude the Signal Desktop verifier path, transport, polling,
 and registration, so they bound the local cryptographic component and do not represent user-visible latency.
 
 All seven specified clean workflows produce their expected clean verdicts (\cref{tab:bench-m17}), and no workflow produces a

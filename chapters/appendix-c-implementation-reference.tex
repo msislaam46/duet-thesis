@@ -172,7 +172,7 @@ The implementation is organized as follows:
   (\cref{tab:impl-modules}), the standalone server and auditor binaries, and the benchmark
   harness.
   \item \texttt{demo/}: the PowerShell and Docker orchestration for the server, auditor, clients, and scripted attacks.
-  \item \texttt{signal-desktop/ts/kt/}: the embedded TypeScript client, whose shared
+  \item \texttt{signal-desktop/ts/kt/}: the embedded Signal Desktop verifier and monitor modules, implemented in TypeScript, whose shared
   verifier modules are mirrored byte-for-byte by the standalone \texttt{signal-desktop-kt/}
   package, while integration wiring and test scaffolding differ between the two.
 \end{itemize}
@@ -212,8 +212,7 @@ A1b attack workflows across the four roles.
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-signal}
-\caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded TypeScript
-KT client communicates over HTTP with the Rust directory server. It registers identity material at the
+\caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded Signal Desktop verifier communicates over HTTP with the DUET directory server. It registers identity material at the
 key-upload hook and verifies peer material at the peer-key-retrieval hook, reporting verdicts to the
 badge and banner. An independent auditor polls the server. The attacker uses a privileged testing
 interface. \Cref{tab:apiref-hooks,tab:apiref-events} list the hook functions and verdict-event names.}

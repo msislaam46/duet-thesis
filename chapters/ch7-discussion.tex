@@ -71,8 +71,8 @@ CEA fingerprint authentication with dual-index location binding remains future w
 separate first-contact sessions with each party or a fabricated pre-key bundle kept consistent with a
 malicious directory entry. Timings measure local components, not a complete networked monitor
 or audit, and the committed corpus holds aggregate statistics, not raw Criterion samples.
-M11 times the Rust lookup-verification component, not the TypeScript key-fetch path, and M12 measures
-local signature and consistency work, not network transfer, epoch-delta retrieval, or full transition
+M11 times lookup verification in the Rust implementation and excludes the Signal Desktop key-fetch path. M12 measures
+local signature and consistency work and excludes network transfer, epoch-delta retrieval, and full transition
 replay (\cref{ssec:eval-scale}). These limits prevent interpreting the component results as an
 end-to-end deployment measurement.
 

@@ -11,8 +11,9 @@ expose the malicious-operator behaviours specified in the threat model (\cref{ch
 dual-index warning scheme for in-band peer
 warnings and a windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
 and compares signed heads obtained from separate vantage points, providing the cross-vantage check
-used to detect equivocation. The Rust implementation provides the directory server, proof construction, and auditor. A Signal
-Desktop verifier runs the client-verification path (\cref{ch:impl}).
+used to detect equivocation. The \texttt{duet} Rust crate implements the directory server, proof construction, and independent
+auditor. A verifier integrated into Signal Desktop runs the client-verification path
+(\cref{ch:impl}).
 
 \Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an
 individual lookup proof. At a matched directory size, the implemented VRF-indexed lookup
@@ -25,8 +26,7 @@ availability controls.
 These results support the four contributions introduced in \cref{sec:intro-contributions}.
 Conceptually, the dual-index scheme gives both parties access to a shared warning location while
 retaining party-specific lookup labels. Cryptographically, DUET applies an RFC~9162
-distant-head consistency proof to offline monitoring. The Rust directory
-implementation and the Signal Desktop verifier show that client-side verification is feasible. Empirically, the benchmark suite quantifies the component costs, and the adversarial suite tests the
+distant-head consistency proof to offline monitoring. The DUET directory server and Signal Desktop verifier show that client-side verification is feasible. Empirically, the benchmark suite quantifies the component costs, and the adversarial suite tests the
 controls across the attack scenarios.
 
 Production integration still requires binding the per-session labels to Signal's live conversation

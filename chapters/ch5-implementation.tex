@@ -1,14 +1,15 @@
 \chapter{Implementation}\label{ch:impl}
 
-The implementation has two components. The Rust component provides the directory, cryptographic
-operations, auditor, and benchmarks. The TypeScript component embeds the client verifier in Signal
-Desktop. This chapter covers their architecture, integration, parity testing, engineering
+The implementation has two components. The standalone DUET component, implemented in Rust, provides
+the directory server, cryptographic operations, independent auditor, and benchmark harness. The
+client component, implemented in TypeScript and integrated into Signal Desktop, provides the
+verifier, background monitor, lifecycle hooks, and warning interface. This chapter covers their architecture, integration, parity testing, engineering
 constraints, and reproducibility.
 
 % ============================================================================
 \section{Architecture and Language Boundary}\label{sec:impl-strategy}
 
-The standalone \texttt{duet} crate implements the Rust component. An initial Python version
+The \texttt{duet} Rust crate implements the standalone component. An initial Python version
 prototyped the core constructions but was too slow for the required large-directory benchmarks. The
 measured implementation was therefore rebuilt in Rust, which also supports libsignal integration and
 established cryptographic libraries for timing-sensitive operations. Rust allows the crate to be
@@ -16,13 +17,13 @@ measured independently of Signal and libsignal and is also used by the Parakeet 
 implementations~\cite{malvai2023parakeet,facebook-akd}. \Cref{fig:impl-overview} shows the resulting
 language and trust boundary.
 
-The TypeScript layer implements the client-side proof checks and user-interface path. It verifies
+The client component implements the client-side proof checks, background monitoring, lifecycle hooks, and user-interface path. It verifies
 prefix, log, VRF, and signed-head evidence locally, performs the required raw-label writes, and is
 checked against Rust through fixed vectors and live wire-parity tests. The formats follow the IETF
 KeyTrans design, but no Go interoperability is claimed because Signal and DUET deliberately use
 different prefix-proof encodings~\cite{ietf-keytrans-protocol,signal-kt-server}.
 
-The Rust service is an in-memory, single-machine prototype. The Signal integration uses a deterministic
+The directory server is an in-memory, single-machine prototype implemented in Rust. The Signal integration uses a deterministic
 conversation-secret stand-in and a seeded Double Ratchet simulation, which cover the construction and
 wire format but not secrecy-dependent label unpredictability or real-ratchet security. The identity-key
 path is not simulated: the verifier runs at Signal Desktop's real peer-key-retrieval
@@ -32,14 +33,14 @@ boundary. Production integration must obtain the live conversation secret and ra
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-overview}
-\caption[Implemented architecture.]{The TypeScript verifier checks responses from the Rust directory
+\caption[Implemented architecture.]{The Signal Desktop verifier checks responses from the DUET directory
 server, while an independent auditor obtains signed heads and epoch disclosures from a separate
 vantage.}
 \label{fig:impl-overview}
 \end{figure}
 
 % ============================================================================
-\section{The Rust Cryptographic Core}\label{sec:impl-modules}
+\section{DUET Directory and Cryptographic Core}\label{sec:impl-modules}
 
 The \texttt{duet} crate implements a path-compressed sparse Merkle directory and signed tree heads
 following the IETF KeyTrans model~\cite{ietf-keytrans-protocol}, an RFC~9162 append-only
@@ -54,7 +55,7 @@ its standards basis and conformance evidence.
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-modules}
-\caption[Core relationships in the Rust component.]{Core relationships in the Rust component. The
+\caption[Core relationships in the DUET implementation.]{Core relationships in the DUET implementation. The
 directory service composes the authenticated data structures and signing components. Client-side
 constructions use the directory operations, while the independent auditor maintains a replica and
 checks signed heads, consistency proofs, and declared transitions.}
@@ -135,7 +136,7 @@ recomputed root matches the committed root.}
 \label{fig:impl-transition-audit}
 \end{figure}
 
-The benchmark harness invokes the Rust server in process. Its timings measure local
+The benchmark harness invokes the directory server in process. Its timings measure local
 cryptographic work and exclude HTTP, Electron, database, and network costs. The measurement environment
 is given in \cref{sec:bench-env}, while
 \cref{sec:bench-repro} provides the reproduction procedure.
@@ -144,7 +145,7 @@ is given in \cref{sec:bench-env}, while
 % ============================================================================
 \section{Signal Desktop Integration}\label{sec:impl-signal}
 
-The embedded TypeScript client verifies Rust directory responses and reports the result through a
+The embedded Signal Desktop verifier checks responses from the DUET directory server and reports the result through a
 conversation badge and banner. The interface starts grey (pending), turns green only when
 verification succeeds and the account-wide self-check is healthy, shows an amber notice when a check
 is unavailable, and shows a red warning after a proof failure, key mismatch, authenticated peer
@@ -176,7 +177,7 @@ functions, event names, and engineering record are in \cref{sec:apiref-hooks,sec
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
-The demonstration uses two Signal Desktop clients with the Rust directory server, auditor, and a
+The demonstration uses two Signal Desktop clients with the DUET directory server, independent auditor, and a
 privileged attack tool. It covers the two \hyperref[sc:threat-a1]{A1 key-substitution variants}.
 In the A1a global-slot variant, the attack tool replaces the value in the mutable global identity
 slot. The auditor accepts the declared rotation, while the affected client's self-check detects the
@@ -228,9 +229,9 @@ reaches both clients.}
 
 RFC~9381 test vectors~\cite{rfc9381} check the ECVRF implementation. Fixed cross-language vectors
 require byte-for-byte agreement for label derivation, warning payloads, and CEA evolution. A live
-wire-parity suite checks the TypeScript verifier against signed heads, VRF outputs, Merkle proofs, and
-consistency proofs produced by the Rust directory server. The Rust integration and cryptographic tests
-use an in-process \texttt{KTServer} rather than a mock. The adversarial suite covers the honest
+wire-parity suite checks the TypeScript verifier implementation against signed heads, VRF outputs, Merkle proofs, and
+consistency proofs produced by the directory-server implementation in Rust. The Rust test suite runs its integration and cryptographic tests
+against an in-process \texttt{KTServer} rather than a mock. The adversarial suite covers the honest
 baseline (A0), global- and session-slot substitution (\hyperref[sc:threat-a1]{A1a and A1b}), warning
 censorship (\hyperref[sc:threat-a2]{A2}), the first-contact substitution postcondition
 (\hyperref[sc:threat-a3]{A3}), equivocation (\hyperref[sc:threat-a4]{A4}), key-rotation substitution
