@@ -17,7 +17,8 @@ authenticity of keys obtained from the server.
 
 \subsection{Key Material, Safety Numbers, and What They Cover}\label{ssec:bg-keymat}
 
-Signal publishes a long-term identity key, a signed pre-key, and optional one-time pre-keys. The Safety
+Under the X3DH protocol used by Signal, a client publishes its long-term identity key, a signed
+pre-key, and optional one-time pre-keys to the messaging server~\cite[Sections~2.4 and 3.2]{x3dh}. The Safety
 Number authenticates the parties' identity keys and account identifiers through an out-of-band
 comparison~\cite{safetynumbers}. A signed pre-key is authenticated indirectly by its identity-key
 signature, while one-time pre-keys are unsigned. The ceremony therefore authenticates the long-term
@@ -27,8 +28,8 @@ full key-material notation and coverage.
 \subsection{The Extended Triple Diffie--Hellman (X3DH) Protocol}\label{ssec:bg-x3dh}
 
 X3DH lets Alice establish a shared secret $\sharedS$ with an offline Bob by combining identity,
-ephemeral, signed-pre-key, and optional one-time-pre-key Diffie--Hellman terms~\cite[Section~2.4]{x3dh}.
-The resulting secret initializes the later protocol stages and is also the input from which DUET
+ephemeral, signed-pre-key, and optional one-time-pre-key Diffie--Hellman terms~\cite[Sections~2.4 and 3.3]{x3dh}.
+The resulting secret initializes the Double Ratchet~\cite{doubleratchet} and is also the input from which DUET
 derives conversation labels. Alice verifies Bob's signed pre-key under the supplied identity key and
 aborts if that signature fails~\cite[Section~3.3]{x3dh}.
 
@@ -40,24 +41,27 @@ substitution, whose full derivation and message sequence are in \cref{sec:ext-si
 
 \subsection{The Double Ratchet Protocol}\label{ssec:bg-ratchet}
 
-The Double Ratchet evolves the X3DH or PQXDH secret into per-message keys, providing forward secrecy
-and post-compromise recovery after the adversary becomes passive~\cite{doubleratchet,pqxdh}. It does
-not re-authenticate the public keys used to establish the session, so its guarantees still depend on
-an authentic initial binding. \Cref{sec:ext-ratchet} explains the key-schedule details.
+The Double Ratchet evolves a shared secret established by X3DH or PQXDH into per-message keys and
+provides forward secrecy~\cite{doubleratchet,pqxdh}. Once the adversary becomes passive, it can
+also provide post-compromise recovery~\cite{doubleratchet}. It does not re-authenticate the
+session-establishment keys, so authentication still depends on an authentic initial binding. \Cref{sec:ext-ratchet} explains the key-schedule details.
 
 \subsection{Safety Numbers and the Verification Gap}\label{ssec:bg-gap}
 
-Signal provides manual Safety Number comparison and optional Automatic Key Verification. AKV checks a
-peer's stored binding against Signal's transparency service, but its documented availability is
-limited for some username and phone-number-discovery cases, and it does not provide a channel through
-which a detecting client can warn the peer~\cite{signal-akv}.
+To detect man-in-the-middle key substitution, Signal provides Safety Numbers for out-of-band
+comparison and an optional Automatic Key Verification (AKV). AKV checks the peer's identity-key
+binding against Signal's transparency service, but requires Signal to have the contact's phone
+number. When AKV is unavailable, including for chats started with a username, Signal recommends
+manual Safety Number comparison. Its documented workflow returns the result to the verifying
+client and does not describe a way to warn the peer~\cite{signal-akv}.
 
 Usability evidence also limits reliance on manual verification. Across unguided trials in one study,
 only 14\% of pair--application trials succeeded, and only two of twelve pairs completed the ceremony
 in any tested application~\cite[p.~30]{vaziripour2017}. Instructions improved
-success~\cite[p.~29]{vaziripour2017}, but users still needed substantial
-time~\cite[p.~36]{vaziripour2017}. ACKA and its predecessor MoDUSA authenticate evolving protocol
-state, yet both retain a user-initiated comparison or an assumed secure
+success~\cite[p.~29]{vaziripour2017}, but even instructed users took an average of 3.2 minutes to
+find the ceremony and another 7.8 minutes to complete
+it~\cite[p.~36]{vaziripour2017}. MoDUSA authenticates evolving protocol state but retains a
+user-initiated comparison, while ACKA replaces that comparison with an assumed secure
 log~\cite{dowling2021meta,dowling2023acka}. The supporting measurements are reported in
 \cref{sec:ext-usability}.
 
@@ -68,110 +72,140 @@ a detected substitution to the peer instead of leaving the result local to the k
 % ============================================================================
 \section{Secure Transparency Logs}\label{sec:bg-logs}
 
-Key transparency makes the directory accountable by binding each response to a committed state. An
-operator that substitutes a key must place it in a state whose later evolution can be monitored.
+Transparency logs commit to a signed, append-only sequence of
+states~\cite[Sections~2.1.4 and 4.10]{rfc9162}. Applied to a key directory, they let clients verify
+returned bindings and monitor later states for unexpected keys or an inconsistent
+history~\cite{melara2015coniks,chase2019seemless}.
 
 \subsection{Commitments and Merkle Log Trees}\label{ssec:bg-merkle}
 
 A Merkle root commits to every leaf under a collision-resistant hash. An inclusion proof shows that a
-record belongs to the committed tree, while a consistency proof shows that a later log is an
-append-only extension of an earlier one~\cite{rfc6962,rfc9162}. Both proofs are logarithmic in the
-relevant tree size, and they answer different questions, because inclusion authenticates one record
-whereas consistency shows that committed history was not rewritten. The construction, domain
-separation, and proof walkthrough are explained in \cref{sec:ext-merkle}.
-
-Although each proof is compact, requesting one proof for every missed epoch makes a returning
-client's total work grow with its offline period. DUET's windowed proof addresses this cost.
+record belongs to the committed tree, while a consistency proof shows that a later tree preserves
+every entry in an earlier tree~\cites[Section~2.1]{rfc6962}[Sections~2.1.1--2.1.4]{rfc9162}.
+Both proofs are logarithmic in the relevant tree size. Inclusion authenticates one record, while
+consistency establishes append-only growth. The construction, domain separation, and proof
+walkthrough are explained in \cref{sec:ext-merkle}.
 
 \subsection{Key Transparency Requirements}\label{ssec:bg-ct2kt}
 
-Key transparency applies verifiable commitments to identity-to-key bindings~\cite{chase2016overlays,melara2015coniks}.
-A verifiable random function maps an identity to a deterministic but outsider-unpredictable label and
-proves that the mapping was evaluated correctly~\cite{rfc9381}. This resists outsider enumeration, but
-it does not hide queries from the operator or conceal the directory's scale.
+Key transparency uses verifiable commitments for identity-to-key
+bindings~\cite[Sections~1 and 3]{melara2015coniks} and can use a verifiable
+random function (VRF) to derive privacy-preserving lookup labels that resist
+offline enumeration by outsiders~\cite[Section~1]{rfc9381}. The VRF does not
+hide the client's query from the operator. Moreover, concealing the directory's scale
+requires additional mechanisms, such as the dummy entries used by
+CONIKS~\cite[Section~2.2]{melara2015coniks}.
 
-Local proof verification also does not establish that every observer received the same state. A malicious
-operator can present Alice and Bob with different internally consistent histories, and exposing such a fork
-requires signed commitments obtained from independent vantage points to be compared. DUET therefore
-separates local lookup verification from cross-vantage equivocation detection. The split-view problem
-and the comparison mechanisms used by existing systems are discussed further in
-\cref{sec:ext-splitview}.
+Verified Merkle proofs show that a directory response matches a committed state, but they do not
+show whether every observer received that same state~\cite[Section~3.3]{ietf-keytrans-architecture}.
+A malicious operator can present Alice and Bob with different but internally consistent histories.
+Detecting this split view requires comparing log commitments observed by different parties or through
+separate channels~\cites[Section~4.1.4]{melara2015coniks}[Section~10.2]{ietf-keytrans-protocol}.
+Existing comparison mechanisms are discussed further in \cref{sec:ext-splitview}.
 
 \subsection{The IETF KeyTrans Architecture}\label{ssec:bg-keytrans}
 
-The IETF Key Transparency architecture combines a VRF-indexed prefix tree with a log of committed
-directory states and defines search, monitoring, and auditing roles~\cite{ietf-keytrans-architecture,ietf-keytrans-protocol}.
-Signal's service implements the emerging protocol with modifications~\cite{signal-kt-server}. The draft
-defines a Reasonable Monitoring Window through distinguished log entries and supplies owner and contact
-monitoring algorithms~\cite{ietf-keytrans-protocol}. DUET uses the same combined-tree model.
+The IETF Key Transparency protocol combines a VRF-indexed prefix tree with a log tree that records
+successive prefix-tree roots~\cites[Section~8]{ietf-keytrans-architecture}
+[Sections~3.3--3.4 and 11.7]{ietf-keytrans-protocol}. It defines search and monitoring operations
+along with third-party auditing~\cites[Sections~3.1 and 4.2]{ietf-keytrans-architecture}
+[Sections~13 and 15.2]{ietf-keytrans-protocol}. Signal's key-transparency server uses the protocol
+with changes for its application requirements~\cite{signal-kt-server}. The protocol uses the
+Reasonable Monitoring Window to select regularly spaced distinguished log entries and specifies
+separate contact- and owner-monitoring algorithms~\cite[Sections~6.1, 8, and
+13.2--13.4]{ietf-keytrans-protocol}.
 
 % ============================================================================
 \section{Verifiable Key Directories for Key Transparency}\label{sec:bg-vkd}
 
-A verifiable key directory is an authenticated key--value map whose membership and non-membership
-answers can be checked against a public commitment. SEEMless formalized completeness, soundness, and
-simulation-based privacy for this abstraction~\cite{chase2019seemless}, and later constructions refine
-its update history, storage, monitoring, and privacy properties.
+In key transparency, a verifiable key directory (VKD) provides an authenticated mapping from user
+identifiers to public keys, allowing clients to verify membership and non-membership answers against
+a public commitment. The authors of SEEMless formalized this abstraction through completeness,
+soundness, and simulation-based privacy~\cite[Section~2]{chase2019seemless}.
 
 \subsection{Cryptographic Building Blocks}\label{ssec:bg-vkd-blocks}
 
-Most systems combine VRF-derived labels with a sparse or path-compressed Merkle directory, and some add
-a zero-knowledge set to hide information beyond the queried binding. SEEMless uses an append-only ZKS,
-Parakeet an ordered ZKS, and ELEKTRA a rotatable ZKS~\cite{chase2019seemless,malvai2023parakeet,chen2022rzks,len2023elektra}.
-Merkle\textsuperscript{2} instead composes a chronological log with per-key
-histories~\cite[pp.~1--2]{hu2021merkle2}. \Cref{sec:ext-vkd-blocks} explains the structural
-differences and terminology.
+Key-transparency constructions use combinations of VRFs, Merkle directories, and zero-knowledge
+sets to provide private lookup labels and verifiable directory answers. CONIKS and SEEMless combine
+private labels with sparse or path-compressed Merkle
+directories~\cite{melara2015coniks,chase2019seemless}. Zero-knowledge-set variants further limit
+what proofs reveal beyond the queried binding. SEEMless uses an append-only ZKS (aZKS), Parakeet an
+ordered ZKS (oZKS), and ELEKTRA a rotatable ZKS
+(RZKS)~\cites[Sections~3--6]{chase2019seemless}[Section~III]{malvai2023parakeet}
+[Section~3.1]{len2023elektra}[Section~3]{chen2022rzks}.
+Merkle\textsuperscript{2} uses chronological Merkle trees in the outer layer, with a prefix tree
+corresponding to each internal node~\cite[Section~IV]{hu2021merkle2}.
+\Cref{sec:ext-vkd-blocks} explains the structural differences and terminology.
 
 \subsection{Academic and Deployed Systems}\label{ssec:bg-vkd-academic}
 
-The literature develops a sequence of trade-offs. CONIKS introduced VRF-indexed bindings and
-epoch-by-epoch monitoring~\cite{melara2015coniks}. SEEMless formalized the directory abstraction,
-Parakeet added storage compaction and witnesses, ELEKTRA addressed multi-device histories and privacy
-recovery, OPTIKS reduced history cost, and PRISM moved towards whole-directory verification~\cite{chase2019seemless,malvai2023parakeet,len2023elektra,optiks2024,pusch2025prism}.
-Detection in each still depends on a user, an auditor, a witness set, or a global verifier rather than
-a conversation-specific warning delivered to the peer.
+Academic key-transparency designs differ in monitoring, storage, privacy, and deployment. CONIKS
+uses private lookup indices and client
+self-monitoring~\cite[Sections~3.4 and 4.1.3]{melara2015coniks}, while SEEMless formalizes VKDs and
+makes monitoring depend mainly on key
+updates~\cite[Sections~1--2 and 4.2]{chase2019seemless}. Parakeet combines history compaction with a
+witness quorum~\cite[Sections~IV--V]{malvai2023parakeet}, and ELEKTRA supports multi-device key
+histories and privacy recovery after server
+compromise~\cite[Sections~1, 2.1, and 3.1]{len2023elektra}. OPTIKS reduces the cost of monitoring an
+unchanged key to a single non-membership proof~\cite[p.~4356]{optiks2024}. PRISM uses
+whole-directory verification~\cite[Sections~1 and 4]{pusch2025prism}. Across the surveyed designs,
+clients, auditors, or witness quorums perform verification, but none defines a conversation-specific
+peer-warning channel for an individual key substitution.
 
-Two results sharpen that comparison. ELEKTRA's unsuppressible warning is raised after a full account
-reset rather than after substitution of one key~\cite[p.~2]{len2023elektra}. PRISM frames the wider
-problem as reliance on someone else to check, whether a user, gossiping clients, a blockchain, or an
-auditor~\cite[p.~6]{pusch2025prism}. Its whole-directory proof changes who verifies the state but does
-not itself provide conversation-specific peer notification.
+A comparison with ELEKTRA and PRISM clarifies this peer-warning gap. After a full account reset,
+ELEKTRA requires every conversation partner to acknowledge an urgent warning that the server cannot
+suppress~\cite[p.~2]{len2023elektra}. PRISM frames the wider problem as reliance on external checks
+such as client gossip and third-party auditing~\cite[p.~6]{pusch2025prism}. It also proposes
+embedding commitments in encrypted messages as an additional gossip
+safeguard~\cite[p.~5]{pusch2025prism}. A warning about one substituted key therefore remains
+distinct from both mechanisms.
 
-CONIKS is the principal baseline for this thesis because it combines private VRF-derived labels with
-signed epoch roots and self-monitoring. A client verifies its own binding and later exposes a fork by
-comparing signed roots with another observer. Its limitations are also central here, because
-monitoring work grows with the offline period, direct client gossip was left as future work, and
-detection does not itself notify the communication peer~\cite{melara2015coniks}. SEEMless reduces
-history cost through versioned labels, Parakeet replaces external gossip with a witness quorum, and
-ELEKTRA adds signed device-key histories. Each improvement introduces a different monitoring, trust, or
-deployment condition rather than removing the peer-warning gap.
+CONIKS is the principal baseline for this thesis because it combines private lookup indices, signed
+tree roots, and client self-monitoring~\cite[Sections~3.2--3.3 and
+4.1.3]{melara2015coniks}. A client monitors its own binding every epoch and compares the provider's
+signed tree root with one observed by an auditor to detect
+equivocation~\cite[Sections~4.1.3--4.1.4]{melara2015coniks}. CONIKS relies on auditors for this
+comparison, while direct exchange between clients remains future
+work~\cite[Section~4.1.4, footnote~5]{melara2015coniks}. A returning client that misses several
+epochs must also perform a series of checks to confirm that its last verified inclusion proofs and
+signed tree roots remain consistent with the recent proofs~\cite[pp.~7--8]{melara2015coniks}. This
+missed-epoch procedure provides the baseline for DUET's windowed catch-up evaluation.
 
-Production systems demonstrate that these constructions can operate at messaging scale. WhatsApp,
-Signal, Proton, Google, and Apple use different combinations of monitoring, auditing, and commitment
-comparison~\cite{whatsapp2023whitepaper,signal-kt-server,goebel2023proton,google-kt,apple-ckv}, and an
-independent review of Meta's AKD implementation reports that all identified findings were fixed at
-retest~\cite{nccgroup2023akd}. None of the cited deployments provides the peer-warning channel
-defined in this thesis. The per-system mechanisms, limitations, and citations are examined further in
+Beyond academic designs, key transparency is already used in production communication services and
+explored in research and development projects. WhatsApp, Signal, Proton, Google, and Apple use
+different approaches to client monitoring, external auditing, and signed-commitment
+comparison~\cite{whatsapp2023whitepaper,signal-kt-server,goebel2023proton,google-kt,apple-ckv}.
+Moreover, Meta's Auditable Key Directory (AKD) implementation was independently reviewed, and
+retesting confirmed that all findings were fixed~\cite{nccgroup2023akd}. However, none of these
+sources describes the conversation-specific peer-warning channel defined in this thesis for an
+individual key substitution. Their mechanisms and limitations are examined in
 \cref{sec:ext-vkd-survey} and summarized in \cref{tab:bg-compare}.
 
-The deployments also expose relevant engineering choices. WhatsApp demonstrates a public audit path at
-messaging scale but disables client history monitoring in the cited configuration~\cite{whatsapp2023whitepaper}, Signal follows the
-IETF architecture and uses fixed-length prefix copaths~\cite{signal-kt-server}, and Proton combines owner and
-external auditing with Certificate Transparency. Proton also identifies communication of verification
-failures to users as unresolved~\cite[p.~88]{goebel2023proton}. These systems establish deployment feasibility, but
-their detection remains local to the account owner or an external verifier.
+The surveyed systems also make different engineering choices. The WhatsApp whitepaper reports
+publicly verifiable audit proofs and states that key-history requests were not yet enabled in its
+clients~\cite[pp.~5--6 and 11]{whatsapp2023whitepaper}. Signal's repository states that its
+implementation uses the IETF protocol with application-specific modifications, and its verifier
+requires a fixed-length prefix copath~\cite{signal-kt-server}. ProtonKT combines client
+self-auditing and external auditing with Certificate
+Transparency~\cite[pp.~39, 44, 47]{goebel2023proton}. The Proton thesis also describes the
+investigation of KT warnings as an open user-experience
+challenge~\cite[pp.~81--82]{goebel2023proton}.
 
 % ============================================================================
 \section{The ACKA (Authenticated Continuous Key Agreement) Framework}\label{sec:bg-acka}
 
-ACKA composes continuous key agreement, Continuous Entity Authentication (CEA), and an abstract secure
-log~\cite[p.~18]{dowling2023acka}. CEA derives a label and a fingerprint from chained secret state and
-the new public key-share at each epoch~\cite[pp.~13--14]{dowling2023acka}, and its security notion is
-$\CEAsec$~\cite[p.~18]{dowling2023acka}. A forged share either collides at the honest label, producing
-two fingerprints at one label, or appears under a label the impersonated party never derives and is
-caught on lookup~\cite[pp.~7--8]{dowling2023acka}. The secure-log scheme $\Log$, required to satisfy
-$\Logsec$, stores and returns those fingerprints~\cite[pp.~10--11]{dowling2023acka}.
-\Cref{fig:bg-acka} summarizes the composition.
+The ACKA construction proposed by Dowling and Hale combines continuous key agreement (CKA),
+Continuous Entity Authentication (CEA), and an abstract secure
+log~\cite[pp.~20--21]{dowling2023acka}. At each epoch, CEA derives a public label from the
+pre-update state and a fingerprint that authenticates the public update produced by the
+CKA~\cite[pp.~13--14]{dowling2023acka}. The sender stores the label and fingerprint in the log,
+and the receiver queries the expected label before accepting the
+update~\cite[pp.~7--8]{dowling2023acka}. A substituted update either produces conflicting
+fingerprints at the expected label or leaves no matching fingerprint
+there~\cite[pp.~7--8]{dowling2023acka}. The required security notions are $\CEAsec$ for
+CEA~\cite[p.~18]{dowling2023acka} and $\Logsec$ for the
+log~\cite[pp.~10--11]{dowling2023acka}.
+\Cref{fig:bg-acka} summarizes this composition.
 
 \begin{figure}[H]
 \centering
@@ -182,18 +216,23 @@ Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
 
-ACKA addresses an active channel adversary and provides continuous authentication, but its detection
-result is conditional on a log satisfying $\Logsec$ rather than on a directory that resists a
-malicious operator~\cite[p.~7]{dowling2023acka}. ACKA assumes a common initial state associated with
-trust on first use and verifies sequentially by epoch~\cite[p.~6]{dowling2023acka}. Only the receiver
-learns of a forgery, and its consistency mechanism is not used for third-party fork detection. The
-formal CKA definition, adversary model, abstract log construction, and receiver-only detection result
-are examined further in \cref{sec:ext-acka}.
+ACKA targets an active channel adversary and provides continuous authentication when CEA satisfies
+$\CEAsec$ and the secure log satisfies $\Logsec$~\cite[pp.~6--7]{dowling2023acka}. It begins from
+a common initial state, corresponding to correctly assumed trust on first use or authenticated
+initial keying material~\cite[p.~6]{dowling2023acka}. It then authenticates each subsequent CKA
+update in sequence through a CEA label and fingerprint~\cite[pp.~7--8]{dowling2023acka}. The
+construction presented in the paper provides one-sided detection, in which the receiver detects a
+forgery~\cite[p.~21]{dowling2023acka}. Its secure-log interface supports consistency verification
+between views~\cite[pp.~10--11]{dowling2023acka}. However, the paper does not define a third-party
+auditor for comparing those views~\cite[p.~21]{dowling2023acka}. The formal CKA definition,
+adversary model, secure-log construction, and one-sided detection result are examined further in
+\cref{sec:ext-acka}.
 
-DUET supplies the verifiable directory behind $\Log$. It also adds conversation-derived lookup labels,
-a shared peer-warning slot, windowed catch-up, and cross-vantage comparison of signed heads. ACKA and
-key transparency therefore address complementary adversaries. ACKA authenticates evolving state
-against an active channel attacker, while key transparency constrains a malicious directory operator.
+The ACKA paper formalizes the per-epoch CEA construction and evaluates it through security proofs, but
+does not report a software implementation or empirical
+evaluation~\cite[Sections~4--6]{dowling2023acka}. Moreover, it leaves $\Log$ as a generic secure-log
+interface~\cite[pp.~10, 21]{dowling2023acka}. The paper therefore leaves open how this interface can
+be instantiated as a verifiable key directory that exposes misbehaviour by a malicious operator.
 
 % ============================================================================
 \section{Comparative Analysis of Existing Systems}\label{sec:bg-compare}
@@ -218,20 +257,19 @@ System & What it logs & Primary detection mechanism & In-band peer warning &
 \midrule
 CONIKS~\cite{melara2015coniks} & username $\to$ key binding & self-monitoring & No & linear in the number of missed epochs &
   STR gossip among auditors\newline direct client-to-client exchange left as future work \\
-SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & per-update
-  history & $\ge$1 honest auditor per epoch\newline commitments compared through gossip or a blockchain \\
-Parakeet~\cite{malvai2023parakeet} & identity key & self-monitoring & No & bounded by the compaction interval & $2f{+}1$ signatures from $3f{+}1$
+SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & history cost depends on key updates & $\ge$1 honest auditor per epoch\newline commitments compared through gossip or a blockchain \\
+Parakeet~\cite{malvai2023parakeet} & identifier $\to$ public key & self-monitoring & No & check once between each tombstone and subsequent deletion & $2f{+}1$ signatures from $3f{+}1$
   witnesses \\
-ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Warning only after account reset & per-update &
+ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Warning only after account reset & retrieve keychain updates since the last query &
   external auditor \\
 OPTIKS~\cite{optiks2024} & identity key and device entries & self-monitoring (single proof, common case) & No &
   verify before old periods are deleted & at least one auditor and a bulletin board \\
 PRISM~\cite{pusch2025prism} & account keys & whole-directory verification & No &
-  constant-size proof & zk-rollup on a data-availability layer \\
-WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & public auditing & No & Not provided in the cited configuration\newline key-history monitoring disabled & signed root and public write-once (WORM) audit log \\
-Signal KT~\cite{signal-kt-server,signal-akv} & account identifier $\to$ identity key, phone-number and username-hash mappings & self-monitoring and audit interfaces, optional user-triggered AKV & No &
-  monitoring endpoint\newline offline-window policy not documented in the cited source & signed head and public audit endpoints\newline independent auditor deployment not documented in the cited source \\
-Proton KT~\cite{goebel2023proton} & email address $\to$ Signed Key List (SKL) fingerprint & self-audit and external audit & No &
+  latest commitment and constant-size proof verify full history & zk-rollup on a data-availability layer \\
+WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & client lookup-proof verification & No & Not provided in the cited configuration\newline key-history monitoring disabled & signed roots and public WORM-retained audit proofs \\
+Signal KT~\cite{signal-kt-server,signal-akv} & ACI $\to$ identity key; phone number and username hash $\to$ ACI & self-monitoring and audit interfaces, optional user-triggered AKV & No &
+  monitoring endpoint\newline offline-window policy not documented in the cited source & signed head and audit endpoints\newline independent auditor deployment not documented in the cited source \\
+Proton KT~\cite{goebel2023proton} & email address $\to$ Signed Key List (SKL) & self-audit and external audit & No &
   self-audit at least every 90 days & CT logs and external auditing \\
 Google KT~\cite{google-kt} & account keys & self-monitoring (experimental, archived 2024) & No & Not documented in the cited source & CONIKS map in a CT log \\
 Apple CKV~\cite{apple-ckv} & account keys, device keys, and opt-in state & automatic device verification and E2E-encrypted CloudKit
@@ -241,33 +279,38 @@ Apple CKV~\cite{apple-ckv} & account keys, device keys, and opt-in state & autom
 
 {\scriptsize\raggedright \emph{In-band peer warning} means a conversation-specific substitution
 warning published at the shared slot and verified by the other client. SEEMless additionally assumes that a user
-recalls their own update times. The in-band mechanisms in Apple CKV and PRISM carry commitments rather than peer-substitution
-warnings. Merkle\textsuperscript{2} and ACKA are omitted because neither defines a complete
-identity-to-key directory. ACKA instead assumes the secure-log interface described in
-\cref{sec:bg-acka}.\par}
+recalls their own update times. Apple CKV gossips log hashes within encrypted messages, while PRISM discusses embedding
+commitments as an additional gossip safeguard. Neither provides the shared peer-substitution
+warning defined here. Merkle\textsuperscript{2} is omitted because it presents a general transparency-log construction
+and sketches its application to public keys~\cite[Section~VII-B]{hu2021merkle2}, while ACKA assumes
+the generic secure-log interface described in \cref{sec:bg-acka} instead of instantiating an
+identity-to-key directory.\par}
 \end{table}
 
 \FloatBarrier
 \subsection{Implications for the Design}\label{ssec:bg-implications}
 
-The comparison yields three requirements. First, detection must reach the peer. Existing systems assign
-discovery to the key owner, an auditor, a witness set, or a global verifier, while the cited WhatsApp
-configuration falls back to manual comparison after a failed
-check~\cite[pp.~5, 10]{whatsapp2023whitepaper}. ELEKTRA warns only after a full account
-reset~\cite[p.~2]{len2023elektra}. DUET
-therefore needs a conversation-specific warning that remains available while either party is offline.
+The preceding comparison identifies three requirements for DUET. First, a client that detects a
+substitution must be able to warn its peer. Existing systems leave detection to the key owner, an
+auditor, a witness set, or a global verifier. In the cited WhatsApp configuration, a failed
+automatic verification leads to manual comparison~\cite[pp.~5, 10]{whatsapp2023whitepaper}, and
+Signal similarly recommends Safety Number comparison when Automatic Key Verification is
+unavailable~\cite{signal-akv}. ELEKTRA warns conversation partners only after a full account
+reset~\cite[p.~2]{len2023elektra}. DUET therefore needs a conversation-specific warning that the
+peer can retrieve after reconnecting.
 
-Second, catch-up must avoid one proof per missed epoch. The IETF draft has clients monitor
-distinguished log entries~\cite{ietf-keytrans-protocol}, while CONIKS requires a series of checks after
-missed epochs~\cite[pp.~7--8]{melara2015coniks}. DUET verifies one consistency proof between the
-client's last trusted head and the current head.
+Second, a returning client that retains its last trusted head should verify the missed history
+efficiently. CONIKS catches up by performing a series of checks after missed
+epochs~\cite[pp.~7--8]{melara2015coniks}. Thus, DUET should use one consistency proof from that
+trusted head to the current head to cover the complete missed window.
 
-Third, equivocation must be detectable outside the affected session. Locally valid proofs cannot show
-whether another client received a different history, so signed heads must be compared across
-independent vantage points. These requirements lead directly to the dual-index warning, windowed
+Third, DUET should detect split-view equivocation. A locally verified proof shows that one response
+matches a committed state, but it cannot show whether another client received a different state.
+Detection therefore requires comparing signed heads observed by different parties or through
+separate channels. Together, the three requirements motivate the dual-index warning, windowed
 consistency, and auditor mechanisms in \cref{ch:design}.
 
-Proof construction introduces a separate bandwidth--privacy trade-off. Signal's fixed-length
-\num{8192}-byte proof conceals directory occupancy~\cite{signal-kt-server}, whereas CONIKS transmits
-the authentication path required for the queried entry~\cite[p.~10]{melara2015coniks}. The evaluation
-places DUET's compressed proof within this design space.
+Finally, ACKA provides the framework for authenticating evolving session state. DUET should
+instantiate ACKA's generic $\Log$ interface with the verifiable directory and retain its per-epoch
+CEA construction for successive CKA
+updates~\cite[pp.~10, 13--14, 20--21]{dowling2023acka}.

@@ -17,7 +17,7 @@ Key transparency commits public-key directory states to a verifiable, append-onl
 deploys this approach through optional Automatic Key Verification~\cite{signal-akv}. The systems
 surveyed in \cref{ch:background} expose changes through self-monitoring, auditing, witnesses, or
 whole-directory verification, but none gives one party an automatic, conversation-specific channel for
-warning the other, and per-epoch monitoring makes a returning client's work grow with the number of
+warning the other. Moreover, per-epoch monitoring makes a returning client's work grow with the number of
 missed epochs.
 
 A suitable design must therefore verify keys automatically, report substitution to both parties in
@@ -36,7 +36,7 @@ with a single proof whose size grows logarithmically in the endpoint log sizes.
 
 DUET does not prevent a malicious provider from denying service. Its narrower goal is to ensure that a
 substituted key, an invalid or missing proof, or an inconsistent directory history causes verification
-to fail rather than allowing the client to accept an attacker's key silently. \Cref{ch:threat}
+to fail, preventing the client from silently accepting an attacker's key. \Cref{ch:threat}
 formalizes this distinction between detectable interference and availability.
 
 \section{Contributions}\label{sec:intro-contributions}
@@ -47,32 +47,33 @@ This thesis makes four principal contributions.
 party and a shared warning label from the conversation's shared secret. The warning label identifies a
 shared slot to which either party can write an authenticated warning payload. For an honestly established and
 monitored conversation, a malicious server cannot predict and pre-position that slot before the label
-is first used. Before the warning commits, a censored write is detected through a key mismatch
-alongside a proof-verified empty slot. After the warning commits, the transition audit detects any
-removal as an invalid directory transition. The committed warning allows both parties to detect the
+is first used. Before committing the warning, the client detects censorship when a key mismatch accompanies a
+proof-verified empty slot. If the committed warning is later removed, the transition audit rejects
+the invalid directory transition. The committed warning allows both parties to detect the
 substitution automatically and in band (\cref{sec:design-dual}).
 
 \paragraph{Cryptographic.} The cryptographic contribution applies an RFC~9162~\cite{rfc9162}
-distant-head consistency proof to offline monitoring. A returning client re-verifies the log with one
-proof instead of retrieving one proof for every missed epoch. The proof size stays logarithmic in the
-endpoint log sizes rather than linear in the number of epochs missed (\cref{sec:design-windowed},
-\cref{lem:windowed-size}). A same-head consistency lemma (\cref{lem:dualindex-consistency}) establishes
+distant-head consistency proof to offline monitoring. With a retained signed-head checkpoint, a client
+re-verifies missed history using one proof for the complete window. Its size is logarithmic in the
+endpoint log sizes, while the repeated-proof baseline grows with the number of missed epochs
+(\cref{sec:design-windowed}, \cref{lem:windowed-size}). A same-head consistency lemma (\cref{lem:dualindex-consistency}) establishes
 that Alice's peer lookup and Bob's self-check cannot authenticate different values under one signed
 head. \Cref{ch:design} establishes these properties, and \cref{ch:eval} evaluates their costs.
 
 \paragraph{Systems.} The systems contribution instantiates ACKA's abstract log
 component~\cite{dowling2023acka} as the DUET directory through a standalone Rust implementation
-comprising the \texttt{duet} crate, an HTTP directory server, and a cross-vantage auditor. A
-TypeScript verifier is integrated into a fork of Signal Desktop~(\cref{ch:impl}). Shared protocol
+comprising the \texttt{duet} crate, an HTTP directory server, and a separate auditor process. A
+client verifier is integrated into a fork of Signal Desktop~(\cref{ch:impl}). Shared protocol
 operations are checked for byte-for-byte agreement using cross-language test vectors.
 
-\paragraph{Empirical.} The benchmark evaluation, covering metrics M1--M17, yields four main
-findings. At a matched directory size, the implemented VRF-indexed lookup proof is roughly comparable
-in size to the corresponding CONIKS proof~\cite{melara2015coniks}. Detection adds label-bound lookups that reuse the same proof format, leaving individual proof size
-unchanged. Median full client verification remains below \SI{150}{\micro\second}
-through $10^7$ labels and grows far more slowly than $N$. A month-long offline catch-up uses a few
-hundred raw consistency-path hash bytes, compared with hundreds of kilobytes under the synthetic
-per-epoch baseline. Separately, the STRIDE and MITRE ATT\&CK evaluation distinguishes the attacks detected by
+\paragraph{Empirical.} The benchmark evaluation yields four main findings. At a matched directory size, the implemented
+VRF-indexed lookup proof is comparable in size to the corresponding CONIKS
+proof~\cite{melara2015coniks}. Detection adds label-bound lookups that reuse the same proof format,
+leaving individual proof size unchanged. Median full client verification remains below
+\SI{150}{\micro\second} through $10^7$ labels. A 30-day offline window with hourly epochs requires
+one proof containing \num{320} raw
+consistency-path hash bytes, compared with \num{222528} bytes for the synthetic repeated-proof
+baseline. Separately, the STRIDE and MITRE ATT\&CK evaluation distinguishes the attacks detected by
 the implemented controls from the residual risks that remain (\cref{ch:eval}).
 
 \section{Thesis Roadmap}\label{sec:intro-roadmap}
