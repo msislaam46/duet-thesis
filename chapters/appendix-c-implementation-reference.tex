@@ -188,16 +188,16 @@ returns the directory server to a fresh genesis tree between runs. Both Signal i
 fully quit and relaunched so they re-register their keys and clear any staged in-memory one-shot CEA
 injection, so each demonstration starts clean. A self-contained walk-through of the client
 verifier, independent of Signal Desktop, runs from the \texttt{signal-desktop-kt/} package with
-\texttt{npm run demo}. A containerized path
-(\texttt{up}, \texttt{logs}, \texttt{down}) runs the server, auditor, and attacker under Docker
-instead. The networked-in-app mode is enabled by setting a server URL in
-the client's environment before launch.
+\texttt{npm run demo}. A containerized path (\texttt{up}, \texttt{logs}, \texttt{down}) runs the directory server,
+auditor, and log viewer under Docker. The attacker runs only when invoked. The networked-in-app mode
+is enabled by setting a server URL in the client's environment
+before launch.
 
-Client and auditor log lines carry a structured \texttt{[KT]} prefix with a component tag (and, on
-the client, the affected peer or label), so the captures in \cref{ssec:impl-demo} are legible without
-post-processing. Verbose proof dumps and the attacker's target details are gated behind explicit
-verbose and demonstration flags and are off by default, keeping an ordinary run's output to one line
-per state change.
+The client and auditor use a structured \texttt{[KT]} prefix to identify the component that
+produced each log line. When applicable, client logs also identify the affected peer or label. Additional proof
+details and attack targets are shown when the verbose or demonstration options are enabled.
+Repeated monitor results are suppressed. A normal run reports a verification result again only
+after its state changes.
 
 % ----------------------------------------------------------------------------
 \FloatBarrier
@@ -214,8 +214,9 @@ A1b attack workflows across the four roles.
 \input{figures/tikz/fig-impl-signal}
 \caption[Signal Desktop integration points.]{Signal Desktop integration. The embedded Signal Desktop verifier communicates over HTTP with the DUET directory server. It registers identity material at the
 key-upload hook and verifies peer material at the peer-key-retrieval hook, reporting verdicts to the
-badge and banner. An independent auditor polls the server. The attacker uses a privileged testing
-interface. \Cref{tab:apiref-hooks,tab:apiref-events} list the hook functions and verdict-event names.}
+badge and banner. An auditor process polls the server for signed heads and epoch disclosures. During
+the controlled A4 run, it also retrieves the staged second view. The attacker uses a privileged
+testing interface. \Cref{tab:apiref-hooks,tab:apiref-events} list the hook functions and verdict-event names.}
 \label{fig:impl-signal}
 \end{figure}
 
@@ -242,13 +243,14 @@ writes a warning that Bob later reads. The auditor separately rejects the immuta
 In \cref{fig:impl-e2e}, Alice and Bob each run an embedded verifier, while the directory server and auditor
 execute as separate processes. In the normal path Alice and Bob each register their session slot and
 commit. Bob's verifier
-then verifies the peer slot, its own owner slot, and the shared warning slot through three
-label-bound, proof-verified lookups (the peer slot $\ell_A$ it retrieves Alice
-from, its own slot $\ell_B$, and the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably
-empty) and returns \texttt{SAFE}, while the auditor polls and replays to \textsc{Consistent}. In the
+then verifies its owner slot, the peer slot, and the shared warning slot through three
+label-bound, proof-verified lookups. These are its owner slot $\ell_B$, the peer slot $\ell_A$ that
+contains Alice's key, and the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably
+empty. The monitor emits a verified green result, while the auditor polls and replays to
+\textsc{Consistent}. In the
 branch for the A1b session-slot substitution, the server overwrites Alice's own dual-index slot $\ell_A$ (which is also Bob's peer slot).
-Alice's monitor reads the substituted value against her pinned key, finds a mismatch, and writes the
-shared warning slot. Bob's monitor then reads that warning and both clients go red. Independently, the
+Alice's monitor compares the substituted value with her local identity key, finds a mismatch, and
+writes the shared warning slot. Bob's monitor then reads that warning and both clients go red. Independently, the
 auditor's transition replay rejects the declared immutable rotation, so detection does not rest on the
 client path alone. The live run in \cref{ssec:impl-demo} shows this inside the real interface.
 
@@ -320,7 +322,7 @@ the red warning state for the selected conversation.}
 \centering
 \includegraphics[width=0.86\textwidth]{figures/cmd-equivocation.png}
 \caption[Staging A4 equivocation.]{Staging A4 equivocation. The privileged testing endpoint signs a
-second root at the current tree size. The cross-vantage auditor detects the two validly signed roots,
+second root at the current tree size. The auditor detects the two validly signed roots by comparing the primary and staged second views,
 as shown in the lower panel of \cref{fig:impl-auditor}.}
 \label{fig:demo-equivocation}
 \end{figure}
@@ -333,7 +335,7 @@ as shown in the lower panel of \cref{fig:impl-auditor}.}
 \par\medskip
 \includegraphics[width=0.88\textwidth]{figures/auditor-fork.png}
 \par\smallskip
-\small (b) A4 cross-vantage fork verdict
+\small (b) A4 fork verdict from the staged second view
 \caption[Auditor outcomes for A1a, A1b, and A4.]{Auditor outcomes for the controlled attacks. The
 upper capture belongs to the run in \cref{fig:demo-cmd}. The auditor verifies the declared history
 through epoch 6, including the mutable identity-entry rotation and the subsequent valid update. It
@@ -378,22 +380,21 @@ suite-\texttt{0x03} test vectors.
 A standalone HTTP server, built on the
 \texttt{axum} framework over the asynchronous \texttt{tokio} runtime, wraps the \texttt{KTServer}
 and serves the lookup, monitoring, and consistency operations as JSON, alongside a privileged
-testing interface used only by the adversarial scenario suite and the scripted attacker. An independent
-auditor binary, a small \texttt{ureq} HTTP client, verifies signed-head growth and replays epoch
-transitions along its own view. The server enforces the write-once policy in its raw-label
+testing interface used only by the adversarial scenario suite and the scripted attacker. An auditor binary, implemented as a small \texttt{ureq} HTTP client, verifies signed-head growth and
+replays declared epoch transitions against its own replica. The server enforces the write-once policy in its raw-label
 update path, so a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
 \texttt{/update-raw} endpoint answers \texttt{409 Conflict}), while the privileged interface exposes
 an explicit unchecked overwrite so the adversarial suite can play a malicious operator. Every commit
 freezes a \emph{declared update set} that the server publishes at an \texttt{/epoch-delta} endpoint,
 which the auditor consumes (\cref{fig:impl-transition-audit}) by replaying each epoch's declared set
-against its own replica and accepting only if the replayed root equals the committed root. Its
-cross-vantage step keeps a fork distinct from an unverified consistency proof: two validly signed
-roots at one tree size are reported as \texttt{[alert] fork: two validly signed roots exist at one
-tree size}, whereas a required proof that is missing, malformed, or invalid yields \texttt{[alert]
-consistency unverified: required proof is missing, malformed, or invalid} and retains the baseline
-rather than declaring a fork. The auditor prints each verdict once and re-emits a line only when the
-verdict or the signed head changes, so a screenshot of a stable run is not flooded. This
-corresponds to the third-party auditor role in the IETF KeyTrans protocol~\cite{ietf-keytrans-protocol}.
+against its own replica and accepting only if the replayed root equals the committed root. Its head-comparison step keeps a fork distinct from an unverified consistency proof. Two validly
+signed roots at one tree size are reported as \texttt{[alert] fork: two validly signed roots exist
+at one tree size}. A required proof that is missing, malformed, or invalid yields \texttt{[alert]
+consistency unverified: required proof is missing, malformed, or invalid} and retains the baseline.
+The auditor prints each verdict once and re-emits a line only when the verdict or signed head changes.
+The demonstration supplies the second head through \texttt{view=b} on the same server. A deployment
+would obtain that signed head from an independent source, following the third-party auditor role in
+the IETF KeyTrans protocol~\cite{ietf-keytrans-protocol}.
 Independently of any auditor, the \texttt{monitor} module retains a writer-side persistence proof
 (the inclusion proof and signed tree head from the epoch in which a warning commits) as an available
 capability, so that a later removal yields a bundle verifying against the server's own signed heads.

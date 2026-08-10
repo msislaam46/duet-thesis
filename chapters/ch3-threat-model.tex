@@ -156,8 +156,9 @@ affected by an A1 or A5 substitution, the peer must receive an in-band warning, 
 \paragraph{G2: Consistency Across Offline Windows.} A returning client must verify that the current
 log extends its last trusted state without processing every missed epoch.
 
-\paragraph{G3: Directory Privacy.} It must be computationally infeasible for anyone other than the
-directory operator to map a public directory label back to the corresponding user identifier.
+\paragraph{G3: Directory Privacy.} For an observer without the VRF secret key, a published
+VRF-derived global identity label must protect the associated user identifier against
+``offline dictionary attacks (also known as enumeration attacks)''~\cite[Section~1]{rfc9381}.
 
 \paragraph{G4: Fork Detection.} An honest auditor detects A4 split-view equivocation by comparing the client-observed head
 with a different valid head for the same epoch from an independent vantage. G4 alone depends on this

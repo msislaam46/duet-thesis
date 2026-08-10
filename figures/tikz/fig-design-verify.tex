@@ -5,7 +5,7 @@
    note/.style={font=\scriptsize\itshape,text=black!55,text width=13cm,align=left}]
   \node[vstep] (s1) {\textbf{1. Requested-label binding} (every path): require $\pi_{\mathrm{prefix}}.\mathit{label}$ equals the label the client queried, so a valid proof for a different label is rejected};
   \node[vstep,below=3mm of s1.south,anchor=north] (s2) {\textbf{2. VRF label binding} (VRF path only): verify the ECVRF proof and require $\beta[0{:}32]$ equals that same queried label (RFC~9381)};
-  \node[vstep,below=3mm of s2.south,anchor=north] (s3) {\textbf{3. STH signature and head pinning}: verify the Ed25519 signature on the returned STH, and require it equals the caller's already-verified (pinned) head, so a signed but stale or forked head is rejected};
+  \node[vstep,below=3mm of s2.south,anchor=north] (s3) {\textbf{3. STH signature and log history}: verify the Ed25519 signature and require the returned head to match the caller-supplied verified head. Between lookups, the Signal Desktop verifier accepts a newer head only after a valid consistency check from the last trusted head};
   \node[vstep,below=3mm of s3.south,anchor=north] (s4) {\textbf{4. Value binding}: require the prefix proof binds to the returned value};
   \node[vstep,below=3mm of s4.south,anchor=north] (s5) {\textbf{5. Prefix root}: recompute the prefix-tree root from the proof (siblings $+$ 32-byte bitmap)};
   \node[vstep,below=3mm of s5.south,anchor=north] (s6) {\textbf{6. Log inclusion and latest-state binding}: check the recomputed root is a leaf under the signed log root, and that the inclusion covers the \emph{last} log leaf (inclusion of an older leaf does not establish the current directory state)};

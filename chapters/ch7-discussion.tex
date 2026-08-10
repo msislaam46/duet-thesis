@@ -31,10 +31,13 @@ DUET's monitoring guarantee begins after a client pins a directory binding. It d
 but cannot establish whether that initial binding was authentic. A proof-verified peer-slot absence
 is reported as pending and then, after a fail-closed timeout, as \texttt{NotPosted}. Because that
 absence cannot be distinguished from a peer who has not yet run the client, timely peer-slot detection
-assumes peer participation. Monitoring is scoped to conversations the client still holds, keyed by
-per-conversation label in memory: a deleted conversation is dropped from the sweep (archived ones are
-retained), and the per-label state is not persisted, so a substitution during an unmonitored gap is
-not caught retrospectively. The design covers pairwise,
+assumes peer participation. Monitoring is scoped to conversations the client still holds and is keyed by the per-conversation
+label in memory. A deleted conversation is dropped from the sweep, while an archived conversation is
+retained. The prototype retains the signed-head checkpoint, peer-key pins, and per-label monitor state
+only while the application process is running. Windowed catch-up therefore covers monitoring gaps
+within a run. After an application restart, the client establishes a new trust-on-first-use baseline
+for its signed-head and peer-pin state. It cannot use the pre-restart checkpoint or peer pin to
+retrospectively detect a peer-key substitution introduced during the gap. The design covers pairwise,
 single-device conversations rather than groups, MLS, Sender Keys, or complete multi-device warning
 propagation. It also cannot protect a compromised endpoint.
 

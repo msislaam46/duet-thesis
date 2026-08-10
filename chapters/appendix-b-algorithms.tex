@@ -244,13 +244,23 @@ conflict, confirming publication by a verified read-back. \textsf{CheckWarning} 
 
 \paragraph{Client verification (Algorithm~\ref{alg:client}).} These procedures are the client's entire
 trust boundary: every value it accepts is checked against a signed tree head before use.
-\textsf{VerifiedLookup} returns a value only when the prefix proof, the log-inclusion proof, and the
-STH signature all verify, bind to the caller's pinned head, and carry the pinned configuration
-commitment, and it fails closed on any mismatch.
-\textsf{Register}, \textsf{RetrieveKey}, and \textsf{WindowedCatchUp} build on it to establish, read,
-and re-synchronize client state. In the implementation, the background \texttt{monitorConversation} loop composes these operations
-instead of mapping each one to a separate method. The same monitor enforces
-\textsf{RetrieveKey}'s non-null requirement.
+\textsf{VerifiedLookup} returns a value only after every check shown in
+Algorithm~\ref{alg:client} succeeds. The signed head returned with the lookup must match the verified
+head supplied by the caller. The procedure rejects the response if any check fails.
+
+The directory may advance between two monitor lookups. The Signal Desktop verifier accepts a newer
+signed head after verifying that it extends the client's last trusted head. This links each accepted
+lookup to the client's verified append-only history.
+
+\textsf{Register} attempts to place the client's key at its secret-derived owner label. A 409
+write-once conflict skips the commit. Registration succeeds only after a verified read-back shows
+that the label is occupied, and the background monitor checks the returned value against the
+client's local identity key during the same tick. \textsf{RetrieveKey} verifies and returns the
+peer-slot value, while \textsf{WindowedCatchUp} verifies the log extension from the client's last
+trusted head.
+
+For each active conversation, the background monitor composes these operations and performs
+windowed catch-up before checking the owner, peer, and warning slots.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
@@ -310,8 +320,10 @@ instead of mapping each one to a separate method. The same monitor enforces
 
 \clearpage
 \paragraph{Detection and persistence (Algorithm~\ref{alg:detect}).} This is the monitoring loop that
-turns a substituted key into an alert. \textsf{DetectMitM} and \textsf{BackgroundMonitor} compare the
-retrieved key against the expected one and, on a mismatch, write the dual-index warning. A
+turns a substituted key into an alert. \textsf{CheckPeerKeyAndWarn} represents the peer-key comparison
+and warning-publication branch. In the implementation,
+\texttt{RemoteKTClient.detectMitm} checks the owner and warning slots. \texttt{monitorConversation}
+adds the peer-slot comparison and warning publication. A
 proof-verified peer-slot absence is not itself an alert: \textsf{BackgroundMonitor} reports it as
 \textsc{Pending} for the first two checks and as an operational \texttt{NotPosted} timeout on the
 third (a fail-closed operational outcome, distinct from the CEA verdict \textsc{NotPosted}), because
@@ -328,7 +340,7 @@ persistence component, retained evidence.
 \begin{algorithm}[H]
 \caption{MitM Detection, Warning, and Warning Persistence}\label{alg:detect}
 \KwData{$\mathit{evidence}[]\gets[\,]$; $\mathit{registered}\gets\emptyset$; $\mathit{seen}\gets\emptyset$; $\mathit{absent}[\cdot]\gets 0$ (keyed by the secret-derived label); $\mathsf{PeerPin}[\cdot]\gets\bot$ (keyed by peer identity)}
-\Fn{\normalfont\textsf{DetectMitM}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
+\Fn{\normalfont\textsf{CheckPeerKeyAndWarn}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
     $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;

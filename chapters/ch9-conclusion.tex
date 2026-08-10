@@ -11,8 +11,8 @@ expose the malicious-operator behaviours specified in the threat model (\cref{ch
 dual-index warning scheme for in-band peer
 warnings and a windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
 and compares signed heads obtained from separate vantage points, providing the cross-vantage check
-used to detect equivocation. The \texttt{duet} Rust crate implements the directory server, proof construction, and independent
-auditor. A verifier integrated into Signal Desktop runs the client-verification path
+used to detect equivocation. The \texttt{duet} Rust crate implements the directory server, proof construction, and auditor
+process. A verifier integrated into Signal Desktop runs the client-verification path
 (\cref{ch:impl}).
 
 \Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an

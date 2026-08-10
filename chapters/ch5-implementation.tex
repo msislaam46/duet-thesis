@@ -1,7 +1,7 @@
 \chapter{Implementation}\label{ch:impl}
 
 The implementation has two components. The standalone DUET component, implemented in Rust, provides
-the directory server, cryptographic operations, independent auditor, and benchmark harness. The
+the directory server, cryptographic operations, an auditor process, and a benchmark harness. The
 client component, implemented in TypeScript and integrated into Signal Desktop, provides the
 verifier, background monitor, lifecycle hooks, and warning interface. This chapter covers their architecture, integration, parity testing, engineering
 constraints, and reproducibility.
@@ -34,8 +34,8 @@ boundary. Production integration must obtain the live conversation secret and ra
 \centering
 \input{figures/tikz/fig-impl-overview}
 \caption[Implemented architecture.]{The Signal Desktop verifier checks responses from the DUET directory
-server, while an independent auditor obtains signed heads and epoch disclosures from a separate
-vantage.}
+server. The auditor runs as a separate process and verifies signed heads, epoch disclosures, and
+the staged second view used by the demonstration.}
 \label{fig:impl-overview}
 \end{figure}
 
@@ -46,7 +46,7 @@ The \texttt{duet} crate implements a path-compressed sparse Merkle directory and
 following the IETF KeyTrans model~\cite{ietf-keytrans-protocol}, an RFC~9162 append-only
 log~\cite{rfc9162}, and ECVRF-EDWARDS25519-SHA512-TAI~\cite{rfc9381}. It also includes DUET's
 dual-index construction, ACKA's CEA construction~\cite{dowling2023acka}, an HTTP server, and an
-independent auditor. The crates \texttt{sha2},
+auditor process. The crates \texttt{sha2},
 \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard primitives. The
 project implements the ECVRF directly and checks it against the RFC~9381 test vectors.
 \Cref{fig:impl-modules} shows the module structure, while \cref{tab:impl-modules} maps each module to
@@ -57,8 +57,8 @@ its standards basis and conformance evidence.
 \input{figures/tikz/fig-impl-modules}
 \caption[Core relationships in the DUET implementation.]{Core relationships in the DUET implementation. The
 directory service composes the authenticated data structures and signing components. Client-side
-constructions use the directory operations, while the independent auditor maintains a replica and
-checks signed heads, consistency proofs, and declared transitions.}
+constructions use the directory operations, while the auditor process maintains a replica and checks signed heads, consistency proofs, and
+declared transitions.}
 \label{fig:impl-modules}
 \end{figure}
 
@@ -113,8 +113,9 @@ A server built with \texttt{axum} and \texttt{tokio} holds the directory behind 
 \texttt{Arc<Mutex<KTServer>>}, with no sharding, matching the single-machine prototype scope. The server exposes public lookup and monitoring
 operations plus a privileged unchecked-overwrite interface used only by the adversarial harness.
 Write-once enforcement returns 409 Conflict when a dual-index, warning, or CEA label is already
-occupied, so a replacement is refused, never silently applied. A separate \texttt{ureq} auditor
-binary obtains signed heads from its own vantage.
+occupied, so a replacement is refused, never silently applied. A separate auditor binary verifies
+signed heads and compares the primary head with a staged second view supplied by the directory
+server in demonstration mode. The A4 run uses this comparison to detect split-view equivocation.
 
 Every commit publishes a declared set of inserts and rotations at an epoch-delta endpoint, and each
 rotation discloses its prior value. \Cref{fig:impl-transition-audit} shows the resulting audit. The
@@ -177,7 +178,7 @@ functions, event names, and engineering record are in \cref{sec:apiref-hooks,sec
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
-The demonstration uses two Signal Desktop clients with the DUET directory server, independent auditor, and a
+The demonstration uses two Signal Desktop clients with the DUET directory server, an auditor process, and a
 privileged attack tool. It covers the two \hyperref[sc:threat-a1]{A1 key-substitution variants}.
 In the A1a global-slot variant, the attack tool replaces the value in the mutable global identity
 slot. The auditor accepts the declared rotation, while the affected client's self-check detects the

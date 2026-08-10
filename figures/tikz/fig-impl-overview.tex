@@ -11,7 +11,7 @@
       dual-index derivation\\ CEA registration and verification\\ HTTP API (\cref{app:apiref})
       \end{tabular}};
   \node[grp,minimum width=5.6cm,below=1.1cm of srv] (aud)
-     {\textbf{Cross-vantage auditor}\\[1pt]{\scriptsize independent process: poll STH and epoch deltas, verify append-only and transition, detect forks}};
+     {\textbf{Auditor}\\[1pt]{\scriptsize separate process: verify signed heads and epoch deltas,}\\ {\scriptsize replay transitions, compare primary and staged second views}};
   \draw[<->] (sd) -- node[right,font=\scriptsize]{HTTP and JSON} (srv);
   \draw[->,dashed] (aud) -- node[right,font=\scriptsize]{obtain signed heads, epoch deltas, and consistency proofs} (srv);
 \end{tikzpicture}

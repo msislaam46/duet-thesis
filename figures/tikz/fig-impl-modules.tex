@@ -37,8 +37,8 @@
   \draw[->,dashed] (didx) -- (cea);
   \draw[->,dashed] (cea.west) -- node[above,font=\scriptsize,pos=0.55]{call the API} (api.east);
 
-  % ---- independent auditor ----
-  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.6,6.0) {\textbf{Independent auditor replica}\\separate process};
+  % ---- auditor process ----
+  \node[cmp,minimum width=3.0cm,fill=black!5] (aud) at (7.6,6.0) {\textbf{Auditor replica}\\separate process};
   \draw[<->,dashed] (aud.west) -- node[above,align=center,font=\scriptsize,pos=0.55]{obtain signed heads,\\epoch deltas, and\\consistency proofs} (api.north east);
 \end{tikzpicture}%
 }
