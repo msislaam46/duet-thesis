@@ -257,34 +257,32 @@ System & What it logs & Primary detection mechanism & In-band peer warning &
 \midrule
 CONIKS~\cite{melara2015coniks} & username $\to$ key binding & self-monitoring & No & linear in the number of missed epochs &
   STR gossip among auditors\newline direct client-to-client exchange left as future work \\
-SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & history cost depends on key updates & $\ge$1 honest auditor per epoch\newline commitments compared through gossip or a blockchain \\
-Parakeet~\cite{malvai2023parakeet} & identifier $\to$ public key & self-monitoring & No & check once between each tombstone and subsequent deletion & $2f{+}1$ signatures from $3f{+}1$
+SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & history cost scales with key updates & $\ge$1 honest auditor per epoch\newline commitments compared through gossip or a blockchain \\
+Parakeet~\cite{malvai2023parakeet} & identifier $\to$ public key & self-monitoring & No & one check between tombstoning and deletion & $2f{+}1$ signatures from $3f{+}1$
   witnesses \\
-ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Warning only after account reset & retrieve keychain updates since the last query &
+ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Warning only after account reset & keychain updates since the last query &
   external auditor \\
 OPTIKS~\cite{optiks2024} & identity key and device entries & self-monitoring (single proof, common case) & No &
   verify before old periods are deleted & at least one auditor and a bulletin board \\
 PRISM~\cite{pusch2025prism} & account keys & whole-directory verification & No &
   latest commitment and constant-size proof verify full history & zk-rollup on a data-availability layer \\
-WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & client lookup-proof verification & No & Not provided in the cited configuration\newline key-history monitoring disabled & signed roots and public WORM-retained audit proofs \\
-Signal KT~\cite{signal-kt-server,signal-akv} & ACI $\to$ identity key; phone number and username hash $\to$ ACI & self-monitoring and audit interfaces, optional user-triggered AKV & No &
-  monitoring endpoint\newline offline-window policy not documented in the cited source & signed head and audit endpoints\newline independent auditor deployment not documented in the cited source \\
+WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & client lookup-proof verification & No & key-history requests not yet enabled & signed roots and public WORM-retained audit proofs \\
+Signal KT~\cite{signal-kt-server,signal-akv} & ACI $\to$ identity key; phone number and username hash $\to$ ACI & self-monitoring, audit interfaces, and optional AKV & No &
+  Not specified & signed head and audit endpoints \\
 Proton KT~\cite{goebel2023proton} & email address $\to$ Signed Key List (SKL) & self-audit and external audit & No &
   self-audit at least every 90 days & CT logs and external auditing \\
-Google KT~\cite{google-kt} & account keys & self-monitoring (experimental, archived 2024) & No & Not documented in the cited source & CONIKS map in a CT log \\
+Google KT~\cite{google-kt} & account keys & self-monitoring & No & Not specified & CONIKS map in a CT log \\
 Apple CKV~\cite{apple-ckv} & account keys, device keys, and opt-in state & automatic device verification and E2E-encrypted CloudKit
-  cross-check & No shared peer-warning slot & Not documented in the cited source & on-device consistency, encrypted log-hash gossip, and internal audit \\
+  cross-check & No shared peer-warning slot & Not specified & on-device consistency, encrypted log-hash gossip, and internal audit \\
 \bottomrule
 \end{tabular}
 
-{\scriptsize\raggedright \emph{In-band peer warning} means a conversation-specific substitution
-warning published at the shared slot and verified by the other client. SEEMless additionally assumes that a user
-recalls their own update times. Apple CKV gossips log hashes within encrypted messages, while PRISM discusses embedding
-commitments as an additional gossip safeguard. Neither provides the shared peer-substitution
-warning defined here. Merkle\textsuperscript{2} is omitted because it presents a general transparency-log construction
-and sketches its application to public keys~\cite[Section~VII-B]{hu2021merkle2}, while ACKA assumes
-the generic secure-log interface described in \cref{sec:bg-acka} instead of instantiating an
-identity-to-key directory.\par}
+{\scriptsize\raggedright
+\emph{In-band peer warning} means the conversation-specific shared-slot warning defined in this
+thesis. \emph{Not specified} means that the cited source does not specify an offline-recovery
+policy. Apple gossips log hashes in encrypted messages, while PRISM discusses in-band commitment
+gossip~\cite{apple-ckv,pusch2025prism}. Neither defines the conversation-specific shared-slot
+warning used by DUET.\par}
 \end{table}
 
 \FloatBarrier
