@@ -240,6 +240,9 @@ censorship (\hyperref[sc:threat-a2]{A2}), the first-contact substitution postcon
 agreement and the expected behaviour for the specified inputs, not equivalence over every input.
 \Cref{sec:tests-evidence} gives the complete counts, names, and outcomes.
 
+The A5 predecessor cross-signature check is currently limited to the standalone adversarial suite.
+The integrated Signal client uses identity re-fetch and the shared warning path.
+
 The Rust tests exhaustively cover every Merkle-log inclusion proof and consistency pair up to size 64,
 with forged-proof rejection, not sampling. Auditor tests reject invalid
 fork evidence and report genuine equivocation as \textsc{Fork}, while a divergent head with an invalid

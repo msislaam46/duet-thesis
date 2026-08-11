@@ -14,9 +14,9 @@
   \draw[dashed,red!70!black,rounded corners] (1.55,-1.7) rectangle (3.75,1.7);
   \node[red!70!black,font=\footnotesize,align=center] at (2.65,2.05) {untrusted network\\(Dolev--Yao)};
   % client--server links pass through the band
-  \draw[->] (A.east) -- (S.west);
-  \draw[->] (B.east) -- (S.west);
-  \node[font=\footnotesize,align=center] at (6.0,-1.9) {service operator:\\semi-trusted};
+  \draw[<->] (A.east) -- (S.west);
+  \draw[<->] (B.east) -- (S.west);
+  \node[font=\footnotesize,align=center] at (6.0,-1.9) {service operator:\\potentially malicious};
   % independent auditor beyond the operator boundary
   \draw[<->,dashed,green!45!black] (S.east) -- node[above,font=\footnotesize]{independent} (Au.west);
 \end{tikzpicture}
