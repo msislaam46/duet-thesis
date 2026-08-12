@@ -47,14 +47,14 @@
   % receiver branch
   \node[font=\bfseries] (rcvH) at (12.3,-1.9) {Receiver};
   \node[box] (rcv1) at (12.3,-2.8) {proof-verified lookup at $L_t$};
-  \node[ok]  (rcvOK) at (12.3,-4.2) {$=F_t$: Consistent, advance to $k_{t+1}$};
-  \node[amb] (rcvNP) at (12.3,-5.7) {absent: retry in window; still absent gives NotPosted, no advance};
-  \node[no]  (rcvFK) at (12.3,-7.2) {$\neq F_t$: Fork, attempt shared-warning publication, no advance};
+  \node[ok]  (rcvOK) at (12.3,-4.2) {$=F_t$: \textsc{Consistent}, advance to $k_{t+1}$};
+  \node[amb] (rcvNP) at (12.3,-5.7) {absent: retry in window; still absent gives \mbox{\textsc{NotPosted}}, no advance};
+  \node[no]  (rcvFK) at (12.3,-7.2) {$\neq F_t$: \textsc{Fork}, attempt shared-warning publication, no advance};
   \draw[edge] (cd) -| (rcvH);
   \draw[edge] (rcvH) -- (rcv1);
   \draw[edge,green!55!black] (rcv1) -- node[right,font=\tiny]{$=F_t$} (rcvOK);
   \draw[edge,orange!85!black] (rcv1.west) -| (10.55,-5.7) -- (rcvNP.west);
-  \draw[edge,red!65!black] (10.55,-5.7) -- (10.55,-7.2) -- (rcvFK.west);
+  \draw[edge,red!65!black] (rcv1.east) -| (14.05,-7.2) -- (rcvFK.east);
 
   % construction boundary note
   \node[draw,dashed,rounded corners,align=center,font=\scriptsize,text width=12.5cm,inner sep=4pt]
