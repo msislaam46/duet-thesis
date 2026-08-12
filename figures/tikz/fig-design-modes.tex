@@ -33,7 +33,7 @@
   \draw[edge] (ck) -- (cd);
 
   % sender branch
-  \node[font=\bfseries] (sndH) at (6.3,-1.9) {Sender};
+  \node[font=\bfseries] (sndH) at (6.3,-1.65) {Sender};
   \node[box,minimum height=12mm] (snd1) at (6.3,-2.8) {proof-verified \mbox{pre-write} lookup at $L_t$};
   \node[box] (sndW) at (6.3,-4.35) {proven absent: write $F_t$, verify read-back};
   \node[ok]  (sndOK) at (6.3,-5.85) {read-back confirmed: advance to $k_{t+1}$};
@@ -48,7 +48,7 @@
     (sndST.west);
 
   % receiver branch
-  \node[font=\bfseries] (rcvH) at (12.3,-1.9) {Receiver};
+  \node[font=\bfseries] (rcvH) at (12.3,-1.65) {Receiver};
   \node[box,minimum height=12mm] (rcv1) at (12.3,-2.8) {proof-verified lookup at $L_t$};
   \node[ok]  (rcvOK) at (12.3,-4.2) {$=F_t$: \textsc{Consistent}, advance to $k_{t+1}$};
   \node[amb] (rcvNP) at (12.3,-5.7) {absent: retry in window; still absent gives \mbox{\textsc{NotPosted}}, no advance};
