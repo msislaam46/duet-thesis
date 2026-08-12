@@ -24,7 +24,7 @@
   \draw[edge,dashed] (sl) -- node[right,font=\tiny]{register} (sk);
 
   % divider
-  \draw[dashed,black!35] (2.9,2.0) -- (2.9,-8.6);
+  \draw[dashed,black!35] (2.9,2.0) -- (2.9,-8.2);
 
   % ---------- continuous mode (right) ----------
   \node[font=\small\bfseries] at (9.2,1.7) {Continuous (CEA) mode};
@@ -34,7 +34,7 @@
 
   % sender branch
   \node[font=\bfseries] (sndH) at (6.3,-1.9) {Sender};
-  \node[box] (snd1) at (6.3,-2.8) {proof-verified pre-write lookup at $L_t$};
+  \node[box] (snd1) at (6.3,-2.8) {proof-verified \mbox{pre-write} lookup at $L_t$};
   \node[box] (sndW) at (6.3,-4.2) {proven absent: write $F_t$, verify read-back};
   \node[ok]  (sndOK) at (6.3,-5.7) {read-back confirmed: advance to $k_{t+1}$};
   \node[neu] (sndST) at (6.3,-7.2) {occupied or unverifiable: no write, no advance};
@@ -42,14 +42,17 @@
   \draw[edge] (sndH) -- (snd1);
   \draw[edge] (snd1) -- node[right,font=\tiny]{proven absent} (sndW);
   \draw[edge,green!55!black] (sndW) -- node[right,font=\tiny]{confirmed} (sndOK);
-  \draw[edge] (snd1.west) -| (4.55,-7.2) -- node[above,font=\tiny,pos=0.15]{otherwise} (sndST.west);
+  \draw[edge] (snd1.west) -| (4.55,-7.2)
+    -- node[above,font=\tiny,pos=0.45,fill=white,inner sep=1pt,yshift=1pt]
+       {otherwise}
+    (sndST.west);
 
   % receiver branch
   \node[font=\bfseries] (rcvH) at (12.3,-1.9) {Receiver};
   \node[box] (rcv1) at (12.3,-2.8) {proof-verified lookup at $L_t$};
   \node[ok]  (rcvOK) at (12.3,-4.2) {$=F_t$: \textsc{Consistent}, advance to $k_{t+1}$};
   \node[amb] (rcvNP) at (12.3,-5.7) {absent: retry in window; still absent gives \mbox{\textsc{NotPosted}}, no advance};
-  \node[no]  (rcvFK) at (12.3,-7.2) {$\neq F_t$: \textsc{Fork}, attempt shared-warning publication, no advance};
+  \node[no]  (rcvFK) at (12.3,-7.2) {$\neq F_t$: \textsc{Fork}, attempt shared-warning \mbox{publication}, no advance};
   \draw[edge] (cd) -| (rcvH);
   \draw[edge] (rcvH) -- (rcv1);
   \draw[edge,green!55!black] (rcv1) -- node[right,font=\tiny]{$=F_t$} (rcvOK);
