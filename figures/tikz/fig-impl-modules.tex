@@ -1,40 +1,42 @@
 % fig-impl-modules.tex — directory core with external client component and auditor.
-% The server core (KTServer) composes the prefix tree, Merkle log, ECVRF, and the
-% Ed25519 signer; the prefix tree, Merkle log, and KTServer itself hash through the
-% shared SHA-256 component. The client component and the auditor are separate
-% processes that reach the directory over the HTTP interface.
+% The HTTP server calls KTServer; KTServer composes the prefix tree, Merkle log,
+% ECVRF, and Ed25519 signer, and hashes through the shared SHA-256 component; the
+% prefix tree and Merkle log also hash through it. The client component and auditor
+% are separate processes that reach the directory over the HTTP interface at
+% distinct boundary points.
 % Label: \label{fig:impl-modules}
+\hyphenpenalty=10000\exhyphenpenalty=10000
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
    cmp/.style={draw,rounded corners,align=center,minimum height=8mm,inner sep=3pt,fill=white},
-   ext/.style={draw,rounded corners,align=center,minimum height=10mm,inner sep=3pt,fill=black!5},
+   ext/.style={draw,rounded corners,align=center,minimum height=13mm,inner sep=3pt,fill=black!5},
    band/.style={font={\footnotesize\itshape},anchor=east,text=black!70}]
 
-  % ---- server stack (left/centre) ----
+  % ---- server stack (centre); SHA-256 centred under KTServer ----
   \node[cmp,minimum width=5.0cm] (api) at (0,5.3) {\textbf{HTTP server}\\lookup, update, and consistency API};
   \node[cmp,minimum width=3.0cm] (dir) at (0,3.8) {\textbf{Directory service}\\(\texttt{KTServer})};
   \node[cmp,minimum width=2.3cm] (ptree) at (-3.6,2.1) {Sparse Merkle\\prefix tree};
   \node[cmp,minimum width=2.1cm] (mlog)  at (-1.2,2.1) {Append-only\\Merkle log};
   \node[cmp,minimum width=1.9cm] (vrf)   at ( 1.0,2.1) {ECVRF};
   \node[cmp,minimum width=2.3cm] (sig)   at ( 3.3,2.1) {Ed25519\\signer};
-  \node[cmp,minimum width=8.0cm] (hash)  at (-0.15,0.5) {SHA-256 hashing};
+  \node[cmp,minimum width=8.0cm] (hash)  at (0,0.5) {SHA-256 hashing};
   % bands
-  \node[band] at (-5.2,5.3) {API};
-  \node[band] at (-5.2,3.8) {server core};
-  \node[band,align=right] at (-5.2,2.1) {authenticated\\structures};
-  \node[band] at (-5.2,0.5) {hashing layer};
+  \node[band] at (-5.4,5.3) {API};
+  \node[band] at (-5.4,3.8) {server core};
+  \node[band,align=right] at (-5.4,2.1) {authenticated\\structures};
+  \node[band] at (-5.4,0.5) {hashing layer};
   % server dependency edges
   \draw[->] (api) -- (dir);
   \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (dir) -- (\n);}
   \foreach \n in {ptree,mlog}{\draw[->] (\n) -- (\n |- hash.north);}
-  \draw[->] (dir.south) -- (hash.north);
+  \draw[->] (dir.south) -- (dir.south |- hash.north);
 
-  % ---- external client component ----
-  \node[ext,minimum width=3.0cm,text width=2.8cm] (cli) at (7.2,5.3) {\textbf{Client component}\\Signal Desktop};
-  \draw[<->] (cli.west) -- node[above,font=\scriptsize,fill=white,inner sep=1pt]{HTTP/JSON} (api.east);
+  % ---- external client component -> api.east ----
+  \node[ext,minimum width=3.0cm,text width=2.8cm] (cli) at (7.4,5.3) {\textbf{Client component}\\Signal Desktop};
+  \draw[<->] (api.east) -- node[above,font=\scriptsize,fill=white,inner sep=1pt]{HTTP/JSON} (cli.west);
 
-  % ---- auditor (separate process) ----
-  \node[ext,minimum width=3.2cm,text width=3.0cm] (aud) at (7.2,2.9) {\textbf{Auditor}\\transition replay and head comparison};
-  \draw[<->,dashed] (aud.west) -- node[above,align=center,font=\scriptsize,fill=white,inner sep=1pt,pos=0.5]{signed heads,\\consistency proofs,\\and epoch deltas} (api.east);
+  % ---- auditor -> api.south east via an elbow with a horizontal label segment ----
+  \node[ext,minimum width=3.2cm,text width=3.0cm] (aud) at (7.4,3.0) {\textbf{Auditor}\\transition replay and head comparison};
+  \draw[<->,dashed] (api.south east) |- node[above,align=center,font=\scriptsize,fill=white,inner sep=1pt,pos=0.72]{signed heads,\\consistency proofs,\\and epoch deltas} (aud.west);
 \end{tikzpicture}%
 }
