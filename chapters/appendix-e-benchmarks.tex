@@ -397,7 +397,10 @@ M7 runs only with \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes a
 and must reproduce byte-for-byte, and timings reproduce within noise.
 
 \medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The Criterion group and CSV names below match the committed benchmark corpus, so some differ from the terminology used in the thesis.
-The \texttt{windowed\_full\_client\_verify} measurement covers one full signed-head lookup verification. Windowed catch-up proof generation is measured separately under M4. The M1 values stored under \texttt{dual\_index} measure the VRF-indexed \texttt{search\_by\_user\_id} lookup. \texttt{M8\_throughput} records per-operation latencies from which a
+The \texttt{windowed\_full\_client\_verify} measurement times VRF proof and label verification,
+value binding, prefix-root reconstruction, log inclusion, and STH signature verification. Result-to-head binding, configuration
+recomputation, head well-formedness, latest-state binding, and append-only-history verification
+remain outside the timed body. Windowed catch-up proof generation is measured separately under M4. The M1 values stored under \texttt{dual\_index} measure the VRF-indexed \texttt{search\_by\_user\_id} lookup. \texttt{M8\_throughput} records per-operation latencies from which a
 single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures, in Rust, one signed-head lookup
 verification corresponding to the verification performed at the peer-key-retrieval boundary. It
 excludes X3DH/PQXDH, network transfer, and session establishment.

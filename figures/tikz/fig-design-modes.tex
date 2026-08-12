@@ -1,34 +1,63 @@
 % fig-design-modes.tex — session vs continuous mode.
-% The continuous side is a compact CEA state machine: derive over the pre-update
-% state and authenticate the public T; advance (fold the secret I) only on a
-% confirmed/Consistent step; leave the state unchanged on Fork or NotPosted.
+% Session mode (left): one registration per conversation secret.
+% Continuous mode (right): CEA per epoch, split into separate Sender and
+% Receiver branches. Green = confirmed state advance; red = Fork + attempted
+% shared-warning publication; amber = NotPosted; neutral = occupied/unverifiable.
 % Label: \label{fig:design-modes}
-\begin{tikzpicture}[>=Stealth,font=\footnotesize,
-   edge/.style={->,shorten <=1pt,shorten >=2pt},
-   box/.style={draw,rounded corners,align=center,minimum width=2cm,minimum height=7mm},
-   st/.style={draw,rounded corners,align=center,inner sep=3pt,minimum height=6mm},
-   ok/.style={draw,rounded corners,align=center,inner sep=3pt,draw=green!50!black},
-   no/.style={draw,rounded corners,align=center,inner sep=3pt,draw=red!60!black}]
+\begin{tikzpicture}[>=Stealth,font=\scriptsize,
+   edge/.style={->,shorten <=1pt,shorten >=1.5pt},
+   box/.style={draw,rounded corners,align=center,inner sep=3pt,minimum height=6mm,text width=2.7cm},
+   sess/.style={draw,rounded corners,align=center,inner sep=3pt,minimum height=6mm,text width=2.5cm},
+   wide/.style={draw,rounded corners,align=center,inner sep=3pt,minimum height=6mm,text width=4.6cm},
+   ok/.style={draw=green!55!black,thick,rounded corners,align=center,inner sep=3pt,minimum height=6mm,text width=2.7cm},
+   no/.style={draw=red!65!black,thick,rounded corners,align=center,inner sep=3pt,minimum height=6mm,text width=2.7cm},
+   amb/.style={draw=orange!85!black,thick,rounded corners,align=center,inner sep=3pt,minimum height=6mm,text width=2.7cm},
+   neu/.style={draw=black!50,rounded corners,align=center,inner sep=3pt,minimum height=6mm,text width=2.7cm}]
 
-  % ---- session mode (left) ----
-  \node[font=\small] at (0,1.5) {\textbf{Session mode}};
-  \node[box] (s)  at (0,0.5)  {$\sharedS$};
-  \node[box] (sl) at (0,-0.7) {labels};
-  \node[box] (sk) at (0,-1.9) {identity key};
-  \draw[edge] (s) -- node[right,font=\footnotesize]{HKDF} (sl);
-  \draw[edge,dashed] (sl) -- node[right,font=\footnotesize]{register} (sk);
-  \node[align=center,font=\footnotesize] at (0,-2.9) {one write per\\pre-key rotation};
+  % ---------- session mode (left) ----------
+  \node[font=\small\bfseries] at (0,1.7) {Session mode};
+  \node[sess] (ss) at (0,0.8)  {shared secret $\sharedS$};
+  \node[sess] (sl) at (0,-0.5) {derive self, peer, and warning labels};
+  \node[sess] (sk) at (0,-2.0) {register own identity key at its lookup slot};
+  \node[align=center,font=\scriptsize\itshape] at (0,-3.2) {one registration per\\conversation secret};
+  \draw[edge] (ss) -- node[right,font=\tiny]{HKDF} (sl);
+  \draw[edge,dashed] (sl) -- node[right,font=\tiny]{register} (sk);
 
-  % ---- continuous (CEA) mode (right): compact state machine ----
-  \node[font=\small] at (5.3,1.5) {\textbf{Continuous (CEA) mode}};
-  \node[st] (cs) at (4.3,0.5)   {state $k_t$};
-  \node[st] (cd) at (4.3,-0.8)  {derive $L_t,F_t$ over $k_t$ (pre-update);\\authenticate public $T_t$};
-  \node[st] (cw) at (4.3,-2.1)  {verified write and read,\\sender occupied-label check};
-  \node[ok] (cok) at (4.3,-3.5) {writer: on confirmed write;\\verifier: on \textbf{Consistent};\\advance: fold $I_t \to k_{t+1}$};
-  \node[no] (cno) at (9.0,-2.1) {\textbf{Fork} or \textbf{NotPosted}:\\no advance};
-  \draw[edge] (cs) -- (cd);
-  \draw[edge] (cd) -- (cw);
-  \draw[edge,green!50!black] (cw) -- node[right,font=\scriptsize]{confirmed} (cok);
-  \draw[edge,red!60!black] (cw.east) -- (cno.west);
-  \node[align=center,font=\footnotesize] at (4.3,-4.5) {one write per ratchet epoch};
+  % divider
+  \draw[dashed,black!35] (2.9,2.0) -- (2.9,-8.6);
+
+  % ---------- continuous mode (right) ----------
+  \node[font=\small\bfseries] at (9.2,1.7) {Continuous (CEA) mode};
+  \node[box] (ck) at (9.2,0.8) {pre-update state $k_t$};
+  \node[wide] (cd) at (9.2,-0.5) {derive $L_t$ and $F_t$;\\$F_t$ authenticates the sender's public ratchet key $T_t$};
+  \draw[edge] (ck) -- (cd);
+
+  % sender branch
+  \node[font=\bfseries] (sndH) at (6.3,-1.9) {Sender};
+  \node[box] (snd1) at (6.3,-2.8) {proof-verified pre-write lookup at $L_t$};
+  \node[box] (sndW) at (6.3,-4.2) {proven absent: write $F_t$, verify read-back};
+  \node[ok]  (sndOK) at (6.3,-5.7) {read-back confirmed: advance to $k_{t+1}$};
+  \node[neu] (sndST) at (6.3,-7.2) {occupied or unverifiable: no write, no advance};
+  \draw[edge] (cd) -| (sndH);
+  \draw[edge] (sndH) -- (snd1);
+  \draw[edge] (snd1) -- node[right,font=\tiny]{proven absent} (sndW);
+  \draw[edge,green!55!black] (sndW) -- node[right,font=\tiny]{confirmed} (sndOK);
+  \draw[edge] (snd1.west) -| (4.55,-7.2) -- node[above,font=\tiny,pos=0.15]{otherwise} (sndST.west);
+
+  % receiver branch
+  \node[font=\bfseries] (rcvH) at (12.3,-1.9) {Receiver};
+  \node[box] (rcv1) at (12.3,-2.8) {proof-verified lookup at $L_t$};
+  \node[ok]  (rcvOK) at (12.3,-4.2) {$=F_t$: Consistent, advance to $k_{t+1}$};
+  \node[amb] (rcvNP) at (12.3,-5.7) {absent: retry in window; still absent gives NotPosted, no advance};
+  \node[no]  (rcvFK) at (12.3,-7.2) {$\neq F_t$: Fork, attempt shared-warning publication, no advance};
+  \draw[edge] (cd) -| (rcvH);
+  \draw[edge] (rcvH) -- (rcv1);
+  \draw[edge,green!55!black] (rcv1) -- node[right,font=\tiny]{$=F_t$} (rcvOK);
+  \draw[edge,orange!85!black] (rcv1.west) -| (10.55,-5.7) -- (rcvNP.west);
+  \draw[edge,red!65!black] (10.55,-5.7) -- (10.55,-7.2) -- (rcvFK.west);
+
+  % construction boundary note
+  \node[draw,dashed,rounded corners,align=center,font=\scriptsize,text width=12.5cm,inner sep=4pt]
+    at (7.6,-8.9)
+    {CEA determines the per-epoch label, fingerprint, and state transition; the dual-index construction supplies the shared warning slot used for peer notification.};
 \end{tikzpicture}

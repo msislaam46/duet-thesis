@@ -13,8 +13,8 @@
   \node[exp] (esf) at (7.5,2.1)  {HKDF-Expand\\``lookup''$\,\|\,\mathit{id_A}\|\mathit{id_B}$};
   \node[exp] (epr) at (7.5,0)    {HKDF-Expand\\``lookup''$\,\|\,\mathit{id_B}\|\mathit{id_A}$};
   \node[exp] (ewn) at (7.5,-2.1) {HKDF-Expand\\``warning''$\,\|\,\min\|\max$};
-  \node[slot] (self) at (10.8,2.1)  {$\ell_{\mathsf{self}}$\\[-1pt]\footnotesize Alice's key};
-  \node[slot] (peer) at (10.8,0)    {$\ell_{\mathsf{peer}}$\\[-1pt]\footnotesize Bob's key};
+  \node[slot] (self) at (10.8,2.1)  {$\ell_{\mathsf{self}}$\\[-1pt]\footnotesize Alice's lookup slot};
+  \node[slot] (peer) at (10.8,0)    {$\ell_{\mathsf{peer}}$\\[-1pt]\footnotesize Bob's lookup slot};
   \node[slot,fill=black!10] (warn) at (10.8,-2.1) {$\ell_{\mathsf{warn}}$\\[-1pt]\footnotesize shared warning slot};
   \draw[edge] (S.east) -- (ext.west);
   \draw[edge] (ext.east) -- (prk.west);

@@ -26,62 +26,63 @@ labels.}
 \subsection{The Three Structures}\label{ssec:design-structures}
 
 The prefix tree stores label-to-value bindings. Global identity slots use VRF-derived labels, while
-the clients derive conversation lookup, warning, and continuous-mode labels from shared state. Each
-committed prefix root becomes one leaf of an append-only Merkle log, and an Ed25519 signed tree head
-authenticates the latest log root. A lookup is accepted only after its prefix proof, the committed
-prefix root's log inclusion, and the signed head have all verified.
+clients derive conversation lookup, warning, and continuous-mode labels from shared state. Each
+committed prefix root becomes a leaf of the append-only Merkle log, and an Ed25519 signature on the
+tree head authenticates the latest log root. A lookup is accepted only after the client verifies the
+prefix proof, the prefix root's inclusion in the log, and the signed head.
 
 \paragraph{Why a VRF?} The VRF implements G3 (Directory Privacy)
-(\cref{sec:threat-goals}). The operator holds the VRF secret key and maps a user
+(\cref{sec:threat-goals}). The directory operator holds the VRF secret key and maps a user
 identifier to a pseudorandom label, attaching a proof that the label was computed
-correctly. A client verifies that proof against the operator's public key but cannot
-itself compute or predict any other label (\cref{ssec:bg-ct2kt}). The labels are thus
-deterministic for the operator yet pseudorandom to an observer of the published directory, which
-prevents offline recovery of identities by traversing public labels. The prototype's public query
-endpoint still permits online tests of already-known identifiers, a residual risk revisited in
-\cref{ch:discussion}.
+correctly. A client verifies that proof against the operator's public key but cannot compute other
+labels locally (\cref{sec:def-vrf}). The labels are deterministic for the operator but
+pseudorandom to an observer of the published directory, protecting identifiers against offline
+enumeration.
 
+\FloatBarrier
 \subsection{Epoch Lifecycle: Update, Commit, and the Signed Tree Head}\label{ssec:design-epoch}
 
 An $\textsf{update}(\mathit{label},\mathit{value})$ changes one path in the current 256-level sparse
-tree. A later $\textsf{commit\_epoch}()$ appends the resulting root to the log, snapshots that state
-for lookups, and signs the new head. Lookups are served only against the last committed snapshot,
-never the live tree, since only a committed root is provable by inclusion against a signed head.
+tree. A subsequent $\textsf{commit\_epoch}()$ appends the resulting prefix root to the log,
+snapshots the tree for later lookups, and signs the new head. Lookups use only the last committed
+snapshot. The live tree is not queried because its root has not yet been included in the log
+authenticated by a signed head.
 
 The signed message is:
 \begin{equation}\label{eq:design-sth}
   \mathit{epoch} \concat \mathit{tree\_size} \concat \mathit{root} \concat
   \mathit{timestamp} \concat \Hash(\mathit{config}),
 \end{equation}
-where $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
+In \cref{eq:design-sth}, $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
 \mathit{pk}_{\mathsf{sth}} \concat \mathit{suite} \concat \mathit{version} \concat
-\mathit{epoch\_interval} \concat \mathit{raw\_label\_policy})$ commits the signed head to the declared
-write-once raw-label policy. A client with the expected configuration rejects a different commitment.
-The hash does not by itself prove that the server followed the policy, which the transition audit
-checks per epoch. In \cref{eq:design-sth}, the epoch, log size, root, timestamp,
-and configuration hash bind the head to one directory state and one parameter set. The client must
-additionally apply a freshness policy, which the prototype does not yet implement. The full field
-rationale and configuration-substitution cases are given in \cref{sec:design-detail-sth}.
+\mathit{epoch\_interval} \concat \mathit{raw\_label\_policy})$ binds the VRF and signing keys,
+suite, version, epoch interval, and write-once raw-label policy into the signed head. A client
+recomputes this commitment from its expected keys and constants and rejects a mismatch, while the
+transition audit replays each epoch's declared changes against the committed roots to check that the
+policy was followed. The signed timestamp allows a client to apply a freshness policy, although
+implementing that policy is outside the scope of this thesis. The full field rationale and
+configuration-substitution cases are given in \cref{sec:design-detail-sth}.
 
 \subsection{The Client Verification Chain}\label{ssec:design-verify}
 
-A client verifies every response against the signed head through the six checks in
-\cref{fig:design-verify}. Global identity lookups include the VRF check, whereas client-derived raw
-labels begin with the requested-label binding. The returned head must equal the independently
-verified current head or the new head accepted during catch-up. The prefix root must also be the
-latest log leaf under that head, preventing acceptance of a stale committed snapshot.
+A client verifies every directory response through the six checks in
+\cref{fig:design-verify}. A global identity lookup binds the proof label to the verified VRF output.
+For a client-derived raw label, the proof must concern the requested label. An occupied raw slot is
+accepted only if its committed entry is immutable. The signed head for the result must have a valid
+signature and belong to the client's accepted append-only history. The prefix root must also be the
+latest log leaf under that head, preventing acceptance of an older committed directory state.
 
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-verify}
 \caption[The six-step client verification chain.]{The six-step client verification chain. Every lookup is checked locally
-against a signed root.}
+against a verified signed tree head.}
 \label{fig:design-verify}
 \end{figure}
 
-The Rust and TypeScript implementations enforce the same chain. The full-verification measurement in
-\cref{ch:eval} includes every check. \Cref{sec:design-detail-sth} examines signed-head freshness and
-binding in greater detail.
+The standalone DUET crate provides the proof and signed-head verification functions. The Signal
+Desktop client applies the complete verification chain to directory responses.
+\Cref{sec:design-detail-sth} examines signed-head freshness and binding in greater detail.
 
 % ============================================================================
 \section{The Dual-Index Warning Scheme}\label{sec:design-dual}
@@ -92,11 +93,10 @@ conversations.
 
 \subsection{Label Derivation}\label{ssec:design-labels}
 
-The dual-index scheme allocates three directory slots to each conversation: two lookup
-slots (one per party) and one shared warning slot (\cref{fig:design-dualindex}).
-Alice and Bob derive these slot labels from the X3DH/PQXDH shared secret $\sharedS$
-(\cref{ssec:bg-x3dh}) using HKDF-SHA256 as specified in RFC~5869~\cite{rfc5869}, the same
-key-derivation function Signal already uses elsewhere:
+The dual-index scheme allocates three directory slots to each conversation: one lookup slot for each
+party and one shared warning slot (\cref{fig:design-dualindex}). Alice and Bob derive the three
+labels from the X3DH/PQXDH shared secret $\sharedS$ (\cref{ssec:bg-x3dh}) using the HKDF-SHA256
+Extract and Expand steps~\cite[Sections~2.2--2.3]{rfc5869}:
 \begin{equation}\label{eq:design-labels}
 \begin{aligned}
   \mathit{PRK} &= \HKDFex(\text{salt} = \text{\texttt{"duet-dual-index"}},\ \sharedS)\\
@@ -105,78 +105,74 @@ key-derivation function Signal already uses elsewhere:
   \ell_{\mathsf{warn}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"warning"}} \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B),\ 32\big).
 \end{aligned}
 \end{equation}
-In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key. Directional identity ordering gives each party
-a separate lookup slot, while canonical ordering gives both parties the same warning slot. Every
-output is 32 bytes. The Rust and TypeScript implementations are checked for byte-for-byte agreement on
-these derivations (\cref{sec:tests-xlang}). \Cref{fig:design-dualindex} shows the two directional
-lookup slots and shared warning slot.
+In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key. Directional identity
+ordering produces one lookup label for each party, while canonical ordering produces the same
+warning label for both. Each label is 32 bytes. Cross-implementation vectors require the standalone
+DUET crate and Signal Desktop client to derive identical bytes (\cref{sec:tests-xlang}).
+\Cref{fig:design-dualindex} shows the derivation from Alice's viewpoint.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-design-dualindex}
-\caption[The dual-index scheme's three derived slots.]{Two lookup slots and a shared warning slot
-are derived from the conversation secret $\sharedS$. HKDF-Extract produces $\mathit{PRK}$.
-Three domain-separated HKDF-Expand operations then produce $\ell_{\mathsf{self}}$,
-$\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$. Alice and Bob share $\sharedS$, so both parties derive
-the same warning label and can read a warning stored at the shared slot. A different secret produces different
-labels except with negligible collision probability.}
+\caption[The dual-index scheme's three derived slots.]{Dual-index label derivation from the
+conversation secret $\sharedS$, shown from Alice's viewpoint. HKDF-Extract produces
+$\mathit{PRK}$, and three domain-separated HKDF-Expand operations produce Alice's lookup label,
+Bob's lookup label, and the shared warning label. Bob reverses the directional identity order,
+which swaps the two lookup roles while preserving the warning label.}
 \label{fig:design-dualindex}
 \end{figure}
 \FloatBarrier
 
-\subsection{The Three Security Properties}\label{ssec:design-properties}
-
-The derivation establishes three properties on which detection rests.
+\subsection{Security Properties}\label{ssec:design-properties}
 
 \paragraph{Symmetry.} From Alice's and Bob's respective viewpoints, the directional lookup
-derivation ensures $A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and $A.\ell_{\mathsf{peer}} =
-B.\ell_{\mathsf{self}}$, while the canonical identity ordering gives $A.\ell_{\mathsf{warn}} =
-B.\ell_{\mathsf{warn}}$. The two parties therefore agree on the two directional lookup slots and the
-shared warning slot they both monitor.
+derivation ensures $A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and
+$A.\ell_{\mathsf{peer}} = B.\ell_{\mathsf{self}}$, while the canonical identity ordering gives
+$A.\ell_{\mathsf{warn}} = B.\ell_{\mathsf{warn}}$. The two parties therefore agree on the two
+directional lookup slots and the shared warning slot they both monitor. Since a signed head
+commits to one directory root, valid proofs under that head cannot bind the same directional lookup
+slot to two different keys, even if the conversation secret is known.
+\Cref{lem:dualindex-consistency} states this result, and \cref{def:g1-consistency} explains its role
+in the broader G1 key-substitution requirement.
 
-\paragraph{Pre-Use Unpredictability.} The server does not hold $\sharedS$, so the HKDF outputs are
-pseudorandom from the server's perspective and it cannot distinguish $\ell_{\mathsf{warn}}$ from
-any other leaf in the tree. It can therefore neither pre-position a value on the warning slot nor
-recognize and selectively censor it. This protection holds until the label is first queried. After
-first use the operator can associate a conversation's labels, and those consequences are handled by
-the write-once policy, the transition audit, and the persistence check (\cref{ssec:design-detection}).
+\paragraph{Pre-Use Unpredictability.} Before a conversation label is used, the operator does not
+know the high-entropy secret $\sharedS$. Under the HKDF assumption, the outputs are therefore
+pseudorandom from the operator's perspective. Therefore, the operator cannot derive or recognize the
+warning label except with negligible probability and cannot identify its slot in advance to
+pre-position a value or selectively censor it. A read or write reveals the label to the operator and
+ends this protection. The controls that apply after disclosure are described in
+\cref{ssec:design-detection}.
 
 \paragraph{Scope of the Warning Channel.} The shared warning channel applies only after an honest
 X3DH/PQXDH handshake has established a common secret. For established pairs, it covers the
 \hyperref[sc:threat-a1]{A1 key-substitution scenario} and the
 \hyperref[sc:threat-a5]{A5 malicious key-rotation scenario}. When the directory is honest,
 comparison with the peer's global VRF-bound identity entry detects a first-contact
-\hyperref[sc:threat-a3]{A3 substitution}. Labels derived from different conversation secrets provide
-supporting evidence. The global identity binding also supplies the expected key used to detect
-pre-emptive occupation of a session slot. A substitution that predates an honest baseline remains
-the TOFU boundary (\cref{sec:threat-fair}).
+\hyperref[sc:threat-a3]{A3 substitution}, while the resulting peer-slot absence provides only
+supporting evidence of that substitution. The warning channel therefore assumes an honest baseline,
+subject to the TOFU limitation in \cref{sec:threat-fair}.
 
 \subsection{Detection and the Bidirectional Warning}\label{ssec:design-detection}
 
-On detecting a suspicious key at a lookup slot, the client writes a warning payload to
-$\ell_{\mathsf{warn}}$. Both parties' background monitors read this slot on their next check and
-raise a warning. The payload carries a MAC under a key derived from the shared secret and the
-canonically ordered identities
-($\HKDFexp(\mathit{PRK}, \text{\texttt{"warn-mac"}} \concat \min(\mathit{id_A},\mathit{id_B}) \concat \max(\mathit{id_A},\mathit{id_B}), 32)$).
-Only the two conversation parties can produce or verify this MAC. The warning label is unpredictable
-to the operator until one party reveals it in a request, so any \emph{unauthenticated} value returned
-at that location is itself suspicious and still raises a warning. After the operator observes the
-label, a valid MAC shows that a holder of the shared key produced the value rather than the operator.
-Since both parties derive the same key, it does not identify the writer (\cref{ssec:design-properties}).
+A client writes a warning payload to $\ell_{\mathsf{warn}}$ when its own lookup slot does not
+contain its local identity key or when a peer's lookup slot contains a key different from the peer
+identity key already pinned by the client. Either party can write the warning, and both background
+monitors read the shared slot.
 
-An append-only log authenticates committed roots but does not by itself constrain directory
-transitions. DUET therefore combines write-once labels, per-epoch transition auditing, and retained
-persistence evidence. \Cref{sec:sec-suppression} gives the full suppression and offline-detection
-analysis, including the \hyperref[sc:threat-a2]{A2} compound condition and the treatment of refused responses.
+The warning payload carries a MAC under a key derived from the shared secret and the canonically
+ordered identities
+($\HKDFexp(\mathit{PRK}, \text{\texttt{"warn-mac"}} \concat
+\min(\mathit{id_A},\mathit{id_B}) \concat \max(\mathit{id_A},\mathit{id_B}), 32)$).
+While their endpoints remain uncompromised, only Alice and Bob can derive this key. A valid MAC
+shows that a holder of the shared key produced the warning but does not identify which party wrote
+it. Any value at the warning slot causes an alert, so a value without a valid MAC is reported as
+unauthenticated and still raises a warning.
 
-\subsection{Shared-Label Consistency}\label{ssec:design-consistency}
-
-Alice's peer lookup and Bob's self-check use the same directional label. Under one signed head that
-label cannot authenticate two different values, even if the conversation secret is known.
-\Cref{lem:dualindex-consistency} states the same-head result, while
-\cref{def:g1-consistency} covers the surrounding detection cases. The same-head result does not cover
-warning publication, changes across epochs, offline catch-up, or equivocation. Those cases rely on
-warning persistence, transition auditing, windowed consistency, and cross-vantage comparison.
+An append-only log authenticates committed roots but does not establish that directory transitions
+are valid. Therefore, DUET uses write-once entries for the dual-index and warning slots, per-epoch
+transition auditing, and retained persistence evidence. \Cref{sec:sec-suppression} analyses warning
+suppression and offline detection, including the compound signal for
+\hyperref[sc:threat-a2]{A2 warning censorship} and the handling of refused responses.
 
 \subsection{Session and Continuous Authentication Modes}\label{ssec:design-modes}
 
@@ -184,9 +180,10 @@ DUET supports two authentication granularities. Session mode authenticates the i
 conversation, while continuous mode uses ACKA's continuous entity authentication (CEA) to authenticate
 later public ratchet keys.
 
-In \emph{session mode}, labels derive from the initial X3DH or PQXDH secret, and each slot stores the
-identity key. A party re-registers when its signed pre-key rotates. The remaining handshake values are
-not logged separately, but they contribute to the shared secret from which the labels derive.
+In \emph{session mode}, labels derive from the X3DH or PQXDH secret established for the conversation,
+and each party registers its identity key at its own derived lookup slot. Each new conversation
+secret produces a new set of lookup and warning labels. The remaining handshake values are not logged
+separately, but they contribute to the shared secret from which the labels derive.
 \Cref{tab:design-x3dh-coverage} summarizes this coverage.
 
 \emph{Continuous mode} follows ACKA's CEA construction. At epoch $t$, each party derives a shared label
@@ -199,30 +196,24 @@ mixes the secret epoch input $I_t$ into the next state:
   k_{t+1} &= \KDF\!\big(k_t,\ \KDF(I_t, \text{\texttt{"CEA"}})\big) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
 \end{aligned}
 \end{equation}
-In \cref{eq:design-cea}, both parties derive the same $L_t$, while $F_t$ binds the sender and public ratchet key. The sender
-checks that the label is empty before writing, and the receiver advances only after a
-\textsc{Consistent} verdict. An occupied label or mismatching fingerprint produces a warning and
-leaves the chain unchanged. \Cref{sec:design-detail-cea} gives the full operation ordering and explains
-how DUET's single-value directory implements ACKA's detection objective. In this division of labour,
-CEA authenticates a per-epoch fingerprint stored at an entry, while the dual-index construction
-determines the conversation-derived locations at which entries and warnings are stored.
+In \cref{eq:design-cea}, both parties derive the same $L_t$, while $F_t$ binds the sender's
+identity and public ratchet key $T_t$ to that epoch. The sender writes $F_t$ only after a verified
+non-inclusion proof shows that $L_t$ is empty and advances only after a verified read-back confirms
+the committed fingerprint. The receiver advances only when a verified lookup
+returns the expected $F_t$, producing a \textsc{Consistent} verdict. A persistent absence after the
+retry window produces \textsc{NotPosted}, while a different fingerprint produces \textsc{Fork} and
+causes the receiver to attempt to publish a shared warning. Neither outcome advances the state.
+\Cref{fig:design-modes} contrasts the two modes and shows these sender and receiver outcomes.
+\Cref{sec:design-detail-cea} gives the full operation ordering and explains how DUET's single-value
+directory implements ACKA's detection objective.
 
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-modes}
-\caption[Session mode versus continuous mode.]{Session mode derives labels from the initial secret
-$\sharedS$ and registers the identity key once per pre-key rotation. Continuous mode derives a
-label and fingerprint from the pre-update state $k_t$ at every epoch and authenticates the public
-ratchet key $T_t$. The verifier advances only after a \textsc{Consistent} result. A \textsc{Fork} or
-\textsc{NotPosted} result leaves the state unchanged.}
+\caption[Session mode versus continuous mode.]{Session and continuous authentication modes,
+including the sender and receiver state-transition outcomes in continuous mode.}
 \label{fig:design-modes}
 \end{figure}
-
-\Cref{fig:design-modes} contrasts the two authentication modes. Session mode authenticates the
-identity binding with one write per signed-pre-key rotation.
-Continuous mode authenticates each ratchet epoch but writes once per epoch. Both share the directory,
-signed heads, and warning channel. \Cref{ch:discussion} discusses the prototype's simulated
-conversation secret and the production integration these modes require.
 
 % ============================================================================
 \FloatBarrier
@@ -230,80 +221,88 @@ conversation secret and the production integration these modes require.
 
 \subsection{The Catch-Up Problem and the Bound}\label{ssec:design-catchup}
 
-The windowed proof implements G2. A client returning after $W$ epochs requests one RFC~9162
-consistency proof between its last trusted log size $m$ and the current size $n$, rather than one
-proof for each intermediate epoch~\cite{rfc9162}. Its size is bounded by:
+The windowed proof implements G2 (Consistency Across Offline Windows). A returning client that
+retains a trusted head requests one RFC~9162 consistency proof from its last verified log size $m$
+to the current size $n$~\cite[Section~2.1.4]{rfc9162}. Its size is bounded by:
 \begin{equation}\label{eq:design-proofsize}
-  |\pcons(m, n)| \le \lceil \log_2 m \rceil + \lceil \log_2 n \rceil \quad\text{hashes}.
+  |\pcons(m, n)| \le \lceil \log_2 m \rceil + \lceil \log_2 n \rceil
+  \quad\text{hashes}.
 \end{equation}
-The bound in \cref{eq:design-proofsize} covers one consistency proof between the trusted and new
-heads. The client accepts only if the new signed head is an append-only extension of the trusted head. The
-warning-slot lookup occurs in the same synchronization workflow and does not change the asymptotic
-bound. \Cref{lem:windowed-size} states the result, and \cref{alg:client} gives the procedure.
+The bound in \cref{eq:design-proofsize} covers one consistency proof between the trusted and current
+heads. The client accepts only when the current signed head is an append-only extension of the
+trusted head. The warning-slot lookup follows this consistency check as a separate verified lookup.
+It is not part of $\pcons(m,n)$ and does not alter its size bound.
+\Cref{lem:windowed-size} provides the proof sketch, and \cref{alg:client} gives the client procedure.
 
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-windowed}
-\caption[Windowed offline catch-up.]{Offline catch-up over $W=n-m$ epochs. The upper arcs show
-the synthetic evaluation baseline, which verifies one consistency proof per missed epoch at
-$O(W\log n)$. The lower arc shows the RFC~9162 windowed approach, which requests one
-consistency proof between the trusted head at $m$ and the current head at $n$. Its proof size is
-logarithmic in the log size.}
+\caption[Windowed offline catch-up.]{Offline catch-up over $W=n-m$ missed epochs. The upper arcs
+represent the synthetic evaluation baseline, which verifies one consistency proof for each missed
+epoch at $O(W\log n)$. The lower arc represents one RFC~9162 consistency proof between the trusted
+head at $m$ and the current head at $n$~\cite[Section~2.1.4]{rfc9162}. Its size is logarithmic in
+the log size.}
 \label{fig:design-windowed}
 \end{figure}
 
-\Cref{fig:design-windowed} contrasts one windowed proof with repeated per-epoch proofs. Endpoint
-consistency alone cannot expose a substitution inserted and reverted inside the offline window.
-Detection of such a transient attack therefore depends on a peer observing the substituted key and
-committing a warning. After a warning is committed, three safeguards protect it: write-once enforcement
-prevents replacement of an occupied slot through the honest interface, the transition audit rejects
-an invalid declared change, and persistence evidence exposes a later removal from the committed
-history. If the operator censors the write before commitment, the distant-head proof still establishes
-append-only consistency but cannot exclude that transient substitution. The complete argument is
-given in \cref{sec:design-detail-window}.
+As shown in \cref{fig:design-windowed}, the windowed proof verifies consistency between the retained
+trusted head and the current head, but it does not inspect every intermediate directory state.
+Detecting a substitution inserted and reverted within the offline window through the returning
+client's catch-up path therefore depends on a peer observing it and committing a warning. If the
+directory operator censors the warning before it is committed, the consistency proof can still
+verify append-only growth between the endpoint heads without revealing the substitution. The
+safeguards that apply after commitment are described in \cref{ssec:design-detection}, while
+\cref{sec:design-detail-window} gives the complete supporting argument.
 
 \subsection{Worked Parameterization}\label{ssec:design-param}
 
-For $N=10^7$ users, let $c=5$ be the active conversations per user and $r=30$ days the signed-pre-key
-rotation period. With hourly epochs, the illustrative directory carries about 50 million
-user--conversation lookup entries and a returning client may miss $W=r\cdot24=720$ epochs.
-Each conversation also allocates one shared warning label, normally unwritten. Amortized over the
-illustrative 30-day rotation period, the lookup entries are about 1.67~million directory updates per
-day, or roughly $69{,}400$ updates folded into each hourly epoch commit (the log itself
-gains one leaf per epoch regardless of update volume, \cref{ssec:design-epoch}).
-\Cref{ch:eval} evaluates this parameterization.
+For an illustrative analytic model, let $N=10^7$ be the number of users, let $c=5$ be the active
+conversations per user, and let $r=30$ days be the assumed interval between new session-mode
+conversation secrets. The model uses hourly epochs~\cite[Section~5.3]{melara2015coniks}. This gives
+$Nc/2=25$ million conversations and $Nc=50$ million directional lookup slots. A client offline for
+30 days misses $W=720$ hourly epochs.
+
+Each conversation also derives one warning label, but its slot remains absent until a warning is
+written. Under the assumed session interval, new conversation secrets produce about $1.67$ million
+directional-slot writes per day, or approximately $69{,}400$ per hourly epoch on average. The log
+adds one leaf per epoch regardless of the number of directory writes
+(\cref{ssec:design-epoch}). \Cref{ch:eval} evaluates these parameters.
 
 % ============================================================================
 \FloatBarrier
 \section{Instantiating ACKA}\label{sec:design-acka}
 
-ACKA composes continuous key agreement, CEA, and an abstract secure-log interface
-$\Log$~\cite{dowling2023acka}. DUET instantiates $\Log$ with the prefix tree, Merkle log, signed heads,
-consistency and exclusion proofs, write-once raw labels, and transition validation. Continuous mode
-retains ACKA's per-epoch label-and-fingerprint construction.
+DUET instantiates ACKA's generic $\Log$ interface~\cite[Section~2.3]{dowling2023acka} using the
+verifiable directory described in \cref{ssec:design-structures}. \Cref{tab:design-acka} maps the
+underlying CKA, CEA, and $\Log$ components onto this design, while \cref{ssec:design-modes} gives
+the continuous-mode operation.
 
-ACKA and DUET represent a label's history differently. ACKA detects impersonation when conflicting
-fingerprints appear at one label, whereas DUET stores one immutable value per label. DUET therefore
-detects an earlier adversarial post through the sender's occupancy check and a later overwrite through
-transition auditing. The receiver's per-epoch check alone does not cover a later overwrite, so the
-transition audit supplies that check.
+ACKA and DUET handle values at a label differently. ACKA's log query returns all fingerprints
+stored at a label~\cite[Section~2.3]{dowling2023acka}, while DUET's raw-label interface stores one
+immutable value at each label. Therefore, the sender verifies that its epoch label is empty before
+writing. This pre-write check detects an earlier adversarial post. Transition auditing rejects a
+later overwrite within the audited history, including one attempted after the receiver has accepted
+that epoch.
 
-DUET additionally supplies conversation-derived lookup labels and a shared warning slot, windowed
-catch-up, and cross-vantage fork detection. These additions address malicious directory behaviour,
-peer notification, and offline recovery beyond ACKA's assumed log.
+ACKA's $\Log$ interface also requires verification of append-only consistency between two log
+views~\cite[Section~2.3]{dowling2023acka}. DUET provides append-only verification through Merkle
+consistency proofs and detects divergent signed views through the auditor's comparison of signed
+heads. Moreover, the shared warning slot and windowed catch-up described in
+\cref{ssec:design-detection,sec:design-windowed} add peer notification and offline catch-up to this
+instantiation.
 
 \begin{table}[htbp]
 \centering
-\caption{Mapping the ACKA components onto their instantiation in this work.}
+\caption{Mapping ACKA's components to their DUET instantiations.}
 \label{tab:design-acka}
 \footnotesize
 \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}X@{}}
 \toprule
-ACKA component & Role in the framework & Instantiation in this work \\
+ACKA component & Role in ACKA & DUET instantiation \\
 \midrule
-$\CKA$ & continuous key agreement & Signal's Double Ratchet, unmodified at the design level, simulated in the prototype \\
-$\CEA$ & per-epoch labels and fingerprints & Continuous mode retains ACKA's per-epoch CEA label-and-fingerprint construction \\
-$\Log$ & abstract append-only secure log, required to be $\Logsec$-secure & DUET's verifiable key directory, comprising the prefix tree, Merkle log, signed tree heads, consistency and exclusion proofs, the write-once raw-label policy, and per-epoch transition validation \\
+$\CKA$ & continuous key agreement & Signal's Double Ratchet in the design, with simulated ratchet inputs in the prototype \\
+$\CEA$ & per-epoch labels, fingerprints, and state updates & ACKA's CEA construction retained in continuous mode \\
+$\Log$ & abstract label-indexed append-only log satisfying $\Logsec$ & DUET's prefix tree and append-only log, signed heads, inclusion, non-inclusion, and consistency proofs, write-once raw-label policy, and transition audit \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -312,10 +311,30 @@ $\Log$ & abstract append-only secure log, required to be $\Logsec$-secure & DUET
 % ============================================================================
 \section{Design Decisions and Alternatives}\label{sec:design-decisions}
 
-The design rests on a number of choices, each made against a specific alternative and,
-where possible, with a deployed precedent. \Cref{tab:design-decisions} summarizes them, and the
-paragraphs below expand the three that most affect the system's behaviour.
+The directory structure, global-label derivation, and combined prefix-plus-log construction are the
+three choices that most affect the system's behaviour.
 
+\paragraph{Directory Structure.} DUET uses a path-compressed sparse binary Merkle prefix tree
+because the warning channel requires verifiable inclusion and non-inclusion, including proof that
+the warning slot is empty. Path compression collapses single-child chains in sparsely populated
+regions, while the compressed proof transmits only the non-empty sibling hashes.
+
+\paragraph{Global-Label Derivation.} Global slots use the
+ECVRF-EDWARDS25519-SHA512-TAI VRF ciphersuite to make label derivation verifiable and protect
+published labels from outsider enumeration, as required by G3 (Directory
+Privacy)~\cite[Sections~1 and 3.4]{rfc9381}. The selected ciphersuite also matches Signal's
+key-transparency implementation~\cite{signal-kt-server}.
+
+\paragraph{Combined Prefix-Plus-Log Stack.} The prefix tree authenticates current lookup results,
+while the append-only log supplies the history required for windowed catch-up and transition
+auditing. Therefore, each lookup includes one additional log-inclusion path. The cost of this path
+is evaluated in \cref{ch:eval}.
+
+\Cref{sec:design-detail-alternatives} compares the rejected alternatives and their trade-offs.
+\Cref{tab:design-decisions} summarizes these choices and the remaining design decisions with their
+cited precedents and technical basis.
+
+\FloatBarrier
 \begin{table}[htbp]
 \centering
 \caption{Principal design decisions.}
@@ -326,33 +345,16 @@ paragraphs below expand the three that most affect the system's behaviour.
 \toprule
 Decision & Justification & Basis \\
 \midrule
-Sparse binary Merkle tree & uniform node semantics, cheap first-class non-inclusion for the warning slot, small audit surface & CONIKS~\cite{melara2015coniks}, IETF KeyTrans~\cite{ietf-keytrans-protocol} \\
-ECVRF-EDWARDS25519-SHA512-TAI for global labels & publicly verifiable directory privacy, parity with Signal's deployed keytrans VRF & RFC~9381~\cite{rfc9381}, Signal keytrans~\cite{signal-kt-server} \\
-SHA-256 with RFC~6962 domain tags & second-preimage separation of leaves and nodes, RFC~9162 alignment & RFC~6962/9162~\cite{rfc6962,rfc9162} \\
-HKDF-SHA256 for dual-index labels & standard, X3DH-consistent KDF, PRF security underpins pre-use unpredictability & RFC~5869~\cite{rfc5869}, Signal X3DH~\cite{x3dh} \\
-Two-tree (prefix + log) combined stack & one verifiable chain from entry to signed head & IETF KeyTrans draft~\cite{ietf-keytrans-protocol} \\
-Hourly epochs (tunable) & balances proof freshness against commit cost & CONIKS~\cite{melara2015coniks} \\
-Client-tunable window $W$ & lets each client trade catch-up frequency against per-check cost & this work \\
-Write-once dual-index and CEA labels, audited per epoch & preserves the entry immutability required by ACKA's $\Logsec$ notion, makes warning deletion detectable and provable & ACKA~\cite{dowling2023acka}, IETF KeyTrans auditing~\cite{ietf-keytrans-protocol} \\
-Truncate VRF output $\beta$ to 32 bytes & 256-bit label space, matches the prefix-tree label width & Signal keytrans~\cite{signal-kt-server} \\
+Path-compressed sparse binary Merkle prefix tree & provides inclusion and non-inclusion proofs with smaller transmitted paths in sparse regions & CONIKS~\cite[Sections~3.1--3.2]{melara2015coniks}, IETF KeyTrans~\cite[Sections~3.3 and 12.2]{ietf-keytrans-protocol}, this work (\cref{sec:design-detail-alternatives}) \\
+ECVRF-EDWARDS25519-SHA512-TAI for global labels & makes global-label derivation verifiable, protects published labels from outsider enumeration, and matches Signal's VRF suite & RFC~9381~\cite{rfc9381}, Signal keytrans~\cite{signal-kt-server} \\
+SHA-256 with RFC~6962 leaf and node prefixes & separates leaf and internal-node hashes for second-preimage resistance and follows the RFC~9162 Merkle-log construction & RFC~6962/9162~\cite{rfc6962,rfc9162} \\
+HKDF-SHA256 for dual-index labels & provides pre-use unpredictability and separates the two lookup directions from the shared warning channel & RFC~5869~\cite{rfc5869}, X3DH~\cite{x3dh}, this work (\cref{ssec:design-labels}) \\
+Combined prefix tree and append-only Merkle log & combines searchable current-state proofs with append-only history verification & IETF KeyTrans draft~\cite{ietf-keytrans-protocol} \\
+One-hour epoch interval & matches CONIKS's hourly assumption and sets the expected interval between signed heads & CONIKS~\cite{melara2015coniks}, this work (\cref{ssec:design-epoch}) \\
+Client-specific catch-up window $W$ & covers the client's complete missed interval with one consistency proof & this work (\cref{sec:design-windowed}) \\
+Write-once dual-index, warning, and CEA labels with transition auditing & supports ACKA's $\Logsec$ immutability requirement and allows the auditor to detect invalid transitions & ACKA~\cite{dowling2023acka}, IETF KeyTrans auditing~\cite{ietf-keytrans-protocol}, this work (\cref{ssec:design-detection}) \\
+First 32 bytes of VRF output $\beta$ as the global label & matches Signal's 32-byte index and the prefix-tree label width & Signal keytrans~\cite{signal-kt-server}, this work (\cref{alg:server,def:prefix-tree}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
-
-\paragraph{Directory Structure.} A sparse binary Merkle tree gives uniform node semantics and
-first-class non-inclusion for an empty warning slot. Path compression keeps transmitted proof size
-dependent on populated prefix depth, while binary branching avoids the wider copaths and encodings of
-an $n$-ary trie. Accumulators would make the required non-membership proof more expensive.
-
-\paragraph{Global-Label Derivation.} Global slots use ECVRF-EDWARDS25519-SHA512-TAI rather than a bare
-hash. The VRF therefore provides publicly verifiable resistance to offline identity recovery from
-published labels and matches Signal's deployed suite~\cite{rfc9381,signal-kt-server}.
-
-\paragraph{Combined Prefix-Plus-Log Stack.} The prefix tree authenticates the present directory,
-while the log authenticates its history. One structure alone would not provide both lookup proofs and
-the consistency evidence required by windowed catch-up and cross-vantage fork detection. The extra
-cost is one log-inclusion path, quantified in \cref{ch:eval}. The combined stack provides one authenticated
-chain from a directory entry to a signed history and retains direct non-inclusion proofs for the
-warning slot. \Cref{sec:design-detail-alternatives} compares the alternatives, and the traceability table
-\cref{tab:threat-goals} in \cref{app:traceability} maps each security requirement to its associated
-threat, mechanism, and evidence.
+\FloatBarrier
