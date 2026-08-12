@@ -10,7 +10,7 @@
     {\textbf{Signal Desktop client}\\[1pt]{\tiny\textcolor{black!55}{TypeScript}}\\[6pt]proof verification\\background monitoring\\warning interface};
   \node[box,fill=black!6,text width=4.7cm] (srv) at (6.6,0)
     {\textbf{DUET directory server}\\[1pt]{\tiny\textcolor{black!55}{Rust}}\\[6pt]prefix tree and append-only log\\signed heads and proof API\\dual-index and CEA operations};
-  \node[box,fill=black!4,text width=3.9cm] (aud) at (13.2,0)
+  \node[box,fill=black!4,text width=3.9cm] (aud) at (14.8,0)
     {\textbf{Auditor process}\\[1pt]{\tiny\textcolor{black!55}{Rust}}\\[6pt]signed-head verification\\transition replay\\view comparison};
   \draw[<->] (cli.east) -- node[above=3pt,font=\scriptsize,fill=white,inner sep=1pt]{HTTP/JSON} (srv.west);
   \draw[<->,dashed] (srv.east) -- node[above=3pt,align=center,font=\scriptsize,fill=white,inner sep=1pt]{signed heads, proofs,\\and epoch deltas} (aud.west);
