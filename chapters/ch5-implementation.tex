@@ -37,10 +37,9 @@ state from libsignal, as discussed further in \cref{ch:discussion}.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-overview}
-\caption[Implementation and process boundaries.]{Implementation and process boundaries. Signal
-Desktop communicates with the directory server over HTTP and JSON. The separate auditor verifies
-signed heads and consistency proofs, replays declared transitions, and compares the primary
-and staged views used by the demonstration.}
+\caption[Implementation and process boundaries.]{Implementation and process boundaries. The Signal
+Desktop client communicates with the directory server over HTTP/JSON. The auditor is a separate
+process that replays declared transitions and compares signed-head views.}
 \label{fig:impl-overview}
 \end{figure}
 \FloatBarrier
@@ -66,9 +65,10 @@ standards basis and conformance evidence.
 \input{figures/tikz/fig-impl-modules}
 \caption[Core relationships in the DUET implementation.]{Core relationships in the DUET
 implementation. The client component accesses directory operations through the HTTP/JSON interface.
-The directory core composes the prefix tree, append-only log, ECVRF, Ed25519 signed-head signer, and
-configuration commitment. The auditor obtains signed heads, consistency proofs, and epoch deltas
-through the same interface, replays declared transitions, and compares signed-head views.}
+The directory service uses the prefix tree and append-only log for authenticated state and history,
+the ECVRF for global-label derivation, and Ed25519 for signed heads. The auditor obtains signed
+heads, consistency proofs, and epoch deltas through the same interface, replays declared
+transitions, and compares signed-head views.}
 \label{fig:impl-modules}
 \end{figure}
 

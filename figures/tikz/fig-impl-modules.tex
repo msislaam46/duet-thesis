@@ -1,9 +1,8 @@
 % fig-impl-modules.tex — directory core with external client component and auditor.
-% The HTTP server calls KTServer; KTServer composes the prefix tree, Merkle log,
-% ECVRF, and Ed25519 signer, and hashes through the shared SHA-256 component; the
-% prefix tree and Merkle log also hash through it. The client component and auditor
-% are separate processes that reach the directory over the HTTP interface at
-% distinct boundary points.
+% The HTTP server calls KTServer; KTServer composes the prefix tree, append-only
+% log, ECVRF, and Ed25519 signer. The client component and auditor are separate
+% processes that reach the directory over the HTTP interface at distinct boundary
+% points. The shared SHA-256 hashing module is documented in Table 5.1.
 % Label: \label{fig:impl-modules}
 \hyphenpenalty=10000\exhyphenpenalty=10000
 \resizebox{\textwidth}{!}{%
@@ -12,24 +11,20 @@
    ext/.style={draw,rounded corners,align=center,minimum height=13mm,inner sep=3pt,fill=black!5},
    band/.style={font={\footnotesize\itshape},anchor=east,text=black!70}]
 
-  % ---- server stack (centre); SHA-256 centred under KTServer ----
+  % ---- server stack (centre) ----
   \node[cmp,minimum width=5.0cm] (api) at (0,5.3) {\textbf{HTTP server}\\lookup, update, and consistency API};
   \node[cmp,minimum width=3.0cm] (dir) at (0,3.8) {\textbf{Directory service}\\(\texttt{KTServer})};
   \node[cmp,minimum width=2.3cm] (ptree) at (-3.6,2.1) {Sparse Merkle\\prefix tree};
   \node[cmp,minimum width=2.1cm] (mlog)  at (-1.2,2.1) {Append-only\\Merkle log};
   \node[cmp,minimum width=1.9cm] (vrf)   at ( 1.0,2.1) {ECVRF};
   \node[cmp,minimum width=2.3cm] (sig)   at ( 3.3,2.1) {Ed25519\\signer};
-  \node[cmp,minimum width=8.0cm] (hash)  at (0,0.5) {SHA-256 hashing};
   % bands
   \node[band] at (-5.4,5.3) {API};
   \node[band] at (-5.4,3.8) {server core};
   \node[band,align=right] at (-5.4,2.1) {authenticated\\structures};
-  \node[band] at (-5.4,0.5) {hashing layer};
   % server dependency edges
   \draw[->] (api) -- (dir);
   \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (dir) -- (\n);}
-  \foreach \n in {ptree,mlog}{\draw[->] (\n) -- (\n |- hash.north);}
-  \draw[->] (dir.south) -- (dir.south |- hash.north);
 
   % ---- external client component -> api.east ----
   \node[ext,minimum width=3.0cm,text width=2.8cm] (cli) at (7.4,5.3) {\textbf{Client component}\\Signal Desktop};

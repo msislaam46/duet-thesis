@@ -1,17 +1,18 @@
 % fig-impl-overview.tex — implementation and process boundaries (horizontal row).
-% Three role/process boxes of equal fixed height; functions on separate lines.
+% Three role/process boxes of equal fixed height; language shown as a small grey
+% qualifier, functions on separate lines. Caption in ch5-implementation.tex.
 % Label: \label{fig:impl-overview}
 \hyphenpenalty=10000\exhyphenpenalty=10000
 \resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
-   box/.style={draw,rounded corners,align=center,inner sep=5pt,minimum height=34mm}]
-  \node[box,fill=black!4,text width=4.4cm] (cli) at (0,0)
-    {\textbf{Signal Desktop client component}\\[1pt]{\scriptsize integrated TypeScript}\\[6pt]{\scriptsize proof verifier}\\{\scriptsize background monitor}\\{\scriptsize lifecycle hooks}\\{\scriptsize warning interface}};
-  \node[box,fill=black!6,text width=5.4cm] (srv) at (7.4,0)
-    {\textbf{DUET directory server and cryptographic core}\\[1pt]{\scriptsize \texttt{duet} crate, Rust}\\[6pt]{\scriptsize sparse Merkle prefix tree}\\{\scriptsize append-only Merkle log}\\{\scriptsize signed heads}\\{\scriptsize dual-index and CEA operations}\\{\scriptsize HTTP API}};
-  \node[box,fill=black!4,text width=4.4cm] (aud) at (15.8,0)
-    {\textbf{Auditor process}\\[1pt]{\scriptsize \texttt{duet} crate, Rust}\\[6pt]{\scriptsize verify signed heads and}\\{\scriptsize consistency proofs}\\{\scriptsize replay declared transitions}\\{\scriptsize compare primary and}\\{\scriptsize staged views}};
+   box/.style={draw,rounded corners,align=center,inner sep=5pt,minimum height=25mm}]
+  \node[box,fill=black!4,text width=3.9cm] (cli) at (0,0)
+    {\textbf{Signal Desktop client}\\[1pt]{\tiny\textcolor{black!55}{TypeScript}}\\[6pt]proof verification\\background monitoring\\warning interface};
+  \node[box,fill=black!6,text width=4.7cm] (srv) at (6.6,0)
+    {\textbf{DUET directory server}\\[1pt]{\tiny\textcolor{black!55}{Rust}}\\[6pt]prefix tree and append-only log\\signed heads and proof API\\dual-index and CEA operations};
+  \node[box,fill=black!4,text width=3.9cm] (aud) at (13.2,0)
+    {\textbf{Auditor process}\\[1pt]{\tiny\textcolor{black!55}{Rust}}\\[6pt]signed-head verification\\transition replay\\view comparison};
   \draw[<->] (cli.east) -- node[above=3pt,font=\scriptsize,fill=white,inner sep=1pt]{HTTP/JSON} (srv.west);
-  \draw[<->,dashed] (srv.east) -- node[above=3pt,align=center,font=\scriptsize,fill=white,inner sep=1pt]{signed heads, epoch\\deltas, consistency proofs} (aud.west);
+  \draw[<->,dashed] (srv.east) -- node[above=3pt,align=center,font=\scriptsize,fill=white,inner sep=1pt]{signed heads, proofs,\\and epoch deltas} (aud.west);
 \end{tikzpicture}%
 }

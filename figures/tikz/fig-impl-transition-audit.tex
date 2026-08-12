@@ -56,7 +56,7 @@
   \draw[edge] (gob.east -| chan) -- (gob.east);
 
   % ===== continuation arrow (a) -> (b) =====
-  \node[wide] (b0) at (0,-11.0) {\textbf{(b) transactional replay} (entered from (a))\\clone the committed replica into a candidate; set $\mathit{cursor}\gets\mathit{audited\_epochs}$};
+  \node[wide] (b0) at (0,-11.0) {\textbf{(b) transactional replay}\\clone the committed replica into a candidate; set $\mathit{cursor}\gets\mathit{audited\_epochs}$};
   \draw[edge,very thick] (gob) -- (b0);
 
   % ===== panel (b): replay and comparison =====
@@ -78,7 +78,8 @@
   \draw[edge] (bcmp.east) -- node[above,lbl,align=center,pos=0.5]{same size,\\different root} (rf.west);
   \node[nop] (r4) at (10.0,-17.2) {\textsc{ConsistencyUnverified}: retain state};
   \draw[edge] (bcmp.east) -- node[below,lbl,align=center,pos=0.5]{different sizes,\\missing or invalid proof} (r4.west);
-  % no valid comparison head: bypass to the final update
-  \coordinate (byp) at (-5.2,-15.1);
-  \draw[edge] (bcv.west) -- node[above,lbl,align=center]{no valid comparison\\head: no split-view verdict} (byp) |- (b2.west);
+  % no valid comparison head: separate box, then advance
+  \node[proc,text width=3.2cm] (bnv) at (-5.7,-15.1) {no split-view verdict};
+  \draw[edge] (bcv.west) -- node[above,lbl]{no} (bnv.east);
+  \draw[edge] (bnv.south) |- (b2.west);
 \end{tikzpicture}
