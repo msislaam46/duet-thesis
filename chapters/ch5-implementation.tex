@@ -110,7 +110,7 @@ tree levels per label, giving $O(kd)$ tree-update work. Since $d$ is fixed, this
 and independent of $N$.
 
 At an epoch commit, the server appends the current directory root to the log, clones the current
-tree as the committed snapshot, and signs the resulting head. Clients verify each response against
+tree as the committed snapshot, and signs the resulting head. Clients verify lookup responses against
 this signed state. The \texttt{dual\_index} module uses the \texttt{hkdf} crate with SHA-256 to
 implement the extract-and-expand derivations in \cref{ssec:design-labels}~\cite[Sections~2--3]{rfc5869}.
 The two lookup directions use opposite service-identifier orders under the \texttt{lookup} context,

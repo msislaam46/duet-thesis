@@ -21,7 +21,7 @@
   % bands
   \node[band] at (-5.4,5.3) {API};
   \node[band] at (-5.4,3.8) {server core};
-  \node[band,align=right] at (-5.4,2.1) {authenticated\\structures};
+  \node[band,align=right] at (-5.4,2.1) {directory structures\\and cryptography};
   % server dependency edges
   \draw[->] (api) -- (dir);
   \foreach \n in {ptree,mlog,vrf,sig}{\draw[->] (dir) -- (\n);}

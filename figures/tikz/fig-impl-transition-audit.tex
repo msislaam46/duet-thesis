@@ -7,6 +7,7 @@
 % Algorithm 7's normative short-circuit ordering.
 % Label: \label{fig:impl-transition-audit}
 \hyphenpenalty=10000\exhyphenpenalty=10000
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,
   edge/.style={->,shorten <=1pt,shorten >=2pt},
   lbl/.style={font=\scriptsize},
@@ -82,4 +83,5 @@
   \node[proc,text width=3.2cm] (bnv) at (-5.7,-15.1) {no split-view verdict};
   \draw[edge] (bcv.west) -- node[above,lbl]{no} (bnv.east);
   \draw[edge] (bnv.south) |- (b2.west);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
