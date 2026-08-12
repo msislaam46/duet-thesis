@@ -348,7 +348,7 @@ exist at one tree size.}
 \FloatBarrier
 
 % ============================================================================
-\section{Implementation Detail and Engineering Record}\label{sec:apiref-engineering}
+\section{Implementation and Engineering Details}\label{sec:apiref-engineering}
 
 This section provides the module, server, integration, and engineering detail summarized in
 \cref{ch:impl}.
@@ -404,6 +404,11 @@ malicious client could occupy an unclaimed peer slot before its legitimate owner
 core cost that is not sublinear is the epoch commit, which snapshots the tree by a deep clone.
 
 \subsection{Signal Desktop Integration Wiring}\label{ssec:apiref-eng-wiring}
+
+The integration processes account identifiers (ACIs) only. It uses libsignal to convert each ACI
+service-ID string to its canonical 16 raw UUID bytes before registration, verification, monitoring,
+or CEA processing. Phone-number identifiers (PNIs) are excluded before these operations and
+therefore produce no lookup verdict, user-interface event, or monitoring state.
 
 The integration uses key-upload and peer-key-retrieval hooks together with a background monitor.
 Peer identity material is recorded during key retrieval and through a periodic identity-record

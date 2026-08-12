@@ -1,86 +1,96 @@
 \chapter{Implementation}\label{ch:impl}
 
-The implementation has two components. The standalone DUET component, implemented in Rust, provides
-the directory server, cryptographic operations, an auditor process, and a benchmark harness. The
-client component, implemented in TypeScript and integrated into Signal Desktop, provides the
-verifier, background monitor, lifecycle hooks, and warning interface. This chapter covers their architecture, integration, parity testing, engineering
-constraints, and reproducibility.
+The implementation has two components. The standalone DUET component, implemented in Rust,
+provides the directory server, cryptographic operations, an auditor process, and a benchmark
+harness. The client component, implemented in TypeScript and integrated into Signal Desktop,
+provides the verifier, background monitor, lifecycle hooks, and warning interface. This chapter
+covers their architecture, integration, testing, and engineering challenges.
 
 % ============================================================================
 \section{Architecture and Language Boundary}\label{sec:impl-strategy}
 
-The \texttt{duet} Rust crate implements the standalone component. An initial Python version
-prototyped the core constructions but was too slow for the required large-directory benchmarks. The
-measured implementation was therefore rebuilt in Rust, which also supports libsignal integration and
-established cryptographic libraries for timing-sensitive operations. Rust allows the crate to be
-measured independently of Signal and libsignal and is also used by the Parakeet and Meta AKD
-implementations~\cite{malvai2023parakeet,facebook-akd}. \Cref{fig:impl-overview} shows the resulting
-language and trust boundary.
+The \texttt{duet} Rust crate contains the directory server and cryptographic core, along with the
+auditor process and benchmark harness. An initial Python version prototyped the core constructions
+but was too slow for the required large-directory benchmarks. The measured implementation was
+therefore rebuilt in Rust to use established cryptographic libraries for timing-sensitive operations
+and support future integration with libsignal~\cite{libsignal}. Keeping the crate separate from
+Signal Desktop also allows independent measurement.
 
-The client component implements the client-side proof checks, background monitoring, lifecycle hooks, and user-interface path. It verifies
-prefix, log, VRF, and signed-head evidence locally, performs the required raw-label writes, and is
-checked against Rust through fixed vectors and live wire-parity tests. The formats follow the IETF
-KeyTrans design, but no Go interoperability is claimed because Signal and DUET deliberately use
-different prefix-proof encodings~\cite{ietf-keytrans-protocol,signal-kt-server}.
+The client component provides local proof verification, background monitoring, lifecycle hooks, and
+the warning interface. Its verification and raw-label write paths are described in
+\cref{ssec:impl-verifier}. Fixed vectors compare cryptographic outputs between the client component
+and the \texttt{duet} crate, while the opt-in live integration tests, referred to as the wire-parity
+suite, run the client verification code against responses from the directory server. The
+verification chain is based on the IETF KeyTrans design~\cite{ietf-keytrans-protocol}. However,
+differing prefix-proof encodings currently prevent interoperability with Signal's Go
+key-transparency implementation~\cite{signal-kt-server}. \Cref{fig:impl-overview} shows the two
+implementation components and the separate auditor process.
 
-The directory server is an in-memory, single-machine prototype implemented in Rust. The Signal integration uses a deterministic
-conversation-secret stand-in and a seeded Double Ratchet simulation, which cover the construction and
-wire format but not secrecy-dependent label unpredictability or real-ratchet security. The identity-key
-path is not simulated: the verifier runs at Signal Desktop's real peer-key-retrieval
-boundary. Production integration must obtain the live conversation secret and ratchet state from libsignal
-(\cref{ch:discussion}).
+The directory server is an in-memory, single-machine prototype. The Signal Desktop integration uses
+a deterministic substitute for the live conversation secret and a seeded Double Ratchet simulation.
+These allow the label derivation and CEA state transitions to be tested, but do not establish
+secrecy-dependent label unpredictability or the security of Signal's live Double Ratchet. However,
+the identity-key verification path is not simulated as it runs at Signal Desktop's peer-key-retrieval
+boundary. Production integration would require access to the live conversation secret and ratchet
+state from libsignal, as discussed further in \cref{ch:discussion}.
 
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-overview}
-\caption[Implemented architecture.]{The Signal Desktop verifier checks responses from the DUET directory
-server. The auditor runs as a separate process and verifies signed heads, epoch disclosures, and
-the staged second view used by the demonstration.}
+\caption[Implementation and process boundaries.]{Implementation and process boundaries. Signal
+Desktop communicates with the directory server over HTTP and JSON. The separate auditor verifies
+signed heads and consistency proofs, replays declared transitions, and compares the primary
+and staged views used by the demonstration.}
 \label{fig:impl-overview}
 \end{figure}
+\FloatBarrier
 
 % ============================================================================
 \section{DUET Directory and Cryptographic Core}\label{sec:impl-modules}
 
-The \texttt{duet} crate implements a path-compressed sparse Merkle directory and signed tree heads
-following the IETF KeyTrans model~\cite{ietf-keytrans-protocol}, an RFC~9162 append-only
-log~\cite{rfc9162}, and ECVRF-EDWARDS25519-SHA512-TAI~\cite{rfc9381}. It also includes DUET's
-dual-index construction, ACKA's CEA construction~\cite{dowling2023acka}, an HTTP server, and an
-auditor process. The crates \texttt{sha2},
-\texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard primitives. The
-project implements the ECVRF directly and checks it against the RFC~9381 test vectors.
-\Cref{fig:impl-modules} shows the module structure, while \cref{tab:impl-modules} maps each module to
-its standards basis and conformance evidence.
+Within the \texttt{duet} crate, the directory core combines a path-compressed sparse Merkle
+directory, an append-only log with RFC~9162 consistency proofs~\cite[Section~2.1.4]{rfc9162}, and signed tree heads based on
+the IETF KeyTrans model~\cite[Sections~3 and 11.2]{ietf-keytrans-protocol}. It also uses
+ECVRF-EDWARDS25519-SHA512-TAI for global-label
+derivation~\cite[Section~5.5]{rfc9381}. The crate implements DUET's dual-index construction, ACKA's
+CEA construction~\cite[Section~5.1]{dowling2023acka}, the HTTP server, and the auditor process. The
+\texttt{sha2}, \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} crates provide
+the underlying hash, key-derivation, signing, and elliptic-curve operations. The \texttt{vrf} module
+checks its curve encoding and proof verification against the RFC~9381 test
+vectors~\cite[Appendix~B.3]{rfc9381}. \Cref{fig:impl-modules} shows the relationships among the
+directory core, client component, and auditor, while \cref{tab:impl-modules} maps each module to its
+standards basis and conformance evidence.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-impl-modules}
-\caption[Core relationships in the DUET implementation.]{Core relationships in the DUET implementation. The
-directory service composes the authenticated data structures and signing components. Client-side
-constructions use the directory operations, while the auditor process maintains a replica and checks signed heads, consistency proofs, and
-declared transitions.}
+\caption[Core relationships in the DUET implementation.]{Core relationships in the DUET
+implementation. The client component accesses directory operations through the HTTP/JSON interface.
+The directory core composes the prefix tree, append-only log, ECVRF, Ed25519 signed-head signer, and
+configuration commitment. The auditor obtains signed heads, consistency proofs, and epoch deltas
+through the same interface, replays declared transitions, and compares signed-head views.}
 \label{fig:impl-modules}
 \end{figure}
 
 \begin{table}[ht]
 \centering
-\caption{The \texttt{duet} crate's modules and their standards basis and conformance evidence.}
+\caption{The \texttt{duet} crate's main modules, technical basis, and verification evidence.}
 \label{tab:impl-modules}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{5.0cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
 \toprule
-Module & Standards or design basis & Conformance evidence \\
+Module & Standards or design basis & Verification and test evidence \\
 \midrule
-\texttt{hashing} & RFC~6962 Section~2.1 leaf and node domain tags~\cite{rfc6962} & domain-separation unit tests \\
-\texttt{merkle\_log} & RFC~9162 Sections~2.1.3 and~2.1.4 inclusion and consistency verifiers~\cite{rfc9162} & exhaustive inclusion and every $(m,n)$ consistency pair up to size 64, plus forgery rejection \\
-\texttt{prefix\_tree} & IETF KeyTrans sparse Merkle tree, path-compressed~\cite{ietf-keytrans-protocol} & client-side root recompute from compressed proof \\
-\texttt{vrf} & RFC~9381 ECVRF-EDWARDS25519-SHA512-TAI, suite \texttt{0x03}~\cite{rfc9381} & RFC~9381 App.~B.3 test vectors \\
-\texttt{dual\_index} & RFC~5869 HKDF-SHA256 label derivation~\cite{rfc5869} with warning-payload MAC (\cref{alg:dualindex}) & cross-implementation vectors confirm TypeScript agreement for label derivation and the sealed warning payload, supplemented by round-trip and invalid-MAC rejection tests across both clients' warning write and read paths \\
-\texttt{server} & KeyTrans combined-tree semantics and Ed25519 STH~\cite{ietf-keytrans-protocol} with write-once raw-label policy and per-epoch declared update set (\cref{alg:server}) & valid-signature, tampering, and wrong-key tests for STH verification, committed-snapshot search, write-once rejection, and delta records for inserts and rotations \\
-\texttt{auditor} & cross-vantage fork detection and per-epoch transition audit (\cref{alg:auditor}) & append-only audit and equivocation tests, and transition audit catches undeclared deletion and modification \\
-\texttt{monitor} & writer-side persistence check and deletion-evidence bundle (\cref{alg:detect}) & persistence holds while committed, and deletion yields evidence that verifies against the server's signed heads \\
-\texttt{cea} & ACKA example CEA construction~\cite{dowling2023acka}, server-mediated registration and verification with sender before-and-after write check and advance-only-on-success (\cref{alg:cea}) & cross-implementation agreement with the TypeScript vectors, occupied-label rejection tests, and confirmation that receiver state remains unchanged after \textsc{Fork} and \textsc{NotPosted} verdicts \\
+\texttt{hashing} & RFC~6962 leaf and node domain tags~\cite[Section~2.1]{rfc6962} & unit tests for leaf/node domain separation and deterministic hashing \\
+\texttt{merkle\_log} & RFC~9162 inclusion and consistency verifiers~\cite[Sections~2.1.3 and~2.1.4]{rfc9162} & exhaustive inclusion and every $(m,n)$ consistency pair up to size 64, plus forgery rejection \\
+\texttt{prefix\_tree} & IETF KeyTrans prefix tree~\cite[Section~3.3]{ietf-keytrans-protocol}, with path compression as DUET's implementation choice & client-side root reconstruction from compressed proofs \\
+\texttt{vrf} & RFC~9381 ECVRF-EDWARDS25519-SHA512-TAI, suite \texttt{0x03}~\cite[Section~5.5]{rfc9381} & RFC~9381 test vectors~\cite[Appendix~B.3]{rfc9381} \\
+\texttt{dual\_index} & RFC~5869 HKDF-SHA256 derivation for the labels and warning MAC key~\cite[Sections~2--3]{rfc5869}, with the authenticated warning payload in \cref{alg:dualindex} & cross-implementation vectors for the labels and authenticated warning payload, plus warning round-trip and invalid MAC rejection tests \\
+\texttt{server} & IETF KeyTrans combined-tree and signed-head model~\cite[Sections~3 and~11.2]{ietf-keytrans-protocol}, with DUET's write-once raw-label policy and epoch deltas in \cref{alg:server} & signed-head verification, committed-state lookup, write-once rejection, and epoch-delta tests \\
+\texttt{auditor} & signed-head comparison and per-epoch transition audit in \cref{alg:auditor} & append-only and equivocation tests, with invalid deletion and modification rejected during transition replay \\
+\texttt{monitor} & warning persistence and deletion evidence in \cref{alg:detect} & persistence while committed and verifiable deletion evidence against the server's signed heads \\
+\texttt{cea} & ACKA's CEA construction~\cite[Section~5.1]{dowling2023acka}, instantiated with write-once directory registration, verified write confirmation, and state advance only on success in \cref{alg:cea} & cross-implementation vectors, rejection of occupied labels, and no state advance after \textsc{Fork} or \textsc{NotPosted} \\
 \texttt{hook\_process\_\allowbreak prekey\_bundle} & documentation-only libsignal integration module, compiled with the crate but not invoked as an executable hook & marks where a production binding of the live X3DH secret could be inserted \\
 \bottomrule
 \end{tabular}
@@ -90,105 +100,124 @@ Module & Standards or design basis & Conformance evidence \\
 \subsection{Directory State and Cryptography}\label{ssec:impl-core-state}
 \label{ssec:impl-core-crypto}
 
-The directory materializes only populated prefix paths and bitmap-compresses proofs. A compressed leaf
-terminates the otherwise fixed 256-bit walk. The implementation lazily memoizes a small window of each
-compressed leaf's empty-sibling hash chain, avoiding repeated computation. Empty siblings are omitted
-from the transmitted proof, which carries about $\lceil \lg N \rceil$ non-empty sibling hashes. Proof transmission and update cost have different
-bounds. With the trie depth fixed at $d=256$, copying the affected paths for $k$ modified labels
-costs $O(kd)$, which is $O(k)$ in $k$ and independent of $N$.
+The directory materializes only populated prefix paths and compresses each proof with a 256-bit
+bitmap. A compressed leaf terminates the fixed-depth tree walk early. Empty sibling hashes are
+omitted from the transmitted proof. The implementation memoizes a small window of each compressed
+leaf's empty-sibling hash chain when it is first needed, avoiding repeated computation on later
+lookups. For the pseudorandom labels used here, a proof contains about $\lceil \lg N \rceil$
+non-empty sibling hashes. Tree-update work is separate. Updating $k$ labels visits at most $d=256$
+tree levels per label, giving $O(kd)$ tree-update work. Since $d$ is fixed, this is $O(k)$ in $k$
+and independent of $N$.
 
-A committed epoch freezes a snapshot, appends its root to the log, and signs the resulting head.
-Client recomputation checks each response without trusting the directory operator. HKDF-SHA256 derives
-the two conversation-specific lookup labels and the shared warning label from the conversation secret
-and the parties' service identifiers~\cite{rfc5869}. For global identity entries, the RFC~9381 ECVRF
-derives a pseudorandom label from the user identifier and supplies a proof of correct
-evaluation~\cite{rfc9381}. Epoch commitment deep-clones the current tree to form the committed
-snapshot, so its copy cost grows with the directory size. Further module and data-structure details
-are provided in \cref{sec:apiref-engineering}.
+At an epoch commit, the server appends the current directory root to the log, clones the current
+tree as the committed snapshot, and signs the resulting head. Clients verify each response against
+this signed state. The \texttt{dual\_index} module uses the \texttt{hkdf} crate with SHA-256 to
+implement the extract-and-expand derivations in \cref{ssec:design-labels}~\cite[Sections~2--3]{rfc5869}.
+The two lookup directions use opposite service-identifier orders under the \texttt{lookup} context,
+while canonical identifier ordering under the \texttt{warning} context produces the shared warning
+label. The \texttt{vrf} module implements ECVRF-EDWARDS25519-SHA512-TAI directly with
+\texttt{curve25519-dalek} and \texttt{sha2}~\cite[Section~5.5]{rfc9381}, using the first 32 bytes of
+$\beta$ as the prefix-tree label. A drawback of cloning the tree is that its cost grows with the
+directory size. Further module and data-structure details are provided in
+Appendix~\ref{sec:apiref-engineering}.
 
-\subsection{Server, Auditor, and Benchmark Boundary}\label{ssec:impl-core-server}
+\subsection{Server, Auditor, and Benchmark Harness}\label{ssec:impl-core-server}
 \label{ssec:impl-bench}
 
-A server built with \texttt{axum} and \texttt{tokio} holds the directory behind a single
-\texttt{Arc<Mutex<KTServer>>}, with no sharding, matching the single-machine prototype scope. The server exposes public lookup and monitoring
-operations plus a privileged unchecked-overwrite interface used only by the adversarial harness.
-Write-once enforcement returns 409 Conflict when a dual-index, warning, or CEA label is already
-occupied, so a replacement is refused, never silently applied. A separate auditor binary verifies
-signed heads and compares the primary head with a staged second view supplied by the directory
-server in demonstration mode. The A4 run uses this comparison to detect split-view equivocation.
+The HTTP server uses \texttt{axum} and \texttt{tokio} and holds the directory behind a single
+\texttt{Arc<Mutex<KTServer>>}. This serializes access within the single-machine prototype. The public
+interface provides registration, lookup, raw-label updates, consistency proofs, epoch deltas, and
+epoch commits. The adversarial harness uses a separate privileged testing interface to overwrite or
+delete entries and reset the server. A public write to an occupied dual-index, warning, or CEA label
+returns \texttt{409 Conflict}. For the A4 split-view scenario, the adversarial harness uses the
+privileged interface to stage a second signed-head view. The auditor runs as a separate process and
+compares that view with the primary head to detect equivocation.
 
-Every commit publishes a declared set of inserts and rotations at an epoch-delta endpoint, and each
-rotation discloses its prior value. \Cref{fig:impl-transition-audit} shows the resulting audit. The
-auditor applies the declared set to a candidate replica and accepts only if the recomputed root equals
-the committed root, which mirrors the \texttt{AuditorUpdate} role in the IETF architecture. Deletion is
-not expressible in the delta format, so an omitted warning or an immutable-slot replacement makes the
-roots diverge and is reported, not absorbed. A tested writer-side persistence component can
-additionally combine an original inclusion proof, a later non-inclusion proof, and consistency between
-the two signed heads into independently verifiable deletion evidence, but it is not yet wired into the
-live monitor. Initial ownership of an empty raw label is not authenticated, so a malicious client can
-still occupy an unclaimed slot first.
+The auditor also verifies every committed directory transition. For each epoch, the
+\texttt{/epoch-delta} endpoint returns the declared insertions and rotations, including the previous
+value for every rotation. \Cref{fig:impl-transition-audit} shows the complete verification flow. The
+auditor replays every unaudited delta on a temporary copy of its local directory replica. It verifies
+that each disclosed root is included in the signed log and that the replay reproduces that root. The
+live replica and cursor advance only after every unaudited epoch is verified and any available
+signed-head comparison succeeds. The auditor's update flow is based on the IETF
+\texttt{AuditorUpdate} pattern, in which the service operator sends an update for each new log entry
+to a third-party auditor for
+verification~\cite[Section~15.2]{ietf-keytrans-protocol}. However, DUET's delta format and
+verification checks are specific to this implementation. Since deletion is not expressible in the
+delta format, an undeclared deletion produces a root mismatch. A duplicate insert or immutable
+rotation is rejected during replay. A separate persistence check provides additional deletion
+evidence by combining an earlier inclusion proof, a later non-inclusion proof, and a consistency
+proof between the signed heads. This check is independently tested but is not integrated into the
+Signal Desktop monitor.
 
 \begin{figure}[htbp]
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
-\caption[Per-epoch transition audit.]{Per-epoch transition audit. The auditor replays the declared
-insertions and rotations on an independent directory replica and accepts the epoch only when the
-recomputed root matches the committed root.}
+\caption[Auditor verification flow.]{Auditor verification flow. The auditor classifies the primary
+signed head, replays every unaudited epoch delta on a candidate replica, and checks a comparison head
+when available. It updates its local replica, cursor, and baseline only after all checks succeed.}
 \label{fig:impl-transition-audit}
 \end{figure}
 
-The benchmark harness invokes the directory server in process. Its timings measure local
-cryptographic work and exclude HTTP, Electron, database, and network costs. The measurement environment
-is given in \cref{sec:bench-env}, while
-\cref{sec:bench-repro} provides the reproduction procedure.
+For performance evaluation, the benchmark harness calls the directory core directly within the same
+process. Therefore, the reported timings cover local cryptographic and data-structure work and
+exclude HTTP, Electron, persistent storage, and network costs. The measurement environment is
+described in Appendix~\ref{sec:bench-env}, while Appendix~\ref{sec:bench-repro} gives the
+reproduction procedure.
 \FloatBarrier
 
 % ============================================================================
 \section{Signal Desktop Integration}\label{sec:impl-signal}
 
-The embedded Signal Desktop verifier checks responses from the DUET directory server and reports the result through a
-conversation badge and banner. The interface starts grey (pending), turns green only when
-verification succeeds and the account-wide self-check is healthy, shows an amber notice when a check
-is unavailable, and shows a red warning after a proof failure, key mismatch, authenticated peer
-warning, or the fail-closed operational timeout.
+The Signal Desktop verifier checks responses from the DUET directory server and reports results
+through a conversation badge and banner. The badge starts grey (pending) and turns green only when
+verification succeeds and the account-wide self-check is healthy. If the server is unreachable, the
+badge remains pending and an amber availability banner appears. A proof failure, key mismatch,
+authenticated peer warning, or fail-closed operational timeout produces a red badge and warning
+banner.
 
 \subsection{Client Verification and Lifecycle}\label{ssec:impl-verifier}
 \label{ssec:impl-hooks}
 
-Node's cryptographic provider supplies SHA-256, SHA-512, HMAC-SHA256, Ed25519, and X25519, while the
-ECVRF arithmetic is implemented in TypeScript. The client performs the complete verification chain of
-\cref{ssec:design-verify} at Signal Desktop's own peer-key-retrieval boundary, on the real
-identity-key path. Invalid or absent heads, proof failures, and key mismatches produce rejecting
-verdicts. The integration reports the verdict but, by design in this prototype, does not block
-session establishment.
+Node's cryptographic APIs provide SHA-256, SHA-512, HMAC-SHA256, Ed25519, and X25519, while the
+ECVRF arithmetic is implemented in TypeScript. At Signal Desktop's peer-key-retrieval boundary, the
+client applies the complete verification chain described in \cref{ssec:design-verify} to the fetched identity
+key. An invalid or missing signed head, a failed proof, or a key mismatch causes verification to
+fail. The prototype reports the resulting verdict but does not prevent session establishment.
 
-The key-upload path registers identity material, while the peer-key-retrieval path verifies the
-fetched binding. A background monitor first checks the
-client's own global VRF-derived identity entry, then, per conversation, its owner, peer, and warning
-slots, emitting a green verdict only when the global self-check is healthy. A proof-verified
-peer-slot absence is reported as pending for the first checks and, after a fail-closed timeout, as
-\texttt{NotPosted}, since it can also mean the peer has not yet run the client. A periodic sweep
-drops conversations that have gone inactive, as on deletion, while retaining archived ones. A warning
-payload carries an HKDF-derived MAC over the conversation secret,
-so a client can tell a secret-holder's payload apart from one injected by the operator. Since both
-parties derive the same MAC key, the MAC does not identify the writer. Signal service-ID strings are
-converted to canonical 16-byte account identifiers at the integration boundary, and phone-number
-identifiers are excluded. Verdicts cross Electron's isolated contexts through DOM events. The exact
-functions, event names, and engineering record are in \cref{sec:apiref-hooks,sec:apiref-engineering}.
+The key-upload path registers the client's global identity binding, while the peer-key-retrieval
+path verifies the fetched binding. Before these directory operations, Signal service-ID strings are
+converted to canonical 16-byte account identifiers. A background monitor first checks the client's
+own global VRF-derived identity entry. For each conversation, it then verifies append-only consistency, the
+client's own lookup slot, the peer's lookup slot, and the shared warning slot, emitting a green
+verdict only when all checks succeed and the global self-check is healthy. A proof-verified peer-slot
+absence remains pending for two checks. If the slot is still absent on the third check, the client
+reports a fail-closed \texttt{NotPosted} timeout, since the peer may not yet have run the client. A
+periodic lifecycle check stops monitoring deleted conversations, while archived conversations remain
+monitored.
+
+A warning payload carries a MAC under a key derived from the conversation secret. A valid MAC shows
+that one of the parties produced the payload but does not identify the writer. DOM events carry
+verdicts from the preload context to the user interface. Appendix~\ref{sec:apiref-hooks} lists the functions and
+event names, while Appendix~\ref{sec:apiref-engineering} provides the implementation and engineering
+details.
 
 \subsection{End-to-End Demonstration}\label{ssec:impl-demo}
 
-The demonstration uses two Signal Desktop clients with the DUET directory server, an auditor process, and a
-privileged attack tool. It covers the two \hyperref[sc:threat-a1]{A1 key-substitution variants}.
-In the A1a global-slot variant, the attack tool replaces the value in the mutable global identity
-slot. The auditor accepts the declared rotation, while the affected client's self-check detects the
-substituted key. In the A1b session-slot variant, the attack tool replaces the value in an immutable
-dual-index session slot. The affected client publishes a warning that the peer reads from the shared
-slot, and the auditor rejects the transition because that slot cannot be rotated.
+The demonstration uses two Signal Desktop clients with the DUET directory server, an auditor process,
+and a privileged attack tool. It covers the two server-side key-substitution variants in
+\hyperref[sc:threat-a1]{A1}. In the A1a global-slot variant, the attack tool replaces the mutable
+global identity entry. The transition auditor accepts the declared rotation because this entry is
+mutable, while the affected client's account-wide self-check detects the substitution and publishes
+an authenticated warning that the peer reads from the shared slot. In the A1b session-slot variant,
+the attack tool replaces an immutable dual-index session slot. The affected client's session monitor
+detects the mismatch and publishes the peer warning, while the transition auditor rejects the
+declared rotation because the slot is immutable.
+
 \Cref{fig:impl-screens} shows both clients before and after the A1a substitution. The runs use two
 researcher-controlled Signal accounts linked through Signal's production service and intercept no
 third-party traffic. Additional console, command, and auditor evidence is provided in
-\cref{sec:apiref-demo}.
+Appendix~\ref{sec:apiref-demo}.
 
 \begin{figure}[p]
 \centering
@@ -217,86 +246,56 @@ third-party traffic. Additional console, command, and auditor evidence is provid
   \par\smallskip
   \small (d) Bob after the A1a substitution
 \end{minipage}
-\caption[Clean and warning states for the A1a global-slot substitution.]{End-to-end demonstration of the A1a global-slot substitution. The
-upper panels show both views of the conversation after proof-backed verification. The lower panels
-show the same views after Bob's global identity entry is replaced and the authenticated warning
-reaches both clients.}
+\caption[Clean and warning states for the A1a global-slot substitution.]{End-to-end demonstration of
+the A1a global-slot substitution. Figures (a) and (b) show Alice and Bob after proof-backed
+verification. After Bob's global identity entry is replaced, Figure (c) shows Alice's verification of
+the resulting authenticated warning, while Figure (d) shows Bob's account-wide self-detection of the
+substitution.}
 \label{fig:impl-screens}
 \end{figure}
 
 % ============================================================================
 \FloatBarrier
-\section{Cross-Implementation Testing and Parity}\label{sec:impl-tests}
+\section{Implementation Agreement and Security Testing}\label{sec:impl-tests}
 
-RFC~9381 test vectors~\cite{rfc9381} check the ECVRF implementation. Fixed cross-language vectors
-require byte-for-byte agreement for label derivation, warning payloads, and CEA evolution. A live
-wire-parity suite checks the TypeScript verifier implementation against signed heads, VRF outputs, Merkle proofs, and
-consistency proofs produced by the directory-server implementation in Rust. The Rust test suite runs its integration and cryptographic tests
-against an in-process \texttt{KTServer} rather than a mock. The adversarial suite covers the honest
-baseline (A0), global- and session-slot substitution (\hyperref[sc:threat-a1]{A1a and A1b}), warning
-censorship (\hyperref[sc:threat-a2]{A2}), the first-contact substitution postcondition
-(\hyperref[sc:threat-a3]{A3}), equivocation (\hyperref[sc:threat-a4]{A4}), key-rotation substitution
-(\hyperref[sc:threat-a5]{A5}), and endpoint compromise (\hyperref[sc:threat-x1]{X1}). These tests show
-agreement and the expected behaviour for the specified inputs, not equivalence over every input.
-\Cref{sec:tests-evidence} gives the complete counts, names, and outcomes.
+Testing checks standards conformance, agreement between the \texttt{duet} crate and the Signal
+Desktop client component, and the expected behaviour under the threat scenarios. Both ECVRF
+implementations are checked against the RFC~9381 test
+vectors~\cite[Appendix~B.3]{rfc9381}. Fixed vectors require byte-for-byte agreement for dual-index
+labels, warning payloads, and CEA state evolution. The opt-in wire-parity suite checks the client
+verification code against signed heads, VRF outputs, prefix-tree and log-inclusion proofs, and
+consistency proofs returned by the directory server implemented in Rust.
 
-The A5 predecessor cross-signature check is currently limited to the standalone adversarial suite.
-The integrated Signal client uses identity re-fetch and the shared warning path.
-
-The Rust tests exhaustively cover every Merkle-log inclusion proof and consistency pair up to size 64,
-with forged-proof rejection, not sampling. Auditor tests reject invalid
-fork evidence and report genuine equivocation as \textsc{Fork}, while a divergent head with an invalid
-signature is rejected rather than misclassified.
-
-The TypeScript harness contains 180 Jest tests. Thirty-five embedded tests across six suites drive
-realistic account identifiers through Signal Desktop's own integration boundary. The standalone,
-embedded, and opt-in wire-parity suites are separate test
-classes rather than one aggregate total. \Cref{sec:impl-repro} provides the complete reproduction
-commands and environment.
+The adversarial suite covers the honest baseline (A0), the attack scenarios (A1--A5), and the
+endpoint-compromise boundary defined in \cref{sec:threat-scenarios}. These tests establish agreement
+and the expected behaviour for the specified inputs only, without establishing equivalence over
+every input. For A5 (malicious key rotation), predecessor cross-signature checking remains limited
+to the \texttt{duet} crate's adversarial suite. The Signal Desktop client instead uses identity
+re-fetch and the shared warning path without performing this check.
+Appendix~\ref{sec:tests-evidence} gives the complete suite structure, counts, and outcomes.
 
 % ============================================================================
 \FloatBarrier
-\section{System-Wide Engineering Challenges}\label{sec:impl-challenges}
+\section{Engineering Challenges}\label{sec:impl-challenges}
 
-Three areas required substantial implementation changes. First, the initial TypeScript label stand-in did not agree with Rust's RFC~9381 ECVRF because their
-encode-to-curve steps differed. Both implementations were aligned on the
+Three areas required substantial implementation changes. First, the client component's initial
+ECVRF implementation produced different outputs from the \texttt{duet} crate as their
+encode-to-curve steps differed. Both implementations were aligned with the
 ECVRF-EDWARDS25519-SHA512-TAI suite and checked against the RFC test
-vectors~\cite[Appendix~B.3]{rfc9381}. Signed heads were also bound to each lookup response, preventing a valid proof
-from being paired with an unsigned or unrelated head.
+vectors~\cite[Appendix~B.3]{rfc9381}. Each lookup response was also changed to carry a signed head
+obtained under the same server lock. The verifier checks that the signed head's root matches the
+root used for log-inclusion verification, preventing a valid proof from being paired with an
+unsigned or unrelated head.
 
-Second, registration and lookup originally encoded Signal account identifiers differently. Converting
-the service-ID string once at the integration boundary gives both paths the same canonical 16-byte
-input and excludes phone-number identifiers before processing. Concurrent registration separately
-exposed a time-of-check race between reading the head and using it to bound a proof. Binding each
-consistency proof to the already validated head size prevents a later commit from making the client or
-auditor compare a proof against the wrong upper bound.
+Second, registration and lookup initially used different encodings for Signal account identifiers.
+Converting both paths to the canonical 16-byte account identifier removed that mismatch. Another
+race condition arose when an epoch was committed between reading a signed head and requesting a
+consistency proof. The client and auditor now request each proof using the size of the validated
+signed head so that a later commit cannot change the proof's upper bound.
 
-Third, Electron integration blocked reliable interface delivery. Dynamic imports split the
-key-transparency code, so it was kept in one bundle. Context isolation blocked assignments to
-\texttt{window} but allowed DOM events across the preload and renderer boundary. The application
-exposes both a typed event bus and DOM custom events. Dispatching verdicts through both interfaces
-resolved the delivery mismatch. The remaining bundling,
-deterministic-state, and reset detail is described in \cref{sec:apiref-engineering}.
-
-Within the uncompromised-endpoint assumption in \cref{sec:threat-assumptions}, directory-response
-verification relies on the verifier, its cryptographic dependencies, the project's ECVRF implementation, and the
-operator's two public keys, which are fetched once at initialization. The verifier returns a rejecting
-verdict for invalid or absent signed heads, incorrect roots, missing inclusion proofs, mismatching labels,
-and invalid VRF bindings. Availability
-failures produce an amber notice rather than a red integrity warning, so an unreachable directory server is
-never reported as an attack. The Signal integration currently reports these verdicts but leaves
-session-blocking policy to future work.
-
-Seeded server keys, a genesis epoch, and an administrative reset make the demonstration repeatable and
-prevent an empty-log failure from leaving shared state unusable. The harness also recovers from a
-poisoned mutex. Production handlers would still need explicit lock-failure recovery beyond these
-demonstration safeguards.
-
-% ============================================================================
-\section{Reproducibility}\label{sec:impl-repro}
-
-Fixed seeds set the VRF key, label placement, sampled users, and fresh server state per benchmark, so
-no state carries between runs, while the live demonstration uses the administrative reset. The
-environment record captures the hardware, operating system, compiler, and toolchain versions, and
-\cref{sec:apiref-repo} gives the \texttt{cargo test} and \texttt{cargo bench} commands, repository
-layout, and runner scripts.
+Third, Electron integration produced two delivery problems. First, dynamic imports split the
+key-transparency code across bundles, so the complete key-transparency layer was kept in one bundle.
+Second, context isolation prevents properties assigned in the preload context from being read by the
+renderer. Therefore, verdicts are dispatched through both the typed event bus and DOM custom events.
+Appendix~\ref{sec:apiref-engineering} provides further details on bundling, deterministic keys,
+reset behaviour, and fail-closed handling.

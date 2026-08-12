@@ -1,17 +1,17 @@
-% fig-impl-overview.tex — extracted from ch5-implementation.tex
+% fig-impl-overview.tex — implementation and process boundaries (horizontal row).
+% Three role/process boxes: client component, directory server, auditor process.
 % Label: \label{fig:impl-overview}
-\begin{tikzpicture}[>=Stealth,font=\footnotesize,
-   grp/.style={draw,rounded corners,align=center,inner sep=5pt}]
-  \node[grp,fill=black!4,minimum width=7.6cm] (sd)
-     {\textbf{Signal Desktop (TypeScript)}\\[2pt]{\scriptsize conversation UI \,\textbullet\, KT verifier \,\textbullet\, background monitor \,\textbullet\, hook layer}};
-  \node[grp,fill=black!8,align=center,minimum width=8.0cm,minimum height=4.8cm,inner sep=9pt,below=1.1cm of sd] (srv)
-     {\textbf{\large DUET directory server and cryptographic core}\\[1pt]{\scriptsize server implemented by the \texttt{duet} Rust crate}\\[6pt]
-      \footnotesize\renewcommand{\arraystretch}{1.35}\begin{tabular}{@{}l@{}}
-      prefix tree\\ Merkle log\\ signed tree head\\ Ed25519 signer\\ ECVRF\\
-      dual-index derivation\\ CEA registration and verification\\ HTTP API (\cref{app:apiref})
-      \end{tabular}};
-  \node[grp,minimum width=5.6cm,below=1.1cm of srv] (aud)
-     {\textbf{Auditor}\\[1pt]{\scriptsize separate process: verify signed heads and epoch deltas,}\\ {\scriptsize replay transitions, compare primary and staged second views}};
-  \draw[<->] (sd) -- node[right,font=\scriptsize]{HTTP and JSON} (srv);
-  \draw[->,dashed] (aud) -- node[right,font=\scriptsize]{obtain signed heads, epoch deltas, and consistency proofs} (srv);
-\end{tikzpicture}
+\hyphenpenalty=10000\exhyphenpenalty=10000
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[>=Stealth,font=\scriptsize,
+   box/.style={draw,rounded corners,align=center,inner sep=4pt,minimum height=20mm}]
+  \node[box,fill=black!4,text width=4.0cm] (cli) at (0,0)
+    {\textbf{Signal Desktop client component}\\[1pt]{\scriptsize integrated TypeScript}\\[4pt]{\scriptsize proof verifier\,\textbullet\,background monitor\,\textbullet\,lifecycle hooks\,\textbullet\,warning interface}};
+  \node[box,fill=black!6,text width=5.0cm] (srv) at (6.6,0)
+    {\textbf{DUET directory server and cryptographic core}\\[1pt]{\scriptsize \texttt{duet} crate, Rust}\\[4pt]{\scriptsize sparse Merkle prefix tree\,\textbullet\,append-only Merkle log\,\textbullet\,signed heads}\\[1pt]{\scriptsize dual-index and CEA operations\,\textbullet\,HTTP API}};
+  \node[box,fill=black!4,text width=4.0cm] (aud) at (14.8,0)
+    {\textbf{Auditor process}\\[1pt]{\scriptsize \texttt{duet} crate, Rust}\\[4pt]{\scriptsize verify signed heads and consistency proofs}\\[1pt]{\scriptsize replay declared transitions\,\textbullet\,compare primary and staged views}};
+  \draw[<->] (cli.east) -- node[above,font=\scriptsize,fill=white,inner sep=1pt]{HTTP and JSON} (srv.west);
+  \draw[<->,dashed] (srv.east) -- node[above,align=center,font=\scriptsize,fill=white,inner sep=1pt]{signed heads, epoch\\deltas, consistency proofs} (aud.west);
+\end{tikzpicture}%
+}

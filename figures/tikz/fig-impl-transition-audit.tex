@@ -1,79 +1,86 @@
-% fig-impl-transition-audit.tex — the transition auditor's state flow (Alg 7),
-% in two coordinated diagrams: (a) head classification and (b) the transactional
-% per-epoch replay followed by the cross-vantage head check. First / grown /
-% incomplete heads all proceed to (b); the baseline is adopted only in (b)'s
-% atomic commit, after replay and any available valid cross-vantage comparison.
+% fig-impl-transition-audit.tex — the transition auditor's fail-closed flow (Alg 7),
+% in two panels: (a) primary-head classification and (b) transactional per-epoch
+% replay followed by the comparison-head check. Any failed primary-head check,
+% required consistency proof, epoch-delta fetch, or replay ends the attempt and
+% retains state; the comparison head is checked only after the preceding checks pass.
 % Label: \label{fig:impl-transition-audit}
+\hyphenpenalty=10000\exhyphenpenalty=10000
 \begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=4mm,
   edge/.style={->,shorten <=1pt,shorten >=2pt},
-  proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.6cm,minimum height=6mm},
-  dec/.style={draw,align=center,inner sep=3pt,text width=4.6cm,minimum height=6mm,fill=blue!6},
+  proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.8cm,minimum height=6mm},
+  dec/.style={draw,align=center,inner sep=3pt,text width=4.8cm,minimum height=6mm,fill=blue!6},
   term/.style={draw,rounded corners,align=center,inner sep=3pt,text width=3.7cm,minimum height=6mm},
   bad/.style={term,draw=red!60!black,fill=red!3},
   nop/.style={term,draw=orange!80!black,fill=orange!4},
   go/.style={term,draw=green!50!black,fill=green!5}]
 
-  \node[proc] (a0) {\textbf{(a) head classification}\\receive new head, verify STH signature and well-formedness};
-  \node[dec,below=of a0] (a1) {first head? (no recorded baseline)};
-  \node[dec,below=of a1] (a2) {rollback, or equal size with a different root?};
-  \node[dec,below=of a2] (a3) {log grew (new size $>$ baseline)?};
-  \node[dec,below=9mm of a3] (a4) {equal head (same root): all epochs already audited?};
-  \node[go,below=8mm of a4] (gob) {$\to$ transactional replay (b)};
+  \node[proc] (a0) {\textbf{(a) head classification}\\fetch and parse the primary signed head};
+  \node[dec,below=of a0] (a1) {signature and well-formedness valid?};
+  \node[dec,below=of a1] (a2) {first head (no baseline)?};
+  \node[dec,below=of a2] (a3) {rollback, or equal size with a different root?};
+  \node[dec,below=of a3] (a4) {log grew (size $>$ baseline)?};
+  \node[go,below=9mm of a4] (gob) {equal head, or valid growth: $\to$ replay (b)};
   \draw[edge] (a0) -- (a1);
+  \draw[edge] (a1) -- node[left,font=\tiny]{yes} (a2);
   \draw[edge] (a2) -- node[left,font=\tiny]{no} (a3);
   \draw[edge] (a3) -- node[left,font=\tiny]{no} (a4);
-  \draw[edge] (a4) -- node[left,font=\tiny]{no: incomplete} (gob);
+  \draw[edge] (a4) -- node[left,font=\tiny]{no: equal head} (gob);
 
-  % right terminal column: alarms, no-op, and the grown-head consistency step
-  \node[bad,right=12mm of a2] (t2) {reject (rollback or fork)};
-  \draw[edge] (a2.east) -- node[above,font=\tiny]{yes} (t2.west);
-  \node[proc,right=12mm of a3,text width=3.7cm] (a3p) {verify RFC~9162 consistency proof};
-  \draw[edge] (a3.east) -- node[above,font=\tiny]{yes} (a3p.west);
-  \node[bad,below=5mm of a3p] (t3) {invalid proof: reject\\retain baseline, no replay};
-  \draw[edge] (a3p) -- node[right,font=\tiny]{invalid} (t3);
-  \node[nop,below=4mm of t3] (t4) {idempotent: no state change};
-  \draw[edge] (a4.east) |- node[below,font=\tiny,pos=0.85]{yes} (t4.west);
+  % right terminals
+  \node[nop,right=10mm of a0] (tu) {\textsc{Unavailable}: retain state, retry};
+  \draw[edge] (a0.east) -- node[above,font=\tiny]{unavailable} (tu.west);
+  \node[bad,right=10mm of a1] (tm) {\textsc{Malformed}: retain state};
+  \draw[edge] (a1.east) -- node[above,font=\tiny]{no} (tm.west);
+  \node[bad,right=10mm of a3] (t3) {reject: retain state};
+  \draw[edge] (a3.east) -- node[above,font=\tiny]{yes} (t3.west);
+  \node[proc,right=10mm of a4,text width=3.7cm] (a4p) {verify RFC~9162 consistency};
+  \draw[edge] (a4.east) -- node[above,font=\tiny]{yes} (a4p.west);
+  \node[nop,below=4mm of a4p] (t4) {\textsc{ConsistencyUnverified}: retain state, no replay};
+  \draw[edge] (a4p) -- node[right,font=\tiny]{invalid} (t4);
 
-  % far-right bus: first-head (skip consistency) and valid-consistency both proceed to (b)
-  \coordinate (chan) at ([xshift=10mm]a3p.east);
-  \draw[edge] (a1) -- node[left,font=\tiny]{no} (a2);
-  \draw (a1.east) -- node[above,font=\tiny,pos=0.62]{yes: skip consistency} (a1.east -| chan);
-  \draw (a3p.east) -- node[above,font=\tiny]{valid} (a3p.east -| chan);
-  \draw (a1.east -| chan) -- (gob.east -| chan);
+  % first-head skip and valid-consistency both proceed to (b)
+  \coordinate (chan) at ([xshift=9mm]a4p.east);
+  \draw (a2.east) -- node[above,font=\tiny,pos=0.62]{yes: skip consistency} (a2.east -| chan);
+  \draw (a4p.east) -- node[above,font=\tiny]{valid} (a4p.east -| chan);
+  \draw (a2.east -| chan) -- (gob.east -| chan);
   \draw[edge] (gob.east -| chan) -- (gob.east);
 \end{tikzpicture}
 
-\vspace{5pt}
+\vspace{6pt}
 
-\begin{tikzpicture}[>=Stealth,font=\scriptsize,node distance=3mm,
+\begin{tikzpicture}[>=Stealth,font=\scriptsize,
   edge/.style={->,shorten <=1pt,shorten >=2pt},
-  proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm},
-  loop/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=10mm},
-  cv/.style={draw,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm,fill=blue!6},
-  term/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.2cm,minimum height=6mm},
+  proc/.style={draw,rounded corners,align=center,inner sep=3pt,text width=6.0cm,minimum height=6mm},
+  loop/.style={draw,rounded corners,align=center,inner sep=3pt,text width=6.0cm,minimum height=12mm},
+  dec/.style={draw,align=center,inner sep=3pt,text width=6.0cm,minimum height=6mm,fill=blue!6},
+  term/.style={draw,rounded corners,align=center,inner sep=3pt,text width=4.0cm,minimum height=6mm},
   bad/.style={term,draw=red!60!black,fill=red!3},
   rtr/.style={term,draw=orange!80!black,fill=orange!4},
-  good/.style={draw,rounded corners,align=center,inner sep=3pt,text width=5.6cm,minimum height=6mm,draw=green!50!black,fill=green!5}]
+  good/.style={draw,rounded corners,align=center,inner sep=3pt,text width=6.0cm,minimum height=6mm,draw=green!50!black,fill=green!5}]
 
-  \node[proc] (b0) {\textbf{(b) transactional replay}\\(entered from (a))\\clone the committed replica into a candidate, then set $\mathit{cursor}\gets\mathit{audited\_epochs}$};
-  \node[loop,below=of b0] (b1) {\textbf{for each not-yet-audited epoch} $e$\\ (cursor\,$\to$\,current, incl.\ $e{=}0$):\\ fetch delta$_e$, replay each\\ insertion or rotation (reject a\\ duplicate insert (A1) or an\\ immutable rotation), and candidate root\\ must equal declared root$_e$};
-  \node[cv,below=of b1] (bcv) {\textbf{cross-vantage:} valid second-vantage head available?};
-  \node[cv,below=6mm of bcv] (bcmp) {same-epoch head with a different root at the same tree size (two validly signed roots)?};
-  \node[cv,below=6mm of bcmp] (bcons) {between-vantage consistency proof present and valid?};
-  \node[good,below=6mm of bcons] (b2) {commit replica, cursor, \emph{and} baseline atomically};
+  \node[proc] (b0) at (0,0) {\textbf{(b) transactional replay} (entered from (a))\\clone the committed replica into a candidate; set $\mathit{cursor}\gets\mathit{audited\_epochs}$};
+  \node[loop] (b1) at (0,-2.0) {\textbf{for each unaudited epoch} $e$: fetch $\mathrm{delta}_e$ and its root-inclusion proof; verify the disclosed root under the primary head; replay each insertion or rotation; reject a duplicate insert or immutable rotation; require candidate root $=$ disclosed root};
+  \node[dec] (bcv) at (0,-3.9) {valid comparison head available?};
+  \node[dec] (bcmp) at (0,-5.2) {compare the comparison head with the primary head};
+  \node[good] (b2) at (0,-7.0) {advance the local replica, cursor, and baseline together};
   \draw[edge] (b0) -- (b1);
-  \draw[edge] (b1) -- (bcv);
+  \draw[edge] (b1) -- node[left,font=\tiny]{all epochs verified} (bcv);
   \draw[edge] (bcv) -- node[left,font=\tiny]{yes} (bcmp);
-  \draw[edge] (bcmp) -- node[left,font=\tiny]{no} (bcons);
-  \draw[edge] (bcons) -- node[left,font=\tiny]{yes: agree} (b2);
-  \node[bad,right=12mm of b1] (r2) {reject (audit failed): root mismatch, duplicate insert (A1), or immutable \mbox{rotation}};
-  \node[rtr,above=5mm of r2] (r1) {delta-fetch failure: discard candidate, retry (not a fork)};
-  \draw[edge] (b1.east) -- node[above,font=\tiny,fill=white,inner sep=1pt]{replay fail} (r2.west);
-  \draw[edge] (b1.north east) -- node[above,font=\tiny,fill=white,inner sep=1pt,pos=0.4]{fetch fail} (r1.west);
-  \node[bad,right=12mm of bcmp] (r3) {\textsc{Fork}: two validly signed roots at one tree size, reject};
-  \draw[edge] (bcmp.east) -- node[above,font=\tiny]{yes} (r3.west);
-  \node[rtr,right=12mm of bcons] (r4) {\textsc{ConsistencyUnverified}: retain baseline (no G4 verdict)};
-  \draw[edge] (bcons.east) -- node[above,font=\tiny]{no} (r4.west);
-  \coordinate (byp) at ([xshift=-28mm]bcv.west);
-  \draw[edge] (bcv.west) -- node[above,font=\tiny,align=center]{no valid second-vantage head:\\no G4 verdict} (byp) |- (b2.west);
+  \draw[edge] (bcmp) -- node[left,font=\tiny,align=center]{same root, or valid\\consistency proof: agree} (b2);
+
+  % replay-stage terminals (right of b1)
+  \node[rtr] (r1) at (9.4,-1.4) {\textsc{Incomplete}: discard candidate, retain state, retry};
+  \draw[edge] (b1.east) -- node[above,font=\tiny,fill=white,inner sep=1pt,pos=0.5]{fetch fail} (r1.west);
+  \node[bad] (r2) at (9.4,-2.6) {\textsc{TransitionFailed}: discard candidate, retain state};
+  \draw[edge] (b1.east) -- node[below,font=\tiny,fill=white,inner sep=1pt,pos=0.5]{replay fail} (r2.west);
+
+  % comparison terminals (right of bcmp), stacked at distinct rows
+  \node[bad] (rf) at (9.4,-4.5) {\textsc{Fork}: retain state};
+  \draw[edge] (bcmp.east) -- node[above,font=\tiny,align=center,pos=0.5]{same size,\\different root} (rf.west);
+  \node[rtr] (r4) at (9.4,-5.8) {\textsc{ConsistencyUnverified}: retain state};
+  \draw[edge] (bcmp.east) -- node[below,font=\tiny,align=center,pos=0.5]{different size,\\invalid proof} (r4.west);
+
+  % no comparison head: bypass to b2
+  \coordinate (byp) at (-4.9,-3.9);
+  \draw[edge] (bcv.west) -- node[above,font=\tiny,align=center]{no comparison head:\\no split-view verdict} (byp) |- (b2.west);
 \end{tikzpicture}

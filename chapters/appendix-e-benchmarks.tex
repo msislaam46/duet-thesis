@@ -6,6 +6,10 @@ corpus and M7, and the full-grid run supplies the M14--M16 families. Sizes are e
 seed-deterministic, and timings are reported as the median and 95th percentile. The metric families M1--M17 and the baseline configurations (\emph{no-KT floor}, \emph{single-index}, \emph{dual-index}, and \emph{windowed}) are defined in \hyperref[sec:bench-defs]{the definitions below}. The code$\to$group$\to$CSV mapping for reproducing each row is given in
 \cref{sec:bench-repro}.
 
+Each benchmark setup constructs fresh in-memory state, so no directory state carries between runs.
+The fixed VRF and lookup-sampling seeds in \cref{tab:bench-env} make the directory layout and sampled
+labels reproducible.
+
 \phantomsection\label{sec:bench-defs}
 \section*{Metric and Baseline Definitions}
 
