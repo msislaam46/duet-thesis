@@ -1,26 +1,28 @@
 \chapter{Conclusion}\label{ch:conclusion}
 
 End-to-end encrypted messaging depends on authentic public keys, yet manual comparison is rarely
-completed~\cite{vaziripour2017}, and the deployed transparency systems surveyed in \cref{ch:background}
-do not warn both peers. This thesis addresses that gap through DUET, which automatically checks for
-key substitution and provides an in-band peer-warning channel for honestly established and monitored
-conversations without changing lookup-proof asymptotics.
+completed~\cite{vaziripour2017}. Moreover, the deployed transparency systems surveyed in
+\cref{ch:background} do not describe a conversation-specific channel that warns both peers of an
+individual key substitution. This thesis addresses that gap through DUET, which automatically
+checks for key substitution and provides an in-band peer-warning channel for honestly established
+and monitored conversations without changing the lookup-proof format.
 
 DUET instantiates ACKA's abstract log component $\Log$ as a verifiable key directory designed to
 expose the malicious-operator behaviours specified in the threat model (\cref{ch:design}). It adds a
 dual-index warning scheme for in-band peer
-warnings and a windowed consistency proof for offline catch-up. An independent auditor verifies directory transitions
-and compares signed heads obtained from separate vantage points, providing the cross-vantage check
-used to detect equivocation. The \texttt{duet} Rust crate implements the directory server, proof construction, and auditor
-process. A verifier integrated into Signal Desktop runs the client-verification path
+warnings and a windowed consistency proof for offline catch-up. DUET also retains ACKA's CEA
+construction in continuous mode, using simulated ratchet inputs in the prototype. A separate auditor
+process verifies directory transitions. In deployment, G4 (Fork Detection) additionally requires
+comparison of signed heads obtained from independent vantage points. The \texttt{duet} Rust crate
+implements the directory server, proof construction, and auditor process. A verifier integrated into Signal Desktop runs the client-verification path
 (\cref{ch:impl}).
 
 \Cref{ch:eval} shows that detection uses additional label-bound lookups without enlarging an
-individual lookup proof. At a matched directory size, the implemented VRF-indexed lookup
-proof is roughly comparable in size to the corresponding CONIKS proof, and median full verification
-remains below \SI{150}{\micro\second} through $10^7$ labels. Windowed catch-up uses one
-distant-head proof for the entire missed window. These measurements cover local components and exclude
-end-to-end monitor latency. The adversarial suite produced the expected verdicts for every implemented scenario. The STRIDE analysis identified one privacy residual and three unimplemented
+individual lookup proof. At a matched directory size, DUET's measured lookup proof and the derived CONIKS quantity are in the
+same sub-kilobyte size class when their signed heads are excluded. Median full verification
+remains below \SI{150}{\micro\second} through $10^7$ labels. Windowed catch-up uses one consistency
+proof for the complete missed window. These measurements cover local components and exclude
+end-to-end monitor latency. The adversarial suite produced the expected outcome in all eight specified cases. The STRIDE analysis identified one privacy residual and three unimplemented
 availability controls.
 
 These results support the four contributions introduced in \cref{sec:intro-contributions}.
