@@ -1,127 +1,129 @@
 \chapter{Discussion, Limitations and Future Work}\label{ch:discussion}
 
-This chapter interprets the results, states the prototype's limitations, and identifies priorities for
-completing, deploying, and extending the system.
+This chapter interprets the evaluation results, states the prototype's limitations, and identifies
+priorities for completing, deploying, and extending DUET.
 
 % ============================================================================
 \section{Discussion}\label{sec:disc-discussion}
 
-DUET adds automatic in-band substitution detection through additional label-bound lookups without
-introducing a new proof family. Each lookup therefore retains the same asymptotic proof size and verification cost. The
-detection guarantee depends on domain-separated labels, proof-verified absence, warning persistence, and
-transition validation. When the directory is honest, the global VRF-bound identity entry supplies the detecting comparison
-for the \hyperref[sc:threat-a3]{A3 network man-in-the-middle scenario}. Labels derived from the two
-different conversation secrets provide supporting evidence.
+DUET provides automatic in-band key-substitution detection by adding conversation-specific peer
+warnings through additional label-bound lookups without changing the lookup-proof format. The
+detection mechanism combines domain-separated labels, proof-verified absence, warning persistence,
+and transition auditing. When the directory is honest, comparison with the global VRF-bound identity
+entry detects the \hyperref[sc:threat-a3]{A3 network man-in-the-middle substitution}, while
+peer-slot absence provides supporting evidence.
 
-The evaluation supports this separation of costs. Identity proofs remain roughly comparable with the
-matched CONIKS proof, detection paths reuse raw-label proofs, and distant-head consistency replaces
-a proof per missed epoch with one proof. These measurements characterize component costs rather than
-production throughput.
+The evaluation shows that key-substitution detection reuses the existing proof format through
+additional lookups, while windowed catch-up reduces the proof count from $W$ to one in the defined
+synthetic baseline (\cref{ssec:eval-catchup}). DUET's measured identity proof remains in the same
+sub-kilobyte class as the matched CONIKS quantity in \cref{sec:eval-compare}. These are local
+component results and do not measure production throughput.
 
-The construction could apply beyond Signal wherever a messenger supplies a semi-trusted directory and a
-conversation secret, with continuous mode additionally needing public ratchet keys and secret epoch
-inputs. Session mode has the smaller integration and write surface, while continuous mode
-authenticates each ratchet epoch at a higher write rate. Both remain bounded by trust on first use,
-endpoint security, and the need for an independent vantage to expose two internally consistent views.
+DUET could extend beyond Signal to a messenger with a provider-operated key directory and a shared
+secret between the messaging parties. Continuous mode also requires public ratchet keys and secret
+state for each epoch. Session mode requires fewer integration points and directory writes, while
+continuous mode authenticates each ratchet epoch at a higher write rate. Both remain subject to
+trust on first use, endpoint security, and independent head comparison for split-view detection.
 
 % ============================================================================
 \section{Limitations}\label{sec:disc-limitations}
 
-DUET's monitoring guarantee begins after a client pins a directory binding. It detects later changes
-but cannot establish whether that initial binding was authentic. A proof-verified peer-slot absence
-is reported as pending and then, after a fail-closed timeout, as \texttt{NotPosted}. Because that
-absence cannot be distinguished from a peer who has not yet run the client, timely peer-slot detection
-assumes peer participation. Monitoring is scoped to conversations the client still holds and is keyed by the per-conversation
-label in memory. A deleted conversation is dropped from the sweep, while an archived conversation is
-retained. The prototype retains the signed-head checkpoint, peer-key pins, and per-label monitor state
-only while the application process is running. Windowed catch-up therefore covers monitoring gaps
-within a run. After an application restart, the client establishes a new trust-on-first-use baseline
-for its signed-head and peer-pin state. It cannot use the pre-restart checkpoint or peer pin to
-retrospectively detect a peer-key substitution introduced during the gap. The design covers pairwise,
-single-device conversations rather than groups, MLS, Sender Keys, or complete multi-device warning
-propagation. It also cannot protect a compromised endpoint.
+DUET detects changes only after a client pins its initial directory binding and therefore cannot
+establish whether that binding was authentic. A proof-verified peer-slot absence remains pending
+before becoming a fail-closed \texttt{NotPosted} timeout. Since the absence may instead mean that
+the peer has not run the client, timely detection assumes active peer participation. Monitoring
+applies only to retained conversations: deleting a conversation stops it, while archiving preserves
+it. The prototype retains the signed-head checkpoint, peer-key pins, and per-label monitor state only
+while the application process is running. An application restart establishes a new trust-on-first-use
+baseline and cannot retrospectively detect a substitution introduced during the gap. Also, the design
+does not cover groups, MLS, Sender Keys, complete multi-device warning propagation, or compromised
+endpoints.
 
-The design also depends on an honest auditor for transition validation. Detection of
-\hyperref[sc:threat-a4]{A4} split-view equivocation further requires a valid signed head obtained from an independent
-vantage. A client can reject a head that does not extend its pinned baseline, but it cannot expose two
-internally consistent branches extending a common prefix. Production deployment therefore requires
-authenticated epoch disclosures, freshness and failure policies, and an independent gossip or
-second-vantage source.
+For third-party auditing, transition validation assumes at least one honest auditor. G4 (Fork
+Detection) additionally requires signed heads obtained from independent vantage points. A client can
+reject a head that does not extend its retained baseline, but it cannot independently expose two
+internally consistent histories. Therefore, before production deployment, the system must define
+authenticated epoch disclosures, signed-head freshness and failure policies, and a source of
+independently observed heads.
 
-The prototype also lacks query privacy from the operator, write-rate limits, published-head timeouts,
-and gossip-based detection of omitted proofs. The VRF prevents offline recovery of identities from
-published labels, but the unauthenticated public query endpoint still permits online tests of known
-identifiers, so production requires authenticated access, rate limiting, or a private-lookup design.
-A malicious peer can publish a valid but false warning
-because the shared MAC shows only that a secret-holder produced the payload, not that the report is
-true or who wrote it. Deployment therefore requires
-authenticated writer identities, attributable warning records, and an abuse policy.
+The prototype also does not hide lookup queries from the operator. Published VRF-derived global
+identity labels resist offline enumeration by observers without the VRF secret key or corresponding
+proof~\cite[Sections~1, 3.4, and 7.6]{rfc9381}, but the public interface permits online tests of
+known identifiers. Moreover, a valid warning MAC shows only that a holder of the conversation
+secret created the payload. It neither identifies the writer nor establishes that the report is
+true. Write-rate limits, signed-head freshness checks, gossip for detecting omitted proofs, and
+warning attribution remain unimplemented.
 
-The implementation runs on one machine, stores the directory in memory,
-and deep-clones the tree when committing an epoch. The Signal integration uses a deterministic
-conversation-secret stand-in and a seeded ratchet simulation, which cover the code paths but do not
-establish label unpredictability or active-attacker security for live Signal state. The key-fetch
-integration reports a rejecting verdict without blocking session establishment. The writer-side
-warning-persistence component is implemented and unit-tested but is not wired into the live monitor,
-so a live run surfaces a silently deleted warning only through the transition audit. Simulated continuous
-mode also supplies the raw Diffie--Hellman output where ACKA's Signal mapping uses the derived chain
-key, and its synchronous state does not model skipped ratchet epochs. A production binding must obtain
-the live chain key and support explicit epoch indices and bounded skipped state.
+For the implementation, the key directory server is an in-memory, single-machine prototype that
+clones the directory tree at each epoch commit. The Signal Desktop integration uses a deterministic
+substitute for the conversation secret and a seeded Double Ratchet simulation. These demonstrate
+the label derivation and CEA state transitions but do not establish label unpredictability or the
+security of Signal's live Double Ratchet. The identity-key verification path runs at Signal
+Desktop's peer-key-retrieval boundary. However, if a signed head or proof is invalid, or the fetched
+identity key does not match the verified directory binding, the prototype reports a rejecting
+verdict without blocking session establishment. Warning persistence checks are implemented and
+tested but are not called by the live monitor. Continuous mode also uses the raw Diffie--Hellman
+output as a substitute for the chain key and does not model skipped ratchet epochs. A production
+integration must obtain the live chain key and support explicit epoch indices and bounded skipped
+state.
 
-The supporting evidence has a narrower scope. The security argument is an informal proof sketch
-supported by definitions, the same-head lemma, and the adversarial suite. A formal argument combining
-CEA fingerprint authentication with dual-index location binding remains future work. The suite does not model
-separate first-contact sessions with each party or a fabricated pre-key bundle kept consistent with a
-malicious directory entry. Timings measure local components, not a complete networked monitor
-or audit, and the committed corpus holds aggregate statistics, not raw Criterion samples.
-M11 times lookup verification in the Rust implementation and excludes the Signal Desktop key-fetch path. M12 measures
-local signature and consistency work and excludes network transfer, epoch-delta retrieval, and full transition
-replay (\cref{ssec:eval-scale}). These limits prevent interpreting the component results as an
-end-to-end deployment measurement.
+Finally, the supporting security evidence consists of an informal proof sketch, definitions, the
+same-head lemma, and the adversarial suite. The adversarial suite also does not model separate
+first-contact sessions for both parties or a fabricated pre-key bundle made consistent with a
+malicious directory entry. Moreover, the timings cover local components rather than complete
+networked monitoring or auditing. M11 excludes the Signal Desktop peer-key-retrieval path, while
+M12 excludes network transfer, epoch-delta retrieval, persistent state, and full transition replay.
+The committed corpus holds aggregate statistics rather than raw Criterion samples. Therefore, these
+results cannot be interpreted as end-to-end deployment measurements.
 
 % ============================================================================
 \section{Future Work}\label{sec:disc-future}
 
 \subsection{Completing the Protocol and Security Argument}
 
-Production integration must obtain the live X3DH or PQXDH conversation secret and the live Double
-Ratchet chain key from libsignal. Replacing the current stand-ins changes the inputs to the existing
-label and CEA constructions rather than their downstream proof formats. The live conversation secret
-is necessary for the label-unpredictability argument used in the \hyperref[sc:threat-a3]{A3} network man-in-the-middle analysis.
+First, production integration must replace the deterministic conversation and ratchet inputs with
+the live X3DH or PQXDH conversation secret and Double Ratchet chain key obtained from libsignal.
+Continuous mode must also support explicit epoch indices and bounded skipped state.
 
-The public registration and raw-label write interfaces must also authenticate the account or
-conversation party authorised to make the first write. This prevents an unauthorised client from
-planting a global binding or occupying an empty conversation slot. Later replacement and deletion
-remain subject to transition auditing and persistence evidence.
+Second, the public registration and raw-label write interfaces must authenticate the account or
+conversation party making the first write. This prevents an unauthorised client from registering a
+global binding or occupying an empty conversation slot. Later replacement and deletion remain
+subject to transition auditing and persistence evidence.
 
-The security argument also needs a formal detection game covering the KDF, VRF, signed heads, warning
-authentication, and append-only verification. Symbolic analysis and separate verification of the
-client proof checker would provide complementary assurance.
+Finally, the security analysis needs a formal detection game combining the KDF, VRF, signed heads,
+warning authentication, CEA fingerprints, and append-only verification. Symbolic analysis and
+independent verification of the client proof checker would provide additional assurance.
 
 \subsection{Groups, Devices, and Directory Privacy}
 
-Group support requires epoch-scoped labels and a warning policy covering membership changes and every
-current device, potentially using domain-separated MLS exporter secrets~\cite{rfc9420}.
-Multi-device continuity could build on ELEKTRA-style device cross-signing, together with device-scoped
-labels, warning propagation, and reset handling~\cite{len2023elektra}.
+Group messaging support would require epoch-scoped labels and a warning policy covering membership
+changes and every current device, potentially using domain-separated MLS exporter
+secrets~\cite[Section~8.5]{rfc9420}. Multi-device continuity could build on ELEKTRA-style device
+cross-signing, together with device-scoped labels, warning propagation, and reset
+handling~\cite[Sections~2.1 and 3]{len2023elektra}.
 
-Stronger directory privacy is another research direction. OPRF-based identity blinding could conceal
-the raw lookup identity, but private retrieval and network anonymity would still be needed to hide the
-requested entry and the requester. The design would need to specify whether the OPRF role is separated
-or distributed~\cite{rfc9497}.
+Stronger directory privacy is another research direction. OPRF-based identity blinding could
+conceal the raw lookup identity from the OPRF server~\cite[Sections~1 and 7.1]{rfc9497}. However,
+private retrieval and network anonymity would still be needed to hide the requested entry and the
+requester. The design would need to specify whether the OPRF role is separate or distributed.
 
 \subsection{Deployment and Cryptographic Scale}
 
-Persistent copy-on-write nodes should replace full snapshot cloning without changing the proof format.
-This would avoid the full-tree copy currently performed at each epoch commit. Integration with
-Signal's existing key-transparency service~\cite{signal-kt-server} would require immutable raw writes,
-authenticated ownership, transition disclosures, client integration points, and an independent
-auditor or gossip federation.
+Persistent copy-on-write nodes should replace full snapshot cloning without changing the proof
+format. This would avoid the full-tree copy currently performed at each epoch commit. Integration
+with Signal's existing key-transparency service~\cite{signal-kt-server} would require immutable raw
+writes, authenticated ownership, transition disclosures, client integration points, and an
+independent auditor or gossip federation.
 
-Post-quantum operation also requires replacements for the ECVRF and signed-head signatures, although
-PQXDH secrets already fit the label KDF~\cite{pqxdh}. Even with PQXDH-derived labels, end-to-end
-post-quantum security would continue to depend on the messenger's authentication and ratchet
-mechanisms. This thesis does not select or implement those replacements.
+CONIKS allows clients to monitor their own bindings with logarithmic proofs without relying on a
+third-party monitor for that task~\cite[Sections~1 and 4.1.3]{melara2015coniks}. DUET could evaluate
+client-assisted transition checking and signed-head exchange. However, G4 still requires
+independently observed heads.
+
+Post-quantum operation also requires replacements for the ECVRF and signed-head signatures,
+although PQXDH secrets already fit the label KDF~\cite[Sections~2.2 and 3.3]{pqxdh}. Even with
+PQXDH-derived labels, end-to-end post-quantum security would continue to depend on the messenger's
+authentication and ratchet mechanisms. This thesis does not select or implement those replacements.
 
 Concurrency, serialization, reclamation, and memory use require measurement under realistic
 deployment loads.
