@@ -18,7 +18,7 @@ including the missing, unparseable, and failing consistency-proof cases that ret
 
 \Cref{tab:impl-t5a} lists representative correctness tests and the requirement each protects, and
 \cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
-verdicts. The unit, cross-language, and TypeScript tests are catalogued in the tables that follow. The
+verdicts. The unit, crate--client agreement, and client-component tests are catalogued in the tables that follow. The
 \texttt{kt\_auditor} binary tests are summarized by category above rather than listed individually.
 \Cref{fig:impl-testing} summarizes the five evidence classes.
 
@@ -290,7 +290,7 @@ Suite & Test \\
 \texttt{kt\_integration} & windowed catch-up after an offline period \\
 \texttt{kt\_integration} & cross-implementation vector v1 (alice/bob) \\
 \texttt{kt\_integration} & cross-implementation vector v3 (fixed-width 16-byte ids) \\
-\texttt{kt\_integration} & warn-MAC vector: sealed payload matches Rust \\
+\texttt{kt\_integration} & warn-MAC vector: sealed payload matches the \texttt{duet} crate \\
 \texttt{kt\_integration} & ECVRF vector $i$: RFC~9381 proof verifies to $\beta$ (3 RFC vectors) \\
 \texttt{kt\_integration} & ECVRF vector $i$: deterministic prove reproduces the RFC~9381 $\pi$ (3 RFC vectors) \\
 \texttt{kt\_integration} & tampered proof and wrong alpha are rejected \\
@@ -345,7 +345,7 @@ Suite & Test \\
 \texttt{cea} & honest parties agree each epoch (fold secret $I$, authenticate public $T$) \\
 \texttt{cea} & labels evolve with the ratchet \\
 \texttt{cea} & verdicts: \textsc{Consistent} / \textsc{Fork} / \textsc{NotPosted} returned as specified \\
-\texttt{cea} & cross-implementation vectors (locked with the Rust suite, 3 ratchet epochs) \\
+\texttt{cea} & cross-implementation vectors (locked with the \texttt{duet} crate's suite, 3 ratchet epochs) \\
 \midrule
 \texttt{secret\_store} & the pair key is order-independent ($A{,}B = B{,}A$) and 32 bytes \\
 \texttt{secret\_store} & the derived secret is deterministic and depends on the key pair \\
@@ -503,11 +503,7 @@ X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 \end{tabular}
 \end{table}
 
-The suite is the Rust integration test \texttt{tests/adversarial.rs}, run with
-\texttt{cargo test --test adversarial}. Each scenario asserts its expected security outcome, and the
-A1 variants additionally assert the warning epoch. The \texttt{kt\_attack\_demo} binary provides a
-narrated walkthrough. All eight cases produce their expected outcomes: the A0 baseline and six
-detection scenarios pass, while X1 confirms that endpoint compromise is outside the threat model.
+The \texttt{kt\_attack\_demo} binary provides a narrated walkthrough of the same scenarios.
 
 % ============================================================================
 \section{Evidence Structure and Cross-Implementation Parity}\label{sec:tests-evidence}
