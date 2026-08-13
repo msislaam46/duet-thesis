@@ -10,8 +10,8 @@
   \node[kdf,minimum width=2.6cm] (ext) at (2.7,0)
     {HKDF-Extract\\[1pt]{\scriptsize salt ``\texttt{duet-dual-index}''}};
   \node[draw,rounded corners,minimum width=1.0cm,minimum height=8mm] (prk) at (4.9,0) {PRK};
-  \node[exp] (esf) at (7.5,2.1)  {HKDF-Expand\\``lookup''$\,\|\,\mathit{id_A}\|\mathit{id_B}$};
-  \node[exp] (epr) at (7.5,0)    {HKDF-Expand\\``lookup''$\,\|\,\mathit{id_B}\|\mathit{id_A}$};
+  \node[exp] (esf) at (7.5,2.1)  {HKDF-Expand\\``lookup''$\,\|\,\mathit{id}_{\A}\|\mathit{id}_{\B}$};
+  \node[exp] (epr) at (7.5,0)    {HKDF-Expand\\``lookup''$\,\|\,\mathit{id}_{\B}\|\mathit{id}_{\A}$};
   \node[exp] (ewn) at (7.5,-2.1) {HKDF-Expand\\``warning''$\,\|\,\min\|\max$};
   \node[slot] (self) at (10.8,2.1)  {$\ell_{\mathsf{self}}$\\[-1pt]\footnotesize Alice's lookup slot};
   \node[slot] (peer) at (10.8,0)    {$\ell_{\mathsf{peer}}$\\[-1pt]\footnotesize Bob's lookup slot};

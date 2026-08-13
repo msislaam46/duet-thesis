@@ -297,7 +297,7 @@ extracts $\mathit{PRK}=\HKDFex(\text{salt}=\text{\texttt{"duet-dual-index"}},\ \
 \begin{align*}
   \lblself &= \HKDFexp(\mathit{PRK},\ \texttt{"lookup"}\concat \mathit{id}_{\mathsf{self}}\concat \mathit{id}_{\mathsf{peer}},\ 32),\\
   \lblpeer &= \HKDFexp(\mathit{PRK},\ \texttt{"lookup"}\concat \mathit{id}_{\mathsf{peer}}\concat \mathit{id}_{\mathsf{self}},\ 32),\\
-  \lblwarn &= \HKDFexp(\mathit{PRK},\ \texttt{"warning"}\concat \min(\mathit{id}_\A,\mathit{id}_\B)\concat \max(\mathit{id}_\A,\mathit{id}_\B),\ 32),
+  \lblwarn &= \HKDFexp(\mathit{PRK},\ \texttt{"warning"}\concat \min(\mathit{id}_{\A},\mathit{id}_{\B})\concat \max(\mathit{id}_{\A},\mathit{id}_{\B}),\ 32),
 \end{align*}
 using HKDF-SHA256 (\cref{def:hkdf}). The canonical ordering of identifiers in $\lblwarn$ makes the
 warning label symmetric, so both parties address the same warning slot, while the lookup labels are
@@ -353,24 +353,24 @@ Specified in \cref{ssec:design-detection}. Implemented by \textsf{PersistenceChe
 \end{definition}
 
 \begin{lemma}[Same-head label consistency]\label{lem:dualindex-consistency}
-Fix a signed tree head $\mathit{sth}$. Applying $\textsf{DeriveLabels}$ (\cref{ssec:design-labels})
+Fix a signed tree head $\STH_t$. Applying $\textsf{DeriveLabels}$ (\cref{ssec:design-labels})
 from Alice's and Bob's respective viewpoints gives the same lookup label,
 \[
-  \ell^\A_{\mathsf{peer}} = \HKDFexp\!\big(\mathit{PRK},\ \texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},\ 32\big) = \ell^\B_{\mathsf{self}}.
+  \ell^\A_{\mathsf{peer}} = \HKDFexp\!\big(\mathit{PRK},\ \texttt{"lookup"}\concat\mathit{id}_{\B}\concat\mathit{id}_{\A},\ 32\big) = \ell^\B_{\mathsf{self}}.
 \]
 Let $\ell$ denote this shared label. If the client verification chain of \cref{ssec:design-verify}
-accepts a value $v_{\mathsf{peer}}$ at $\ell$ under $\mathit{sth}$ (Alice's lookup of Bob's key) and a
-value $v_{\mathsf{self}}$ at $\ell$ under the same $\mathit{sth}$ (Bob's self-check), then
+accepts a value $v_{\mathsf{peer}}$ at $\ell$ under $\STH_t$ (Alice's lookup of Bob's key) and a
+value $v_{\mathsf{self}}$ at $\ell$ under the same $\STH_t$ (Bob's self-check), then
 $v_{\mathsf{peer}}=v_{\mathsf{self}}$, unless the soundness of the prefix or log-inclusion proof, or
 the collision resistance of $\Hash$ (\cref{def:hash}), is violated.
 \end{lemma}
 \begin{proof}[Argument]
 Alice's peer-lookup and Bob's self-lookup resolve to the same label
 \[
-  \ell=\HKDFexp(\mathit{PRK},\texttt{"lookup"}\concat\mathit{id_B}\concat\mathit{id_A},32).
+  \ell=\HKDFexp(\mathit{PRK},\texttt{"lookup"}\concat\mathit{id}_{\B}\concat\mathit{id}_{\A},32).
 \]
 This is the directional slot for Bob's key. The canonical $\min/\max$ ordering applies only to
-$\ell_{\mathsf{warn}}$. Under a single $\mathit{sth}$ a verifying inclusion proof binds $\ell$ to
+$\ell_{\mathsf{warn}}$. Under a single $\STH_t$ a verifying inclusion proof binds $\ell$ to
 exactly one committed prefix-tree leaf, whose value is fixed by the log-inclusion proof against the
 one signed root. Two accepted values $v_{\mathsf{peer}}\neq v_{\mathsf{self}}$ at $\ell$ under that
 root would exhibit two verifying openings of one committed label, contradicting proof soundness and

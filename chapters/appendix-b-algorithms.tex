@@ -163,7 +163,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 \textsf{SearchByUserId} adds the VRF step (ECVRF, RFC~9381~\cite{rfc9381}) that derives global labels through the server's ECVRF evaluation.
 \begin{algorithm}[H]
 \caption{Key-Transparency Directory Server}\label{alg:server}
-\KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$}
+\KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$, config $\mathit{suite}$, $\mathit{version}$, $\mathit{epoch\_interval}$, $\mathit{raw\_label\_policy}$}
 \Fn{\normalfont\textsf{UpdateByUserId}($\mathit{user\_id},pk$)}{
   $(\beta,\pvrf)\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$ \tcp*{ECVRF, RFC 9381}
   $\mathit{label}\gets\beta[0{:}32]$ \tcp*{32-byte truncation}
@@ -183,6 +183,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
   $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
   freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
   $\mathit{config\_hash}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{epoch\_interval}\concat \mathit{raw\_label\_policy})$ \tcp*{policy commitment (CONIKS $P$), where $\mathit{raw\_label\_policy}$ binds the write-once/delta policy}
+  $\mathit{timestamp}\gets\textsf{CurrentUnixTime}()$\;
   $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ e\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{timestamp}\concat \mathit{config\_hash})$ \tcp*{88-byte LE}
   $\mathit{sth}\gets(e,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{timestamp},\mathit{config\_hash},\sigma)$\;
   $\mathit{epoch}\gets \mathit{epoch}+1$ \tcp*{advance only after signing this epoch's head}
@@ -265,7 +266,7 @@ windowed catch-up before checking the owner, peer, and warning slots.
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
 \caption{Client Verification, Registration, Retrieval, Windowed Catch-Up}\label{alg:client}
-\KwData{$\mathit{last\_sth}\gets\bot$}
+\KwData{$\mathit{last\_sth}\gets\bot$; pinned $pk_{\mathrm{vrf}}$, $pk_{\mathrm{sth}}$, $\mathit{suite}$, $\mathit{version}$, $\mathit{epoch\_interval}$, and $\mathit{raw\_label\_policy}$}
 \Fn{\normalfont\textsf{VerifiedLookup}($\mathit{server},\mathit{label},\mathit{sth},[\mathit{user\_id},\pvrf]$)}{
   $(v,\pprefix,\pincl,\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
   \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$tree\_size$\concat$root$\concat$timestamp$\concat$config\_hash}
@@ -479,7 +480,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
 
 \clearpage
 \paragraph{Continuous mode (Algorithm~\ref{alg:cea}).} CEA authenticates the Double Ratchet epoch by
-epoch, following the ACKA CEA construction~\cite{dowling2023acka}. It folds each epoch's secret into a chained key $k$ and
+epoch, following the ACKA CEA construction~\cite{dowling2023acka}. It folds each epoch's secret into a chained key $k_t$ and
 publishes a directional fingerprint over the new ratchet public key, which the receiver recomputes and
 compares. A mismatch shows that the committed fingerprint is inconsistent with the receiver's chained state and
 authenticated ratchet public key $T_t$; the verifier reports this as a fork without attributing the

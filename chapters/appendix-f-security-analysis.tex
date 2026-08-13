@@ -66,8 +66,8 @@ inclusion proof and signed tree head of the epoch at which its warning committed
 check re-verifies the warning's inclusion on a later head. In the prototype this check is implemented
 and separately unit-tested as a persistence component. It is not wired into the live background monitor
 (\cref{alg:detect}). If the leaf later disappears,
-the writer holds an inclusion proof under $\mathit{sth}_t$, a non-inclusion proof under
-$\mathit{sth}_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
+the writer holds an inclusion proof under $\STH_t$, a non-inclusion proof under
+$\STH_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
 constitute publicly verifiable evidence, attributable to the server's signing key, that the server
 deleted a committed leaf, since all three verify against heads the server itself signed.
 \end{enumerate}
