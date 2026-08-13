@@ -58,7 +58,7 @@ primitive that windowed catch-up (\cref{sec:design-windowed}) and the auditor's 
 build on. The $m=0$ case is accepted as the local trust-on-first-use convention.
 \begin{algorithm}[H]
 \caption{Merkle Log Tree (RFC 9162)}\label{alg:merklelog}
-\KwData{$\mathit{leaves}[]\gets[\,]$}
+\KwData{$\mathit{leaves}[]\gets[\,]$ (the ordered leaf list, written $D$ in the RFC~9162 slice notation, so $D=\mathit{leaves}$)}
 \Fn{\normalfont\textsf{Append}($\mathit{record}$)}{
   $\mathit{leaves}.\textsf{append}(\Hleaf(\mathit{record}))$\;
   \KwRet $|\mathit{leaves}|-1$ \tcp*{index of new leaf}
@@ -180,7 +180,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
   $e\gets \mathit{epoch}$ \tcp*{capture the epoch being committed}
   $r\gets \mathit{live}.\textsf{RootHash}()$\;
   $i\gets \mathit{log}.\textsf{Append}(r)$ \tcp*{prefix root is a log leaf}
-  $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
+  $\mathit{committed}\gets(\mathit{tree}{:}\,\textsf{snapshot}(\mathit{live}),\ \mathit{leaf\_index}{:}\,i)$ \tcp*{named fields, read below as $\mathit{committed}.\mathit{tree}$ and $\mathit{committed}.\mathit{leaf\_index}$}
   freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
   $\mathit{config\_hash}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{epoch\_interval}\concat \mathit{raw\_label\_policy})$ \tcp*{policy commitment (CONIKS $P$), where $\mathit{raw\_label\_policy}$ binds the write-once/delta policy}
   $\mathit{timestamp}\gets\textsf{CurrentUnixTime}()$\;
@@ -193,7 +193,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 \Fn{\normalfont\textsf{Search}($\mathit{label}$)}{
   \Req $\mathit{committed}\ne\bot$\;
   $(v,\pprefix)\gets \mathit{committed}.\mathit{tree}.\textsf{Lookup}(\mathit{label})$\;
-  $\pincl\gets \mathit{log}.\textsf{InclusionProof}(\mathit{committed}.i,\mathit{log}.\mathit{size})$\;
+  $\pincl\gets \mathit{log}.\textsf{InclusionProof}(\mathit{committed}.\mathit{leaf\_index},\mathit{log}.\mathit{size})$\;
   \KwRet $(v,\pprefix,\pincl,\mathit{sth}_{\mathrm{latest}})$\;
 }
 \Fn{\normalfont\textsf{SearchByUserId}($\mathit{user\_id}$)}{
@@ -342,7 +342,7 @@ persistence component, retained evidence.
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
 \caption{MitM Detection, Warning, and Warning Persistence}\label{alg:detect}
-\KwData{$\mathit{evidence}[]\gets[\,]$; $\mathit{registered}\gets\emptyset$; $\mathit{seen}\gets\emptyset$; $\mathit{absent}[\cdot]\gets 0$ (keyed by the secret-derived label); $\mathsf{PeerPin}[\cdot]\gets\bot$ (keyed by peer identity)}
+\KwData{$\mathit{evidence}[]\gets[\,]$; $\mathit{registered}\gets\emptyset$; $\mathit{seen}\gets\emptyset$; $\mathit{absent}[\cdot]\gets 0$ (keyed by the secret-derived label); $\mathsf{PeerPin}[\cdot]\gets\bot$ (keyed by peer identity); shares the pinned $pk_{\mathrm{sth}}$ and the last trusted head $\mathit{last\_sth}$ with Algorithm~\ref{alg:client}}
 \Fn{\normalfont\textsf{CheckPeerKeyAndWarn}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
@@ -353,20 +353,18 @@ persistence component, retained evidence.
   }
   \KwRet $pk$\;
 }
-\Fn{\normalfont\textsf{RecordWarning}($\lwarn$)}{
-  $(v,\pprefix,\pincl,\mathit{sth}_w)\gets \mathit{server}.\textsf{Search}(\lwarn)$;\ \ \Req $v\ne\bot$\;
-  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth}_w)$ and the chain $(\pprefix,\pincl)$ verifies against $\mathit{sth}_w$ \tcp*{evidence is retained only once it verifies}
-  $\mathit{evidence}.\textsf{append}((\lwarn,\mathit{sth}_w,\pprefix,\pincl))$ \tcp*{inclusion proof at the committing epoch}
+\Fn{\normalfont\textsf{RecordWarning}($\mathit{server},\lwarn$)}{
+  $(v,\pprefix_w,\pincl_w,\mathit{sth}_w)\gets \mathit{server}.\textsf{Search}(\lwarn)$;\ \ \Req $v\ne\bot$\;
+  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth}_w)$ and the chain $(\pprefix_w,\pincl_w)$ verifies against $\mathit{sth}_w$ \tcp*{evidence is retained only once it verifies}
+  $\mathit{evidence}.\textsf{append}((\lwarn,\mathit{sth}_w,\pprefix_w,\pincl_w))$ \tcp*{inclusion proof at the committing epoch}
 }
 \Fn{\normalfont\textsf{PersistenceCheck}($\mathit{server}$)}{
-  \ForEach{$(\lwarn,\mathit{sth}_w,\pprefix,\pincl)\in \mathit{evidence}$}{
-    $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{last\_sth})$\;
-    \If{$v=\bot$}{
-      \tcc{a committed leaf has disappeared: inclusion under $\mathit{sth}_w$, proven non-inclusion
-           under $\mathit{last\_sth}$, and the consistency proof between them are publicly verifiable
-           proof of deletion, attributable to the server's signing key (\cref{ssec:design-detection})}
+  \ForEach{$(\lwarn,\mathit{sth}_w,\pprefix_w,\pincl_w)\in \mathit{evidence}$}{
+    $(v,\pprefix_{\mathrm{ni}},\pincl_{\mathrm{ni}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\lwarn)$\;
+    \If{$v=\bot\ \wedge\ \mathit{sth'}=\mathit{last\_sth}$}{
+      \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{last\_sth})$ and $(\pprefix_{\mathrm{ni}},\pincl_{\mathrm{ni}})$ proves non-inclusion of $\lwarn$ under $\mathit{last\_sth}$ \tcp*{later non-inclusion evidence; publicly verifiable deletion (\cref{ssec:design-detection})}
       $\pcons\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth}_w.\mathit{tree\_size},\mathit{last\_sth}.\mathit{tree\_size})$\;
-      \textbf{raise} DeletionEvidence$(\lwarn,\mathit{sth}_w,\pprefix,\pincl,\mathit{last\_sth},\pcons)$\;
+      \textbf{raise} DeletionEvidence$(\lwarn,\mathit{sth}_w,\pprefix_w,\pincl_w,\mathit{last\_sth},\pprefix_{\mathrm{ni}},\pincl_{\mathrm{ni}},\pcons)$\;
     }
   }
 }
@@ -496,7 +494,7 @@ its chain only after confirming that the write committed. The receiver advances 
 
 \begin{algorithm}[H]
 \caption{ACKA Continuous Entity Authentication Mode}\label{alg:cea}
-\KwData{per conversation: chained secret $k_t$; epoch $t$; warning label $\lwarn$ and warn-MAC key
+\KwData{per conversation: shared secret $\sharedS$ and identities $\mathit{id_{self}},\mathit{id_{peer}}$; chained secret $k_t$; epoch $t$; warning label $\lwarn$ and warn-MAC key
 $k_{\mathrm{mac}}\gets\textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ (Alg.~\ref{alg:dualindex}; the label uses canonical $\min/\max$ id order: one slot per epoch;
 the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id}_{\A},\mathit{id}_{\B}$)}{
