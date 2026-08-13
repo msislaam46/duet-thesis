@@ -417,18 +417,18 @@ second vantage.
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
 \caption{Networked auditor: per-epoch audit (\textsf{AuditEpoch})}\label{alg:auditor}
-\KwData{trusted baseline head $\mathit{last}$ (initially $\bot$); committed $\mathit{replica}$ (a PrefixTree,
+\KwData{last trusted signed head $\mathit{last\_sth}$ (initially $\bot$); committed $\mathit{replica}$ (a PrefixTree,
 empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
   \lIf{$\mathit{sth_{new}}=\bot$}{\KwRet \textsc{Unavailable} \tcp*[f]{retryable}}
   \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})\ \vee\ \mathit{sth_{new}}.\mathit{epoch}+1\ne \mathit{sth_{new}}.\mathit{tree\_size}$}{\textbf{alarm};\ \KwRet \textsc{Malformed}}
-  \If{$\mathit{last}\ne\bot$}{
-    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{tree\_size}<\mathit{last}.\mathit{tree\_size}$}{\textbf{alarm};\ \KwRet \textsc{Rollback}}
-    \lIf{$\mathit{sth_{new}}.\mathit{tree\_size}=\mathit{last}.\mathit{tree\_size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
-    \If{$\mathit{sth_{new}}.\mathit{tree\_size}>\mathit{last}.\mathit{tree\_size}$}{
-      $\pcons\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last}.\mathit{tree\_size},\mathit{sth_{new}}.\mathit{tree\_size})$\;
-      \lIf{$\pcons=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{tree\_size},\mathit{sth_{new}}.\mathit{tree\_size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pcons)$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{append-only unverified}}
+  \If{$\mathit{last\_sth}\ne\bot$}{
+    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{tree\_size}<\mathit{last\_sth}.\mathit{tree\_size}$}{\textbf{alarm};\ \KwRet \textsc{Rollback}}
+    \lIf{$\mathit{sth_{new}}.\mathit{tree\_size}=\mathit{last\_sth}.\mathit{tree\_size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last\_sth}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+    \If{$\mathit{sth_{new}}.\mathit{tree\_size}>\mathit{last\_sth}.\mathit{tree\_size}$}{
+      $\pcons\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{tree\_size},\mathit{sth_{new}}.\mathit{tree\_size})$\;
+      \lIf{$\pcons=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{tree\_size},\mathit{sth_{new}}.\mathit{tree\_size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pcons)$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{append-only unverified}}
     }
   }
   $\mathit{candidate}\gets \textsf{clone}(\mathit{replica})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
@@ -442,7 +442,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   $\mathit{vb}\gets\textsf{DetectFork}(\mathit{peer}.\textsf{CurrentHead}(),\mathit{sth_{new}},\mathit{server})$\;
   \lIf{$\mathit{vb}=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
   \lIf{$\mathit{vb}=\textsc{ConsistencyUnverified}$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{hold; no fork}}
-  $\mathit{replica}\gets \mathit{candidate}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
+  $\mathit{replica}\gets \mathit{candidate}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{atomic commit}
   \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed, no G4}}
   \KwRet \textsc{Consistent}\;
 }
