@@ -4,11 +4,10 @@
 
 \begin{table}[ht]
 \centering
-\caption[M14: proof size and verification versus history depth.]{M14 history-depth
-sweep: the directory is held at $N$ while the committed log grows through
-$E$ epochs. The log-inclusion sibling count is $\lceil\lg E\rceil$ at these powers
-of two (where $\mathrm{popcount}(E-1)$ is maximal), and the serialized proof grows
-by $32$ bytes per sibling on top of the directory-path component.}
+\caption[M14: proof size and verification versus history depth.]{M14 history-depth sweep: the
+directory size is held at $N$ while the committed log grows through $E$ epochs. At the evaluated
+powers of two, the log-inclusion sibling count is $\lceil\lg E\rceil$, and the serialized proof
+grows by \num{32} bytes for each additional log sibling.}
 \label{tab:bench-m14}
 \small
 \begin{tabular}{@{}llrrr@{}}
@@ -30,12 +29,13 @@ $10^{4}$ & 1 & 0 & 625 & 127.9 / 144.7 \\
 
 \begin{table}[ht]
 \centering
-\caption[M15: continuous-mode verification versus ratchet depth.]{M15 deep-chain
-experiment: the final-epoch transparency check after $K$ ratchet epochs, timed
-against a session-mode raw lookup on the \emph{same} deep server so both series see
-the identical log depth and directory size. Both median series vary by at most \SI{0.5}{\micro\second} across the tested $K$ values, supporting depth independence over the evaluated range. The $\Delta$ column is their pointwise difference, within the timer
-resolution and not interpreted as a distinct mechanism cost.
-Times in \si{\micro\second}, log depth in epochs.}
+\caption[M15: final-epoch verification versus ratchet depth.]{M15 final-epoch verification after
+simulated continuous-mode chains of depth $K$, compared with a session-mode raw lookup on the same
+resulting directory. Both series therefore use the same log depth and directory size. The measured
+medians are consistent with stable final-state verification across the evaluated depths, but the
+experiment does not measure replay of the preceding epochs. The $\Delta$ column is the pointwise
+difference and is not interpreted as a separate mechanism cost. Times are in
+\si{\micro\second}, and log depth is in epochs.}
 \label{tab:bench-m15}
 \small
 \setlength{\tabcolsep}{4pt}
@@ -53,12 +53,11 @@ $K$ & CEA med.\,/\,p95 & Session med. & $\Delta$ & Log depth \\
 
 \begin{table}[ht]
 \centering
-\caption[M15: write-amplification over ratchet depth and rotation period.]{M15
-write-amplification (analytic): continuous mode writes $K$ entries over $K$ ratchet
-epochs, session mode writes $\lceil K/R\rceil$, so the ratio is
-$K/\lceil K/R\rceil$. No grid point models a specific real conversation. The grid
-shows how the ceiling depends on the rotation period $R$ (ratchet epochs per
-signed-pre-key rotation).}
+\caption[M15: write-amplification over ratchet depth and assumed session interval.]{M15
+write-amplification (analytic): continuous mode writes $K$ entries over $K$ ratchet epochs, while
+session mode writes $\lceil K/R\rceil$, giving the ratio $K/\lceil K/R\rceil$. No grid point
+models a specific real conversation. The grid shows how the ratio depends on the assumed session
+interval $R$, measured in ratchet epochs per new session-mode conversation secret.}
 \label{tab:bench-m15-writes}
 \small
 \begin{tabular}{@{}lrrrr@{}}
@@ -75,12 +74,11 @@ $K$ (ratchet epochs) & $R{=}60$ & $R{=}168$ & $R{=}720$ & $R{=}2880$ \\
 
 \begin{table}[ht]
 \centering
-\caption[M16: verified detection-path latency.]{M16 detection-path cost at
-$N=10^4$: synthetic reconstructions in Rust of the two branches of
-\texttt{KTClient.detectMitm}. They time the same verified operations (raw-label
-search, proof verification, and value comparison). The production Signal Desktop
-runtime is outside this measurement. These local, in-process measurements exclude
-HTTP transport, polling, and registration.}
+\caption[M16: verified detection-path latency.]{M16 detection-path cost at $N=10^4$ for
+reconstructed owner-mismatch and clean-match paths in the \texttt{duet} crate. The timed work
+includes server-side proof generation, raw-label proof verification, and value comparison. The
+Signal Desktop runtime is outside this measurement. These local, in-process measurements exclude
+HTTP transport, background polling, registration, and warning publication.}
 \label{tab:bench-m16}
 \small
 \begin{tabular}{@{}lrr@{}}

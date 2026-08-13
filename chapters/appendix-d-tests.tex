@@ -1,18 +1,18 @@
 \chapter{Test Catalogue}\label{app:tests}
 
-This appendix summarizes the complete test corpus that backs the conformance claims of \cref{sec:impl-tests}.
-The Rust core contains \num{134} tests: \num{97} unit and invariant tests across nine modules, the
-\num{8}-scenario adversarial integration suite, \num{25} tests in the \texttt{kt\_auditor} binary, and
-\num{4} clean-session regression tests in \texttt{tests/clean\_path\_coverage.rs}
-(\cref{ssec:eval-detection}), all run under \texttt{cargo test}. The standalone TypeScript verifier harness has \num{180}
-Jest tests in thirteen suites and a further \num{35} embedded electron-mocha tests in six
-Signal Desktop suites that drive realistic account identifier (ACI) strings through the integration boundary. A fixed set
-of cross-language vectors additionally requires the two implementations to produce byte-identical
-outputs.
+This appendix summarizes the complete test corpus supporting the conformance claims in
+\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{134} tests: \num{97} unit and invariant
+tests across nine modules, the \num{8}-case adversarial integration suite, \num{25} tests in the
+\texttt{kt\_auditor} binary, and \num{4} clean-workflow regression tests in
+\texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}), all run under
+\texttt{cargo test}. The \texttt{signal-desktop-kt} client verifier harness contains \num{180} Jest
+tests in thirteen suites, along with \num{35} embedded electron-mocha tests in six Signal Desktop
+suites. The embedded tests pass realistic account identifiers through the client integration. Fixed
+vectors also require the crate and client component to produce byte-identical outputs.
 
 The \num{25} \texttt{kt\_auditor} tests comprise the delta-replay test, six \texttt{classify\_head}
-rollback/fork cases, five \texttt{commit\_decision} transaction cases, an end-to-end
-partial-fetch-failure test, and twelve \texttt{PollStatus} tests covering every poll verdict,
+rollback/fork cases, five \texttt{commit\_decision} transaction cases, one partial-fetch-failure
+integration test, and twelve \texttt{PollStatus} tests covering every poll verdict,
 including the missing, unparseable, and failing consistency-proof cases that return
 \textsc{ConsistencyUnverified}, and the exact status-line mapping.
 
@@ -47,7 +47,8 @@ Test & Component & Property checked & Why it matters \\
 exhaustive inclusion and forgery tests & \texttt{merkle\_log} & every leaf proof verifies, and forged proofs are rejected & a forged or uncommitted response cannot pass verification. Detecting A1 then rests on comparing the proven value against the expected key \\
 exhaustive consistency, $(m,n)\le 64$ & \texttt{merkle\_log} & append-only growth between any two sizes & an offline client must not accept a rewritten log (G2, rollback/rewrite rejection) \\
 RFC~9381 test vectors & \texttt{vrf} & ECVRF suite-\texttt{0x03} conformance & directory privacy follows from the VRF assumption (G3). The vectors establish implementation conformance \\
-cross-implementation vectors & \texttt{dual\_index} & Rust and TypeScript derive identical labels & both parties must address one shared warning slot (G1) \\
+cross-implementation vectors & \texttt{dual\_index} & the crate and client component derive
+identical labels & both parties must address one shared warning slot (G1) \\
 STH-signature acceptance, tampering, and wrong-key tests & \texttt{server} & only a correctly signed head is accepted & signed-head authenticity, the prerequisite of every downstream verdict \\
 equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\Rightarrow$ fork & split-view detection (A4, G4) \\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
@@ -61,7 +62,7 @@ key-fetch status integrity & hook (TS) & only a proof-verified match emits \text
 \FloatBarrier
 
 % ----------------------------------------------------------------------------
-\section{Rust Unit and Property Tests}\label{sec:tests-rust}
+\section{\texttt{duet} Crate Tests}\label{sec:tests-rust}
 
 The unit and invariant tests divide into three groups: the cryptographic primitives and data
 structures (\cref{tab:tests-rust-prim}), the server and its verification chain
@@ -70,7 +71,7 @@ mode (\cref{tab:tests-rust-system}).
 
 \begin{table}[H]
 \centering
-\caption{Rust tests: primitives and data structures (\num{41} tests).}
+\caption{\texttt{duet} crate tests: primitives and data structures (\num{41} tests).}
 \label{tab:tests-rust-prim}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -129,7 +130,7 @@ Module & Test & Property checked \\
 
 \begin{table}[H]
 \centering
-\caption{Rust tests: server and verification chain (\texttt{server}, \num{28} tests).}
+\caption{\texttt{duet} crate tests: server and verification chain (\num{28} tests).}
 \label{tab:tests-rust-server}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -176,7 +177,7 @@ Test & Property checked \\
 
 \begin{table}[H]
 \centering
-\caption{Rust tests: auditor, warning monitor, and continuous mode (\num{28} tests).}
+\caption{\texttt{duet} crate tests: auditor, warning monitor, and continuous mode (\num{28} tests).}
 \label{tab:tests-rust-system}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -196,9 +197,11 @@ Module & Test & Property checked \\
 \texttt{auditor} & \texttt{detect\_fork\_flags\_same\_epoch\_different\_root} & two validly signed roots at one epoch are reported as a fork \\
 \texttt{auditor} & \texttt{detect\_fork\_flags\_same\_size\_different\_root\_across\_epochs} & two heads of equal tree size but different root across epochs are a fork \\
 \texttt{auditor} & \texttt{detect\_fork\_flags\_rollback\_to\_smaller\_tree} & a head that rolls the log back to a smaller tree than one already observed is a fork \\
-\texttt{auditor} & \texttt{detect\_fork\_accepts\_consistent\_head} & a consistent cross-vantage head is not misreported \\
+\texttt{auditor} & \texttt{detect\_fork\_accepts\_consistent\_head} & a consistent supplied head
+is not misreported as a fork \\
 \texttt{auditor} & \texttt{detect\_fork\_rejects\_unsigned\_head} & a divergent head with an invalid signature is not misclassified as a fork \\
-\texttt{auditor} & \texttt{equivocation\_is\_detected\_as\_fork} & the end-to-end A4 equivocation is caught \\
+\texttt{auditor} & \texttt{equivocation\_is\_detected\_as\_fork} & the A4 fixture reports supplied
+conflicting signed heads as a fork \\
 \texttt{auditor} & \texttt{sth\_timestamp\_is\_signed} & the timestamp is inside the signed message, so altering it invalidates the signature. Freshness still depends on a client policy \\
 \midrule
 \texttt{monitor} & \texttt{persistence\_check\_passes\_while\_warning\_persists} & a committed warning that remains present passes the persistence re-check \\
@@ -220,19 +223,19 @@ Module & Test & Property checked \\
 
 \clearpage
 % ----------------------------------------------------------------------------
-\section{TypeScript (Signal Desktop) Jest Suite}\label{sec:tests-ts}
+\section{Client Verifier and Signal Desktop Tests}\label{sec:tests-ts}
 
-The standalone \texttt{signal-desktop-kt} harness covers the verifier with \num{180} Jest tests in
-thirteen suites: a live-server wire-parity suite, an in-process integration suite, a source-parity
-suite, and ten unit suites.
+The \texttt{signal-desktop-kt} client verifier harness contains \num{180} Jest tests in thirteen
+suites: a live-server wire-parity suite, an in-process integration suite, a source-parity suite,
+and ten unit suites.
 Some catalogue rows represent parameterized cases (twelve decoder mutations, three status mappings,
 three VRF vectors), and the totals count executed tests.
-The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} Rust directory
+The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} DUET directory
 server over the network. It is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
 to be running, and its five tests early-return as no-ops when the server is absent, so a bare
 \texttt{npm test} run does not by itself establish wire parity. The \emph{source-parity} suite
-(\texttt{tree\_parity}) asserts that the shared verifier sources are byte-identical between the two
-TypeScript trees, one parameterized case per file across the twenty-seven shared files. The integration suite and the
+(\texttt{tree\_parity}) asserts that the shared verifier sources are byte-identical between the two shared verifier source
+trees, one parameterized case per file across the twenty-seven shared files. The integration suite and the
 cryptographic unit suites (\texttt{remote\_kt\_client}, \texttt{cea}, \texttt{secret\_store}) run
 the verifier against a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF,
 and Ed25519 signer). The remaining unit suites use test doubles by design: \texttt{background\_monitor}
@@ -244,14 +247,15 @@ and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
 phone-number identifier (PNI) event-silence added with the canonical-identity fix. \Cref{tab:tests-jest-wire} lists the
 wire-parity and integration tests, and
 \cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list nine of the ten unit suites (\texttt{kt\_log} is described above but not separately tabulated).
-Beyond the standalone harness, \num{35} embedded electron-mocha tests run in six suites under Signal
+Beyond this harness, \num{35} embedded electron-mocha tests run in six suites under Signal
 Desktop's own test runner (\cref{tab:tests-embedded}). They drive realistic ACI strings through the
 same integration boundary the live preload callers use, so a regression at that boundary fails an
 embedded test rather than passing silently.
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: wire parity against the live directory server implemented in Rust, and the integration suite (\num{36} tests).}
+\caption{Jest tests: live directory-server wire parity and the integration suite
+(\num{36} tests).}
 \label{tab:tests-jest-wire}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}
@@ -455,31 +459,32 @@ Suite & Test \\
 \end{table}
 
 % ----------------------------------------------------------------------------
-\section{Cross-Language Equivalence Vectors}\label{sec:tests-xlang}
+\section{Crate and Client Agreement Vectors}\label{sec:tests-xlang}
 
-A fixed set of test vectors pins the HKDF dual-index derivation, the sealed warning MAC, and the CEA
-construction byte-for-byte across the Rust and TypeScript implementations. On the Rust side, the
-vectors are \texttt{dual\_index::cross\_impl\_test\_vectors},
+Fixed vectors require byte-for-byte agreement between the \texttt{duet} crate and client component
+for the HKDF dual-index derivation, warning MAC, and CEA construction. In the crate, the vectors are
+\texttt{dual\_index::cross\_impl\_test\_vectors},
 \texttt{dual\_index::warn\_mac\_cross\_impl\_vector}, and
-\texttt{cea::cross\_impl\_test\_vectors}. The last pins three ratchet epochs, not only the first
-(\cref{tab:tests-rust-prim,tab:tests-rust-system}). On the TypeScript side, the corresponding evidence
-comes from the \texttt{kt\_integration} v1, v3, and warning-MAC vectors and the \texttt{cea} vector
-test (\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The Ed25519 and Merkle computations are checked to
-agree by the wire-parity suite, which verifies the Rust directory server's live outputs with the TypeScript
-verifiers. Together these are the contract that supports treating the TypeScript verifier implementation as a faithful
-checker of the Rust directory-server implementation's outputs (\cref{sec:impl-tests}).
+\texttt{cea::cross\_impl\_test\_vectors}. The CEA vector covers three ratchet epochs
+(\cref{tab:tests-rust-prim,tab:tests-rust-system}). The corresponding client evidence comes from
+the \texttt{kt\_integration} v1, v3, and warning-MAC vectors and the \texttt{cea} vector test
+(\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The opt-in wire-parity suite additionally checks
+the client verifiers against Ed25519 and Merkle outputs returned by the running directory server.
+Together, these tests establish agreement for the specified vectors and server responses without
+establishing equivalence for every input (\cref{sec:impl-tests}).
 
 % ----------------------------------------------------------------------------
 \section{Adversarial Scenario Suite}\label{sec:tests-adversarial}
 
-The suite runs against the real \texttt{duet} crate and asserts the expected security outcome for all
-eight scenarios defined in \cref{ch:threat} (A0, A1a, A1b, A2--A5, and X1). The A1 variants additionally assert the warning epoch. The other latency
-entries in \cref{tab:tests-adversarial} describe the fixed test schedule of this demonstration rather
-than test assertions or protocol-wide bounds.
+The suite runs against the \texttt{duet} crate and asserts the expected security outcome for all
+eight cases defined in \cref{sec:threat-scenarios}: A0, A1a, A1b, A2--A5, and X1. The A1 variants
+additionally assert the warning epoch. The remaining detection point entries in
+\cref{tab:tests-adversarial} describe the fixed one action per epoch demonstration schedule. They
+are not measured detection latencies or protocol-wide bounds.
 
 \begin{table}[H]
 \centering
-\caption{End-to-end adversarial scenarios (\cref{ch:threat}) and their verdicts.}
+\caption{Adversarial scenarios from \cref{ch:threat} and their observed outcomes.}
 \label{tab:tests-adversarial}
 \footnotesize
 \begin{tabular}{@{}lp{3.6cm}p{4.4cm}ll@{}}
@@ -489,9 +494,9 @@ Scenario & Attack scenario & Detection mechanism & Observed & Detection point \\
 A0 & honest baseline & all checks pass & pass & n/a \\
 A1a & substitute the global VRF slot & self-check (value) + peer warning & pass & 1--2 epochs \\
 A1b & substitute a dual-index session slot & self-check + peer warning & pass & 1--2 epochs \\
-A2 & substitute and censor the warning & compound signal (proven non-inclusion) & pass & 1--2 epochs \\
+A2 & substitute and censor the warning & key mismatch + proven warning non-inclusion & pass & 1--2 epochs \\
 A3 & first-contact substitution postcondition (distinct secrets) & global VRF-bound identity check (honest directory) & pass & next lookup \\
-A4 & equivocate (split-view) & cross-vantage auditor & pass & 1 epoch \\
+A4 & equivocate (split-view) & supplied signed-head comparison & pass & 1 epoch \\
 A5 & substitute during a key rotation & identity re-fetch + cross-signature & pass & 1--2 epochs \\
 X1 & extract the victim's key & out of scope (boundary) & n/a & n/a \\
 \bottomrule
@@ -507,37 +512,29 @@ detection scenarios pass, while X1 confirms that endpoint compromise is outside 
 % ============================================================================
 \section{Evidence Structure and Cross-Implementation Parity}\label{sec:tests-evidence}
 
-This section provides the detailed testing evidence summarized in \cref{sec:impl-tests}. Testing
-provides five forms of evidence. Specification grounding states the required behaviour. Unit and
-invariant tests assess individual components. Cross-language vectors check agreement between the
-implementations. The adversarial scenario suite evaluates the combined system against the threat
-model. Performance benchmarks support the cost claims in \cref{ch:eval}.
+This section provides the detailed testing evidence summarized in \cref{sec:impl-tests}. The
+evidence covers standards conformance, unit and invariant behaviour, agreement between the crate and
+client component, adversarial outcomes, and measured component costs.
 
-On the \textbf{Rust} side, the core is covered by unit tests run under \texttt{cargo test}.
-The Merkle log is tested exhaustively (every inclusion proof and every $(m,n)$ consistency
-pair up to size 64, together with forgery attempts) so the RFC~9162 verifiers are checked
-against their full small-input space rather than on a handful of cases. The prefix tree is
-tested by recomputing the root from the compressed proof. The dual-index derivation is checked
-against the cross-implementation HKDF vectors, and the VRF against the RFC~9381 suite-\texttt{0x03}
-vectors. The server's signed tree head is tested for correct acceptance and for rejection of a tampered
-or wrong-key signature. The auditor is tested for both honest audit and fork detection, including
-the two cases that matter for soundness: that a genuine equivocation (one signer, two roots
-at one epoch) is reported as a fork, and that a divergent head with an invalid signature is
-correctly rejected rather than misclassified as a fork.
+The \texttt{duet} crate's tests cover the cryptographic primitives, prefix tree, Merkle log, signed
+heads, server, auditor, warning monitor, and continuous mode. Every Merkle-log inclusion proof and
+consistency pair up to size 64 is tested, together with forged-proof rejection, so the RFC~9162
+verifiers are checked across their complete small-input
+space~\cite[Sections~2.1.3--2.1.4]{rfc9162}. The prefix-tree tests reconstruct the root from compressed
+proofs. Fixed vectors check the dual-index derivation, while the VRF tests use the RFC~9381
+ECVRF-EDWARDS25519-SHA512-TAI vectors~\cite[Appendix~B.3]{rfc9381}. Signed-head tests cover valid,
+tampered, and wrong-key signatures. Auditor tests cover honest transitions, genuine equivocation,
+and rejection of a divergent head carrying an invalid signature.
 
-On the \textbf{TypeScript} side, the standalone verifier harness contains \num{180} Jest tests. Live
-Rust--TypeScript wire parity is a separate opt-in target that requires the Rust directory server, and a normal
-Jest run alone does not establish wire parity. When enabled, the wire-parity suite runs the client's
-full verification chain against the live directory server implemented in Rust, confirming multi-entry inclusion, proven
-non-inclusion, the Ed25519 signed-tree-head check (and its rejection of a tampered head), the VRF
-path, and windowed consistency. These suites cover key-substitution detection, the own-key self-check, replaced-slot detection, and
-availability-versus-integrity routing. Beyond this harness, thirty-five embedded tests in six Signal Desktop suites run under the
-client's own test runner and drive realistic ACI strings through the same integration boundary the
-live callers use (\cref{sec:tests-ts}).
+The \texttt{signal-desktop-kt} client verifier harness contains \num{180} Jest tests. Its opt-in
+wire-parity suite requires the running directory server and checks the complete client verification
+chain against live responses. The checked paths include multi-entry inclusion, proven
+non-inclusion, signed-head verification and tamper rejection, VRF verification, and windowed
+consistency. A normal Jest run without the server does not establish live wire parity. In addition,
+\num{35} embedded tests in six Signal Desktop suites pass realistic account identifiers through the
+client's integration path (\cref{sec:tests-ts}).
 
-The adversarial scenario suite runs the attack taxonomy of \cref{ch:threat} against the
-implemented crate. Implemented as the Rust integration test \texttt{tests/adversarial.rs}, it
-covers A0, A1a, A1b, A2--A5, and X1 and asserts the
-expected security outcome for each, with the A1 variants additionally pinning the warning epoch. The
-standalone Jest, embedded electron-mocha, and opt-in wire-parity totals are separate figures, each
-counted independently.
+The adversarial suite is implemented in \texttt{tests/adversarial.rs} within the \texttt{duet}
+crate. It covers A0, A1a, A1b, A2--A5, and X1 and asserts the expected security outcome for every
+case. The A1 variants also assert the warning epoch. The Jest, embedded electron-mocha, and opt-in
+wire-parity totals describe separate test classes and are counted independently.
