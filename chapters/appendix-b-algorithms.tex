@@ -136,22 +136,22 @@ non-inclusion proof establishes that a warning slot is empty rather than merely 
 }
 \Fn{\normalfont\textsf{Lookup}($\mathit{label}$)}{
   walk the bit-path of $\mathit{label}$\;
-  $\pi\gets(\mathit{label},\mathit{value}\text{ or }\bot,\mathit{kind},\mathit{bitmap},\mathit{siblings})$ \tcp*{compressed proof}
-  \KwRet $(\mathit{value}\text{ or }\bot,\ \pi)$\;
+  $\pprefix\gets(\mathit{label},\mathit{value}\text{ or }\bot,\mathit{kind},\mathit{bitmap},\mathit{siblings})$ \tcp*{compressed proof}
+  \KwRet $(\mathit{value}\text{ or }\bot,\ \pprefix)$\;
 }
-\Fn{\normalfont\textsf{RootFromProof}($\pi$)}{
-  \uIf{$\pi.\mathit{value}=\bot$}{$c\gets e$ \tcp*[f]{absence: leaf hash is the empty hash}}
-  \Else{$c\gets\Hleaf(\pi.\mathit{kind}\concat\pi.\mathit{label}\concat\pi.\mathit{value})$ \tcp*[f]{kind authenticated by the root}}
+\Fn{\normalfont\textsf{RootFromProof}($\pprefix$)}{
+  \uIf{$\pprefix.\mathit{value}=\bot$}{$c\gets e$ \tcp*[f]{absence: leaf hash is the empty hash}}
+  \Else{$c\gets\Hleaf(\pprefix.\mathit{kind}\concat\pprefix.\mathit{label}\concat\pprefix.\mathit{value})$ \tcp*[f]{kind authenticated by the root}}
   \For{$i\gets 0$ \KwTo $255$}{
-    $s\gets$ next sibling from $\pi.\mathit{siblings}$ if $\mathit{bitmap}[i]$ set, else $e$\;
+    $s\gets$ next sibling from $\pprefix.\mathit{siblings}$ if $\mathit{bitmap}[i]$ set, else $e$\;
     \lIf{$c=e\wedge s=e$}{\textbf{continue}}
-    $c\gets \Hnode(c,s)$ or $\Hnode(s,c)$ per bit $255-i$ of $\pi.\mathit{label}$\;
+    $c\gets \Hnode(c,s)$ or $\Hnode(s,c)$ per bit $255-i$ of $\pprefix.\mathit{label}$\;
   }
   \Req all siblings consumed, else \KwRet $\bot$\;
   \KwRet $c$\;
 }
-\Fn{\normalfont\textsf{VerifyProof}($\pi,\mathit{expected\_root}$)}{
-  \KwRet $\textsf{RootFromProof}(\pi)=\mathit{expected\_root}$\;
+\Fn{\normalfont\textsf{VerifyProof}($\pprefix,\mathit{expected\_root}$)}{
+  \KwRet $\textsf{RootFromProof}(\pprefix)=\mathit{expected\_root}$\;
 }
 \end{algorithm}
 
@@ -165,11 +165,11 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 \caption{Key-Transparency Directory Server}\label{alg:server}
 \KwData{$\mathit{log}\gets$ MerkleLogTree, $\mathit{live}\gets$ PrefixTree, $\mathit{committed}\gets\bot$, $\mathit{epoch}\gets0$, $(sk_{\mathrm{vrf}},pk_{\mathrm{vrf}})$, $(sk_{\mathrm{sth}},pk_{\mathrm{sth}})$}
 \Fn{\normalfont\textsf{UpdateByUserId}($\mathit{user\_id},pk$)}{
-  $(\beta,\pi_{\mathrm{vrf}})\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$ \tcp*{ECVRF, RFC 9381}
+  $(\beta,\pvrf)\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$ \tcp*{ECVRF, RFC 9381}
   $\mathit{label}\gets\beta[0{:}32]$ \tcp*{32-byte truncation}
   $\mathit{live}.\textsf{Insert}(\mathit{label},pk,\textsc{mutable})$ \tcp*{global-VRF identity: leaf hash $\Hleaf(\textsc{mutable}\concat\mathit{label}\concat pk)$}
   record \textsf{Insert}/\textsf{Rotate} with $\mathit{kind}=\textsc{mutable}$ in the epoch's declared delta\;
-  \KwRet $(\mathit{label},\pi_{\mathrm{vrf}})$\;
+  \KwRet $(\mathit{label},\pvrf)$\;
 }
 \Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
   \Req $\mathit{live}.\textsf{Lookup}(\mathit{label}).\mathit{value}=\bot$ \tcp*{write-once: occupied labels rejected (\cref{ssec:design-detection})}
@@ -182,21 +182,21 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
   $i\gets \mathit{log}.\textsf{Append}(r)$ \tcp*{prefix root is a log leaf}
   $\mathit{committed}\gets(\textsf{snapshot}(\mathit{live}),i)$\;
   freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
-  $\mathit{ch}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{interval}\concat \mathit{rawpolicy})$ \tcp*{policy commitment (CONIKS $P$), where $\mathit{rawpolicy}$ binds the write-once/delta policy}
-  $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ e\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{ts}\concat \mathit{ch})$ \tcp*{88-byte LE}
-  $\mathit{sth}\gets(e,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{ts},\mathit{ch},\sigma)$\;
+  $\mathit{config\_hash}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{epoch\_interval}\concat \mathit{raw\_label\_policy})$ \tcp*{policy commitment (CONIKS $P$), where $\mathit{raw\_label\_policy}$ binds the write-once/delta policy}
+  $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ e\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{timestamp}\concat \mathit{config\_hash})$ \tcp*{88-byte LE}
+  $\mathit{sth}\gets(e,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{timestamp},\mathit{config\_hash},\sigma)$\;
   $\mathit{epoch}\gets \mathit{epoch}+1$ \tcp*{advance only after signing this epoch's head}
   \KwRet $\mathit{sth}$\;
 }
 \Fn{\normalfont\textsf{Search}($\mathit{label}$)}{
   \Req $\mathit{committed}\ne\bot$\;
-  $(v,\pi_{\mathrm{prefix}})\gets \mathit{committed}.\mathit{tree}.\textsf{Lookup}(\mathit{label})$\;
-  $\pi_{\mathrm{incl}}\gets \mathit{log}.\textsf{InclusionProof}(\mathit{committed}.i,\mathit{log}.\mathit{size})$\;
-  \KwRet $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth}_{\mathrm{latest}})$\;
+  $(v,\pprefix)\gets \mathit{committed}.\mathit{tree}.\textsf{Lookup}(\mathit{label})$\;
+  $\pincl\gets \mathit{log}.\textsf{InclusionProof}(\mathit{committed}.i,\mathit{log}.\mathit{size})$\;
+  \KwRet $(v,\pprefix,\pincl,\mathit{sth}_{\mathrm{latest}})$\;
 }
 \Fn{\normalfont\textsf{SearchByUserId}($\mathit{user\_id}$)}{
-  $(\beta,\pi_{\mathrm{vrf}})\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$\;
-  \KwRet $\textsf{Search}(\beta[0{:}32])$ with $\pi_{\mathrm{vrf}}$ attached\;
+  $(\beta,\pvrf)\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$\;
+  \KwRet $\textsf{Search}(\beta[0{:}32])$ with $\pvrf$ attached\;
 }
 \end{algorithm}
 
@@ -266,20 +266,21 @@ windowed catch-up before checking the owner, peer, and warning slots.
 \begin{algorithm}[H]
 \caption{Client Verification, Registration, Retrieval, Windowed Catch-Up}\label{alg:client}
 \KwData{$\mathit{last\_sth}\gets\bot$}
-\Fn{\normalfont\textsf{VerifiedLookup}($\mathit{server},\mathit{label},\mathit{sth},[\mathit{user\_id},\pi_{\mathrm{vrf}}]$)}{
-  $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
-  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$size$\concat$root$\concat$ts$\concat$H(config)}
+\Fn{\normalfont\textsf{VerifiedLookup}($\mathit{server},\mathit{label},\mathit{sth},[\mathit{user\_id},\pvrf]$)}{
+  $(v,\pprefix,\pincl,\mathit{sth'})\gets \mathit{server}.\textsf{Search}(\mathit{label})$\;
+  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth'})$ \tcp*{Ed25519 over epoch$\concat$tree\_size$\concat$root$\concat$timestamp$\concat$config\_hash}
   \Req $\mathit{sth'}=\mathit{sth}$ \tcp*{bind to caller's verified head}
-  \Req $\mathit{sth'}.\mathit{config\_hash}=\textsf{H}(P)\ \wedge\ \mathit{sth'}.\mathit{epoch}+1=\mathit{sth'}.\mathit{tree\_size}$ \tcp*{policy pin + well-formed head}
-  \Req $\pi_{\mathrm{prefix}}.\mathit{label}=\mathit{label}$ \tcp*{label binding (every path): the proof must concern the exact queried label}
+  $\mathit{expected\_config\_hash}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{epoch\_interval}\concat \mathit{raw\_label\_policy})$ \tcp*{recompute from the client's pinned parameters}
+  \Req $\mathit{sth'}.\mathit{config\_hash}=\mathit{expected\_config\_hash}\ \wedge\ \mathit{sth'}.\mathit{epoch}+1=\mathit{sth'}.\mathit{tree\_size}$ \tcp*{policy pin + well-formed head}
+  \Req $\pprefix.\mathit{label}=\mathit{label}$ \tcp*{label binding (every path): the proof must concern the exact queried label}
   \If{$\mathit{user\_id}$ given}{
-    $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pi_{\mathrm{vrf}})$;\ \ \Req $\beta[0{:}32]=\mathit{label}$ \tcp*[f]{VRF path: the derived label equals the requested one}\;
+    $\beta\gets \mathsf{VRF.Verify}(pk_{\mathrm{vrf}},\mathit{user\_id},\pvrf)$;\ \ \Req $\beta[0{:}32]=\mathit{label}$ \tcp*[f]{VRF path: the derived label equals the requested one}\;
   }
-  \Req $\pi_{\mathrm{prefix}}.\mathit{value}=v$\;
-  \lIf{$\mathit{label}$ is a raw (dual-index / warning / CEA) label $\wedge\ v\ne\bot$}{\Req $\pi_{\mathrm{prefix}}.\mathit{kind}=\textsc{immutable}$ \tcp*[f]{raw path only: a present client-derived leaf is write-once}}
-  $r\gets \textsf{RootFromProof}(\pi_{\mathrm{prefix}})$;\ \ \Req $r\ne\bot$\;
-  \Req $\textsf{VerifyInclusion}(r,\pi_{\mathrm{incl}}.\mathit{index},\pi_{\mathrm{incl}}.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pi_{\mathrm{incl}}.\mathit{path})$\;
-  \Req $\pi_{\mathrm{incl}}.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pi_{\mathrm{incl}}.\mathit{index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{current-snapshot binding: the proof must cover the last log leaf, and an older leaf's inclusion also verifies (inclusion $\ne$ current-snapshot binding, RFC 9162)}
+  \Req $\pprefix.\mathit{value}=v$\;
+  \lIf{$\mathit{label}$ is a raw (dual-index / warning / CEA) label $\wedge\ v\ne\bot$}{\Req $\pprefix.\mathit{kind}=\textsc{immutable}$ \tcp*[f]{raw path only: a present client-derived leaf is write-once}}
+  $r\gets \textsf{RootFromProof}(\pprefix)$;\ \ \Req $r\ne\bot$\;
+  \Req $\textsf{VerifyInclusion}(r,\pincl.\mathit{leaf\_index},\pincl.\mathit{tree\_size},\mathit{sth'}.\mathit{root},\pincl.\mathit{path})$\;
+  \Req $\pincl.\mathit{tree\_size}=\mathit{sth'}.\mathit{tree\_size}\ \wedge\ \pincl.\mathit{leaf\_index}=\mathit{sth'}.\mathit{tree\_size}-1$ \tcp*{current-snapshot binding: the proof must cover the last log leaf, and an older leaf's inclusion also verifies (inclusion $\ne$ current-snapshot binding, RFC 9162)}
   \KwRet $v$ \tcp*{$v$ may be $\bot$: proven non-inclusion}
 }
 \Fn{\normalfont\textsf{Register}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},pk_{\mathit{self}}$)}{
@@ -304,12 +305,12 @@ windowed catch-up before checking the owner, peer, and warning slots.
   \uIf{$\mathit{last\_sth}=\bot$}{
     $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{first run: trust-on-first-use anchor (\cref{sec:threat-fair}), no history to check}
   }\Else{
-    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch} \lor \mathit{sth_{new}}.\mathit{size}<\mathit{last\_sth}.\mathit{size}$}{\textbf{raise} Fork \tcp*[f]{an honest append-only head never regresses}}
-    \uIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last\_sth}.\mathit{size}$}{
+    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch} \lor \mathit{sth_{new}}.\mathit{tree\_size}<\mathit{last\_sth}.\mathit{tree\_size}$}{\textbf{raise} Fork \tcp*[f]{an honest append-only head never regresses}}
+    \uIf{$\mathit{sth_{new}}.\mathit{tree\_size}=\mathit{last\_sth}.\mathit{tree\_size}$}{
       \Req $\mathit{sth_{new}}.\mathit{root}=\mathit{last\_sth}.\mathit{root}$ \tcp*{unchanged head: equal size with a differing root is same-epoch equivocation, else \textbf{raise} Fork, and only the consistency proof is skipped}
     }\Else{
-      $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
-      \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi_{\mathrm{cons}})$\;
+      $\pcons\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last\_sth}.\mathit{tree\_size},\mathit{sth_{new}}.\mathit{tree\_size})$\;
+      \Req $\textsf{VerifyConsistency}(\mathit{last\_sth}.\mathit{tree\_size},\mathit{sth_{new}}.\mathit{tree\_size},\mathit{last\_sth}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pcons)$\;
       \tcc{one proof spans the whole window: $O(\log n)$ rather than $O(W\log n)$}
     }
   }
@@ -351,19 +352,19 @@ persistence component, retained evidence.
   \KwRet $pk$\;
 }
 \Fn{\normalfont\textsf{RecordWarning}($\lwarn$)}{
-  $(v,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{sth}_w)\gets \mathit{server}.\textsf{Search}(\lwarn)$;\ \ \Req $v\ne\bot$\;
-  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth}_w)$ and the chain $(\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}})$ verifies against $\mathit{sth}_w$ \tcp*{evidence is retained only once it verifies}
-  $\mathit{evidence}.\textsf{append}((\lwarn,\mathit{sth}_w,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}}))$ \tcp*{inclusion proof at the committing epoch}
+  $(v,\pprefix,\pincl,\mathit{sth}_w)\gets \mathit{server}.\textsf{Search}(\lwarn)$;\ \ \Req $v\ne\bot$\;
+  \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth}_w)$ and the chain $(\pprefix,\pincl)$ verifies against $\mathit{sth}_w$ \tcp*{evidence is retained only once it verifies}
+  $\mathit{evidence}.\textsf{append}((\lwarn,\mathit{sth}_w,\pprefix,\pincl))$ \tcp*{inclusion proof at the committing epoch}
 }
 \Fn{\normalfont\textsf{PersistenceCheck}($\mathit{server}$)}{
-  \ForEach{$(\lwarn,\mathit{sth}_w,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}})\in \mathit{evidence}$}{
+  \ForEach{$(\lwarn,\mathit{sth}_w,\pprefix,\pincl)\in \mathit{evidence}$}{
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lwarn,\mathit{last\_sth})$\;
     \If{$v=\bot$}{
       \tcc{a committed leaf has disappeared: inclusion under $\mathit{sth}_w$, proven non-inclusion
            under $\mathit{last\_sth}$, and the consistency proof between them are publicly verifiable
            proof of deletion, attributable to the server's signing key (\cref{ssec:design-detection})}
-      $\pi_{\mathrm{cons}}\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth}_w.\mathit{size},\mathit{last\_sth}.\mathit{size})$\;
-      \textbf{raise} DeletionEvidence$(\lwarn,\mathit{sth}_w,\pi_{\mathrm{prefix}},\pi_{\mathrm{incl}},\mathit{last\_sth},\pi_{\mathrm{cons}})$\;
+      $\pcons\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth}_w.\mathit{tree\_size},\mathit{last\_sth}.\mathit{tree\_size})$\;
+      \textbf{raise} DeletionEvidence$(\lwarn,\mathit{sth}_w,\pprefix,\pincl,\mathit{last\_sth},\pcons)$\;
     }
   }
 }
@@ -420,20 +421,20 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server},\mathit{peer}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
   \lIf{$\mathit{sth_{new}}=\bot$}{\KwRet \textsc{Unavailable} \tcp*[f]{retryable}}
-  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})\ \vee\ \mathit{sth_{new}}.\mathit{epoch}+1\ne \mathit{sth_{new}}.\mathit{size}$}{\textbf{alarm};\ \KwRet \textsc{Malformed}}
+  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})\ \vee\ \mathit{sth_{new}}.\mathit{epoch}+1\ne \mathit{sth_{new}}.\mathit{tree\_size}$}{\textbf{alarm};\ \KwRet \textsc{Malformed}}
   \If{$\mathit{last}\ne\bot$}{
-    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{size}<\mathit{last}.\mathit{size}$}{\textbf{alarm};\ \KwRet \textsc{Rollback}}
-    \lIf{$\mathit{sth_{new}}.\mathit{size}=\mathit{last}.\mathit{size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
-    \If{$\mathit{sth_{new}}.\mathit{size}>\mathit{last}.\mathit{size}$}{
-      $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size})$\;
-      \lIf{$\pi=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{size},\mathit{sth_{new}}.\mathit{size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pi)$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{append-only unverified}}
+    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{tree\_size}<\mathit{last}.\mathit{tree\_size}$}{\textbf{alarm};\ \KwRet \textsc{Rollback}}
+    \lIf{$\mathit{sth_{new}}.\mathit{tree\_size}=\mathit{last}.\mathit{tree\_size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+    \If{$\mathit{sth_{new}}.\mathit{tree\_size}>\mathit{last}.\mathit{tree\_size}$}{
+      $\pcons\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{last}.\mathit{tree\_size},\mathit{sth_{new}}.\mathit{tree\_size})$\;
+      \lIf{$\pcons=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(\mathit{last}.\mathit{tree\_size},\mathit{sth_{new}}.\mathit{tree\_size},\mathit{last}.\mathit{root},\mathit{sth_{new}}.\mathit{root},\pcons)$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{append-only unverified}}
     }
   }
   $\mathit{candidate}\gets \textsf{clone}(\mathit{replica})$;\ \ $\mathit{cursor}\gets \mathit{audited\_epochs}$;\ \ $\mathit{complete}\gets \textbf{true}$\;
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
-    $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e,\mathit{sth_{new}}.\mathit{size})$\;
+    $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e,\mathit{sth_{new}}.\mathit{tree\_size})$\;
     \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable}}
-    \lIf{$\textsf{AuditTransition}(\mathit{candidate},e,\mathit{delta}_e,\mathit{sth_{new}}.\mathit{root},\mathit{sth_{new}}.\mathit{size})=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
+    \lIf{$\textsf{AuditTransition}(\mathit{candidate},e,\mathit{delta}_e,\mathit{sth_{new}}.\mathit{root},\mathit{sth_{new}}.\mathit{tree\_size})=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
   \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
@@ -453,8 +454,8 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
 \makeatletter\let\Hy@raisedlink\@gobble\makeatother
 \caption{Networked auditor, continued (\textsf{AuditTransition} and \textsf{DetectFork})}
 \Fn{\normalfont\textsf{AuditTransition}($\mathit{candidate},e,\mathit{delta}_e,r_{\mathrm{head}},\mathit{size}_{\mathrm{head}}$)}{
-  $(r_{e},\mathit{ops}_e,\pi_{\mathrm{incl}})\gets \mathit{delta}_e$\;
-  \lIf{$\pi_{\mathrm{incl}}$ does not prove leaf index $e$ with value $r_{e}$ included under $r_{\mathrm{head}}$ at tree size $\mathit{size}_{\mathrm{head}}$}{\KwRet \textsc{TransitionFailed}}
+  $(r_{e},\mathit{ops}_e,\pincl)\gets \mathit{delta}_e$\;
+  \lIf{$\pincl$ does not prove leaf index $e$ with value $r_{e}$ included under $r_{\mathrm{head}}$ at tree size $\mathit{size}_{\mathrm{head}}$}{\KwRet \textsc{TransitionFailed}}
   \ForEach{operation $o\in \mathit{ops}_e$ \emph{in declared order}}{
     \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\lIf{$\mathit{candidate}.\textsf{get}(\ell)\ne\bot$}{\KwRet \textsc{TransitionFailed}} \textbf{else} insert $(\ell,\mathit{kind},v)$\;}
     \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$: \lIf{$\neg(\mathit{kind}=\textsc{mutable}\wedge \mathit{candidate}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{candidate}.\textsf{get}(\ell)=v_{\mathrm{old}})$}{\KwRet \textsc{TransitionFailed}} \textbf{else} set $\ell\mapsto v$\;}
@@ -463,14 +464,14 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \KwRet \textsc{Pass}\;
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_b},\mathit{sth_{new}},\mathit{server}$)}{
-  \lIf{$\mathit{sth_b}=\bot\ \vee\ \neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_b})\ \vee\ \mathit{sth_b}.\mathit{epoch}+1\ne\mathit{sth_b}.\mathit{size}$}{\KwRet \textsc{InvalidHead} \tcp*[f]{no G4; commit proceeds}}
-  \uIf{$\mathit{sth_b}.\mathit{size}=\mathit{sth_{new}}.\mathit{size}$}{
+  \lIf{$\mathit{sth_b}=\bot\ \vee\ \neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_b})\ \vee\ \mathit{sth_b}.\mathit{epoch}+1\ne\mathit{sth_b}.\mathit{tree\_size}$}{\KwRet \textsc{InvalidHead} \tcp*[f]{no G4; commit proceeds}}
+  \uIf{$\mathit{sth_b}.\mathit{tree\_size}=\mathit{sth_{new}}.\mathit{tree\_size}$}{
     \lIf{$\mathit{sth_b}.\mathit{root}\ne\mathit{sth_{new}}.\mathit{root}$}{\KwRet \textsc{Fork}}
   }
   \Else{
-    $m,n\gets$ smaller, larger of $\mathit{sth_b}.\mathit{size}$ and $\mathit{sth_{new}}.\mathit{size}$\;
-    $\pi\gets \mathit{server}.\textsf{ConsistencyProof}(m,n)$\;
-    \lIf{$\pi=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m,n,\ \pi)$}{\KwRet \textsc{ConsistencyUnverified} \tcp*[f]{unverified: not proven equivocation}}
+    $m,n\gets$ smaller, larger of $\mathit{sth_b}.\mathit{tree\_size}$ and $\mathit{sth_{new}}.\mathit{tree\_size}$\;
+    $\pcons\gets \mathit{server}.\textsf{ConsistencyProof}(m,n)$\;
+    \lIf{$\pcons=\bot\ \vee\ \neg\,\textsf{VerifyConsistency}(m,n,\ \text{signed roots at }m,n,\ \pcons)$}{\KwRet \textsc{ConsistencyUnverified} \tcp*[f]{unverified: not proven equivocation}}
   }
   \KwRet \textsc{Consistent}\;
 }
@@ -493,40 +494,40 @@ its chain only after confirming that the write committed. The receiver advances 
 
 \begin{algorithm}[H]
 \caption{ACKA Continuous Entity Authentication Mode}\label{alg:cea}
-\KwData{per conversation: chained secret $k$; epoch $t$; warning label $\lwarn$ and warn-MAC key
+\KwData{per conversation: chained secret $k_t$; epoch $t$; warning label $\lwarn$ and warn-MAC key
 $k_{\mathrm{mac}}\gets\textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ (Alg.~\ref{alg:dualindex}; the label uses canonical $\min/\max$ id order: one slot per epoch;
 the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
-\Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id_A},\mathit{id_B}$)}{
-  $k\gets \KDF(\mathit{pss},\min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B}))$;\ \ $t\gets 0$\;
+\Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id}_{\A},\mathit{id}_{\B}$)}{
+  $k_0\gets \KDF(\mathit{pss},\min(\mathit{id}_{\A},\mathit{id}_{\B})\concat \max(\mathit{id}_{\A},\mathit{id}_{\B}))$;\ \ $t\gets 0$\;
 }
-\Fn{\normalfont\textsf{CeaUpdate}($I$)}{
-  $k\gets \KDF(k,\KDF(I,\texttt{"CEA"}))$;\ \ $t\gets t+1$\;
+\Fn{\normalfont\textsf{CeaUpdate}($I_t$)}{
+  $k_{t+1}\gets \KDF(k_t,\KDF(I_t,\texttt{"CEA"}))$;\ \ $t\gets t+1$\;
 }
-\Fn{\normalfont\textsf{CeaLprint}($\mathit{id_A},\mathit{id_B}$)}{
-  \KwRet $\Hash(k\concat \min(\mathit{id_A},\mathit{id_B})\concat \max(\mathit{id_A},\mathit{id_B})\concat t)$\;
+\Fn{\normalfont\textsf{CeaLprint}($\mathit{id}_{\A},\mathit{id}_{\B}$)}{
+  \KwRet $\Hash(k_t\concat \min(\mathit{id}_{\A},\mathit{id}_{\B})\concat \max(\mathit{id}_{\A},\mathit{id}_{\B})\concat t)$\;
 }
 \Fn{\normalfont\textsf{CeaFprint}($\mathit{id_{sender}},\mathit{id_{peer}},T_t$)}{
-  $\mathit{fkey}\gets \KDF(k,\mathit{id_{sender}}\concat \mathit{id_{peer}}\concat t)$\;
+  $\mathit{fkey}\gets \KDF(k_t,\mathit{id_{sender}}\concat \mathit{id_{peer}}\concat t)$\;
   \KwRet $\Hash(\mathit{fkey}\concat T_t)$\;
 }
-\Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},T_t,I,\mathit{sth}$)}{
-  $L\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},T_t)$\;
-  \If{$\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})\ne\bot$}{
+\Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},T_t,I_t,\mathit{sth}$)}{
+  $L_t\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F_t\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},T_t)$\;
+  \If{$\textsf{VerifiedLookup}(\mathit{server},L_t,\mathit{sth})\ne\bot$}{
     \textbf{raise} SecurityAlert\;
   }
-  $\mathit{server}.\textsf{UpdateRaw}(L,F)$;\ \ $\mathit{sth'}\gets \mathit{server}.\textsf{CommitEpoch}()$\;
-  \Req $\textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth'})=F$\;
-  $\textsf{CeaUpdate}(I)$ \tcp*{advance after the confirmed write}
+  $\mathit{server}.\textsf{UpdateRaw}(L_t,F_t)$;\ \ $\mathit{sth'}\gets \mathit{server}.\textsf{CommitEpoch}()$\;
+  \Req $\textsf{VerifiedLookup}(\mathit{server},L_t,\mathit{sth'})=F_t$\;
+  $\textsf{CeaUpdate}(I_t)$ \tcp*{advance after the confirmed write}
 }
-\Fn{\normalfont\textsf{CeaVerify}($\mathit{server},\mathit{id_{sender}},\mathit{id_{self}},T_t,I,\lwarn,\mathit{sth}$)}{
-  $L\gets \textsf{CeaLprint}(\mathit{id_{sender}},\mathit{id_{self}})$;\ \ $F^{*}\gets \textsf{CeaFprint}(\mathit{id_{sender}},\mathit{id_{self}},T_t)$\;
-  $v\gets \textsf{VerifiedLookup}(\mathit{server},L,\mathit{sth})$\;
+\Fn{\normalfont\textsf{CeaVerify}($\mathit{server},\mathit{id_{sender}},\mathit{id_{self}},T_t,I_t,\lwarn,\mathit{sth}$)}{
+  $L_t\gets \textsf{CeaLprint}(\mathit{id_{sender}},\mathit{id_{self}})$;\ \ $F^{*}_t\gets \textsf{CeaFprint}(\mathit{id_{sender}},\mathit{id_{self}},T_t)$\;
+  $v\gets \textsf{VerifiedLookup}(\mathit{server},L_t,\mathit{sth})$\;
   \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{no advance}}
-  \If{$v\ne F^{*}$}{
+  \If{$v\ne F^{*}_t$}{
     $\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"ratchet-fork"},k_{\mathrm{mac}})$\;
     \KwRet \textsc{Fork} \tcp*{no advance}
   }
-  $\textsf{CeaUpdate}(I)$ \tcp*{advance on \textsc{Consistent}}
+  $\textsf{CeaUpdate}(I_t)$ \tcp*{advance on \textsc{Consistent}}
   \KwRet \textsc{Consistent}\;
 }
 \end{algorithm}

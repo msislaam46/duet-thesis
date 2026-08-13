@@ -32,8 +32,8 @@ by Bob. Following the X3DH specification~\cite[Section~2.4]{x3dh}, this thesis d
 $\xIK{}$, signed pre-keys by $\xSPK{}$, one-time pre-keys by $\xOPK{}$, and ephemeral keys by
 $\xEK{}$. Thus, $\xIK{U}=\pkid{U}$, $\xSPK{U}=\spk{U}$, and
 $\xOPK{U}=\opk{U}{i}$. Each notation denotes a public key whose corresponding private key is held by
-its owner. Alice generates an ephemeral key $\xEK{A}$ and computes the following Diffie--Hellman
-values.
+its owner. Alice generates an ephemeral key $\xEK{A}$ and computes the Diffie--Hellman
+values in \cref{eq:bg-x3dh}.
 \begin{equation}\label{eq:bg-x3dh}
 \begin{aligned}
 \mathrm{DH1}    &= \DH{\xIK{A}}{\xSPK{B}}, \\
@@ -136,8 +136,8 @@ authentication secrets~\cite[pp.~5, 19--20, 23]{dowling2023acka}.
 Three limitations remain in ACKA's construction. First, only the receiver detects a forgery, so no
 signal reaches the peer~\cite[p.~21]{dowling2023acka}. Second, verification proceeds sequentially
 each epoch and provides no windowed catch-up. Finally, its consistency mechanism is not used for
-third-party auditing, which can instead be provided through the standard cross-vantage comparison
-(\cref{fig:bg-splitview}). DUET's auditor is specified in \cref{alg:auditor}.
+third-party auditing, which can instead be provided through the standard comparison of independently
+observed signed heads (\cref{fig:bg-splitview}). DUET's auditor is specified in \cref{alg:auditor}.
 
 % ============================================================================
 \section{Manual Verification Evidence}\label{sec:ext-usability}
@@ -270,7 +270,7 @@ differ mainly in how they encode update history and preserve privacy after serve
 
 A consistency proof establishes that one log state extends another, but it does not establish that
 every observer received the same state. A malicious server may maintain two internally consistent
-histories, presenting tree head $\logroot{A}$ to Alice and a different $\logroot{B}$ to Bob while
+histories, presenting signed head $\STH^\A$ to Alice and a different $\STH^\B$ to Bob while
 supplying each with a different key for the other. Their local inclusion and consistency checks may
 all succeed. Detecting this split view requires commitments observed from different vantage points
 to be compared through client gossip, an independent transparency log, or external
@@ -281,9 +281,9 @@ in \cref{ssec:bg-implications}. \Cref{fig:bg-splitview} depicts the two divergen
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-splitview}
-\caption[The split-view (fork) attack.]{The split-view attack. The server shows Alice tree head
-$\logroot{A}$ and Bob a different $\logroot{B}$, with each view internally consistent.
-A cross-vantage comparison exposes the divergence. Two validly signed heads of the same size with
+\caption[The split-view (fork) attack.]{The split-view attack. The server shows Alice signed head
+$\STH^\A$ and Bob a different $\STH^\B$, with each view internally consistent.
+A comparison of independently observed signed heads exposes the divergence. Two validly signed heads of the same size with
 different roots provide direct evidence of equivocation. Heads of different sizes require a valid
 consistency proof. A missing or invalid proof produces the verdict \emph{consistency unverified}.}
 \label{fig:bg-splitview}

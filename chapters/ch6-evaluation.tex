@@ -36,10 +36,10 @@ the complete tables, measurement environment, and reproduction instructions.
 \subsection{Proof Size and Verification (M1--M3, M14)}\label{ssec:eval-sizes}\label{ssec:eval-latency}
 
 A VRF-indexed lookup proof carries a prefix copath, a log-inclusion path, and fixed-size VRF and
-encoding fields. Its serialized proof body is:
+encoding fields. Let $\pi^{\mathsf{lookup}}$ denote the serialized lookup-proof body:
 
 \begin{equation}\label{eq:eval-proofsize}
-  |\pi| \;=\; 32h \;+\; 32h_{\mathrm{log}} \;+\; 177 \ \text{bytes},
+  |\pi^{\mathsf{lookup}}| \;=\; 32h \;+\; 32h_{\mathrm{log}} \;+\; 177 \ \text{bytes},
   \qquad \mathbb{E}[h]\approx\lceil\lg N\rceil,\quad
   h_{\mathrm{log}}\le\lceil\lg E\rceil.
 \end{equation}

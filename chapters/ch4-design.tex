@@ -102,7 +102,7 @@ Extract and Expand steps~\cite[Sections~2.2--2.3]{rfc5869}:
   \mathit{PRK} &= \HKDFex(\text{salt} = \text{\texttt{"duet-dual-index"}},\ \sharedS)\\
   \ell_{\mathsf{self}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"lookup"}} \concat \mathit{id}_{\mathsf{self}} \concat \mathit{id}_{\mathsf{peer}},\ 32\big)\\
   \ell_{\mathsf{peer}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"lookup"}} \concat \mathit{id}_{\mathsf{peer}} \concat \mathit{id}_{\mathsf{self}},\ 32\big)\\
-  \ell_{\mathsf{warn}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"warning"}} \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B),\ 32\big).
+  \ell_{\mathsf{warn}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"warning"}} \concat \min(\mathit{id}_{\A}, \mathit{id}_{\B}) \concat \max(\mathit{id}_{\A}, \mathit{id}_{\B}),\ 32\big).
 \end{aligned}
 \end{equation}
 In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key. Directional identity
@@ -126,9 +126,9 @@ which swaps the two lookup roles while preserving the warning label.}
 \subsection{Security Properties}\label{ssec:design-properties}
 
 \paragraph{Symmetry.} From Alice's and Bob's respective viewpoints, the directional lookup
-derivation ensures $A.\ell_{\mathsf{self}} = B.\ell_{\mathsf{peer}}$ and
-$A.\ell_{\mathsf{peer}} = B.\ell_{\mathsf{self}}$, while the canonical identity ordering gives
-$A.\ell_{\mathsf{warn}} = B.\ell_{\mathsf{warn}}$. The two parties therefore agree on the two
+derivation ensures $\ell^\A_{\mathsf{self}} = \ell^\B_{\mathsf{peer}}$ and
+$\ell^\A_{\mathsf{peer}} = \ell^\B_{\mathsf{self}}$, while the canonical identity ordering gives
+$\ell^\A_{\mathsf{warn}} = \ell^\B_{\mathsf{warn}}$. The two parties therefore agree on the two
 directional lookup slots and the shared warning slot they both monitor. Since a signed head
 commits to one directory root, valid proofs under that head cannot bind the same directional lookup
 slot to two different keys, even if the conversation secret is known.
@@ -162,7 +162,7 @@ monitors read the shared slot.
 The warning payload carries a MAC under a key derived from the shared secret and the canonically
 ordered identities
 ($\HKDFexp(\mathit{PRK}, \text{\texttt{"warn-mac"}} \concat
-\min(\mathit{id_A},\mathit{id_B}) \concat \max(\mathit{id_A},\mathit{id_B}), 32)$).
+\min(\mathit{id}_{\A},\mathit{id}_{\B}) \concat \max(\mathit{id}_{\A},\mathit{id}_{\B}), 32)$).
 While their endpoints remain uncompromised, only Alice and Bob can derive this key. A valid MAC
 shows that a holder of the shared key produced the warning but does not identify which party wrote
 it. Any value at the warning slot causes an alert, so a value without a valid MAC is reported as
@@ -191,7 +191,7 @@ $L_t$ and a directional fingerprint $F_t$ from the current chained state and pub
 mixes the secret epoch input $I_t$ into the next state:
 \begin{equation}\label{eq:design-cea}
 \begin{aligned}
-  L_t &= \Hash\!\big(k_t \concat \min(\mathit{id}_\A, \mathit{id}_\B) \concat \max(\mathit{id}_\A, \mathit{id}_\B) \concat t\big),\\
+  L_t &= \Hash\!\big(k_t \concat \min(\mathit{id}_{\A}, \mathit{id}_{\B}) \concat \max(\mathit{id}_{\A}, \mathit{id}_{\B}) \concat t\big),\\
   F_t &= \Hash\!\big(\KDF(k_t,\ \mathit{id}_{\mathsf{sender}} \concat \mathit{id}_{\mathsf{peer}} \concat t) \concat T_t\big),\\
   k_{t+1} &= \KDF\!\big(k_t,\ \KDF(I_t, \text{\texttt{"CEA"}})\big) \qquad (\KDF = \text{HMAC-SHA256, a PRF}).
 \end{aligned}
@@ -256,10 +256,10 @@ safeguards that apply after commitment are described in \cref{ssec:design-detect
 
 \subsection{Worked Parameterization}\label{ssec:design-param}
 
-For an illustrative analytic model, let $N=10^7$ be the number of users, let $c=5$ be the active
-conversations per user, and let $r=30$ days be the assumed interval between new session-mode
+For an illustrative analytic model, let $n_{\mathsf{users}}=10^7$ be the number of users, let $c=5$ be the active
+conversations per user, and let $R=30$ days be the assumed interval between new session-mode
 conversation secrets. The model uses hourly epochs~\cite[Section~5.3]{melara2015coniks}. This gives
-$Nc/2=25$ million conversations and $Nc=50$ million directional lookup slots. A client offline for
+$n_{\mathsf{users}}c/2=25$ million conversations and $n_{\mathsf{users}}c=50$ million directional lookup slots. A client offline for
 30 days misses $W=720$ hourly epochs.
 
 Each conversation also derives one warning label, but its slot remains absent until a warning is

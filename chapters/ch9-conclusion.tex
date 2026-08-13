@@ -12,7 +12,7 @@ expose the malicious-operator behaviours specified in the threat model (\cref{ch
 dual-index warning scheme for in-band peer
 warnings and a windowed consistency proof for offline catch-up. DUET also retains ACKA's CEA
 construction in continuous mode, using simulated ratchet inputs in the prototype. A separate auditor
-process verifies directory transitions. In deployment, G4 (Fork Detection) additionally requires
+process verifies directory transitions. Detecting split-view equivocation in deployment requires
 comparison of signed heads obtained from independent vantage points. The \texttt{duet} Rust crate
 implements the directory server, proof construction, and auditor process. A verifier integrated into Signal Desktop runs the client-verification path
 (\cref{ch:impl}).

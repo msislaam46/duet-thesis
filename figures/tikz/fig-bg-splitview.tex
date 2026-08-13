@@ -3,13 +3,13 @@
 \begin{tikzpicture}[>=Stealth,font=\small,
    box/.style={draw,rounded corners,minimum width=2.4cm,minimum height=9mm}]
   \node[box,fill=black!8] (srv) at (0,0) {malicious server};
-  \node[box] (ta) at (-3.2,-2) {log with head $\logroot{A}$};
-  \node[box] (tb) at (3.2,-2)  {log with head $\logroot{B}$};
+  \node[box] (ta) at (-3.2,-2) {log with head $\STH^\A$};
+  \node[box] (tb) at (3.2,-2)  {log with head $\STH^\B$};
   \node (A) at (-3.2,-3.6) {\textbf{Alice}};
   \node (B) at (3.2,-3.6)  {\textbf{Bob}};
   \draw[->] (srv) -- (ta);
   \draw[->] (srv) -- (tb);
   \draw[->] (ta) -- (A);
   \draw[->] (tb) -- (B);
-  \draw[<->,dashed] (A) to[bend right=20] node[below,font=\footnotesize,align=center]{cross-vantage check: same size: $\logroot{A}\stackrel{?}{=}\logroot{B}$;\\ different sizes: consistency proof required} (B);
+  \draw[<->,dashed] (A) to[bend right=20] node[below,font=\footnotesize,align=center]{compare independently observed heads:\\ same size: $\STH^\A.\mathit{root}\stackrel{?}{=}\STH^\B.\mathit{root}$;\\ different sizes: consistency proof required} (B);
 \end{tikzpicture}

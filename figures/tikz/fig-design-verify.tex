@@ -3,8 +3,9 @@
 \begin{tikzpicture}[>=Stealth,font=\footnotesize,
    vstep/.style={draw,rounded corners,text width=13cm,minimum height=8mm,align=left,inner sep=5pt},
    note/.style={font=\scriptsize\itshape,text=black!65,text width=13cm,align=left}]
-  \node[vstep] (s1) {\textbf{1. Requested-label binding} (raw paths): require $\pi_{\mathrm{prefix}}.\mathit{label}$ to equal the label requested by the client};
-  \node[vstep,below=3mm of s1.south,anchor=north] (s2) {\textbf{2. VRF label binding} (global path): verify the ECVRF proof and require $\beta[0{:}32]$ to equal $\pi_{\mathrm{prefix}}.\mathit{label}$ (RFC~9381)};
+  \hyphenpenalty=10000\exhyphenpenalty=10000  % avoid mid-word breaks (e.g. ``requested'') in the boxes
+  \node[vstep] (s1) {\textbf{1. Requested-label binding} (raw paths): require $\pprefix.\mathit{label}$ to equal the client's requested label};
+  \node[vstep,below=3mm of s1.south,anchor=north] (s2) {\textbf{2. VRF label binding} (global path): verify $\pvrf$ and require $\beta[0{:}32]=\pprefix.\mathit{label}$ (RFC~9381)};
   \node[vstep,below=3mm of s2.south,anchor=north] (s3) {\textbf{3. Signed-head and history binding}: verify the configuration commitment and Ed25519 signature, require the result's epoch and tree head to match a well-formed signed head, and accept a newer head only after an append-only consistency check from the last trusted head};
   \node[vstep,below=3mm of s3.south,anchor=north] (s4) {\textbf{4. Value binding}: require the prefix proof to bind the returned value. For an occupied raw-label slot, also require the committed entry to be immutable};
   \node[vstep,below=3mm of s4.south,anchor=north] (s5) {\textbf{5. Prefix root}: recompute the prefix-tree root from the proof (siblings $+$ 32-byte bitmap)};

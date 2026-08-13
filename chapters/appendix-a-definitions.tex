@@ -70,10 +70,14 @@ node types. The log root at epoch $t$ is $\logroot{t}=\MTH(D_t)$. Used in
 \begin{definition}[Inclusion proof]\label{def:inclusion}
 \intuition{The list of sibling hashes on the path from a leaf to the root, from which anyone can
 recompute the root and confirm the leaf is present.}
-An inclusion proof $\pincl$ for the entry at index $i$ in a log of size $n$ is the audit path of
-RFC~9162~\cite{rfc9162}: the sequence of subtree hashes that, combined with $d_i$ along the path from
-leaf $i$ to the root, recomputes $\MTH(D)$. Verification recomputes the candidate root from $d_i$ and
-$\pincl$ and accepts exactly when it equals the committed $\logroot{t}$. Used in \cref{ssec:design-verify}.
+DUET represents a log-inclusion proof as
+\[
+\pincl = (\mathit{leaf\_index},\mathit{tree\_size},\mathit{path}),
+\]
+where $\mathit{path}$ is the RFC~9162~\cite{rfc9162} audit path for the leaf at $\mathit{leaf\_index}$
+in the log of size $\mathit{tree\_size}$. Verification recomputes the candidate root from the leaf
+data and $\pincl.\mathit{path}$ and accepts exactly when it equals the committed $\logroot{t}$. Used
+in \cref{ssec:design-verify}.
 \end{definition}
 
 \begin{definition}[Consistency proof]\label{def:consistency}
@@ -104,9 +108,15 @@ $t$ is $\prefroot{t}$. Used in \cref{ssec:design-structures}.
 \begin{definition}[Inclusion and non-inclusion proof in the prefix tree]\label{def:noninclusion}
 \intuition{Because every label has a fixed position, one can prove a label is \emph{absent} by
 exhibiting the (default) contents of its slot, just as one proves presence.}
-A prefix-tree proof for label $\ell$ is the copath of sibling hashes from the leaf at position
-$\ell$ to the prefix root $\prefroot{t}$. An \emph{inclusion} proof recomputes $\prefroot{t}$ from
-$\Hleaf(\mathit{kind}\concat\ell\concat \mathit{value})$ and the copath. A \emph{non-inclusion} proof recomputes it from
+A compressed prefix-tree proof is
+\[
+\pprefix = (\mathit{label},\mathit{value},\mathit{kind},\mathit{bitmap},\mathit{siblings}).
+\]
+The $\mathit{label}$ field contains the queried 256-bit label, while $\mathit{value}=\bot$ denotes
+non-inclusion. For an inclusion proof, $\mathit{kind}$ records whether the leaf is mutable or
+immutable. The bitmap identifies the non-default siblings carried in $\mathit{siblings}$. An
+\emph{inclusion} proof recomputes $\prefroot{t}$ from
+$\Hleaf(\mathit{kind}\concat\ell\concat \mathit{value})$ and the sibling copath. A \emph{non-inclusion} proof recomputes it from
 the default (empty) leaf value at position $\ell$, establishing that no value is bound at $\ell$
 \cite{melara2015coniks,ietf-keytrans-protocol}. Proven non-inclusion of the warning slot is the
 component that, together with a key mismatch, makes warning censorship (A2) detectable as a compound
@@ -117,7 +127,7 @@ signal (\cref{def:dualindex-check}). Non-inclusion alone is not an alarm. Used i
 \intuition{A single signed value that publicly commits the operator to one view of the whole
 directory and its history at a given epoch.}
 The signed tree head at epoch $t$ is
-$\STH_t = \big(\,t,\ \mathit{size}_t,\ \logroot{t},\ \mathit{ts}_t,\ \Hash(\mathit{config})\,\big)$
+$\STH_t = \big(\,t,\ \mathit{tree\_size}_t,\ \logroot{t},\ \mathit{timestamp}_t,\ \Hash(\mathit{config})\,\big)$
 together with an Ed25519 signature over that tuple under the operator's signing key
 (\cref{def:sig}), in the manner of the Certificate Transparency signed tree head~\cite{rfc6962}. A
 client or auditor recomputes the signed message from the head it received and checks the signature
@@ -336,7 +346,7 @@ When a warning commits at epoch $w$, its writer retains the signed tree head $\S
 inclusion proof of $\lblwarn$ under it. If a later verified lookup under a head $\STH_{t}$ ($t>w$)
 yields proven non-inclusion at $\lblwarn$, the bundle consisting of the retained inclusion proof
 under $\STH_w$, the non-inclusion proof under $\STH_t$, and the consistency proof
-$\pcons(\STH_w.\mathit{size},\STH_t.\mathit{size})$ verifies entirely against the operator's own
+$\pcons(\STH_w.\mathit{tree\_size},\STH_t.\mathit{tree\_size})$ verifies entirely against the operator's own
 signatures and constitutes publicly verifiable proof, attributable to the operator's signing key, that a committed leaf was removed.
 Specified in \cref{ssec:design-detection}. Implemented by \textsf{PersistenceCheck}
 (\cref{alg:detect}).
