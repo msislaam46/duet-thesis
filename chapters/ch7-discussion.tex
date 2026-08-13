@@ -6,8 +6,9 @@ priorities for completing, deploying, and extending DUET.
 % ============================================================================
 \section{Discussion}\label{sec:disc-discussion}
 
-DUET provides automatic in-band key-substitution detection by adding conversation-specific peer
-warnings through additional label-bound lookups without changing the lookup-proof format. The
+For honestly established and monitored conversations, DUET provides automatic in-band
+key-substitution detection by adding conversation-specific peer warnings through additional
+label-bound lookups without changing the lookup-proof format. The
 detection mechanism combines domain-separated labels, proof-verified absence, warning persistence,
 and transition auditing. When the directory is honest, comparison with the global VRF-bound identity
 entry detects the \hyperref[sc:threat-a3]{A3 network man-in-the-middle substitution}, while
@@ -15,7 +16,7 @@ peer-slot absence provides supporting evidence.
 
 The evaluation shows that key-substitution detection reuses the existing proof format through
 additional lookups, while windowed catch-up reduces the proof count from $W$ to one in the defined
-synthetic baseline (\cref{ssec:eval-catchup}). DUET's measured identity proof remains in the same
+synthetic baseline (\cref{ssec:eval-catchup}). DUET's measured lookup proof remains in the same
 sub-kilobyte class as the matched CONIKS quantity in \cref{sec:eval-compare}. These are local
 component results and do not measure production throughput.
 
@@ -28,16 +29,16 @@ trust on first use, endpoint security, and independent head comparison for split
 % ============================================================================
 \section{Limitations}\label{sec:disc-limitations}
 
-DUET detects changes only after a client pins its initial directory binding and therefore cannot
-establish whether that binding was authentic. A proof-verified peer-slot absence remains pending
+DUET's monitoring guarantee begins only after a client pins an initial directory binding and
+therefore cannot establish whether that binding was authentic. A proof-verified peer-slot absence remains pending
 before becoming a fail-closed \texttt{NotPosted} timeout. Since the absence may instead mean that
 the peer has not run the client, timely detection assumes active peer participation. Monitoring
-applies only to retained conversations: deleting a conversation stops it, while archiving preserves
-it. The prototype retains the signed-head checkpoint, peer-key pins, and per-label monitor state only
-while the application process is running. An application restart establishes a new trust-on-first-use
-baseline and cannot retrospectively detect a substitution introduced during the gap. Also, the design
-does not cover groups, MLS, Sender Keys, complete multi-device warning propagation, or compromised
-endpoints.
+applies only to retained conversations. Deleting a conversation stops its monitoring, while
+archiving it preserves monitoring. The prototype retains the signed-head checkpoint, peer-key pins,
+and per-label monitor state only while the application process is running. An application restart
+establishes a new trust-on-first-use baseline and cannot retrospectively detect a substitution
+introduced during the gap. The design also does not cover groups, MLS, Sender Keys, complete
+multi-device warning propagation, or compromised endpoints.
 
 For third-party auditing, transition validation assumes at least one honest auditor. G4 (Fork
 Detection) additionally requires signed heads obtained from independent vantage points. A client can
@@ -54,7 +55,7 @@ secret created the payload. It neither identifies the writer nor establishes tha
 true. Write-rate limits, signed-head freshness checks, gossip for detecting omitted proofs, and
 warning attribution remain unimplemented.
 
-For the implementation, the key directory server is an in-memory, single-machine prototype that
+The key directory server is an in-memory, single-machine prototype that
 clones the directory tree at each epoch commit. The Signal Desktop integration uses a deterministic
 substitute for the conversation secret and a seeded Double Ratchet simulation. These demonstrate
 the label derivation and CEA state transitions but do not establish label unpredictability or the
@@ -134,9 +135,10 @@ A usability study should determine whether users correctly interpret and act on 
 amber notice. It should also examine accessibility, escalation, and alarm fatigue, continuing the
 verification-ceremony research that motivated the design~\cite{vaziripour2017}.
 
-Production warning records should contain the scenario, epoch, signed heads, and proofs needed for
-operator or auditor review while avoiding unnecessary metadata. An operational policy must define
-when to reject a proof, request key rotation, or escalate a warning.
+Production warning records should contain the recorded verdict, relevant epoch, signed heads, and
+proofs needed for operator or auditor review while avoiding unnecessary metadata. An operational
+policy must define how to respond to a rejected proof, when to request key rotation, and when to
+escalate a warning.
 
 Moreover, future evaluation should cover persistent storage, concurrent requests, wide-area delay,
 different epoch and catch-up policies, mobile CPU and energy use, and archived raw samples. Applying
