@@ -364,12 +364,13 @@ persistence component, retained evidence.
     \If{$v=\bot\ \wedge\ \mathit{sth'}=\mathit{last\_sth}$}{
       \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{last\_sth})$ and $(\pprefix_{\mathrm{ni}},\pincl_{\mathrm{ni}})$ proves non-inclusion of $\lwarn$ under $\mathit{last\_sth}$ \tcp*{later non-inclusion evidence; publicly verifiable deletion (\cref{ssec:design-detection})}
       $\pcons\gets \mathit{server}.\textsf{ConsistencyProof}(\mathit{sth}_w.\mathit{tree\_size},\mathit{last\_sth}.\mathit{tree\_size})$\;
+      \Req $\textsf{VerifyConsistency}(\mathit{sth}_w.\mathit{tree\_size},\mathit{last\_sth}.\mathit{tree\_size},\mathit{sth}_w.\mathit{root},\mathit{last\_sth}.\mathit{root},\pcons)$\;
       \textbf{raise} DeletionEvidence$(\lwarn,\mathit{sth}_w,\pprefix_w,\pincl_w,\mathit{last\_sth},\pprefix_{\mathrm{ni}},\pincl_{\mathrm{ni}},\pcons)$\;
     }
   }
 }
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations},\mathit{id_{self}},\mathit{own\_pk}$)}{
-  $(v_{\mathsf{vrf}},\mathit{healthy})\gets \textsf{CheckOwnVrfKey}()$ \tcp*{(1) global identity check: takes no arguments and performs its own remote lookup and verification of the client's own VRF entry, even with no active conversation, returning the logged value and the match flag. (2) an unreachable directory ends the tick before this point (availability, not attack)}
+  $(v_{\mathsf{vrf}},\mathit{healthy})\gets \textsf{CheckOwnVrfKey}()$ \tcp*{(1) global identity check: own remote lookup and verification of the client's VRF entry, returning the logged value and match flag. (2) an unreachable directory ends the tick earlier (availability, not attack)}
   \If{$\neg\,\mathit{healthy}$}{
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
