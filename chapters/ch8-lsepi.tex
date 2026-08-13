@@ -1,105 +1,89 @@
 \chapter{Legal, Social, Ethical and Professional Issues}\label{ch:lsepi}
 
-DUET processes account-linked key material, extends AGPL-covered software, and reports security
+DUET processes account-linked key material, extends the Signal Desktop client, and reports security
 evidence that may influence deployment decisions. This chapter examines the resulting legal, social,
 ethical, and professional responsibilities.
 
 % ============================================================================
 \section{Legal Issues}\label{sec:lsepi-legal}
 
-The client work derives from libsignal and Signal Desktop, both distributed under the
-AGPL-3.0~\cite{libsignal,signal-desktop,agpl3}. Conveying modified AGPL-covered code requires the
-corresponding source to be provided under the licence. If a modified version is operated as a network
-service that supports remote interaction, Section~13 additionally requires that interacting users be
-offered the corresponding source. This prototype was evaluated locally rather than operated as a
-public service. UK law protects software as a literary work, so upstream copyright and licence notices are retained rather than
-rewritten~\cite{uk-software-copyright}. An upstream contribution would require signing Signal's contributor licence
-agreement~\cite{signal-cla}, a route not taken here.
+The client component modifies Signal Desktop, which depends on libsignal. Both upstream projects are
+distributed under AGPL-3.0~\cite{libsignal,signal-desktop}. Conveying modified source or object code
+must satisfy the applicable licence conditions~\cite[Sections~5--6]{agpl3}. If the modified program
+supports remote interaction through a computer network, Section~13 of the GNU AGPL v3 also requires
+that users interacting with it be offered the Corresponding Source~\cite[Section~13]{agpl3}. This prototype was
+evaluated locally and was not operated as a public service. The prototype retains the upstream
+copyright and licence notices. UK copyright protects computer programs and code on the same terms as
+literary works~\cite{uk-software-copyright}. Additionally, Signal requires a signed contributor
+licence agreement for upstream contributions~\cite{signal-cla}. This route was not taken in this
+project.
 
-The project uses publicly documented cryptographic algorithms and open-source implementations. Public
-availability does not by itself determine export-control classification, so this thesis makes no claim
-that the implementation falls within a particular exemption~\cite{uk-cryptonote,uk-export-lists}. A
-production release would require classification against the applicable control list and the guidance
-current at that time. The directory stores pseudonymised identifiers, public keys, and epoch metadata,
-never message content or plaintext identifiers. Pseudonymised data remains personal data under UK
-GDPR, so this design is treated as processing personal data, not as
-exempt~\cite{ico-pseudonymisation}. The public registration and lookup endpoints also receive raw
-service identifiers, so the service processes account-linked data even though the tree stores only
-pseudonymised labels. VRF-derived indices keep raw identifiers out of the published tree but do not
-make the records anonymous. Production
-use would require a data-protection assessment, a documented processing purpose and lawful basis,
-restricted access to warning records, and defined retention periods~\cite{ico-data-principles}. Two residual exposures remain: the
-query pattern visible to the operator (\cref{ch:discussion}) and the density metadata a
-bitmap-compressed proof reveals (\cref{ch:eval}).
+The project uses publicly documented cryptographic algorithms and open-source implementations.
+However, public availability alone does not establish an export-control exemption. UK guidance on
+the Cryptography Note states that a product may remain controlled even when its cryptographic
+algorithm is publicly specified~\cite{uk-cryptonote}. Therefore, a production release would require
+classification against the applicable UK Strategic Export Control List and the guidance current at
+that time~\cite{uk-export-lists}.
+
+The key directory stores VRF-derived labels, public-key bindings, warning values, CEA fingerprints,
+and epoch metadata. It does not store message content or raw service identifiers. However, the
+public registration and lookup endpoints receive raw service identifiers before the server derives
+their labels. Pseudonymised data remains personal data when the operator retains the additional
+information needed to identify an account~\cite{ico-pseudonymisation}. Therefore, VRF-derived
+labels do not make the directory records anonymous to the operator. Production use would require a
+documented processing purpose and lawful basis, restricted access to warning records, and defined
+retention periods~\cite{ico-lawfulness,ico-data-principles}.
 
 % ============================================================================
 \section{Social and Ethical Issues}\label{sec:lsepi-social}
 
-Undetected key substitution is a physical risk for journalists, activists, and others whose safety
-depends on a conversation staying private. Automatic detection is intended in part to protect these
-groups, making accurate reporting about what was built an ethical obligation. The
-prototype runs on a single machine and in memory and uses a deterministic conversation-secret
-stand-in and a seeded ratchet simulation (\cref{sec:impl-strategy}). It does not protect a client
-whose endpoint is compromised (\cref{sec:threat-assumptions}). Overstating a security tool puts its
-intended users at risk.
+Undetected key substitution can place users whose safety depends on private communication at risk.
+H\"aring et al. examine this setting through an adversarial Signal study in which participants acted
+as whistleblowers contacting journalists~\cite[Sections~1 and 3.2.1]{haring2024whistleblower}.
+DUET's automatic in-band key-substitution
+detection is intended in part to protect such users. Therefore, accurately reporting what was
+implemented and its limitations is an ethical obligation. The implementation and
+endpoint-compromise boundaries are stated in
+\cref{sec:impl-strategy,sec:threat-assumptions}.
 
-Ambiguous, excessive, or privacy-revealing warnings can themselves cause harm. An uninterpretable
-warning causes alarm fatigue rather than protection. The interface
-therefore uses amber for an unavailable directory and red both for a verified integrity or consistency
-mismatch and for the fail-closed operational timeout after three proof-verified peer-slot absences.
-That operational timeout reflects an unmet participation assumption, not proof of substitution. Usability
-testing, accessibility, escalation routes, and support paths are unaddressed here and named as future
-work in \cref{ch:discussion}. Warning records also reveal who was warned and when, creating additional
-metadata that requires protection.
+Ambiguous, excessive, or privacy-revealing warnings can themselves cause harm. Frequent or poorly
+prioritised alerts can cause later warnings, including genuine ones, to be
+ignored~\cite{ewaschuk2016monitoring,laubheimer2022alertfatigue}. H\"aring et al. also found that
+participants did not always react as intended to an incorrect authentication result, while an
+improved interface supported mismatch detection~\cite[Section~4.1]{haring2024whistleblower}.
+Therefore, a warning must clearly state its severity
+and the action expected from the user. DUET uses amber when the directory is unavailable and red for
+a verified integrity or consistency failure, or after the fail-closed operational timeout caused by
+three proof-verified peer-slot absences. Usability testing, accessibility, escalation
+routes, and support remain future work. Warning records also expose when a warning was published,
+creating metadata that requires protection.
 
-The evaluation recruited no participants and intercepted no third-party traffic. The live demonstration
-used two researcher-controlled Signal accounts linked through Signal's production service, while the
-benchmark and attack inputs were synthetic (\cref{ssec:impl-demo}). It was therefore not a
-human-participant study. A deployment would need to assess the unmeasured infrastructure, energy, and
-access costs of an independent second vantage.
+The evaluation did not involve human participants. Instead, the live demonstration used two
+researcher-controlled Signal accounts connected through Signal's production service and intercepted
+no third-party traffic (\cref{ssec:impl-demo}). The benchmark and adversarial inputs were
+synthetic. Moreover, the infrastructure, energy, and access costs of operating an independent auditing service
+were not measured and would require assessment before deployment.
 
 % ============================================================================
 \section{Professional Issues and Codes of Conduct}\label{sec:lsepi-prof}
 
-The BCS Code of Conduct organizes obligations into public interest, professional competence and
-integrity, duty to relevant authority, and duty to the profession~\cite{bcs-code}. The public
-interest is served by stating the limits above as prominently as the results. Competence and
-integrity are addressed by validating the project's ECVRF implementation against the RFC~9381 test
-vectors and by disclosing in \cref{sec:impl-challenges} the defects corrected during development,
-including a missing signed-head binding that a passing test suite had not caught. Regular supervisory review, source
-attribution, and compliance with the university's academic-integrity requirements address the duty to
-the relevant authority. Separating measured prototype results from unimplemented production
+The BCS Code of Conduct defines four principles: public interest, professional competence and
+integrity, duty to the relevant authority, and duty to the
+profession~\cite{bcs-code}. The public interest principle is addressed by considering privacy,
+security, and user wellbeing and by stating the prototype's limitations alongside its results.
+Professional competence and integrity are supported through established cryptographic libraries,
+RFC test vectors, adversarial testing, and the corrected implementation issues documented in
+\cref{sec:impl-challenges}. Regular supervisory review and source attribution address the duty to
+the relevant authority. Finally, separating measured results from unimplemented production
 requirements addresses the duty to the profession.
 
-The IET Rules of Conduct impose corresponding duties~\cite{iet-conduct}. Through the Statement of
-Ethical Principles incorporated by Rule 2, the IET requires accuracy and rigour, so every measurement
-in \cref{ch:eval} carries its scope. Rules 5 and 6 require working within competence and maintaining
-knowledge. Accordingly, the project's ECVRF implementation is checked against the RFC~9381 vectors.
-Rule 26 requires that opinions state their limitations, so the thesis states the assumptions and
-qualifications attached to its security and performance claims. The defects found during development
-were confined to the prototype. No finding indicated a defect in
-upstream Signal software. Any upstream defect would have been reported through Signal's security
-vulnerability channel rather than published~\cite{signal-security-report}.
+The IET Rules of Conduct require members to observe the current Statement of Ethical Principles,
+maintain their knowledge and skills, work within their competence, and state the limitations of
+professional opinions~\cite[Rules~2, 5, 6, and 26]{iet-conduct}. DUET addresses these duties through
+RFC conformance tests, explicit assumptions, and qualified security and performance claims. The
+implementation defects described in \cref{sec:impl-challenges} were confined to the prototype and no
+defect was found in upstream Signal software. Any upstream vulnerability would be reported through
+Signal's security-vulnerability channel~\cite{signal-security-report}.
 
-The resulting responsibilities and project responses are summarized in \cref{tab:lsepi-mapping}.
-
-\begin{table}[ht]
-\centering
-\caption{Legal, social, ethical, and professional instruments and considerations, their relevance to
-the project, and the project's response.}
-\label{tab:lsepi-mapping}
-\footnotesize
-\setlength{\extrarowheight}{2pt}
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
-\toprule
-Instrument or consideration & Relevance & Implication & Project response \\
-\midrule
-AGPL-3.0 (libsignal, Signal Desktop) & the prototype extends AGPL-covered Signal code & conveying modified code engages the corresponding-source obligations, and offering a modified network-interactive version as a remote service would engage AGPL Section~13 & the prototype was not run as a public service, the upstream notices are preserved, and any upstream contribution would follow Signal's contributor process \\
-UK GDPR (pseudonymised account data) & a production directory would associate keys and labels with accounts & such pseudonymised information remains personal data for an operator holding the linking information & benchmarks used synthetic inputs, and production would require a data-protection assessment, restricted access, and retention periods \\
-UK export controls (cryptographic software) & the design composes standard cryptographic primitives & classification depends on functionality, destination, and end use, and public specifications do not by themselves determine it & no export-control classification is attempted \\
-BCS Code of Conduct & public interest, competence, relevant authority, and profession & duties on security and privacy, competence, honesty to the supervisor, and not overstating results & established libraries, RFC test vectors, reproducible tests, supervisory review, and explicitly stated prototype limitations \\
-IET Rules of Conduct & accuracy and rigour, working within competence, and qualified opinions & reported results must state their limitations and stay within competence & adversarial tests, cross-language vectors, reproducibility measures, and explicit scope qualifications \\
-Research ethics (controlled test accounts, synthetic benchmark inputs) & the demonstration used two researcher-controlled Signal accounts and the benchmarks used synthetic inputs & no third-party traffic intercepted and no participants recruited & not a human-participant study \\
-\bottomrule
-\end{tabularx}
-\end{table}
+Appendix~\ref{sec:trace-lsepi} summarizes the responsibilities and project responses discussed in
+this chapter.
