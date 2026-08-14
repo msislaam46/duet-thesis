@@ -7,151 +7,174 @@ security consequences remain in the main chapter.
 % ============================================================================
 \section{Signed-Head Fields and Verification Details}\label{sec:design-detail-sth}
 
-\paragraph{Domain separation and structure roles.} Hashing is domain-separated in the manner of
-RFC~6962~\cite[Section~2.1]{rfc6962}: $\Hash_{\mathsf{leaf}}(x) = \Hash(\mathtt{0x00} \concat x)$ and
-$\Hash_{\mathsf{node}}(l, r) = \Hash(\mathtt{0x01} \concat l \concat r)$, with $\Hash$ instantiated as
-SHA-256. The prefix tree and the log use these same leaf and node tags. Cross-tree confusion is not
-exploitable here, since prefix roots appear only as log leaf data and log roots only in signed tree
-heads, but a production deployment should apply distinct per-structure tags as defence in depth.
+\paragraph{Domain separation and structure roles.} Hashing uses the domain tags defined in
+RFC~6962~\cite[Section~2.1]{rfc6962}:
+$\Hash_{\mathsf{leaf}}(x)=\Hash(\mathtt{0x00}\concat x)$ and
+$\Hash_{\mathsf{node}}(l,r)=\Hash(\mathtt{0x01}\concat l\concat r)$, with $\Hash$
+instantiated as SHA-256. DUET currently uses these tags in both the prefix tree and the log. The
+IETF KeyTrans construction uses \texttt{0x00}/\texttt{0x01} for the log tree and
+\texttt{0x02}/\texttt{0x03} for the prefix tree~\cite[Sections~11.8--11.9]{ietf-keytrans-protocol}. Although the two roots occupy different
+positions in DUET's verification chain, separate per-structure tags would provide clearer domain
+separation in a production design.
 
-The prefix tree maps each 256-bit label to a value. For a user-identity entry the value is an identity
-public key, and the label is derived rather than chosen. Labels come in two families: a global slot,
-computed server-side as a VRF over the user identifier, and the client-derived raw slots (the
-dual-index lookup and warning slots and, in continuous mode, the per-epoch CEA slots). Each committed
-prefix-tree root is appended to the Merkle log as a single leaf, so the log records every committed
-directory state and a consistency proof certifies that history has only ever grown. Each epoch the log
-root is signed with Ed25519 and published as the signed tree head, the single authenticated value
-against which every lookup is ultimately checked.
+The prefix tree maps each 256-bit label to a value. For a user-identity entry, the value is an
+identity public key, while the label is derived from the user identifier through the VRF. Labels
+belong to two types. The first is a global slot computed server-side as a VRF over the user
+identifier. The second comprises the client-derived raw slots, which include the dual-index lookup
+and warning slots and, in continuous mode, the per-epoch CEA slots. Each committed prefix-tree root
+is appended to the Merkle log as one leaf. Therefore, the log records every committed directory
+state, while a consistency proof verifies that the sequence of committed roots is append-only. At
+each epoch, the log root is signed with Ed25519 and published as the signed tree head against which
+every lookup is ultimately checked.
 
 \paragraph{Signed-head field rationale.} Each field of the signed-head message
-(\cref{eq:design-sth}) is necessary for a different aspect of verification. The $\mathit{tree\_size}$
-is required by the inclusion and consistency verifiers. Signing the $\mathit{timestamp}$ means it
-cannot be altered without invalidating the signature. Enforcing freshness additionally requires a
-client-side maximum-age or publication-cadence policy, which the prototype does not implement. The
-trailing $\Hash(\mathit{config})$ is a CONIKS-style policy commitment (the field CONIKS calls $P$)~\cite[Section~3.3]{melara2015coniks}
-that binds the provider's parameters into the signature. With it, the server cannot silently swap its
-VRF key, its signing key, the ciphersuite, the protocol version, or the epoch cadence, nor serve
-different parameters to different clients, because any client that recomputes $\Hash(\mathit{config})$
-from the parameters it expects will reject the mismatch. A parameter substitution thus becomes a
-signed, monitorable act: a uniform mismatch is rejected by any client that recomputes the commitment,
-and serving different parameter sets to different clients is equivocation on the configuration
-commitment, exposed by the same cross-vantage comparison used to detect \hyperref[sc:threat-a4]{A4} split-view equivocation.
+(\cref{eq:design-sth}) supports a different part of verification. The
+$\mathit{tree\_size}$ is required by the inclusion and consistency verifiers. Signing the
+$\mathit{timestamp}$ prevents it from being altered without invalidating the signature. Enforcing
+freshness additionally requires a client-side maximum-age or publication-interval policy, which
+the DUET prototype does not implement. The trailing $\Hash(\mathit{config})$ is a CONIKS-style
+policy commitment, corresponding to the field that CONIKS calls $P$~\cite[Section~3.3]{melara2015coniks}. In DUET, this commitment binds the VRF and signing keys,
+suite, protocol version, epoch interval, and raw-label policy into the signature. A client
+recomputes the commitment from its expected keys and constants and rejects a mismatch. Different
+signed configuration commitments served to different clients would constitute equivocation on the
+configuration. Detecting this case requires comparing the configuration commitments in separately
+observed heads. Note that the prototype's A4 comparison currently checks roots and tree sizes but
+does not compare configuration commitments.
 
-\paragraph{Verification-chain current-snapshot binding.} The verification chain of \cref{ssec:design-verify} has three
-properties the figure does not make evident. First, global lookups require the VRF check, while
-client-derived raw labels omit it and the requested-label binding stands on its own. Second, the
-signed head used for verification must be identical to the head the client independently obtained and
-verified, either the latest head it fetched or, during catch-up, the new head whose append-only
-consistency with its last trusted head it has just checked. The client rejects any response anchored
-to a different head, even one carrying a valid signature, which prevents stale-snapshot acceptance and
-an equivocating server from substituting another signed view. Third, inclusion is pinned to the latest
-leaf: because each commit appends the new directory root as the log's last leaf, verification requires
-$\mathit{leaf\_index} = \mathit{tree\_size} - 1$ at exactly the signed tree size. Inclusion proves
-membership, not current-snapshot binding (RFC~9162~\cite[Section~2.1.3.2]{rfc9162}), and the current-snapshot check closes that
-gap.
+\paragraph{Verification-chain current-snapshot binding.} The verification chain in
+\cref{ssec:design-verify} has three properties that the figure does not make explicit. First,
+global lookups require the VRF check, while client-derived raw labels omit it and rely on the
+requested-label binding. Second, the response must be anchored to the root in the independently
+obtained and verified signed head. This is either the latest head fetched by the client or, during
+catch-up, the current head whose append-only consistency with the retained trusted head has just
+been verified. The client rejects a response anchored to a different root, even if another validly
+signed head contains that root. This prevents acceptance of an earlier directory state or another
+signed view. Third, inclusion is pinned to the latest leaf. Since each commit appends the new
+directory root as the log's last leaf, verification requires
+$\mathit{leaf\_index}=\mathit{tree\_size}-1$ at exactly the signed tree size. An RFC~9162
+inclusion proof can authenticate any indexed leaf in a tree~\cite[Section~2.1.3.2]{rfc9162}. It does not by itself establish that the leaf represents the
+current directory snapshot, which is why the latest-leaf check is required.
 
 % ============================================================================
-\section{Continuous-Mode Operation and ACKA Correspondence}\label{sec:design-detail-cea}
+\section{Session-Mode X3DH Coverage}\label{sec:design-detail-x3dh}
 
-The ordering of operations within an epoch follows ACKA's composed construction (their
-Figure~8~\cite{dowling2023acka}) in three respects, each of which matters for correctness. First, the
-label and fingerprint are computed over the current (pre-update) state and the public key, and only
-then is the secret $I_t$ mixed into the chain. Mixing the secret epoch key rather than the public
-ratchet key keeps the chain unpredictable to an adversary that has compromised the pre-shared state,
-the property the pre-use unpredictability and forgery-resistance arguments need. Before the secret is
-folded into the CEA chain, it is domain-separated as $\KDF(I_t, \text{\texttt{"CEA"}})$. In a faithful
-Signal integration $I_t$ is Signal's chain key $ck$, which also feeds the session-key derivation (the
-paper's $\KDF(I_t, \text{\texttt{"CKA"}})$). The distinct \texttt{"CEA"} and \texttt{"CKA"} tags keep
-the transparency-chain value independent of the session key. Second, before posting, the sender checks
-that the label $L_t$ is unoccupied, since ACKA specifies that ``the sender will also check if the
-label has already been uploaded to the log with a fingerprint, which would indicate an
-impersonation''~\cite{dowling2023acka}, and the sender advances its chain only after its write is
-confirmed in a committed head. Third, the receiver advances its chain only when a verification returns
-\textsc{Consistent}. A \textsc{Fork} verdict leaves the chain unadvanced over the disputed epoch and
-reports an in-band warning, and a \textsc{NotPosted} verdict (the per-epoch entry is absent, distinct
-from the UI's grey pending state) leaves the receiver's state untouched so the check can be retried
-without desynchronizing the chain.
-
-The two designs represent label history differently. ACKA's log stores a vector of fingerprints for
-each label, and its receiver treats two fingerprints at one label as evidence of impersonation. DUET
-stores one value at each label and implements the same detection objective through two checks. First,
-if the adversary occupies the label before the honest sender writes, the sender's pre-post check finds
-it occupied and rejects the write. Second, if the adversary attempts to replace a committed
-fingerprint, the transition audit rejects the update because each leaf hash records whether the leaf
-is mutable or immutable. The receiver's per-epoch check cannot detect this overwrite when the
-adversary controls the pre-shared state, so that case depends on the transition audit. Proving that
-ACKA's security argument carries over to this directory representation remains future work.
-
-For per-epoch CEA verification, detection follows ACKA. An active man-in-the-middle that injects a
-forged ratchet key $T'$ either posts under a label the impersonated party never derives (a different
-chain produces a different $L_t$) or causes the committed fingerprint to differ from the verifier's
-expected fingerprint at the shared label, in which case \textsf{CeaVerify} returns \textsc{Fork},
-leaves the chain unchanged, and writes to the shared warning slot. This CEA verdict is distinct from
-split-view equivocation (A4), which requires the cross-vantage auditor. \Cref{tab:design-x3dh-coverage}
-sets session-mode X3DH coverage against Signal's manual Safety Number.
+\Cref{tab:design-x3dh-coverage} compares session-mode coverage with Signal's manual Safety Number.
+The X3DH key roles and signature relationship follow the protocol specification~\cite[Sections~2.4 and~3.2--3.3]{x3dh}, while the Safety Number column follows Signal's
+description~\cite{safetynumbers}.
 
 \begin{table}[ht]
 \centering
 \caption[X3DH key-material coverage: Signal versus this thesis.]{Coverage of X3DH key material by
-Signal's Safety Number and the scheme proposed in this thesis. The Signal column describes the Safety
-Number. Optional AKV is discussed in \cref{ssec:bg-gap}.}
+Signal's Safety Number and the scheme proposed in this thesis. Optional AKV is discussed in
+\cref{ssec:bg-gap}.}
 \label{tab:design-x3dh-coverage}
 \small
 \renewcommand{\arraystretch}{1.4}
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.4cm}
+>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
 \toprule
 Cryptographic material & Signal's Safety Number & Proposed scheme (this work) \\
 \midrule
-Long-term identity key ($\pkid{}$) & Yes, by manual out-of-band comparison & Yes:
-  automatically logged and checked by a background monitor \\
-Signed pre-key ($\spk{}$) & No & Not logged individually. A signed-pre-key
-  rotation triggers re-registration of the identity-key binding. The signed pre-key itself is not a
-  logged object, its authenticity resting on its X3DH signature under the verified identity key \\
-One-time pre-key ($\opk{}{i}$) & No & Not logged individually (single-use),
-  contributes to $\sharedS$ \\
-Ephemeral key ($\ek{}$) & No & Not independently logged, contributes to $\sharedS$, from which the
-  conversation's labels derive after honest establishment \\
+Long-term identity key ($\pkid{}$) & Yes, through manual out-of-band comparison &
+  Yes. The key is automatically logged and checked by a background monitor \\
+Signed pre-key ($\spk{}$) & No &
+  Not logged individually. It contributes to $\sharedS$, which determines the new session-mode
+  labels. Its X3DH signature is verified under the verified identity key \\
+One-time pre-key ($\opk{}{i}$) & No &
+  Not logged individually. When present, it contributes to $\sharedS$ \\
+Ephemeral key ($\ek{}$) & No &
+  Not independently logged. It contributes to $\sharedS$, from which the conversation's labels
+  derive after honest establishment \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 % ============================================================================
-\section{Windowing Soundness and Supporting Argument}\label{sec:design-detail-window}
+\section{Continuous-Mode Operation and ACKA Correspondence}\label{sec:design-detail-cea}
 
-The key-transparency literature identifies a soundness risk when clients skip intermediate epochs.
-CONIKS's monitoring cost is linear in the offline period precisely because a malicious provider could
-insert a false binding at some epoch inside the window and revert it before the client
-returns~\cite[pp.~7--8]{melara2015coniks}. A
-client that verifies only the consistency of the two endpoint heads and the current value at its own
-label would miss such a transient substitution, which is why CONIKS concludes that inspecting only the
-latest signed root is unsound (\cref{sec:ext-vkd-survey}). That objection applies verbatim to any
-windowed check, including this one. A transient in-window substitution is profitable to the adversary
-only if it is used. A peer who initiates or continues the conversation during the window performs
-pinned-key lookups at the dual-index slots (\cref{ssec:design-detection}) and, on a mismatch, writes
-to the shared warning slot. DUET preserves detection only when that warning commits. The write-once
-policy blocks replacement through the honest interface. Once committed, the warning either remains
-available for the returning client to read or its removal causes the transition audit to reject the
-epoch transition, and the separately specified persistence check can retain evidence of that removal.
-If the server censors the write (the \hyperref[sc:threat-a2]{A2} threat), the distant-head proof still
-establishes append-only consistency but cannot exclude every transient substitution. Windowed catch-up
-therefore relies on the warning channel, although the warning channel does not depend on windowing.
+The ordering of operations within an epoch follows ACKA's composed construction~\cite[Figure~8]{dowling2023acka} in three aspects. First, the label $L_t$ is computed from the
+current pre-update CEA state, while the fingerprint $F_t$ binds that state to the public ratchet key
+$T_t$. Only after the fingerprint has been committed and verified is the secret epoch input $I_t$
+mixed into the CEA chain. Using the secret epoch input rather than the public ratchet key means that
+an honest, uncompromised $I_t$ contributes fresh secret material to the chain. Before it is mixed
+into the CEA state, the input is domain-separated as
+$\KDF(I_t,\text{\texttt{"CEA"}})$. In ACKA's mapping to Signal, $T_t$ corresponds to the public
+ratchet key and $I_t$ corresponds to the chain key $ck$~\cite[pp.~13--14]{dowling2023acka}. The separate \texttt{"CEA"} and \texttt{"CKA"} tags distinguish
+the CEA state update from the session-key output. A production Signal integration would obtain
+$I_t$ from the live Double Ratchet state. The DUET prototype instead uses the simulated epoch input
+described in \cref{sec:impl-strategy}.
+
+Second, before posting, the sender verifies that $L_t$ is unoccupied. ACKA states that an existing
+fingerprint at the expected label indicates impersonation and should cause the sender to take
+appropriate, likely out-of-band, action~\cite[p.~8]{dowling2023acka}. Therefore, when the label is
+already occupied, the DUET sender procedure rejects the registration and leaves the CEA state
+unchanged. After writing to an empty label, the sender advances its chain only after a verified
+read-back confirms the committed fingerprint. Third, the receiver advances only after a
+\textsc{Consistent} verdict. A \textsc{Fork} verdict leaves the chain unchanged over the disputed
+epoch and publishes an in-band warning. A \textsc{NotPosted} verdict means that the per-epoch entry
+is absent. It also leaves the receiver's state unchanged so that the lookup can be retried without
+desynchronizing the chain. Note that this verdict is distinct from the user interface's grey
+pending state.
+
+An important distinction is that ACKA and DUET represent values at a label differently. ACKA's log
+stores a vector of fingerprints for each label and requires exactly one value when the receiver
+verifies an update~\cite[Figure~8]{dowling2023acka}. DUET stores one immutable value at each label
+and implements the same detection objective through two checks. First, if an adversary occupies the
+label before the honest sender writes, the sender's pre-write lookup detects the occupied slot and
+rejects the write. Second, transition auditing rejects a later overwrite because the raw-label
+policy marks the entry as immutable. A receiver that has already accepted the epoch does not repeat
+its per-epoch lookup, so detecting an overwrite attempted afterwards depends on the transition
+audit. Proving formally that ACKA's security argument carries over to this single-value directory
+representation remains future work.
+
+For per-epoch CEA verification, detection follows ACKA's method. An active man-in-the-middle that
+injects a forged ratchet key $T'$ either leads to a label the impersonated party does not derive or
+produces a fingerprint mismatch at the shared label. In the second case, \textsf{CeaVerify} returns
+\textsc{Fork}, leaves the chain unchanged, and writes to the shared warning slot. This CEA verdict
+is different from the \hyperref[sc:threat-a4]{A4 split-view equivocation scenario}, which requires
+comparison of signed heads obtained from independent vantage points.
 
 % ============================================================================
-\section{Design Alternatives and Requirement Mapping}\label{sec:design-detail-alternatives}
+\section{Windowing Soundness and Supporting Argument}\label{sec:design-detail-window}
 
-\paragraph{Directory structure.} An accumulator would shorten membership proofs but make the
-non-membership proofs the warning channel needs substantially more expensive, and an $n$-ary trie
-would reduce the number of levels but widen every node's copath ($k-1$ siblings per level) and
-complicate the encoding. With path compression the transmitted proof is already governed by the
-populated prefix depth, so binary branching keeps the simplest node semantics at no asymptotic cost in
-proof size.
+Windowed catch-up must account for a substitution introduced and reverted between the retained and
+current heads. CONIKS requires a returning client to perform a series of checks after missed epochs
+because a malicious provider could insert a false binding and later revert it before the client
+returns~\cite[pp.~7--8]{melara2015coniks}. A client that verifies only endpoint consistency and the
+current value of its binding would not detect such a transient substitution. The same limitation
+applies to DUET's windowed check.
 
-\paragraph{Global-label derivation.} Global slots are addressed by an ECVRF over the user identifier
-rather than a bare hash, for the directory-privacy reason given in \cref{ssec:design-structures}. The
-design selects ECVRF-EDWARDS25519-SHA512-TAI (RFC~9381) because it matches Signal's deployed keytrans
-VRF, avoiding a second, incompatible VRF suite~\cite{rfc9381,signal-kt-server}.
+A transient substitution affects a conversation only if an online peer retrieves and uses the
+substituted key. An online peer running DUET's monitor checks the dual-index slots and writes to the
+shared warning slot when it detects a mismatch (\cref{ssec:design-detection}). Detection of an
+in-window substitution therefore depends on that warning being committed. Once committed, the
+write-once policy prevents replacement through the public interface, the transition audit rejects a
+later invalid change, and the persistence check can retain evidence of a deletion. If the directory
+operator censors the warning before it commits, as considered by
+\hyperref[sc:threat-a2]{A2 warning censorship}, the endpoint consistency proof still verifies
+append-only growth between the retained and current heads but cannot reveal the transient
+substitution. Windowed catch-up therefore relies on the warning channel for evidence of an
+in-window substitution. The warning channel itself does not depend on windowing.
 
-\paragraph{Combined prefix-plus-log stack.} One tree alone would authenticate the present state but
-not its history, leaving append-only violations undetectable. The log supplies exactly the consistency
-proofs that windowed catch-up and the cross-vantage auditor depend on. The cost is one extra
-log-inclusion path per lookup, up to $32\lceil\lg E\rceil$ bytes, quantified in \cref{ch:eval}.
+% ============================================================================
+\section{Design Alternatives}\label{sec:design-detail-alternatives}
+
+\paragraph{Directory structure.} DUET retains a path-compressed sparse binary Merkle prefix tree
+because the warning channel requires direct inclusion and non-inclusion proofs, including proof that
+a warning slot is empty. An $n$-ary trie would reduce the number of levels but require up to $k-1$
+sibling hashes at each $k$-ary node and a wider proof encoding. Path compression collapses
+single-child chains, leaving sibling hashes only at populated branching points. Therefore, binary
+branching matches the implemented proof format while retaining direct non-inclusion proofs.
+
+\paragraph{Global-label derivation.} Global slots use
+ECVRF-EDWARDS25519-SHA512-TAI rather than a bare hash for the directory-privacy reason described in
+\cref{ssec:design-structures}. The selected suite is defined by
+RFC~9381~\cite[Section~5.5]{rfc9381} and matches Signal's key-transparency implementation~\cite{signal-kt-server}. This avoids introducing a second, incompatible VRF suite.
+
+\paragraph{Combined prefix-plus-log stack.} The prefix tree alone authenticates current lookup
+results but does not authenticate their history. The append-only log records the committed
+prefix-tree roots and supplies the consistency proofs used by windowed catch-up and the auditor.
+Therefore, each lookup includes one additional log-inclusion path. With $E$ committed epochs, this
+path contains at most $\lceil\lg E\rceil$ sibling hashes of 32 bytes, giving a maximum of
+$32\lceil\lg E\rceil$ bytes~\cite[Section~2.1.3]{rfc9162}. The measured cost is reported in
+\cref{ch:eval}.

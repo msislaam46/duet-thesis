@@ -8,8 +8,7 @@ to motivate DUET.
 \section{Signal Key Material and X3DH Mechanics}\label{sec:ext-signal}
 
 Following the X3DH protocol used by Signal, a user publishes a long-term identity key, a signed
-pre-key and its signature, and a set of one-time pre-keys
-~\cite[Sections~2.4 and 3.2]{x3dh}. A user $U$ generates a long-term identity key pair
+pre-key and its signature, and a set of one-time pre-keys~\cite[Sections~2.4 and 3.2]{x3dh}. A user $U$ generates a long-term identity key pair
 $(\pkid{U},\skid{U})$, retains the secret key $\skid{U}$ locally, and publishes the corresponding
 public identity key $\pkid{U}$. The user also publishes a medium-term signed pre-key $\spk{U}$
 together with a signature $\sig{\spk{U}}$ produced under $\skid{U}$, and a batch of single-use
@@ -68,8 +67,7 @@ coordinated substitution. Substituting only the signed pre-key causes Alice's si
 fail because she verifies $\spk{B}$ under $\pkid{B}$ and aborts on failure. Substituting only the
 one-time pre-key normally causes Alice and Bob to derive different secrets, so the session fails
 rather than enabling impersonation. Omitting the one-time pre-key weakens the initial
-forward-secrecy contribution but does not by itself enable impersonation
-~\cite[Sections~3.3, 3.4, and 4.7]{x3dh}. \Cref{fig:bg-x3dh} shows the protocol sequence from
+forward-secrecy contribution but does not by itself enable impersonation~\cite[Sections~3.3, 3.4, and 4.7]{x3dh}. \Cref{fig:bg-x3dh} shows the protocol sequence from
 publication of Bob's pre-key bundle to Alice's initial message.
 
 \begin{figure}[H]
@@ -82,8 +80,7 @@ Sections~3.2--3.3 of the X3DH specification~\cite{x3dh}.}
 \end{figure}
 
 Signal's post-quantum variant, PQXDH, additionally mixes in a key-encapsulation secret to protect
-recorded traffic against a future ``harvest-now, decrypt-later'' attack
-~\cite[Section~4.7]{pqxdh}. The resulting shared secret then initializes the Double Ratchet, which
+recorded traffic against a future ``harvest-now, decrypt-later'' attack~\cite[Section~4.7]{pqxdh}. The resulting shared secret then initializes the Double Ratchet, which
 evolves the cryptographic state throughout the conversation and derives per-message encryption
 keys~\cite[Section~2.3]{doubleratchet}.
 
