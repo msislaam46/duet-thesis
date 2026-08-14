@@ -11,11 +11,13 @@ security consequences remain in the main chapter.
 RFC~6962~\cite[Section~2.1]{rfc6962}:
 $\Hash_{\mathsf{leaf}}(x)=\Hash(\mathtt{0x00}\concat x)$ and
 $\Hash_{\mathsf{node}}(l,r)=\Hash(\mathtt{0x01}\concat l\concat r)$, with $\Hash$
-instantiated as SHA-256. DUET currently uses these tags in both the prefix tree and the log. The
-IETF KeyTrans construction uses \texttt{0x00}/\texttt{0x01} for the log tree and
-\texttt{0x02}/\texttt{0x03} for the prefix tree~\cite[Sections~11.8--11.9]{ietf-keytrans-protocol}. Although the two roots occupy different
-positions in DUET's verification chain, separate per-structure tags would provide clearer domain
-separation in a production design.
+instantiated as SHA-256. DUET currently uses these tags in both the prefix tree and the log. The IETF KeyTrans construction
+separates the two structures differently. For log-tree parent hashing, it prefixes leaf-child and
+parent-node child values with \texttt{0x00} and \texttt{0x01}, respectively. Prefix-tree leaves use
+\texttt{0x02}, while prefix-tree parents use
+\texttt{0x03}~\cite[Sections~11.8--11.9]{ietf-keytrans-protocol}. Although the two roots occupy
+different positions in DUET's verification chain, separate per-structure tags would provide clearer
+domain separation in a production design.
 
 The prefix tree maps each 256-bit label to a value. For a user-identity entry, the value is an
 identity public key, while the label is derived from the user identifier through the VRF. Labels
@@ -44,10 +46,9 @@ does not compare configuration commitments.
 \paragraph{Verification-chain current-snapshot binding.} The verification chain in
 \cref{ssec:design-verify} has three properties that the figure does not make explicit. First,
 global lookups require the VRF check, while client-derived raw labels omit it and rely on the
-requested-label binding. Second, the response must be anchored to the root in the independently
-obtained and verified signed head. This is either the latest head fetched by the client or, during
-catch-up, the current head whose append-only consistency with the retained trusted head has just
-been verified. The client rejects a response anchored to a different root, even if another validly
+requested-label binding. Second, the response must be anchored to the root in the verified signed head returned with that
+response. During catch-up, the current head must also be verified as an append-only extension of
+the retained trusted head. The client rejects a response anchored to a different root, even if another validly
 signed head contains that root. This prevents acceptance of an earlier directory state or another
 signed view. Third, inclusion is pinned to the latest leaf. Since each commit appends the new
 directory root as the log's last leaf, verification requires

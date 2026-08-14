@@ -237,7 +237,7 @@ Persistent Patricia Trie to retain historical versions of its Append-Only Zero K
 epoch~\cite[Section~6]{chase2019seemless}. Its Patricia trie is compressed because it contains no
 empty nodes. This thesis uses \emph{path-compressed prefix tree} when single-child chains are
 collapsed. The IETF KeyTrans draft separately specifies a prefix tree and proof encodings for
-inclusion and non-inclusion~\cite[Sections~3.3 and~11.2]{ietf-keytrans-protocol}.
+inclusion and non-inclusion~\cite[Sections~3.3 and~12.2]{ietf-keytrans-protocol}.
 
 \paragraph{Zero-Knowledge Sets.} A ZKS commits to a collection of label--value pairs and supports
 membership and non-membership proofs without revealing information about the remaining collection.
@@ -263,7 +263,7 @@ It may commit a legitimate key binding in one view and a substituted binding in 
 clients' local inclusion and consistency checks may succeed. Therefore, detecting this split view
 requires comparing signed heads through client gossip, an anonymous channel, or external
 auditors~\cites[Section~4.1.4]{melara2015coniks}
-[Section~14]{ietf-keytrans-protocol}. This limitation of local verification motivates
+[Sections~10.2 and~16]{ietf-keytrans-protocol}. This limitation of local verification motivates
 DUET's split-view requirement in \cref{ssec:bg-implications}. \Cref{fig:bg-splitview} shows the two
 views and their comparison.
 
