@@ -47,22 +47,9 @@ Correctness requires
 \mathsf{Vfy}(k,m,\mathsf{MAC}(k,m))=1
 \]
 for every key produced by $\mathsf{KGen}$ and every message $m$. The scheme is unforgeable under
-chosen-message attack (UNF-CMA) if every probabilistic polynomial-time adversary with access to
-the tagging and verification oracles satisfies
-\[
-\Pr\!\left[
-\begin{array}{c}
-k\gets\mathsf{KGen}(1^{\secpar})\\
-(m^*,\tau^*)\gets
-\Adv^{\mathsf{MAC}(k,\cdot),\mathsf{Vfy}(k,\cdot,\cdot)}(1^{\secpar})
-\end{array}
-:
-\mathsf{Vfy}(k,m^*,\tau^*)=1
-\land (m^*,\tau^*)\notin\mathcal{S}
-\right]\leq\negl(\secpar),
-\]
-where $\mathcal{S}$ is the set of message--tag pairs returned by the tagging
-oracle~\cite[Slides~5--7]{dowling2025mackdfs}. HMAC is a hash-based message authentication
+chosen-message attack (UNF-CMA) if an efficient adversary, after
+obtaining tags for messages of its choice, can produce a new valid message--tag pair only with
+negligible probability~\cite[Slides~5--7]{dowling2025mackdfs}. HMAC is a hash-based message authentication
 code~\cite[Slide~10]{dowling2025mackdfs}. DUET uses HMAC-SHA256 for HKDF and to authenticate warning
 payloads (\cref{def:hkdf,def:dualindex-write}).
 \end{definition}
@@ -78,22 +65,9 @@ $\mathsf{Vfy}(\mathit{pk},m,\sigma)$ returns a Boolean value. Correctness requir
 \mathsf{Vfy}(\mathit{pk},m,\mathsf{Sign}(\mathit{sk},m))=1
 \]
 for every key pair produced by $\mathsf{KGen}$ and every message $m$. The scheme is unforgeable
-under chosen-message attack (UNF-CMA) if every probabilistic polynomial-time adversary with access
-to the signing and verification oracles satisfies
-\[
-\Pr\!\left[
-\begin{array}{c}
-(\mathit{sk},\mathit{pk})\gets\mathsf{KGen}(1^{\secpar})\\
-(m^*,\sigma^*)\gets
-\Adv^{\mathsf{Sign}(\mathit{sk},\cdot),\mathsf{Vfy}(\mathit{pk},\cdot,\cdot)}(\mathit{pk})
-\end{array}
-:
-\mathsf{Vfy}(\mathit{pk},m^*,\sigma^*)=1
-\land (m^*,\sigma^*)\notin\mathcal{S}
-\right]\leq\negl(\secpar),
-\]
-where $\mathcal{S}$ is the set of message--signature pairs returned by the signing
-oracle~\cite[Slides~29 and~33--34]{dowling2025signatures}. Ed25519 is specified in
+under chosen-message attack (UNF-CMA) if an efficient adversary, after
+obtaining signatures for messages of its choice, can produce a new valid message--signature pair
+only with negligible probability~\cite[Slides~29 and~33--34]{dowling2025signatures}. Ed25519 is specified in
 RFC~8032~\cite[Section~5.1]{rfc8032}. DUET uses Ed25519 to sign the signed tree head
 (\cref{def:sth}).
 \end{definition}
