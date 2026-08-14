@@ -48,13 +48,14 @@ does not compare configuration commitments.
 global lookups require the VRF check, while client-derived raw labels omit it and rely on the
 requested-label binding. Second, the response must be anchored to the root in the verified signed head returned with that
 response. During catch-up, the current head must also be verified as an append-only extension of
-the retained trusted head. The client rejects a response anchored to a different root, even if another validly
-signed head contains that root. This prevents acceptance of an earlier directory state or another
-signed view. Third, inclusion is pinned to the latest leaf. Since each commit appends the new
+the retained trusted head. The client rejects a proof chain bound to a different signed head. Third,
+inclusion is pinned to the latest leaf. Since each commit appends the new
 directory root as the log's last leaf, verification requires
 $\mathit{leaf\_index}=\mathit{tree\_size}-1$ at exactly the signed tree size. An RFC~9162
-inclusion proof can authenticate any indexed leaf in a tree~\cite[Section~2.1.3.2]{rfc9162}. It does not by itself establish that the leaf represents the
-current directory snapshot, which is why the latest-leaf check is required.
+inclusion proof can authenticate any indexed leaf in a
+tree~\cite[Section~2.1.3.2]{rfc9162}. It does not by itself establish that the leaf represents the
+current directory snapshot. Therefore, the latest-leaf check prevents acceptance of an earlier
+committed directory root from the same log history.
 
 % ============================================================================
 \section{Session-Mode X3DH Coverage}\label{sec:design-detail-x3dh}
