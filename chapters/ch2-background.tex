@@ -153,9 +153,10 @@ whole-directory verification~\cite[Sections~1 and 4]{pusch2025prism}. Across the
 clients, auditors, or witness quorums perform verification, but none defines a conversation-specific
 peer-warning channel for an individual key substitution.
 
-A comparison with ELEKTRA and PRISM clarifies this peer-warning gap. After a full account reset,
-ELEKTRA requires every conversation partner to acknowledge an urgent warning that the server cannot
-suppress~\cite[p.~2]{len2023elektra}. PRISM frames the wider problem as reliance on external checks
+A comparison with ELEKTRA and PRISM clarifies this peer-warning gap. A full account reset in
+ELEKTRA invokes \texttt{AddFirstKey}, which appends another \texttt{AddFirst} statement that
+contacts can detect when they query the keychain. The paper recommends that client applications
+show an urgent warning for this event~\cite[Section~2.2]{len2023elektra}. PRISM frames the wider problem as reliance on external checks
 such as client gossip and third-party auditing~\cite[p.~6]{pusch2025prism}. It also proposes
 embedding commitments in encrypted messages as an additional gossip
 safeguard~\cite[p.~5]{pusch2025prism}. A warning about one substituted key therefore remains
@@ -260,7 +261,7 @@ CONIKS~\cite{melara2015coniks} & username $\to$ key binding & self-monitoring & 
   hash-linked STRs, auditor gossip and client--auditor STR comparison \\
 SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & history cost scales with key updates & adjacent-epoch audits, commitment gossip or blockchain publication \\
 Parakeet~\cite{malvai2023parakeet} & identifier $\to$ public key & self-monitoring & No & one check between tombstoning and deletion & witness-verified transitions, $2f{+}1$-of-$3f{+}1$ witness certificates \\
-ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Warning only after account reset & keychain updates since the last query &
+ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Reset warning recommended & keychain updates since the last query &
   audited append-only transitions, agreement on published commitments assumed \\
 OPTIKS~\cite{optiks2024} & identity key and device entries & self-monitoring (single proof, common case) & No &
   verify before old periods are deleted & audited directory updates, shared append-only bulletin-board view \\
@@ -293,8 +294,8 @@ substitution must be able to warn its peer. Existing systems leave detection to 
 auditor, a witness set, or a global verifier. In the cited WhatsApp configuration, a failed
 automatic verification leads to manual comparison~\cite[pp.~5, 10]{whatsapp2023whitepaper}, and
 Signal similarly recommends Safety Number comparison when Automatic Key Verification is
-unavailable~\cite{signal-akv}. ELEKTRA warns conversation partners only after a full account
-reset~\cite[p.~2]{len2023elektra}. DUET therefore needs a conversation-specific warning that the
+unavailable~\cite{signal-akv}. ELEKTRA recommends warning contacts after a full account
+reset~\cite[Section~2.2]{len2023elektra}. DUET therefore needs a conversation-specific warning that the
 peer can retrieve after reconnecting.
 
 Second, a returning client that retains its last trusted head should verify the missed history

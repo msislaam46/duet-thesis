@@ -393,14 +393,15 @@ does not define the automatic in-band peer warning targeted by this thesis.
 
 \paragraph{Signal Key Transparency.}
 Signal's repository states that its implementation uses the IETF protocol with application-specific
-modifications and exposes Search, Monitor, and audit interfaces~\cite{signal-kt-server}. The stored
+modifications and exposes Search, Monitor, and audit interfaces. The stored
 mappings associate an account identifier (ACI) with its identity key and associate a phone number or
 username hash with the ACI. The verifier requires a full 256-sibling prefix copath. At 32 bytes per
-sibling, this gives the fixed \num{8192}-byte copath used as a baseline in \cref{ch:eval}.
+sibling, this gives the fixed \num{8192}-byte copath used as a baseline in
+\cref{ch:eval}~\cite{signal-kt-server}.
 
 \paragraph{Proton Mail Key Transparency.}
 ProtonKT applies a verifiable directory to email and reuses Certificate Transparency to support
-consistency checking~\cite[pp.~35, 37]{goebel2023proton}. It supports owner and external auditing.
+consistency checking~\cite[pp.~35, 37]{goebel2023proton}. It supports owner and external auditing~\cite[pp.~44 and~47]{goebel2023proton}.
 Its warning model notifies the key owner but not the communication
 partner~\cite[pp.~8, 47, 67]{goebel2023proton}. The Proton thesis also describes the investigation
 of KT warnings as an open user-experience

@@ -2,7 +2,7 @@
 % Label: \label{fig:bg-splitview}
 \begin{tikzpicture}[>=Stealth,font=\small,
    box/.style={draw,rounded corners,minimum width=2.4cm,minimum height=9mm}]
-  \node[box,fill=black!8] (srv) at (0,0) {malicious server};
+  \node[box,fill=black!8] (srv) at (0,0) {\shortstack{malicious directory\\operator}};
   \node[box] (ta) at (-3.2,-2) {log with head $\STH^\A$};
   \node[box] (tb) at (3.2,-2)  {log with head $\STH^\B$};
   \node (A) at (-3.2,-3.6) {\textbf{Alice}};
