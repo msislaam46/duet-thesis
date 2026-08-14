@@ -2,19 +2,21 @@
 % Label: \label{fig:bg-x3dh}
 \begin{tikzpicture}[>=Stealth,font=\small]
   \node (A)   at (0,0)   {\textbf{Alice}};
-  \node (Srv) at (5,0)   {\textbf{Server}};
+  \node (Srv) at (5,0)   {\textbf{Messaging server}};
   \node (B)   at (10,0)  {\textbf{Bob}};
   \foreach \n in {A,Srv,B}{\draw[dashed] (\n.south) -- ++(0,-6.7);}
-  \draw[->] ($(B)+(0,-0.7)$)  -- node[above]{publish $\xIK{B},\xSPK{B},\sig{\xSPK{B}},\xOPK{B}$} ($(Srv)+(0,-0.7)$);
+  \draw[->] ($(B)+(0,-1.15)$) --
+    node[above,align=center,font=\footnotesize]
+    {publish $\xIK{B},\xSPK{B},\sig{\xSPK{B}},$\\$\{\xOPK{B}^{i}\}$}
+    ($(Srv)+(0,-1.15)$);
   \draw[->] ($(A)+(0,-1.6)$)  -- node[above]{request Bob's bundle} ($(Srv)+(0,-1.6)$);
-  \draw[->] ($(Srv)+(0,-2.5)$)-- node[above]{pre-key bundle} ($(A)+(0,-2.5)$);
-  % Alice-local computation: two compact boxes kept entirely within Alice's lane
-  % (right edge well left of the Server lifeline at x=5).
+  \draw[->] ($(Srv)+(0,-2.5)$)-- node[above,font=\footnotesize]{pre-key bundle with optional $\xOPK{B}$} ($(A)+(0,-2.5)$);
+  % Alice-local computation: two compact boxes centred on Alice's lifeline.
   \node[draw,rounded corners,align=left,fill=white,font=\footnotesize,
-        text width=3.9cm,anchor=north west] (vbox) at (-0.5,-3.15)
+        text width=3.9cm,anchor=north] (vbox) at ($(A)+(0,-3.15)$)
        {verify $\sig{\xSPK{B}}$ under $\xIK{B}$, abort on failure};
   \node[draw,rounded corners,align=left,fill=white,font=\footnotesize,
-        text width=3.9cm,anchor=north west] (dbox) at (-0.5,-4.55)
+        text width=3.9cm,anchor=north] (dbox) at ($(A)+(0,-4.55)$)
        {sample $\xEK{A}$ and derive $\sharedS$};
-  \draw[->] ($(A)+(0,-6.1)$)  -- node[above]{initial message ($\xIK{A}$, $\xEK{A}$, ciphertext)} ($(B)+(0,-6.1)$);
+  \draw[->] ($(A)+(0,-6.1)$)  -- node[above,font=\footnotesize]{initial message ($\xIK{A}$, $\xEK{A}$, pre-key identifiers, ciphertext)} ($(B)+(0,-6.1)$);
 \end{tikzpicture}

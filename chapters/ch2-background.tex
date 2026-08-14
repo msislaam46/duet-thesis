@@ -57,8 +57,8 @@ client and does not describe a way to warn the peer~\cite{signal-akv}.
 
 Usability evidence also limits reliance on manual verification. Across unguided trials in one study,
 only 14\% of pair--application trials succeeded, and only two of twelve pairs completed the ceremony
-in any tested application~\cite[p.~30]{vaziripour2017}. Instructions improved
-success~\cite[p.~29]{vaziripour2017}, but even instructed users took an average of 3.2 minutes to
+in any tested application~\cite[Section~5]{vaziripour2017}. Instructions improved
+success~\cite[Section~5]{vaziripour2017}, but even instructed users took an average of 3.2 minutes to
 find the ceremony and another 7.8 minutes to complete
 it~\cite[p.~36]{vaziripour2017}. MoDUSA authenticates evolving protocol state but retains a
 user-initiated comparison, while ACKA replaces that comparison with an assumed secure
@@ -100,20 +100,20 @@ Verified Merkle proofs show that a directory response matches a committed state,
 show whether every observer received that same state~\cite[Section~3.3]{ietf-keytrans-architecture}.
 A malicious operator can present Alice and Bob with different but internally consistent histories.
 Detecting this split view requires comparing log commitments observed by different parties or through
-separate channels~\cites[Section~4.1.4]{melara2015coniks}[Section~10.2]{ietf-keytrans-protocol}.
+separate channels~\cites[Section~4.1.4]{melara2015coniks}[Section~14]{ietf-keytrans-protocol}.
 Existing comparison mechanisms are discussed further in \cref{sec:ext-splitview}.
 
 \subsection{The IETF KeyTrans Architecture}\label{ssec:bg-keytrans}
 
 The IETF Key Transparency protocol combines a VRF-indexed prefix tree with a log tree that records
 successive prefix-tree roots~\cites[Section~8]{ietf-keytrans-architecture}
-[Sections~3.3--3.4 and 11.7]{ietf-keytrans-protocol}. It defines search and monitoring operations
+[Sections~3.3--3.4 and 10.7]{ietf-keytrans-protocol}. It defines search and monitoring operations
 along with third-party auditing~\cites[Sections~3.1 and 4.2]{ietf-keytrans-architecture}
-[Sections~13 and 15.2]{ietf-keytrans-protocol}. Signal's key-transparency server uses the protocol
+[Sections~12.1, 12.3, and 13.2]{ietf-keytrans-protocol}. Signal's key-transparency server uses the protocol
 with changes for its application requirements~\cite{signal-kt-server}. The protocol uses the
 Reasonable Monitoring Window to select regularly spaced distinguished log entries and specifies
-separate contact- and owner-monitoring algorithms~\cite[Sections~6.1, 8, and
-13.2--13.4]{ietf-keytrans-protocol}.
+separate contact- and owner-monitoring algorithms~\cite[Sections~6.1 and
+8.2--8.3]{ietf-keytrans-protocol}.
 
 % ============================================================================
 \section{Verifiable Key Directories for Key Transparency}\label{sec:bg-vkd}
@@ -133,8 +133,9 @@ what proofs reveal beyond the queried binding. SEEMless uses an append-only ZKS 
 ordered ZKS (oZKS), and ELEKTRA a rotatable ZKS
 (RZKS)~\cites[Sections~3--6]{chase2019seemless}[Section~III]{malvai2023parakeet}
 [Section~3.1]{len2023elektra}[Section~3]{chen2022rzks}.
-Merkle\textsuperscript{2} uses chronological Merkle trees in the outer layer, with a prefix tree
-corresponding to each internal node~\cite[Section~IV]{hu2021merkle2}.
+Merkle\textsuperscript{2}, a general transparency-log system with applications to public-key
+transparency, uses chronological Merkle trees in the outer layer, with a prefix tree corresponding
+to each internal node~\cite[Sections~I, IV, and~XI]{hu2021merkle2}.
 \Cref{sec:ext-vkd-blocks} explains the structural differences and terminology.
 
 \subsection{Academic and Deployed Systems}\label{ssec:bg-vkd-academic}

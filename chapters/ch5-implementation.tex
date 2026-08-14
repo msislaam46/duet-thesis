@@ -49,7 +49,7 @@ process that replays declared transitions and compares signed-head views.}
 
 Within the \texttt{duet} crate, the directory core combines a path-compressed sparse Merkle
 directory, an append-only log with RFC~9162 consistency proofs~\cite[Section~2.1.4]{rfc9162}, and signed tree heads based on
-the IETF KeyTrans model~\cite[Sections~3 and 11.2]{ietf-keytrans-protocol}. It also uses
+the IETF KeyTrans model~\cite[Sections~3 and 10.2]{ietf-keytrans-protocol}. It also uses
 ECVRF-EDWARDS25519-SHA512-TAI for global-label
 derivation~\cite[Section~5.5]{rfc9381}. The crate implements DUET's dual-index construction, ACKA's
 CEA construction~\cite[Section~5.1]{dowling2023acka}, the HTTP server, and the auditor process. The
@@ -87,7 +87,7 @@ Module & Standards or design basis & Verification and test evidence \\
 \texttt{prefix\_tree} & IETF KeyTrans prefix tree~\cite[Section~3.3]{ietf-keytrans-protocol}, with path compression as DUET's implementation choice & client-side root reconstruction from compressed proofs \\
 \texttt{vrf} & RFC~9381 ECVRF-EDWARDS25519-SHA512-TAI, suite \texttt{0x03}~\cite[Section~5.5]{rfc9381} & RFC~9381 test vectors~\cite[Appendix~B.3]{rfc9381} \\
 \texttt{dual\_index} & RFC~5869 HKDF-SHA256 derivation for the labels and warning MAC key~\cite[Sections~2--3]{rfc5869}, with the authenticated warning payload in \cref{alg:dualindex} & cross-implementation vectors for the labels and authenticated warning payload, plus warning round-trip and invalid MAC rejection tests \\
-\texttt{server} & IETF KeyTrans combined-tree and signed-head model~\cite[Sections~3 and~11.2]{ietf-keytrans-protocol}, with DUET's write-once raw-label policy and epoch deltas in \cref{alg:server} & signed-head verification, committed-state lookup, write-once rejection, and epoch-delta tests \\
+\texttt{server} & IETF KeyTrans combined-tree and signed-head model~\cite[Sections~3.4 and~10.2]{ietf-keytrans-protocol}, with DUET's write-once raw-label policy and epoch deltas in \cref{alg:server} & signed-head verification, committed-state lookup, write-once rejection, and epoch-delta tests \\
 \texttt{auditor} & signed-head comparison and per-epoch transition audit in \cref{alg:auditor} & append-only and equivocation tests, with invalid deletion and modification rejected during transition replay \\
 \texttt{monitor} & warning persistence and deletion evidence in \cref{alg:detect} & persistence while committed and verifiable deletion evidence against the server's signed heads \\
 \texttt{cea} & ACKA's CEA construction~\cite[Section~5.1]{dowling2023acka}, instantiated with write-once directory registration, verified write confirmation, and state advance only on success in \cref{alg:cea} & cross-implementation vectors, rejection of occupied labels, and no state advance after \textsc{Fork} or \textsc{NotPosted} \\
@@ -142,7 +142,7 @@ live replica and cursor advance only after every unaudited epoch is verified and
 signed-head comparison succeeds. The auditor's update flow is based on the IETF
 \texttt{AuditorUpdate} pattern, in which the service operator sends an update for each new log entry
 to a third-party auditor for
-verification~\cite[Section~15.2]{ietf-keytrans-protocol}. However, DUET's delta format and
+verification~\cite[Section~13.2]{ietf-keytrans-protocol}. However, DUET's delta format and
 verification checks are specific to this implementation. Since deletion is not expressible in the
 delta format, an undeclared deletion produces a root mismatch. A duplicate insert or immutable
 rotation is rejected during replay. A separate persistence check provides additional deletion

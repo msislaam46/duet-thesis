@@ -16,19 +16,21 @@
   % fresh DH output enters each KDF_RK from above (second input)
   \draw[->] ($(k0)+(0,1.05)$) -- node[right,font=\footnotesize]{DH output} (k0.north);
   \draw[->] ($(k1)+(0,1.05)$) -- node[right,font=\footnotesize]{DH output} (k1.north);
-  % chain-key row: KDF_RK's second output feeds the sending chain
-  \node[box,below=1.15cm of k0,minimum width=1.6cm] (c1) {chain key $ck_1$};
-  \node[box,right=1.2cm of c1,minimum width=1.4cm] (c2) {$ck_2$};
-  \node[box,right=1.2cm of c2,minimum width=1.4cm] (c3) {$ck_3$};
+  % chain-key row: each KDF_CK step produces the next chain key and one message key
+  \node[box,below=1.15cm of k0,minimum width=1.5cm] (c1) {$ck_1$};
+  \node[kdf,right=0.75cm of c1] (kc1) {$\KDF_{CK}$};
+  \node[box,right=0.75cm of kc1,minimum width=1.2cm] (c2) {$ck_2$};
+  \node[kdf,right=0.75cm of c2] (kc2) {$\KDF_{CK}$};
+  \node[box,right=0.75cm of kc2,minimum width=1.2cm] (c3) {$ck_3$};
   \draw[->] (k0.south) -- (c1.north);
-  \draw[->] (c1) -- node[above,font=\footnotesize]{KDF} (c2);
-  \draw[->] (c2) -- node[above,font=\footnotesize]{KDF} (c3);
+  \draw[->] (c1) -- (kc1);
+  \draw[->] (kc1) -- (c2);
+  \draw[->] (c2) -- (kc2);
+  \draw[->] (kc2) -- (c3);
   \node[font=\footnotesize,align=left,anchor=east] at ($(c1.west)+(-0.3,0)$) {sending chain\\(one direction shown)};
-  % message keys
-  \node[box,below=8mm of c1,minimum width=1.3cm] (m1) {$mk_1$};
-  \node[box,below=8mm of c2,minimum width=1.3cm] (m2) {$mk_2$};
-  \node[box,below=8mm of c3,minimum width=1.3cm] (m3) {$mk_3$};
-  \draw[->] (c1) -- node[right,font=\footnotesize]{KDF} (m1);
-  \draw[->] (c2) -- node[right,font=\footnotesize]{KDF} (m2);
-  \draw[->] (c3) -- node[right,font=\footnotesize]{KDF} (m3);
+  % message keys: each KDF_CK branches downward to one message key
+  \node[box,below=9mm of kc1,minimum width=1.3cm] (m1) {$mk_1$};
+  \node[box,below=9mm of kc2,minimum width=1.3cm] (m2) {$mk_2$};
+  \draw[->] (kc1.south) -- (m1.north);
+  \draw[->] (kc2.south) -- (m2.north);
 \end{tikzpicture}
