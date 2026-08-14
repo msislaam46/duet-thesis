@@ -1,46 +1,101 @@
 \chapter{Formal Definitions}\label{app:definitions}
 
-This appendix defines the formal notions on which the design (\cref{ch:design}) and its
-analysis rest. Each is stated in the thesis's standard notation, and each records where it is
-used in the thesis. Definitions of standard primitives are given as they appear in the specifications
-they are drawn from and are cited accordingly. The dual-index scheme of \cref{sec:def-dualindex} is
-the one construction original to this work.
+This appendix defines the formal notions used in the design (\cref{ch:design}) and its analysis.
+Each definition uses the thesis notation and states where it is applied. Where a definition follows
+an external specification, the relevant source is cited.
 
 % ============================================================================
 \section{Cryptographic Primitives}\label{sec:def-primitives}
 
-This section states the standard cryptographic primitives the design relies on: a collision-resistant
-hash, a key-derivation function, and a digital signature. They are the assumptions under which the
-authenticated structures of \cref{sec:def-structures} and the dual-index security argument hold, and
-each is paired with the algorithm used in the implementation.
+This section defines the four cryptographic primitives used by the design: collision-resistant
+hashing, HKDF, message authentication codes, and digital signatures. They provide the assumptions
+for the authenticated structures in \cref{sec:def-structures} and the dual-index security argument.
+Each definition also identifies where it is used in DUET.
 
 \begin{definition}[Collision-resistant hash function]\label{def:hash}
-\intuition{A function whose outputs are short fingerprints that no efficient adversary can make
-collide.}
-A hash function $\Hash:\{0,1\}^*\to\{0,1\}^{256}$ is collision-resistant if for every probabilistic
-polynomial-time adversary $\Adv$ the probability that $\Adv$ outputs $x\neq x'$ with
-$\Hash(x)=\Hash(x')$ is negligible in the security parameter $\secpar$. The instantiation used
-throughout is SHA-256. Used in every authenticated structure of \cref{sec:def-structures}.
+\intuition{A function for which finding two distinct inputs with the same output is computationally
+infeasible.}
+A hash function $\Hash:\{0,1\}^*\to\{0,1\}^{256}$ is collision-resistant if it is computationally
+infeasible to find $x\neq x'$ such that
+$\Hash(x)=\Hash(x')$~\cite[Slides~9 and~11]{dowling2025hashfunctions}.
+DUET instantiates $\Hash$ with SHA-256. The collision-resistance assumption underlies the
+authenticated structures in \cref{sec:def-structures}.
 \end{definition}
 
 \begin{definition}[Key-derivation function, HKDF]\label{def:hkdf}
-\intuition{A two-step ``extract then expand'' procedure that turns a high-entropy secret into any
-number of independent keys.}
-Following RFC~5869~\cite{rfc5869}, $\HKDFex(\mathit{salt}, \mathit{IKM})\to \mathit{PRK}$ extracts a
-pseudorandom key from input keying material, and $\HKDFexp(\mathit{PRK}, \mathit{info}, L)\to
-\mathit{OKM}$ expands it into $L$ bytes of output bound to a context string $\mathit{info}$. Both are
-instantiated with HMAC-SHA256. Used in the dual-index label derivation
-(\cref{def:dualindex-derive}).
+\intuition{A two-stage extract-and-expand procedure that derives context-specific key material from
+input keying material.}
+HKDF uses an extract-and-expand construction. The input keying material must provide sufficient
+entropy. The context string separates different derivation
+purposes~\cite[Slides~14--15 and~19--22]{dowling2025mackdfs}.
+Following RFC~5869, $\HKDFex(\mathit{salt},\mathit{IKM})\to\mathit{PRK}$ extracts a pseudorandom key
+from the input keying material, while
+$\HKDFexp(\mathit{PRK},\mathit{info},L)\to\mathit{OKM}$ expands it into $L$ bytes of output key
+material bound to the context string $\mathit{info}$~\cite[Sections~2.2--2.3 and~3.2]{rfc5869}.
+DUET uses HKDF with HMAC-SHA256 to derive the dual-index labels and warning-MAC key
+(\cref{def:dualindex-derive,def:dualindex-write}).
 \end{definition}
 
-\begin{definition}[Digital signature, EUF-CMA]\label{def:sig}
-\intuition{A signature scheme that no adversary can forge, even after seeing signatures of its
-choice.}
-A signature scheme $(\mathsf{KeyGen},\mathsf{Sign},\mathsf{Verify})$ is existentially unforgeable
-under chosen-message attack if no probabilistic polynomial-time adversary, given the public key and a
-signing oracle, can produce a valid signature on a message it did not query, except with negligible
-probability in $\secpar$. The instantiation is Ed25519 (RFC~8032~\cite{rfc8032}), used to sign the
-signed tree head (\cref{def:sth}).
+\begin{definition}[Message authentication code, UNF-CMA]\label{def:mac}
+\intuition{A shared-key scheme in which an adversary cannot produce a new valid message--tag pair,
+even after obtaining tags for messages of its choice.}
+A message authentication code is a triple
+$(\mathsf{KGen},\mathsf{MAC},\mathsf{Vfy})$. Key generation produces a symmetric key $k$,
+$\mathsf{MAC}(k,m)$ produces a tag $\tau$, and $\mathsf{Vfy}(k,m,\tau)$ returns a Boolean value.
+Correctness requires
+\[
+\mathsf{Vfy}(k,m,\mathsf{MAC}(k,m))=1
+\]
+for every key produced by $\mathsf{KGen}$ and every message $m$. The scheme is unforgeable under
+chosen-message attack (UNF-CMA) if every probabilistic polynomial-time adversary with access to
+the tagging and verification oracles satisfies
+\[
+\Pr\!\left[
+\begin{array}{c}
+k\gets\mathsf{KGen}(1^{\secpar})\\
+(m^*,\tau^*)\gets
+\Adv^{\mathsf{MAC}(k,\cdot),\mathsf{Vfy}(k,\cdot,\cdot)}(1^{\secpar})
+\end{array}
+:
+\mathsf{Vfy}(k,m^*,\tau^*)=1
+\land (m^*,\tau^*)\notin\mathcal{S}
+\right]\leq\negl(\secpar),
+\]
+where $\mathcal{S}$ is the set of message--tag pairs returned by the tagging
+oracle~\cite[Slides~5--7]{dowling2025mackdfs}. HMAC is a hash-based message authentication
+code~\cite[Slide~10]{dowling2025mackdfs}. DUET uses HMAC-SHA256 for HKDF and to authenticate warning
+payloads (\cref{def:hkdf,def:dualindex-write}).
+\end{definition}
+
+\begin{definition}[Digital signature, UNF-CMA]\label{def:sig}
+\intuition{A public-key scheme in which an adversary cannot produce a new valid message--signature
+pair, even after obtaining signatures for messages of its choice.}
+A digital signature scheme is a triple
+$(\mathsf{KGen},\mathsf{Sign},\mathsf{Vfy})$. Key generation produces a private and public key pair
+$(\mathit{sk},\mathit{pk})$, $\mathsf{Sign}(\mathit{sk},m)$ produces a signature $\sigma$, and
+$\mathsf{Vfy}(\mathit{pk},m,\sigma)$ returns a Boolean value. Correctness requires
+\[
+\mathsf{Vfy}(\mathit{pk},m,\mathsf{Sign}(\mathit{sk},m))=1
+\]
+for every key pair produced by $\mathsf{KGen}$ and every message $m$. The scheme is unforgeable
+under chosen-message attack (UNF-CMA) if every probabilistic polynomial-time adversary with access
+to the signing and verification oracles satisfies
+\[
+\Pr\!\left[
+\begin{array}{c}
+(\mathit{sk},\mathit{pk})\gets\mathsf{KGen}(1^{\secpar})\\
+(m^*,\sigma^*)\gets
+\Adv^{\mathsf{Sign}(\mathit{sk},\cdot),\mathsf{Vfy}(\mathit{pk},\cdot,\cdot)}(\mathit{pk})
+\end{array}
+:
+\mathsf{Vfy}(\mathit{pk},m^*,\sigma^*)=1
+\land (m^*,\sigma^*)\notin\mathcal{S}
+\right]\leq\negl(\secpar),
+\]
+where $\mathcal{S}$ is the set of message--signature pairs returned by the signing
+oracle~\cite[Slides~29 and~33--34]{dowling2025signatures}. Ed25519 is specified in
+RFC~8032~\cite[Section~5.1]{rfc8032}. DUET uses Ed25519 to sign the signed tree head
+(\cref{def:sth}).
 \end{definition}
 
 % ============================================================================
@@ -53,356 +108,611 @@ and its relationship to previously trusted history. The structures are illustrat
 \cref{fig:bg-merkle,fig:design-arch}.
 
 \begin{definition}[Merkle log tree and tree hash]\label{def:merkle-log}
-\intuition{A tamper-evident list: one short root fingerprint commits to every entry in order, and any
-change to the history changes the root.}
-For an ordered list of entries $D=(d_0,\dots,d_{n-1})$, the Merkle Tree Hash
-$\MTH(D)$ is defined recursively as in RFC~6962~\cite{rfc6962}:
-$\MTH(\varnothing)=\Hash(\text{``''})$, $\MTH(d_0)=\Hash(\texttt{0x00}\concat d_0)$, and for $n>1$,
+\intuition{An ordered list represented by one root hash, so that changing an entry or its position
+changes the root unless collision resistance is broken.}
+For an ordered list of entries $D=(d_0,\dots,d_{n-1})$, the Merkle Tree Hash $\MTH(D)$ is defined
+recursively as follows~\cite[Section~2.1]{rfc6962}:
+$\MTH(\varnothing)=\Hash(\text{``''})$,
+$\MTH((d_0))=\Hash(\texttt{0x00}\concat d_0)$, and, for $n>1$,
 \[
-  \MTH(D)=\Hash\!\big(\texttt{0x01}\concat \MTH(D[0{:}k]) \concat \MTH(D[k{:}n])\big),
+  \MTH(D)=\Hash\!\big(\texttt{0x01}\concat \MTH(D[0{:}k])
+  \concat \MTH(D[k{:}n])\big),
 \]
 where $k$ is the largest power of two strictly less than $n$. The domain-separation prefixes
-\texttt{0x00} (leaf) and \texttt{0x01} (internal node) prevent second-preimage attacks across the two
-node types. The log root at epoch $t$ is $\logroot{t}=\MTH(D_t)$. Used in
+\texttt{0x00} for a leaf and \texttt{0x01} for an internal node provide second-preimage resistance
+across the two node types. For the ordered leaf list $D_t$ committed at epoch $t$, the log root is
+$\logroot{t}=\MTH(D_t)$. DUET uses this construction for the append-only log in
 \cref{ssec:design-structures}.
 \end{definition}
 
 \begin{definition}[Inclusion proof]\label{def:inclusion}
-\intuition{The list of sibling hashes on the path from a leaf to the root, from which anyone can
-recompute the root and confirm the leaf is present.}
+\intuition{A sequence of sibling hashes that allows a verifier to reconstruct the root and confirm
+an entry at a specified position in the log.}
 DUET represents a log-inclusion proof as
 \[
-\pincl = (\mathit{leaf\_index},\mathit{tree\_size},\mathit{path}),
+\pincl=(\mathit{leaf\_index},\mathit{tree\_size},\mathit{path}),
 \]
-where $\mathit{path}$ is the RFC~9162~\cite{rfc9162} audit path for the leaf at $\mathit{leaf\_index}$
-in the log of size $\mathit{tree\_size}$. Verification recomputes the candidate root from the leaf
-data and $\pincl.\mathit{path}$ and accepts exactly when it equals the committed $\logroot{t}$. Used
-in \cref{ssec:design-verify}.
+where $\mathit{path}$ is the audit path for the leaf at $\mathit{leaf\_index}$ in a log containing
+$\mathit{tree\_size}$ leaves~\cite[Section~2.1.3.1]{rfc9162}. Verification checks that the index is
+valid, reconstructs the candidate root from the leaf data and $\pincl.\mathit{path}$, and accepts
+only when the RFC~9162 verification procedure produces the committed
+$\logroot{t}$~\cite[Section~2.1.3.2]{rfc9162}. This establishes only that the leaf is included at
+the stated log position. To bind the lookup to the current directory snapshot, verification
+additionally requires the proof's tree size to equal the verified signed-head size and its index to
+identify the last leaf (\cref{ssec:design-verify}).
 \end{definition}
 
 \begin{definition}[Consistency proof]\label{def:consistency}
-\intuition{A short proof that a later version of the log is an append-only extension of an earlier
-one, with nothing reordered, modified, or deleted.}
-For sizes $m\le n$, a consistency proof $\pcons(m,n)$ is the set of subtree hashes of
-RFC~9162~\cite{rfc9162} that proves the size-$m$ tree is a prefix of the size-$n$ tree, i.e.\ that
-$\MTH(D[0{:}m])$ is consistent with $\MTH(D[0{:}n])$. Verification accepts only when the proof
-reconstructs both committed roots. Used in \cref{ssec:design-catchup}.
+\intuition{A proof that a later log preserves every leaf of an earlier log in the same order and
+only appends new leaves.}
+For sizes $0<m<n$, a consistency proof $\pcons(m,n)$ is an ordered sequence of subtree hashes
+generated from the size-$n$ log~\cite[Section~2.1.4.1]{rfc9162}. It proves that the first $m$
+leaves remain unchanged, so that $\MTH(D[0{:}m])$ is the root of the earlier log and
+$\MTH(D[0{:}n])$ is the root after further leaves have been appended. Verification uses the two
+committed roots and accepts only when the RFC~9162 procedure reconstructs both of
+them~\cite[Section~2.1.4.2]{rfc9162}. For $m=0$, the implementation uses an empty proof because
+there is no earlier binding to verify. For $m=n$, it accepts an empty proof only when the two roots
+are equal. DUET uses this proof for windowed catch-up in \cref{ssec:design-catchup}.
 \end{definition}
 
 \begin{definition}[Sparse Merkle prefix tree]\label{def:prefix-tree}
-\intuition{A Merkle tree over the whole space of possible labels, so that a label's slot has a fixed
-position and even an \emph{absent} label has a provable (empty) location.}
-A sparse Merkle prefix tree is a binary Merkle tree of depth $256$ indexed by 256-bit labels
-$\ell$, in which a present leaf at position $\ell$ commits to
-$\Hleaf(\mathit{kind}\concat\ell\concat \mathit{value})$, where
-$\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$ is bound into the hash and authenticates
-whether the slot may later be rotated (global VRF-indexed identity slots are \textsc{mutable}, while raw
-dual-index, CEA, and warning slots are \textsc{immutable}), and every empty subtree collapses to a
-fixed default hash. Following the IETF Key Transparency
-draft~\cite{ietf-keytrans-protocol} and CONIKS~\cite{melara2015coniks}, the tree is path-compressed
-(single-child chains are elided) and proofs are transmitted with a bitmap recording which siblings
-are non-default, so a proof carries only the siblings that actually exist. The prefix root at epoch
-$t$ is $\prefroot{t}$. Used in \cref{ssec:design-structures}.
+\intuition{A label-keyed authenticated map in which every 256-bit label determines one logical path,
+allowing both present and absent labels to be proved.}
+A sparse Merkle prefix tree is a binary Merkle tree of depth $256$ indexed by a 256-bit label
+$\ell$. A present leaf at position $\ell$ commits to
+$\Hleaf(\mathit{kind}\concat\ell\concat\mathit{value})$, where
+$\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$ is included in the leaf hash and records
+whether the transition policy permits later rotation. Global VRF-indexed identity slots are
+\textsc{mutable}, while raw dual-index, CEA, and warning slots are \textsc{immutable}. Every empty
+subtree is represented by a fixed default hash.
+
+CONIKS uses a Merkle prefix tree for its key
+directory~\cite[Section~3.1]{melara2015coniks}. The IETF KeyTrans draft separately specifies a
+prefix tree and proof encodings for inclusion and
+non-inclusion~\cite[Sections~3.3 and~12.2]{ietf-keytrans-protocol}. DUET implements the logical tree using path
+compression, so single-child chains are not materialized. Its transmitted proof uses a 256-bit
+bitmap to identify non-default siblings and carries only the corresponding sibling hashes. For the
+directory state committed at epoch $t$, the prefix-tree root is $\prefroot{t}$. The structure is
+used in \cref{ssec:design-structures}.
 \end{definition}
 
-\begin{definition}[Inclusion and non-inclusion proof in the prefix tree]\label{def:noninclusion}
-\intuition{Because every label has a fixed position, one can prove a label is \emph{absent} by
-exhibiting the (default) contents of its slot, just as one proves presence.}
+\begin{definition}[Prefix-tree inclusion and non-inclusion proof]\label{def:noninclusion}
+\intuition{A proof that a particular 256-bit label is bound to a stated value or is absent from the
+committed directory state.}
 A compressed prefix-tree proof is
 \[
-\pprefix = (\mathit{label},\mathit{value},\mathit{kind},\mathit{bitmap},\mathit{siblings}).
+\pprefix =
+(\mathit{label},\mathit{value},\mathit{kind},\mathit{bitmap},\mathit{siblings}).
 \]
-The $\mathit{label}$ field contains the queried 256-bit label, while $\mathit{value}=\bot$ denotes
-non-inclusion. For an inclusion proof, $\mathit{kind}$ records whether the leaf is mutable or
-immutable. The bitmap identifies the non-default siblings carried in $\mathit{siblings}$. An
-\emph{inclusion} proof recomputes $\prefroot{t}$ from
-$\Hleaf(\mathit{kind}\concat\ell\concat \mathit{value})$ and the sibling copath. A \emph{non-inclusion} proof recomputes it from
-the default (empty) leaf value at position $\ell$, establishing that no value is bound at $\ell$
-\cite{melara2015coniks,ietf-keytrans-protocol}. Proven non-inclusion of the warning slot is the
-component that, together with a key mismatch, makes warning censorship (A2) detectable as a compound
-signal (\cref{def:dualindex-check}). Non-inclusion alone is not an alarm. Used in \cref{ssec:design-verify}.
+The $\mathit{label}$ field identifies the path authenticated by the proof, while
+$\mathit{value}=\bot$ denotes non-inclusion. For an inclusion proof, $\mathit{kind}$ records whether
+the committed leaf is mutable or immutable. The 256-bit bitmap identifies the non-default sibling
+hashes carried in $\mathit{siblings}$ in leaf-to-root order.
+
+Let $\ell=\pprefix.\mathit{label}$. For inclusion, verification begins with
+$\Hleaf(\mathit{kind}\concat\ell\concat\mathit{value})$. For non-inclusion, it begins with the fixed
+default hash at the logical leaf position. It then applies the sibling hashes identified by the
+bitmap and accepts only when the reconstructed root equals $\prefroot{t}$. CONIKS uses Merkle
+prefix-tree proofs to authenticate presence and absence at an
+index~\cite[Section~3.1]{melara2015coniks}. The IETF KeyTrans draft also specifies inclusion and
+non-inclusion proof encodings for its prefix
+tree~\cite[Sections~3.3 and~12.2]{ietf-keytrans-protocol}.
+
+For a client-derived raw lookup, verification additionally requires
+$\pprefix.\mathit{label}$ to equal the label requested by the client. For a global lookup, it
+requires the label to equal the first 32 bytes of the verified VRF output. For
+\hyperref[sc:threat-a2]{A2 (Warning Censorship)}, a key mismatch along with proof-verified
+non-inclusion at the warning slot forms the compound signal defined in
+\cref{def:dualindex-check}. Non-inclusion alone is a verified empty result, not a warning. The proof
+is used in \cref{ssec:design-verify}.
 \end{definition}
 
 \begin{definition}[Signed tree head]\label{def:sth}
-\intuition{A single signed value that publicly commits the operator to one view of the whole
-directory and its history at a given epoch.}
-The signed tree head at epoch $t$ is
-$\STH_t = \big(\,t,\ \mathit{tree\_size}_t,\ \logroot{t},\ \mathit{timestamp}_t,\ \Hash(\mathit{config})\,\big)$
-together with an Ed25519 signature over that tuple under the operator's signing key
-(\cref{def:sig}), in the manner of the Certificate Transparency signed tree head~\cite{rfc6962}. A
-client or auditor recomputes the signed message from the head it received and checks the signature
-before trusting any proof anchored to it. Used in \cref{ssec:design-verify,ssec:design-epoch}.
+\intuition{A signed commitment to one append-only log state and one directory configuration at a
+specified epoch.}
+At epoch $t$, the signed message is
+\[
+m_t =
+t \concat \mathit{tree\_size}_t \concat \logroot{t} \concat
+\mathit{timestamp}_t \concat \Hash(\mathit{config}),
+\]
+as defined in \cref{eq:design-sth}. The signed tree head is
+\[
+\STH_t=(m_t,\sigma_t),
+\qquad
+\sigma_t=\mathsf{Sign}(\mathit{sk}_{\mathsf{sth}},m_t).
+\]
+Here, $\mathit{tree\_size}_t$ is the number of committed log leaves,
+$\logroot{t}$ is the Merkle-log root, $\mathit{timestamp}_t$ is the Unix time at which the epoch was
+committed, and $\Hash(\mathit{config})$ commits to the expected keys and directory configuration.
+Since epochs are zero-indexed and each epoch commit appends one directory root to the log, a
+well-formed head satisfies
+\[
+t+1=\mathit{tree\_size}_t.
+\]
+
+This follows the signed-head role of Certificate Transparency, whose signed tree head includes a
+timestamp, tree size, and Merkle-tree root~\cite[Section~3.2]{rfc6962}. DUET additionally signs the
+epoch and configuration commitment. A client or auditor recomputes $m_t$, checks the expected
+configuration commitment, verifies $\sigma_t$ under the pinned
+$\mathit{pk}_{\mathsf{sth}}$, and checks the well-formedness condition before using
+$\logroot{t}$ to verify any proof. The signed tree head is used in
+\cref{ssec:design-epoch,ssec:design-verify}. Its complete field rationale is given in
+\cref{sec:design-detail-sth}.
 \end{definition}
 
 % ============================================================================
 \section{Verifiable Random Function}\label{sec:def-vrf}
 
-This section defines the verifiable random function (VRF) that produces the directory's
-privacy-preserving lookup labels. The VRF lets the server derive a pseudorandom label for an
-identifier and prove that derivation correct. A client can therefore verify the label, while outsiders
-without the VRF secret key cannot compute labels for guessed identifiers. It underpins the global-slot index of \cref{ssec:design-labels}.
+This section defines the verifiable random function (VRF) used to derive global identity labels. The
+server evaluates the VRF on a service identifier and returns a proof, allowing the client to verify
+the derivation. For an observer with neither the VRF secret key nor the corresponding proof, the
+published output is pseudorandom and protects the identifier against offline
+enumeration~\cite[Sections~1 and~3.4]{rfc9381}. The VRF underpins the global identity slots in
+\cref{ssec:design-structures} and their label binding in \cref{ssec:design-verify}.
 
 \begin{definition}[Verifiable random function]\label{def:vrf}
-\intuition{A keyed function whose outputs look random to everyone but the key holder, yet come with a
-proof that the output was computed correctly.}
-A verifiable random function is a triple $(\VRFkg,\VRFeval,\VRFvfy)$~\cite{rfc9381}, comprising
+\intuition{A keyed function that uses a secret key to produce an output and corresponding proof,
+allowing anyone with the public key to verify the result.}
+A verifiable random function comprises three algorithms~\cite[Section~2]{rfc9381}:
 \[
 \begin{aligned}
   \VRFkg(1^\secpar) &\to (\mathit{pk},\mathit{sk}), \\
-  \VRFeval(\mathit{sk},\alpha) &\to (\beta,\pvrf) \quad\text{(an output $\beta$ and a proof $\pvrf$)}, \\
-  \VRFvfy(\mathit{pk},\alpha,\pvrf) &\to \beta \ \text{ or }\ \bot.
+  \VRFeval(\mathit{sk},\alpha) &\to (\beta,\pvrf), \\
+  \VRFvfy(\mathit{pk},\alpha,\pvrf) &\to \beta \ \text{or}\ \bot,
 \end{aligned}
 \]
-The instantiation is ECVRF-EDWARDS25519-SHA512-TAI, suite \texttt{0x03}, of
-RFC~9381~\cite{rfc9381}. Used to derive global directory labels in \cref{ssec:design-structures}.
+where $\alpha$ is the input, $\beta$ is the VRF hash output, and $\pvrf$ proves that the output was
+derived correctly under $\mathit{pk}$.
+
+DUET uses the ECVRF-EDWARDS25519-SHA512-TAI ciphersuite with suite string
+\texttt{0x03}~\cite[Section~5.5]{rfc9381}. RFC~9381 defines the output $\beta$ for this SHA-512
+ciphersuite as 64 bytes~\cite[Sections~5.2 and~5.5]{rfc9381}. DUET uses the first 32 bytes,
+$\beta[0{:}32]$, as the prefix-tree label, matching Signal's key-transparency
+index~\cite{signal-kt-server}. This 32-byte truncation is an implementation choice and is not part
+of RFC~9381. The VRF is used for global directory labels in
+\cref{ssec:design-structures,ssec:design-verify}.
 \end{definition}
 
 \begin{definition}[VRF uniqueness and pseudorandomness]\label{def:vrf-security}
-\intuition{Uniqueness: a given key and input admit only one verifiable output. Pseudorandomness:
-without the secret key, that output is indistinguishable from random.}
-For \emph{full uniqueness}, for every (even adversarially chosen) public key $\mathit{pk}$ and input
-$\alpha$ there is at most one $\beta$ for which some proof verifies. For \emph{pseudorandomness}, no
-probabilistic polynomial-time adversary wins the experiment $\Expt{vrf\text{-}prand}{\Adv}$ of
-RFC~9381~\cite{rfc9381} with advantage non-negligible in $\secpar$: the adversary, given
-$\mathit{pk}$ and a $\VRFeval$ oracle, must distinguish the true challenge output $\beta^\star$, obtained as the
-first component of $\VRFeval(\mathit{sk},\alpha^\star)$ for a fresh $\alpha^\star$, from a uniform string. Uniqueness underlies label integrity
-in the verification chain (G1). Pseudorandomness underlies
-directory privacy (G3).
+\intuition{Uniqueness prevents one input from having two different verified outputs.
+Pseudorandomness hides the output from an observer with neither the secret key nor the corresponding
+proof.}
+A VRF has \emph{full uniqueness} if every probabilistic polynomial-time adversary has only
+negligible probability of producing a public key $\mathit{pk}$, an input $\alpha$, and two proofs
+$\pvrf_1,\pvrf_2$ such that
+\[
+\VRFvfy(\mathit{pk},\alpha,\pvrf_1)=\beta_1 \neq \bot,
+\qquad
+\VRFvfy(\mathit{pk},\alpha,\pvrf_2)=\beta_2 \neq \bot,
+\qquad
+\beta_1\neq\beta_2.
+\]
+This property also covers adversarially chosen public
+keys~\cite[Section~3.1]{rfc9381}.
+
+A VRF has \emph{full pseudorandomness} if, for a correctly generated key pair, every probabilistic
+polynomial-time adversary without the secret key has only negligible advantage in distinguishing
+the output $\beta^\star$ for an adversarially selected fresh input $\alpha^\star$ from a uniform
+string of the same length. This remains true when the adversary obtains outputs and proofs for other
+inputs of its choice~\cite[Section~3.4]{rfc9381}. The corresponding proof ${\pvrf}^{\star}$ is not
+provided because an observer holding that proof can verify and distinguish
+$\beta^\star$~\cite[Section~3.4]{rfc9381}.
+
+In DUET, full uniqueness supports the binding between a service identifier and its verified global
+label under the pinned VRF public key. The pseudorandomness of the 32-byte prefix
+$\beta[0{:}32]$ supports requirement G3 (Directory Privacy) for observers with neither the VRF
+secret key nor the corresponding proof. These properties are used in
+\cref{ssec:design-verify,sec:threat-goals}.
 \end{definition}
 
 % ============================================================================
 \section{Epochs and Windowed Consistency}\label{sec:def-epoch}
 
-This section defines the epoch model and the windowed consistency proof on which offline catch-up
-rests. It fixes what an epoch and a signed tree head are, and states the distant-head consistency
-proof a returning client verifies in place of one proof per missed epoch. It supports the windowed
-scheme of \cref{sec:design-windowed}.
+This section defines how live directory updates become committed epochs and how a returning client
+verifies append-only growth across an offline window. It also defines the declared transition data
+replayed by the auditor. These definitions support the windowed construction in
+\cref{sec:design-windowed}.
 
 \begin{definition}[Epoch]\label{def:epoch}
-\intuition{A committed snapshot of the directory. Between snapshots the live tree is mutated, and a
-commit freezes one version into the public history.}
-An epoch is a committed version of the directory. An
-$\mathsf{update}(\ell,\mathit{value})$ mutates the live prefix tree in place. A
-$\mathsf{commit}$ closes the epoch by appending the current prefix root $\prefroot{t}$ as one leaf
-of the log (\cref{def:merkle-log}) and publishing the signed tree head $\STH_t$ (\cref{def:sth}).
-Lookups are always served against the last committed epoch, never the live tree. Used in
-\cref{ssec:design-epoch}.
+\intuition{A committed directory state that becomes one leaf in the append-only log and is bound to
+a signed tree head.}
+During epoch $t$, update operations modify the live prefix tree without changing the committed
+snapshot used for lookups. The operation $\textsf{CommitEpoch}$ computes the current prefix-tree
+root $\prefroot{t}$, appends it as the next leaf of the Merkle log
+(\cref{def:merkle-log}), freezes the declared update set $\Delta_t$, and stores a snapshot of the
+current tree. It then produces the signed tree head $\STH_t$ (\cref{def:sth}) and advances the epoch
+counter so that later updates belong to epoch $t+1$. Lookups use only the most recently committed
+snapshot. The live tree holds updates until the next epoch commit. The epoch lifecycle is specified
+in \cref{ssec:design-epoch,alg:server}.
 \end{definition}
 
 \begin{definition}[Declared update set and transition audit]\label{def:epoch-delta}
-\intuition{Every commit publishes the exact list of changes it made, and an auditor replays that list and
-checks it reproduces the committed directory, so a deletion, which the list cannot even express,
-is caught.}
-Each $\mathsf{commit}$ records a \emph{declared update set} $\Delta_t$ of two operation types.
-$\textsf{Insert}(\ell,\mathit{value})$ adds a label that was absent from the previous committed
-directory. $\textsf{Rotate}(\ell,\mathit{value}_{\mathrm{old}},\mathit{value}_{\mathrm{new}})$
-replaces the value at an existing \textsc{mutable} label and declares both the previous and the
-replacement values. The format contains no deletion operation. The \emph{transition auditor} starts
-from a clone of the directory committed by $\prefroot{t-1}$ and processes the operations in their
-declared order. Before applying an \textsf{Insert} it verifies that the label is absent. Before
-applying a \textsf{Rotate} it verifies that the label is present, is \textsc{mutable}, and holds the
-declared previous value. It accepts exactly when the resulting root equals $\prefroot{t}$. An
-undeclared modification or deletion causes the replayed root to differ, and an attempted rotation of
-an \textsc{immutable} dual-index, CEA, or warning label is rejected directly. Specified in
-\cref{ssec:design-detection}. Implemented by \textsf{AuditTransition} (\cref{alg:auditor}).
+\intuition{An auditor replays the changes declared for each epoch and checks that they reproduce the
+directory root committed to the signed log.}
+Each epoch commit records a declared update set $\Delta_t$ containing two operation types:
+\[
+\textsf{Insert}(\ell,\mathit{kind},v)
+\quad\text{and}\quad
+\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v),
+\]
+where $\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$. An
+\textsf{Insert} declares a value written at a previously absent label. A \textsf{Rotate} declares
+the previous and replacement values at an existing label. The format contains no deletion
+operation.
+
+For epoch $0$, the auditor begins with an empty candidate replica. For each later epoch, the
+candidate contains the state accepted through the preceding epoch. The disclosed prefix-tree root
+$\prefroot{t}$ must be included at leaf index $t$ in the Merkle log at the size given by the
+verified signed head. The auditor then processes the operations in their declared order. Before
+applying an \textsf{Insert}, it requires the label to be absent. For a \textsf{Rotate}
+operation, it requires the label to be present, marked \textsc{mutable}, and bound to the declared
+previous value. The transition succeeds only when the resulting candidate root equals
+$\prefroot{t}$.
+
+An undeclared modification or deletion causes the replayed root to differ from the committed root.
+A rotation of an \textsc{immutable} dual-index, CEA, or warning label is rejected directly. The
+auditor adopts the candidate replica and advances its cursor only after every unaudited transition
+and the remaining signed-head checks succeed. The update flow is based on the IETF
+\texttt{AuditorUpdate} pattern~\cite[Section~15.2]{ietf-keytrans-protocol}, while DUET's operation
+format and replay checks are specific to this implementation. The design role is described in
+\cref{ssec:design-detection}. The implementation flow is given in
+\cref{ssec:impl-core-server,alg:auditor}.
 \end{definition}
 
 \begin{definition}[Windowed consistency proof]\label{def:windowed}
-\intuition{A single consistency proof that lets a long-absent client re-synchronize in one step,
-rather than one proof per missed epoch.}
-For a client that last verified the log at size $m$ and returns when the log has size $n$, spanning
-$W$ intervening epochs, the windowed consistency proof is the single proof $\pcons(m,n)$ of
-\cref{def:consistency}. Used in \cref{ssec:design-catchup}.
+\intuition{A returning client verifies append-only growth from its retained signed head to the
+current signed head using one consistency proof.}
+Let $\STH_{\mathrm{old}}$ be the client's retained trusted head and let
+$\STH_{\mathrm{new}}$ be the current verified head, with log sizes
+\[
+m=\STH_{\mathrm{old}}.\mathit{tree\_size}
+\quad\text{and}\quad
+n=\STH_{\mathrm{new}}.\mathit{tree\_size}.
+\]
+If $n<m$, or if the epoch number decreases, the client rejects the new head as a rollback. If
+$n=m$, it accepts only when the two heads have the same root. If $n>m$, the client requests one
+RFC~9162 consistency proof $\pcons(m,n)$ and accepts only when
+\[
+\textsf{VerifyConsistency}
+\bigl(m,n,\STH_{\mathrm{old}}.\mathit{root},
+\STH_{\mathrm{new}}.\mathit{root},\pcons(m,n)\bigr)
+\]
+succeeds~\cite[Section~2.1.4]{rfc9162}. The client then retains
+$\STH_{\mathrm{new}}$ as its trusted head.
+
+When no trusted head has previously been retained, the client pins the current verified head as its
+trust-on-first-use baseline without requesting a consistency proof
+(\cref{sec:threat-fair}). For $W=n-m$ missed epochs, one proof therefore covers the complete
+offline window. It verifies append-only growth between the endpoint heads but does not inspect every
+intermediate directory state. The warning-slot check remains a separate verified lookup. The
+construction is described in \cref{ssec:design-catchup} and implemented by
+\textsf{WindowedCatchUp} in \cref{alg:client}.
 \end{definition}
 
 \begin{lemma}[Windowed proof size]\label{lem:windowed-size}
-The windowed consistency proof $\pcons(m,n)$ consists of at most $\lceil\lg n\rceil + \lceil\lg
-m\rceil$ hash values: logarithmic in the endpoint sizes rather than linear in the number of
-intervening epochs $W$.
+For $1\le m\le n$, the windowed consistency proof satisfies
+\[
+|\pcons(m,n)|
+\le
+\lceil\log_2 m\rceil+\lceil\log_2 n\rceil
+\quad\text{hash values}.
+\]
+Therefore, its size depends logarithmically on the endpoint log sizes and does not grow linearly
+with the number of missed epochs $W=n-m$.
 \end{lemma}
+
 \begin{proof}[Proof sketch]
-By the structure of the RFC~9162 consistency proof~\cite{rfc9162}, the proof comprises the subtree
-hashes needed to reconstruct both $\MTH(D[0{:}m])$ and $\MTH(D[0{:}n])$. The number of such nodes is
-bounded by the depths of the two trees, $\lceil\lg m\rceil$ and $\lceil\lg n\rceil$. The bound
-depends only on the endpoint sizes $m$ and $n$, growing logarithmically with them rather than
-linearly with the $W$ epochs between the two visits, which is the property exploited in
-\cref{ssec:design-catchup}.
+If $m=n$, the two heads have the same log size and the consistency proof is empty. For $0<m<n$,
+RFC~9162 bounds the generated consistency proof by
+$\lceil\log_2 n\rceil+1$ hash values~\cite[Section~2.1.4.1]{rfc9162}. When $m\ge2$,
+$\lceil\log_2 m\rceil\ge1$. Therefore,
+$\lceil\log_2 n\rceil+1\le
+\lceil\log_2 m\rceil+\lceil\log_2 n\rceil$.
+When $m=1$, the recursive construction follows the branch containing the first leaf and adds at
+most one sibling hash at each level. The proof then contains at most
+$\lceil\log_2 n\rceil$ hashes, which also satisfies the bound.
 \end{proof}
 
-\begin{remark}[Relation to prior systems]
-The windowed proof is a \emph{standard} RFC~9162 consistency proof between two distant heads, not a
-new cryptographic object. Related systems also reduce repeated history checks. SEEMless makes
-monitoring cost depend chiefly on key updates~\cite[Section~4.2]{chase2019seemless}, and OPTIKS reduces
-unchanged-key monitoring to a single proof~\cite[p.~4356]{optiks2024}. The contribution here is an
-\emph{offline-client} instantiation that replaces $W$ separate consistency proofs with one proof from
-the client's last checkpoint to the current head, together with the measured saving reported in
-\cref{ch:eval}. The asymptotic complexity of the individual proof remains unchanged.
+\begin{remark}[Scope of the contribution]
+The windowed proof is a standard RFC~9162 consistency proof between two distant heads, not a new
+cryptographic object~\cite[Section~2.1.4]{rfc9162}. DUET applies this proof to a returning client
+that retains its last trusted head and combines it with a separate verified lookup of the warning
+slot. The M4 experiment compares this construction with the synthetic repeated-proof baseline
+defined in \cref{ssec:eval-catchup}, which models this implementation without windowing. However,
+the baseline does not represent a deployed system. Other approaches to reducing monitoring costs,
+including the versioned-directory constructions in SEEMless and OPTIKS, are discussed in
+\cref{sec:ext-vkd-survey}.
 \end{remark}
 
 % ============================================================================
 \section{Signal Protocol Primitives}\label{sec:def-signal}
 
-This section defines the Signal protocol primitives whose outputs DUET consumes: the X3DH handshake
-that establishes a per-conversation shared secret and the Double Ratchet that evolves it. DUET
-derives its per-conversation labels from these secrets, so their definitions fix the inputs to the
-dual-index derivation of \cref{sec:def-dualindex}.
+This section defines the Signal protocol outputs used by DUET: the conversation secret established
+by X3DH or PQXDH and the evolving state of the Double Ratchet.
 
-\begin{definition}[X3DH shared secret]\label{def:x3dh}
-\intuition{An asynchronous handshake that lets Alice derive a shared secret with an offline Bob from
-his published pre-keys.}
-The Extended Triple Diffie--Hellman handshake~\cite{x3dh} derives a shared secret $\sharedS$ from a
-combination of Diffie--Hellman values over the parties' identity keys $\pkid{\cdot}$, Bob's signed
-pre-key $\spk{\B}$, an optional one-time pre-key $\opk{\B}{i}$, and Alice's ephemeral key
-$\ek{\A}$. The post-quantum variant PQXDH~\cite{pqxdh} augments this with a KEM. It is introduced and
-diagrammed in \cref{ssec:bg-x3dh,fig:bg-x3dh}. In this thesis $\sharedS$ is the entropy source for
-the dual-index labels (\cref{def:dualindex-derive}), used in \cref{ssec:design-labels}. This
-thesis assumes the security of the X25519 Diffie--Hellman operation used by X3DH and does not
-analyse that primitive further.
+\begin{definition}[X3DH/PQXDH shared secret]\label{def:x3dh}
+\intuition{A per-conversation secret established through an asynchronous authenticated key
+agreement.}
+X3DH and PQXDH establish a shared secret $\sharedS$ for Alice and Bob through the handshakes
+described in \cref{ssec:bg-x3dh}~\cites[Sections~3.2--3.4]{x3dh}[Sections~3.2--3.4]{pqxdh}.
+DUET uses $\sharedS$ as input to the
+dual-index label and warning-MAC derivations
+(\cref{def:dualindex-derive,def:dualindex-write}). The prototype currently uses the deterministic
+substitute described in \cref{sec:impl-strategy}.
 \end{definition}
 
 \begin{definition}[Double Ratchet]\label{def:doubleratchet}
-\intuition{A chain of key-derivation steps that gives every message a fresh key and heals the session
-after a compromise.}
-The Double Ratchet~\cite{doubleratchet} maintains a root chain and per-direction sending and
-receiving chains, deriving a fresh message key per message and mixing in new Diffie--Hellman outputs
-as the conversation proceeds. It is introduced and diagrammed in \cref{ssec:bg-ratchet,fig:bg-ratchet}.
-Its per-epoch ratchet state is the input to the continuous operating mode (\cref{def:cka}), used in
-\cref{ssec:design-modes}.
+\intuition{A key-evolution protocol that derives a new key for each message and supports
+post-compromise recovery through fresh Diffie--Hellman exchanges.}
+The Double Ratchet evolves the secret established by X3DH or PQXDH through root, sending, and
+receiving chains to derive per-message keys, as described in
+\cref{ssec:bg-ratchet,sec:ext-ratchet}~\cite[Sections~2.1--2.4]{doubleratchet}. DUET uses the Double
+Ratchet as the design-level CKA instantiation in continuous mode
+(\cref{def:cka,ssec:design-modes}). The prototype currently uses the seeded ratchet simulation
+described in \cref{sec:impl-strategy}.
 \end{definition}
 
-\begin{definition}[Continuous key agreement and continuous authentication]\label{def:cka}
-\intuition{An abstraction of a ratcheting protocol as a stream of evolving shared keys, together with
-a notion of authenticating that stream continuously.}
-The Authenticated Continuous Key Agreement framework~\cite{dowling2023acka} models a ratcheting
-protocol as a continuous key agreement $\CKA$ producing a sequence of per-epoch keys, and defines a
-continuous entity authentication (CEA) notion, with security game $\CEAsec$, that captures detection of an active adversary who
-injects state mid-session. The framework leaves its append-only log component $\Log$ abstract (with security notion $\Logsec$). This
-thesis instantiates that component with the structures of \cref{sec:def-structures} and provides
-continuous authentication through the continuous mode of \cref{ssec:design-modes}. The dual-index
-warning scheme below is an \emph{extension} of this idea (it authenticates by directory
-\emph{location} rather than by chained fingerprint value) and is not an instance of $\CEAsec$.
+\begin{definition}[Continuous key agreement and continuous entity authentication]\label{def:cka}
+\intuition{A model for evolving shared keys across protocol messages and authenticating each
+update.}
+A continuous key agreement (CKA) continually exchanges public key shares and produces a new
+symmetric key after each protocol message. Continuous entity authentication (CEA) derives
+per-epoch labels and fingerprints from the evolving shared state and public keying material. The
+ACKA construction combines a CKA and CEA with a secure log to detect an active
+man-in-the-middle that injects a forged update after
+compromise~\cite[Sections~2.2, 3.1, and~4.2]{dowling2023acka}. The corresponding security notions are
+$\CEAsec$ for CEA and $\Logsec$ for the log. \Cref{sec:ext-acka} explains the framework in detail.
+DUET's component mapping and continuous-mode operation are given in
+\cref{tab:design-acka,ssec:design-modes}.
 \end{definition}
 
 % ============================================================================
 \section{The Dual-Index Warning Scheme}\label{sec:def-dualindex}
 
-The following definitions specify the construction original to this work
-(\cref{ssec:design-labels}). They rely on the primitives above and introduce no new assumptions.
+This section formalizes the dual-index warning scheme presented as the conceptual contribution in
+\cref{sec:intro-contributions}. It defines the labels, warning operations, deletion evidence, and
+same-head consistency property used by the design in \cref{sec:design-dual}.
 
 \begin{definition}[Dual-index derivation]\label{def:dualindex-derive}
 \intuition{From one shared secret, two parties independently derive the same three directory slots:
-one lookup slot each and one shared warning slot.}
-$\mathsf{DeriveLabels}(\sharedS, \mathit{id}_{\mathsf{self}}, \mathit{id}_{\mathsf{peer}})$ first
-extracts $\mathit{PRK}=\HKDFex(\text{salt}=\text{\texttt{"duet-dual-index"}},\ \sharedS)$ and then returns the three 256-bit labels
+one directional lookup slot for each party and one shared warning slot.}
+Let $\mathit{id}_{\mathsf{self}}$ and $\mathit{id}_{\mathsf{peer}}$ be fixed-width byte strings, so that
+their concatenation is unambiguous without separate length prefixes. Given the shared secret
+$\sharedS$, $\mathsf{DeriveLabels}$ first computes
+\[
+\mathit{PRK}
+=
+\HKDFex(\text{salt}=\text{\texttt{"duet-dual-index"}},\sharedS)
+\]
+and then derives three 256-bit labels:
 \begin{align*}
-  \lblself &= \HKDFexp(\mathit{PRK},\ \texttt{"lookup"}\concat \mathit{id}_{\mathsf{self}}\concat \mathit{id}_{\mathsf{peer}},\ 32),\\
-  \lblpeer &= \HKDFexp(\mathit{PRK},\ \texttt{"lookup"}\concat \mathit{id}_{\mathsf{peer}}\concat \mathit{id}_{\mathsf{self}},\ 32),\\
-  \lblwarn &= \HKDFexp(\mathit{PRK},\ \texttt{"warning"}\concat \min(\mathit{id}_{\A},\mathit{id}_{\B})\concat \max(\mathit{id}_{\A},\mathit{id}_{\B}),\ 32),
+\lblself
+&=
+\HKDFexp\!\bigl(
+\mathit{PRK},
+\text{\texttt{"lookup"}}\concat
+\mathit{id}_{\mathsf{self}}\concat
+\mathit{id}_{\mathsf{peer}},
+32
+\bigr),\\
+\lblpeer
+&=
+\HKDFexp\!\bigl(
+\mathit{PRK},
+\text{\texttt{"lookup"}}\concat
+\mathit{id}_{\mathsf{peer}}\concat
+\mathit{id}_{\mathsf{self}},
+32
+\bigr),\\
+\lblwarn
+&=
+\HKDFexp\!\bigl(
+\mathit{PRK},
+\text{\texttt{"warning"}}\concat
+\min(\mathit{id}_{\mathsf{self}},\mathit{id}_{\mathsf{peer}})\concat
+\max(\mathit{id}_{\mathsf{self}},\mathit{id}_{\mathsf{peer}}),
+32
+\bigr).
 \end{align*}
-using HKDF-SHA256 (\cref{def:hkdf}). The canonical ordering of identifiers in $\lblwarn$ makes the
-warning label symmetric, so both parties address the same warning slot, while the lookup labels are
-deliberately asymmetric. Specified in \cref{ssec:design-labels}.
+Here, $\min$ and $\max$ use lexicographic byte ordering. Reversing the two party viewpoints swaps
+$\lblself$ and $\lblpeer$, while the canonical ordering produces the same $\lblwarn$ for both
+parties. The derivation uses HKDF-SHA256 (\cref{def:hkdf}). The implementation uses canonical
+16-byte account identifiers, satisfying the fixed-width requirement
+(\cref{ssec:impl-verifier}).
 \end{definition}
 
-\begin{definition}[Register and write-warning]\label{def:dualindex-write}
-\intuition{A party publishes its key at its own lookup slot, and raises the alarm by writing to the
-shared warning slot.}
-$\mathsf{Register}(\lblself,\mathit{pk})$ binds the party's public key at its own lookup label in the
-directory. $\mathsf{WriteWarning}(\lblwarn)$ writes a non-empty warning payload to the shared warning
-slot, authenticated by a MAC under a pair-bound key expanded from $\mathit{PRK}$ with the info string
-\texttt{"warn-mac"} and the canonically ordered identities, so that a reader can distinguish a
-warning produced by a holder of the shared key from operator-injected data (\cref{alg:dualindex}).
-Both slots are write-once: the directory's raw-label interface rejects overwrites
-(\cref{def:epoch-delta}), and a privileged operator bypass is instead detected by the transition
-audit. The two read-back conflicts nevertheless mean different things. For a warning write, a
-verified non-empty read-back means a warning is already committed, and the slot is left in place
-since its value already alerts both monitors. For a registration write, a verified non-empty
-read-back proves only that the slot is occupied. Whether it holds the client's own key is decided by
-the same-tick owner-slot comparison in the background monitor. Once a warning write commits, the
-writer retains inclusion evidence for the persistence check (\cref{def:deletion-evidence}).
-Both operations take effect at the next committed epoch (\cref{def:epoch}). Specified in
-\cref{ssec:design-detection}.
+\begin{definition}[Dual-index registration and warning publication]\label{def:dualindex-write}
+\intuition{Each party registers its identity key at its own lookup slot and can notify the peer by
+publishing an authenticated value at their shared warning slot.}
+
+$\mathsf{Register}(\lblself,\mathit{pk}_{\mathsf{self}})$ attempts to write the party's identity
+public key to its own lookup slot. A successful new write becomes verifiable after an epoch commit.
+If the slot is already occupied, no new commit is required. In either case, registration accepts
+only after a verified read-back under a valid signed head proves that the slot is non-empty. The
+background monitor then compares the returned value with $\mathit{pk}_{\mathsf{self}}$ in the same
+monitoring tick. A proof-verified empty result or an invalid proof rejects the operation.
+
+The warning-MAC key is
+\[
+k_{\mathrm{mac}}
+=
+\HKDFexp\!\bigl(
+\mathit{PRK},
+\text{\texttt{"warn-mac"}}\concat
+\min(\mathit{id}_{\mathsf{self}},\mathit{id}_{\mathsf{peer}})\concat
+\max(\mathit{id}_{\mathsf{self}},\mathit{id}_{\mathsf{peer}}),
+32
+\bigr).
+\]
+$\mathsf{WriteWarning}(\lblwarn,\mathit{alert},k_{\mathrm{mac}})$ attempts to write
+\[
+\mathit{alert}\concat\mathsf{MAC}(k_{\mathrm{mac}},\mathit{alert})
+\]
+to the shared warning slot. After either an apparent success or a write-once conflict, warning
+publication is accepted only when a verified read-back under the current verified signed head
+proves that the slot is non-empty. A proof-verified empty result or an invalid proof raises
+\textsc{WarningCensored}. Since any non-empty value at the warning slot causes an alert, an existing
+value does not need to be replaced. A valid MAC shows that a holder of the shared conversation
+secret produced the payload but does not identify which party wrote it
+(\cref{def:mac,alg:dualindex}).
+
+The lookup and warning slots are immutable. The raw-label interface rejects later writes to an
+occupied slot, while the transition audit detects an invalid operator-side replacement or deletion
+(\cref{def:epoch-delta}). After warning publication has been confirmed, the separate persistence
+component can retain the signed head and inclusion proof required for the deletion-evidence check
+(\cref{def:deletion-evidence,alg:detect}). The complete registration and warning procedures are
+given in \cref{alg:client,alg:dualindex}.
 \end{definition}
 
-\begin{definition}[Check-warning and the verification verdict]\label{def:dualindex-check}
-\intuition{A client accepts a peer key only if the peer's lookup slot verifies against a signed head
-\emph{and} the shared warning slot is provably empty.}
-$\mathsf{CheckWarning}(\lblwarn,\STH_t,k_{\mathrm{mac}})$ returns \textsc{Alert} if an inclusion proof binds a
-non-empty value at $\lblwarn$ under $\STH_t$, and \textsc{Safe} if a non-inclusion proof
-(\cref{def:noninclusion}) establishes the slot is empty. A response with neither valid proof is
-rejected. The warning-MAC key $k_{\mathrm{mac}}$ is derived separately by $\mathsf{DeriveWarnMacKey}$
-(\cref{alg:dualindex}). \Cref{def:dualindex-write} defines the payload MAC. A valid MAC shows that a holder of the shared
-conversation secret produced the value. A non-empty value with an invalid MAC is itself evidence of
-misbehaviour because only the two parties should be able to derive the warning slot. Both cases
-therefore return \textsc{Alert} (\cref{alg:dualindex}). A peer key is accepted only when the peer-lookup proof
-verifies through the chain of \cref{ssec:design-verify} and $\mathsf{CheckWarning}$ returns
-\textsc{Safe}. Specified in \cref{ssec:design-verify}.
+\begin{definition}[Warning-slot check]\label{def:dualindex-check}
+\intuition{A warning slot is safe for this check only when a verified non-inclusion proof establishes
+that it is empty. Any committed value raises an alert.}
+
+$\mathsf{CheckWarning}(\lblwarn,\STH_t,k_{\mathrm{mac}})$ performs a verified lookup of
+$\lblwarn$ under the current verified signed head $\STH_t$. If a valid non-inclusion proof
+establishes that the slot is empty, it returns \textsc{Safe}. If the proof chain is invalid or does
+not authenticate the requested warning label, the operation rejects.
+
+For a non-empty value
+\[
+v=\mathit{alert}\concat\tau,
+\]
+the client checks
+\[
+\mathsf{Vfy}(k_{\mathrm{mac}},\mathit{alert},\tau).
+\]
+A valid MAC authenticates the payload as having been produced by a holder of the shared warning-MAC
+key. It does not identify which party wrote the warning or establish that the reported event
+occurred. A malformed payload or invalid MAC is reported as unauthenticated. Both authenticated and
+unauthenticated values return \textsc{Alert} because any non-empty value at the warning slot
+activates the warning channel (\cref{def:mac,alg:dualindex}).
+
+The \textsc{Safe} result applies only to the warning-slot check. A peer-key result is accepted only
+after its lookup proof verifies through the complete chain in \cref{ssec:design-verify} and the
+remaining owner, peer, and warning checks succeed. The full background monitor composition is given
+in \cref{alg:detect}.
 \end{definition}
 
 \begin{definition}[Deletion evidence]\label{def:deletion-evidence}
-\intuition{A writer that keeps the proof of its committed warning can later \emph{prove} the server
-deleted it, using only the server's own signatures.}
-When a warning commits at epoch $w$, its writer retains the signed tree head $\STH_w$ and the
-inclusion proof of $\lblwarn$ under it. If a later verified lookup under a head $\STH_{t}$ ($t>w$)
-yields proven non-inclusion at $\lblwarn$, the bundle consisting of the retained inclusion proof
-under $\STH_w$, the non-inclusion proof under $\STH_t$, and the consistency proof
-$\pcons(\STH_w.\mathit{tree\_size},\STH_t.\mathit{tree\_size})$ verifies entirely against the operator's own
-signatures and constitutes publicly verifiable proof, attributable to the operator's signing key, that a committed leaf was removed.
-Specified in \cref{ssec:design-detection}. Implemented by \textsf{PersistenceCheck}
-(\cref{alg:detect}).
+\intuition{Verifiable evidence that the directory operator signed an earlier state containing a
+warning and a later state in the same append-only history in which the warning slot is absent.}
+
+When publication of a warning is confirmed under a signed head $\STH_w$, DUET's separate
+persistence component retains $\lblwarn$, $\STH_w$, and the corresponding prefix-tree and
+log-inclusion proofs. The retained proofs must authenticate a non-empty value at $\lblwarn$ and
+bind the directory root to the current snapshot under $\STH_w$.
+
+At a later signed head $\STH_t$, the persistence check performs another verified lookup of the same
+label. If the warning remains present, it reports \textsc{Present}. If the lookup proves
+non-inclusion, the deletion-evidence bundle contains the retained inclusion evidence, the later
+non-inclusion evidence, and an RFC~9162 consistency proof
+\[
+\pcons\!\left(
+\STH_w.\mathit{tree\_size},
+\STH_t.\mathit{tree\_size}
+\right)
+\]
+between the two signed heads~\cite[Section~2.1.4]{rfc9162}.
+
+The bundle verifies only when both signed heads are valid under the expected signing key, the
+earlier proof establishes inclusion of $\lblwarn$, the later proof establishes non-inclusion of the
+same label, both proofs bind to the current snapshot under their respective heads, and the
+consistency proof establishes append-only growth from $\STH_w$ to $\STH_t$. If any check fails, the
+result is \textsc{Indeterminate} and is not accepted as deletion evidence.
+
+Therefore, a valid bundle provides publicly verifiable evidence that the directory operator signed
+an earlier state containing the warning and a later state in the same append-only history in which
+the warning slot is absent. It attributes the two directory states to the operator's signing key
+but does not determine whether the removal was malicious or caused by an implementation fault. The
+complete procedure is given in \cref{alg:detect}, and its role in warning persistence is described
+in \cref{ssec:design-detection}.
 \end{definition}
 
 \begin{lemma}[Same-head label consistency]\label{lem:dualindex-consistency}
-Fix a signed tree head $\STH_t$. Applying $\textsf{DeriveLabels}$ (\cref{ssec:design-labels})
-from Alice's and Bob's respective viewpoints gives the same lookup label,
+Assume Alice and Bob use the same conversation secret $\sharedS$ and therefore derive the same
+$\mathit{PRK}$. From their respective viewpoints, the directional derivation in
+\cref{def:dualindex-derive} gives
 \[
-  \ell^\A_{\mathsf{peer}} = \HKDFexp\!\big(\mathit{PRK},\ \texttt{"lookup"}\concat\mathit{id}_{\B}\concat\mathit{id}_{\A},\ 32\big) = \ell^\B_{\mathsf{self}}.
+\ell^{\A}_{\mathsf{peer}}
+=
+\HKDFexp\!\bigl(
+\mathit{PRK},
+\text{\texttt{"lookup"}}\concat
+\mathit{id}_{\B}\concat
+\mathit{id}_{\A},
+32
+\bigr)
+=
+\ell^{\B}_{\mathsf{self}}.
 \]
-Let $\ell$ denote this shared label. If the client verification chain of \cref{ssec:design-verify}
-accepts a value $v_{\mathsf{peer}}$ at $\ell$ under $\STH_t$ (Alice's lookup of Bob's key) and a
-value $v_{\mathsf{self}}$ at $\ell$ under the same $\STH_t$ (Bob's self-check), then
-$v_{\mathsf{peer}}=v_{\mathsf{self}}$, unless the soundness of the prefix or log-inclusion proof, or
-the collision resistance of $\Hash$ (\cref{def:hash}), is violated.
+Let $\ell$ denote this shared directional label and fix a verified signed head $\STH_t$. If the
+client verification chain accepts a value $v_{\mathsf{peer}}$ for Alice's peer lookup at $\ell$ and
+a value $v_{\mathsf{self}}$ for Bob's self-check at the same label under $\STH_t$, then
+\[
+v_{\mathsf{peer}}=v_{\mathsf{self}},
+\]
+unless the soundness of the prefix-tree or log-inclusion verification, or the collision resistance
+of $\Hash$, is violated.
 \end{lemma}
-\begin{proof}[Argument]
-Alice's peer-lookup and Bob's self-lookup resolve to the same label
-\[
-  \ell=\HKDFexp(\mathit{PRK},\texttt{"lookup"}\concat\mathit{id}_{\B}\concat\mathit{id}_{\A},32).
-\]
-This is the directional slot for Bob's key. The canonical $\min/\max$ ordering applies only to
-$\ell_{\mathsf{warn}}$. Under a single $\STH_t$ a verifying inclusion proof binds $\ell$ to
-exactly one committed prefix-tree leaf, whose value is fixed by the log-inclusion proof against the
-one signed root. Two accepted values $v_{\mathsf{peer}}\neq v_{\mathsf{self}}$ at $\ell$ under that
-root would exhibit two verifying openings of one committed label, contradicting proof soundness and
-the collision resistance of the Merkle construction.
+
+\begin{proof}
+Reversing the party viewpoints swaps the two directional lookup labels. Therefore, Alice's lookup
+of Bob's key and Bob's lookup of his own key use the same label $\ell$. The canonical
+$\min/\max$ ordering is used only for $\lblwarn$ and is not needed for this equality.
+
+The verified signed head $\STH_t$ fixes one log root and tree size. The client verification chain
+requires each accepted lookup to bind its prefix-tree root to the final log leaf under that head.
+Therefore, successful verification of the log-inclusion proofs anchors both lookup results to the
+same current prefix-tree root.
+
+Each prefix-tree proof binds its requested label, leaf kind, and value to that prefix-tree root. Two
+different accepted values at the same label would produce two different openings of the same
+authenticated map position. This would violate prefix-proof soundness or produce a collision in the
+Merkle hash construction. Therefore,
+$v_{\mathsf{peer}}=v_{\mathsf{self}}$. The result does not depend on the secrecy of $\sharedS$.
 \end{proof}
 
-\begin{definition}[Same-head label consistency and G1]\label{def:g1-consistency}
-\intuition{Under one signed head the peer-lookup label and the owner's self-check label are the same
-slot, so a substituted peer key cannot pass the owner's self-check. Full G1 detection additionally
-uses the warning channel and the scenario-specific controls summarized in \cref{tab:eval-security}.}
-The static core of G1 (Key-Substitution Detection) is a same-head consistency property
-(\cref{lem:dualindex-consistency}). Fixing a signed head $\STH_t$, the shared label
-$\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}$ cannot carry two verifying values, by soundness
-of the prefix and inclusion proofs and collision resistance of $\Hash$ (\cref{def:hash}). This holds
-even if the adversary knows $\sharedS$.
+\begin{definition}[Requirement G1 (Key-Substitution Detection)]\label{def:g1-consistency}
+\intuition{G1 combines same-head label consistency with global identity verification, authenticated
+peer warnings, rotation authentication, and warning-censorship controls.}
 
-G1 in the full model of \cref{ch:threat} additionally depends on three properties with distinct
-adversary scopes. First, pre-use unpredictability of the raw dual-index labels relies on HKDF
-(\cref{def:hkdf}) acting as a PRF keyed by an unknown, high-entropy $\sharedS$. Second, warning
-authenticity against operator injection depends on the unforgeability of the warning-MAC. Finally, the
-global VRF-indexed identity path derives its security from VRF uniqueness
-(\cref{def:vrf-security}), independently of label secrecy.
+Requirement G1 (Key-Substitution Detection) is defined in \cref{sec:threat-goals}. Its same-head
+property follows from \cref{lem:dualindex-consistency}. Let $\STH_t$ be a verified signed head, and
+let
+\[
+\ell=\ell^\A_{\mathsf{peer}}=\ell^\B_{\mathsf{self}}
+\]
+be the shared directional label. Valid prefix-tree and log-inclusion proofs under $\STH_t$ cannot
+authenticate two different values at $\ell$ without violating proof soundness or the collision
+resistance of $\Hash$ (\cref{def:hash}). Therefore, if a peer accepts a substituted value at
+$\ell$, the owner's comparison of the same slot with its local identity key must fail under that
+head. This property does not depend on the secrecy of $\sharedS$.
 
-For the established-conversation G1 cases that use the shared warning channel to notify the peer, the
-argument also depends on the A2 censorship safeguards. First, if the operator drops a warning before
-commitment, the client observes the existing key mismatch together with proof-verified absence at the
-warning slot. Second, if the operator removes a warning after commitment, the transition audit detects
-the invalid change and the retained persistence evidence records the removal. The write-once policy
-also prevents an honest server from overwriting a committed warning.
+The additional G1 checks depend on the attack scenario. For
+\hyperref[sc:threat-a1]{A1 (Server-Side Key Substitution)}, a client compares its self-slot value
+with its local identity key and its peer-slot value with the pinned peer identity key. For
+\hyperref[sc:threat-a3]{A3 (Network Man-in-the-Middle Substitution)}, an honest directory allows
+the client to compare the identity key in the received pre-key bundle with the peer's global
+VRF-bound identity entry. For \hyperref[sc:threat-a5]{A5 (Malicious Key Rotation)}, the design
+requires the client to re-fetch the global identity entry and accept a changed key as an authorised
+rotation only when a valid predecessor cross-signature verifies. For an established conversation
+affected by A1 or A5, the detecting client publishes an authenticated warning to the shared warning
+slot (\cref{def:dualindex-write,def:dualindex-check}).
 
-Separately, the cross-vantage auditor handles A4 split-view equivocation
-(\cref{ssec:design-detection}).
+Before their first use, the unpredictability of the raw dual-index labels depends on the high
+entropy of $\sharedS$ and the pseudorandomness of the HKDF outputs derived from it
+(\cref{def:hkdf,ssec:design-properties}). Warning authenticity depends on the UNF-CMA security of
+the warning MAC (\cref{def:mac}). The binding between a service identifier and its global label
+depends on VRF uniqueness under the pinned VRF public key (\cref{def:vrf-security}).
 
-A complete formal proof combining these properties remains future work (\cref{ch:discussion}).
+The warning path is also subject to
+\hyperref[sc:threat-a2]{A2 (Warning Censorship)}. Before commitment, a detected key mismatch
+together with proof-verified absence at the warning slot causes verification to fail. After
+commitment, removal of the warning creates an invalid directory transition detected by the
+transition audit. The separate persistence component can also produce deletion evidence
+(\cref{def:epoch-delta,def:deletion-evidence}).
+
+A complete formal proof combining these properties remains future work
+(\cref{ch:discussion}).
 \end{definition}

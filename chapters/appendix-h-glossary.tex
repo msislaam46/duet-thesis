@@ -33,8 +33,8 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
   directory. It is the closest published design point for proof size.
 \item[Consistency proof] A short proof that a later log is an append-only extension of an earlier one
   (\cref{def:consistency}).
-\item[Declared update set (epoch delta)] The exact list of inserts and value-disclosing rotations a
-  commit made, published per epoch for auditor replay. The format cannot express a deletion
+\item[Declared update set (epoch delta)] The list of inserts and value-disclosing rotations declared
+  for a committed epoch and provided for auditor replay. The format cannot express a deletion
   (\cref{def:epoch-delta}).
 \item[Deletion evidence] The verifiable bundle (inclusion proof at commit, later proven
   non-inclusion, and the consistency proof between the two heads) by which a warning's writer proves
@@ -53,16 +53,14 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
   publishes a signed tree head (\cref{def:epoch}).
 \item[Equivocation / fork] A malicious server signing two divergent views at one epoch, caught by
   cross-vantage auditing for A4 split-view equivocation under G4 (Fork Detection).
-\item[EUF-CMA] Existential unforgeability under chosen-message attack, the standard signature-security
-  notion (\cref{def:sig}).
 \item[HKDF] HMAC-based key-derivation function (RFC~5869), used for the dual-index label derivation
   (\cref{def:hkdf}).
 \item[Inclusion proof] A proof that a value is present at a position in the log or prefix tree
   (\cref{def:inclusion,def:noninclusion}).
 \item[KT] Key transparency: making a key directory's contents publicly and verifiably consistent.
 \item[MAC] Message authentication code: a shared-key tag that authenticates a message and detects
-  modification. The warning payload carries a MAC under a key derived from the conversation secret
-  (\cref{sec:design-dual}).
+  modification. DUET uses HMAC-SHA256 to authenticate warning payloads
+  (\cref{def:mac,def:dualindex-write}).
 \item[Merkle log] An append-only tamper-evident log whose root commits to every entry in order
   (\cref{def:merkle-log}).
 \item[MitM] Man-in-the-middle: an active adversary substituting keys in transit (attack A3).
@@ -98,6 +96,9 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
 \item[Transition audit] The auditor's per-epoch replay of the declared update set against the
   previous committed root, which catches any undeclared mutation, in particular a deletion
   (\cref{def:epoch-delta}, \cref{alg:auditor}).
+\item[UNF-CMA] Unforgeability under chosen-message attack: an adversary cannot produce a new valid
+  message--tag or message--signature pair, even after obtaining tags or signatures for messages of
+  its choice (\cref{def:mac,def:sig}).
 \item[VKD] Verifiable Key Directory, the general term for a key directory serving cryptographic proofs
   of its answers.
 \item[VRF] Verifiable Random Function: a keyed function whose outputs are pseudorandom to outsiders

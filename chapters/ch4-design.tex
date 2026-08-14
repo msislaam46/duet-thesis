@@ -105,11 +105,12 @@ Extract and Expand steps~\cite[Sections~2.2--2.3]{rfc5869}:
   \ell_{\mathsf{warn}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"warning"}} \concat \min(\mathit{id}_{\A}, \mathit{id}_{\B}) \concat \max(\mathit{id}_{\A}, \mathit{id}_{\B}),\ 32\big).
 \end{aligned}
 \end{equation}
-In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key. Directional identity
-ordering produces one lookup label for each party, while canonical ordering produces the same
-warning label for both. Each label is 32 bytes. Cross-implementation vectors require the standalone
-DUET crate and Signal Desktop client to derive identical bytes (\cref{sec:tests-xlang}).
-\Cref{fig:design-dualindex} shows the derivation from Alice's viewpoint.
+In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key. The fixed-width
+identifier encoding makes the concatenated identity fields unambiguous without separate length
+prefixes. Directional identity ordering produces one lookup label for each party, while canonical
+ordering produces the same warning label for both. Each label is 32 bytes. Cross-implementation
+vectors require the \texttt{duet} crate and Signal Desktop client to derive identical bytes
+(\cref{sec:tests-xlang}). \Cref{fig:design-dualindex} shows the derivation from Alice's viewpoint.
 
 \begin{figure}[ht]
 \centering
