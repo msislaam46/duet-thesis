@@ -82,7 +82,7 @@ Sections~3.2--3.3 of the X3DH specification~\cite{x3dh}.}
 Signal's post-quantum variant, PQXDH, additionally mixes in a key-encapsulation secret to protect
 recorded traffic against a future ``harvest-now, decrypt-later'' attack~\cite[Section~4.7]{pqxdh}. The resulting shared secret then initializes the Double Ratchet, which
 evolves the cryptographic state throughout the conversation and derives per-message encryption
-keys~\cite[Section~2.3]{doubleratchet}.
+keys~\cite[Sections~2.1--2.4]{doubleratchet}.
 
 % ============================================================================
 \section{Double Ratchet Mechanics}\label{sec:ext-ratchet}
@@ -167,7 +167,7 @@ Manual comparison also introduces a usability cost. In the first phase of one st
 asked to authenticate each other and ensure that no other party could read their messages, but were
 not instructed to compare encryption keys. Only two of twelve pairs succeeded in locating and
 completing the ceremony in at least one of WhatsApp, Viber, or Facebook Messenger. Across all
-pair--application trials, the success rate was 14\%~\cite[Sections~4.1 and 5]{vaziripour2017}.
+pair--application trials, the success rate was 14\%~\cite[Section~5]{vaziripour2017}.
 Application-independent instructions about comparing encryption keys raised the overall success rate
 to 78\%, while Viber reached 96\%~\cite[Section~6.1 and Table~2]{vaziripour2017}. Even with these instructions,
 users took an average of 3.2 minutes to find the ceremony and a further 7.8 minutes to complete
@@ -399,7 +399,7 @@ sibling, this gives the fixed \num{8192}-byte copath used as a baseline in
 
 \paragraph{Proton Mail Key Transparency.}
 ProtonKT applies a verifiable directory to email and reuses Certificate Transparency to support
-consistency checking~\cite[pp.~35, 37]{goebel2023proton}. It supports owner and external auditing~\cite[pp.~44 and~47]{goebel2023proton}.
+consistency checking~\cite[pp.~35 and~39]{goebel2023proton}. It supports owner and external auditing~\cite[pp.~44 and~47]{goebel2023proton}.
 Its warning model notifies the key owner but not the communication
 partner~\cite[pp.~2 and~44--45]{goebel2023proton}. The Proton thesis also describes the investigation
 of KT warnings as an open user-experience

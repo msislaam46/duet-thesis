@@ -192,7 +192,7 @@ Module & Test & Property checked \\
 \texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_modification} & an in-place modification likewise diverges and alarms \\
 \texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected: the kind-commitment pre-shared-secret-compromise path \\
 \texttt{auditor} & \texttt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert} & the same overwrite declared as an \textsf{Insert} of an already-present label is rejected (A1): closing the other delta-op variant \\
-\texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_replica} & a rejected transition leaves the auditor's replica untouched, so a single bad epoch cannot corrupt later audits \\
+\texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_replica} & a rejected transition leaves the accepted directory state unchanged, so a single bad epoch cannot corrupt later audits \\
 \texttt{auditor} & \texttt{audit\_rejects\_unsigned\_or\_foreign\_sth} & an unsigned or foreign-key head is rejected before auditing \\
 \texttt{auditor} & \texttt{audit\_requires\_committed\_epoch} & auditing requires a committed epoch \\
 \texttt{auditor} & \texttt{detect\_fork\_flags\_same\_epoch\_different\_root} & two validly signed roots at one epoch are reported as a fork \\
@@ -244,13 +244,13 @@ and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to
 \texttt{decoder\_validation} drives the DTO decoders through a mocked transport to check
 malformed-response rejection, \texttt{kt\_log} checks the structured screenshot-readable log format,
 and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
-\texttt{pni\_silence} suites cover the ACI canonical-bytes boundary, display-string preservation, and
+\texttt{pni\_silence} suites cover the ACI canonicalization, display-string preservation, and
 phone-number identifier (PNI) event-silence added with the canonical-identity fix. \Cref{tab:tests-jest-wire} lists the
 wire-parity and integration tests, and
 \cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list nine of the ten unit suites (\texttt{kt\_log} is described above but not separately tabulated).
 Beyond this harness, \num{35} embedded electron-mocha tests run in six suites under Signal
 Desktop's own test runner (\cref{tab:tests-embedded}). They drive realistic ACI strings through the
-same integration boundary the live preload callers use, so a regression at that boundary fails an
+same integration point the live preload callers use, so a regression at that integration point fails an
 embedded test rather than passing silently.
 
 \begin{table}[H]
@@ -306,7 +306,7 @@ RFC~9381 VRF proof (3 RFC vectors) \\
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: client unit suites, part 1 of 2.}
+\caption{Jest tests: representative client unit-suite rows, part 1 of 2.}
 \label{tab:tests-jest-unit}
 \footnotesize
 \renewcommand{\arraystretch}{0.90}
@@ -315,8 +315,8 @@ RFC~9381 VRF proof (3 RFC vectors) \\
 Suite & Test \\
 \midrule
 \texttt{remote\_kt\_client} & \texttt{SAFE} when the fetched key matches the logged key \\
-\texttt{remote\_kt\_client} & \textsc{key\_mismatch} when the fetched key differs from the logged key \\
-\texttt{remote\_kt\_client} & \textsc{key\_not\_in\_log} (proven non-inclusion) for an unregistered peer \\
+\texttt{remote\_kt\_client} & \texttt{KEY\_MISMATCH} when the fetched key differs from the logged key \\
+\texttt{remote\_kt\_client} & \texttt{KEY\_NOT\_IN\_LOG} (proven non-inclusion) for an unregistered peer \\
 \texttt{remote\_kt\_client} & a stale old-leaf inclusion under the current STH is refused (current-snapshot check) \\
 \texttt{remote\_kt\_client} & \texttt{matches=true} after honest registration \\
 \texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites the client's slot \\
@@ -361,7 +361,7 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: client unit suites, part 2 of 2.}
+\caption{Jest tests: representative client unit-suite rows, part 2 of 2.}
 \label{tab:tests-jest-unit-b}
 \footnotesize
 \renewcommand{\arraystretch}{0.90}
@@ -370,8 +370,8 @@ Suite & Test \\
 Suite & Test \\
 \midrule
 \texttt{getKeysForServiceId\_status} & \texttt{SAFE} $\to$ verified \\
-\texttt{getKeysForServiceId\_status} & \textsc{key\_not\_in\_log} $\to$ absent, not verified \\
-\texttt{getKeysForServiceId\_status} & \textsc{key\_mismatch} / \textsc{proof\_invalid} / \textsc{mitm\_warning} $\to$ warning with \texttt{shouldProceed=false} (3 cases) \\
+\texttt{getKeysForServiceId\_status} & \texttt{KEY\_NOT\_IN\_LOG} $\to$ absent, not verified \\
+\texttt{getKeysForServiceId\_status} & \texttt{KEY\_MISMATCH} / \texttt{PROOF\_INVALID} / \texttt{MITM\_WARNING} $\to$ warning with \texttt{shouldProceed=false} (3 cases) \\
 \texttt{getKeysForServiceId\_status} & a network/init failure (\texttt{KtUnreachableError}) $\to$ unreachable, not verified \\
 \texttt{getKeysForServiceId\_status} & a malformed or unexpected verifier error $\to$ error, \texttt{shouldProceed=false} (fail-closed) \\
 \texttt{getKeysForServiceId\_status} & \texttt{verified} $\to$ \texttt{kt:verified} \\
@@ -379,7 +379,7 @@ Suite & Test \\
 \texttt{getKeysForServiceId\_status} & \texttt{unreachable} $\to$ \texttt{kt:unreachable} carrying the \texttt{serviceId} \\
 \texttt{getKeysForServiceId\_status} & \texttt{absent} $\to$ no status event, no \texttt{kt:verified} emission \\
 \texttt{getKeysForServiceId\_status} & \texttt{error} $\to$ no status event, no \texttt{kt:verified} emission \\
-\texttt{getKeysForServiceId\_status} & \textsc{key\_not\_in\_log} never produces \texttt{kt:verified} \\
+\texttt{getKeysForServiceId\_status} & \texttt{KEY\_NOT\_IN\_LOG} never produces \texttt{kt:verified} \\
 \texttt{getKeysForServiceId\_status} & a thrown exception never produces \texttt{kt:verified} \\
 \midrule
 \texttt{decoder\_validation} & a well-formed \texttt{/search} response decodes, and a non-object body is rejected \\
@@ -394,7 +394,7 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: canonical-identity boundary suites added with the ACI fix.}
+\caption{Jest tests: canonical-identity integration suites added with the ACI fix.}
 \label{tab:tests-jest-canonical}
 \footnotesize
 \renewcommand{\arraystretch}{0.90}
@@ -420,7 +420,7 @@ Suite & Test \\
 
 \begin{table}[H]
 \centering
-\caption{Embedded electron-mocha tests at the Signal Desktop integration boundary (\num{35} tests in
+\caption{Embedded electron-mocha tests at the Signal Desktop integration point (\num{35} tests in
 six suites, representative rows shown).}
 \label{tab:tests-embedded}
 \footnotesize
@@ -439,7 +439,7 @@ Suite & Test \\
 \texttt{ktServiceId} & does not match a different peer under any encoding \\
 \texttt{ktServiceId} & accepts when either id is unknown, to avoid hiding a real warning \\
 \midrule
-\texttt{aci\_integration} & derives 16-byte ids from real ACI strings via the boundary adapter \\
+\texttt{aci\_integration} & derives 16-byte ids from real ACI strings via the ACI adapter \\
 \texttt{aci\_integration} & registers, verifies clean (\texttt{SAFE}), and monitors the dual-index path clean \\
 \texttt{aci\_integration} & detects a substituted lookup slot via \texttt{detectMitm} (dual-index) \\
 \texttt{aci\_integration} & flags a mismatched fetched key as \texttt{KEY\_MISMATCH} (global path) \\

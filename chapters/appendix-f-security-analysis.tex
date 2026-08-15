@@ -32,7 +32,7 @@ the signed configuration hash of \cref{eq:design-sth}, so a server that changes 
 signed commitment and is rejected by a client that checks the expected configuration.
 \item \textbf{Transition audit.} The write-once policy binds an honest server. To bind a malicious
 one, the auditor verifies each epoch. For each committed epoch the server discloses the ordered update
-set and the committed root. The auditor applies the declared operations to its own replica of the
+set and the committed root. The auditor applies the declared operations to its own copy of the
 previous committed state (insertions of previously absent labels and, for key rotation, declared
 in-place rotations whose disclosed old value must match the leaf being replaced), verifies that nothing
 beyond the declared operations changed (the delta format cannot express a deletion), and accepts only
@@ -54,11 +54,11 @@ in depth for the dual-index labels: a replaced lookup slot fails the owner's sel
 replaced warning slot still alerts (any value at the slot alerts). But note the CEA fingerprint
 overwrite is one the receiver's per-epoch verdict alone \emph{cannot} catch under a pre-shared-state
 compromise (the substituted fingerprint matches what the victim recomputes for the injected key), so
-it is the auditor's rejection of the immutable-leaf rotation, and the alarm it raises, that closes it. This is
-the update-validity role the IETF KeyTrans protocol assigns to third-party auditors, whose
-\textsf{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
-proof against the prior tree, so that the auditor can recompute both roots of the
-transition~\cite{ietf-keytrans-protocol}. A deletion or overwrite therefore cannot be committed
+it is the auditor's rejection of the immutable-leaf rotation, and the alarm it raises, that closes it. The IETF
+KeyTrans protocol assigns this update-validity role to third-party auditors. Its
+\texttt{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
+proof against the prior tree, allowing the auditor to recompute both roots of the
+transition~\cite[Section~15.2]{ietf-keytrans-protocol}. A deletion or overwrite therefore cannot be committed
 without either failing the auditor's validation and raising its alarm, or presenting the auditor a transition that
 fails to replay.
 \item \textbf{Persistence check.} Independently of any auditor, the writer of a warning retains the
@@ -151,7 +151,7 @@ censoring writes, and presenting divergent signed views (equivocation).
 % ----------------------------------------------------------------------------
 \section{STRIDE Threat Analysis}\label{sec:sec-stride}
 
-The STRIDE threat analysis covers the server (Merkle log, prefix tree, signed tree head), the client
+The STRIDE threat analysis~\cite{stride} covers the server (Merkle log, prefix tree, signed tree head), the client
 (registration, verification, warning monitor), and the auditor. Of twenty threats, sixteen are
 addressed by an implemented control and four are residual. The control column distinguishes attacks
 that are cryptographically prevented from those detected after they are attempted. Forgery of a VRF
@@ -161,7 +161,7 @@ divergent head) are not prevented but detected by the transparency log, the warn
 cross-vantage auditor. \Cref{tab:eval-stride} gives the summary, and
 the per-category detail follows in \cref{tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}.
 
-A threat is counted \emph{addressed} when an implemented control prevents or detects the principal
+A threat is counted \emph{addressed} when an implemented control prevents or detects the main
 attack outcome, even where a limitation remains. It is counted \emph{residual} when no implemented
 control addresses that outcome. Observability of an availability failure (for instance, a client
 seeing that a server refuses to serve) does not by itself count as addressing it. The Residual column
@@ -197,10 +197,10 @@ in \cref{sec:def-structures}. The endpoint, auditor, and trust-on-first-use assu
 \cref{sec:eval-security}.
 
 The four residuals arise from the trust model and deployment requirements. One follows from the
-semi-trusted-server model: the operator learns the association between an account and its VRF-derived
-identity label. This limitation also appears in CONIKS~\cite{melara2015coniks} and the IETF Key
-Transparency architecture~\cite{ietf-keytrans-protocol}, while ACKA abstracts the log behind its
-secure-log interface~\cite{dowling2023acka}. The other three concern availability: write flooding,
+operator's position in the trust model: the operator learns the association between an account and its VRF-derived
+identity label. This limitation also appears in CONIKS~\cite{melara2015coniks} and the IETF KeyTrans
+protocol, where the service operator evaluates the VRF used to derive each prefix-tree search
+key~\cite[Section~11.7]{ietf-keytrans-protocol}. The other three concern availability: write flooding,
 published-epoch staleness, and omitted proofs. These deployment tasks are discussed in
 \cref{ch:discussion}.
 
@@ -275,7 +275,7 @@ Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Link a label to a user identity & VRF-derived pseudorandom labels & \emph{server knows the mapping (semi-trusted)} \\
+Link a label to a user identity & VRF-derived pseudorandom labels & \emph{server knows the mapping (operator knowledge)} \\
 Enumerate registered users & 256-bit pseudorandom labels prevent offline recovery & none offline for outsiders. The prototype's unauthenticated query endpoint still permits online tests of known identifiers (operator residual counted above) \\
 Leak the shared secret from a label & HKDF-Expand outputs (dual-index labels) are pseudorandom and ECVRF outputs (identity labels) are pseudorandom without the VRF secret & none (cryptographic) \\
 \bottomrule
@@ -295,8 +295,8 @@ Threat & KT control & Residual \\
 \midrule
 Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented, freshness alarm left to deployment} \\
 Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve. A refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the prototype, counted as an availability residual} \\
-Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & \emph{surfacing beyond the prototype warning UI (for example an out-of-band alert) left to deployment} \\
-Flood with fake registrations & \emph{none}: no deployment rate limit is implemented in the prototype & deployment-level rate limiting, left to deployment (operational) \\
+Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & surfacing beyond the prototype warning UI (for example an out-of-band alert) left to deployment \\
+Flood with fake registrations & \emph{none}: no deployment rate limit is implemented in the prototype & \emph{deployment-level rate limiting, left to deployment (operational)} \\
 \bottomrule
 \end{tabular}
 \end{table}

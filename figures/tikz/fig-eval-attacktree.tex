@@ -15,14 +15,14 @@
 
   % two parallel, matching group headers at the same level
   \node[hdr] (orG)   at (-2.0, 3.7) {OR: any one substitution route};
-  \node[hdr] (rhead) at ( 4.8, 3.7) {Detection-evasion attempts};
+  \node[hdr] (rhead) at ( 5.0, 3.7) {Detection-evasion attempts};
 
   % attack rows (uniform boxes)
   \node[atk] (a1) at (-4.7, 2.0) {A1\\server substitution};
   \node[atk] (a3) at (-2.0, 2.0) {A3\\network MitM};
   \node[atk] (a5) at ( 0.7, 2.0) {A5\\malicious rotation};
-  \node[atk] (a2) at ( 3.5, 2.0) {A2\\warning suppression};
-  \node[atk] (a4) at ( 6.1, 2.0) {A4\\equivocation (split view)};
+  \node[atk] (a2) at ( 3.5, 2.0) {A2\\warning censorship};
+  \node[atk] (a4) at ( 6.5, 2.0) {A4\\equivocation (split view)};
   \foreach \n in {a1,a3,a5}{\draw[->,black!45] (orG) -- (\n);}
   \draw[->,black!45] (rhead) -- (a2);
   \draw[->,black!45] (rhead) -- (a4);
@@ -32,7 +32,7 @@
   \node[det] (d3) at (-2.0,-0.2) {global VRF identity comparison};
   \node[det] (d5) at ( 0.7,-0.2) {identity re-fetch and predecessor cross-signature};
   \node[det] (d2) at ( 3.5,-0.2) {key mismatch and proven warning absence};
-  \node[det] (d4) at ( 6.1,-0.2) {cross-vantage fork check};
+  \node[det] (d4) at ( 6.5,-0.2) {cross-vantage fork check};
   \foreach \a/\d in {a1/d1,a3/d3,a5/d5,a2/d2,a4/d4}{%
     \draw[->,green!45!black,dashed] (\a) -- (\d);}
 

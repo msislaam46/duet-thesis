@@ -10,7 +10,7 @@ run the system.
 % ----------------------------------------------------------------------------
 \section{Directory Server REST API}\label{sec:apiref-rest}
 
-The standalone server exposes a public API used by clients and auditors. Requests and
+The directory server exposes a public API used by clients and auditors. Requests and
 responses are JSON, and byte strings are hex-encoded. The verified-lookup endpoints return the
 value together with the prefix proof, the log-inclusion proof, and the signed tree head, so
 that the client can run the full verification chain (\cref{ssec:design-verify}).
@@ -169,11 +169,11 @@ The implementation is organized as follows:
 
 \begin{itemize}
   \item \texttt{crate/}: the Rust \texttt{duet} crate, with library modules
-  (\cref{tab:impl-modules}), the standalone server and auditor binaries, and the benchmark
+  (\cref{tab:impl-modules}), the server and auditor binaries, and the benchmark
   harness.
   \item \texttt{demo/}: the PowerShell and Docker orchestration for the server, auditor, clients, and scripted attacks.
   \item \texttt{signal-desktop/ts/kt/}: the embedded Signal Desktop verifier and monitor modules, implemented in TypeScript, whose shared
-  verifier modules are mirrored byte-for-byte by the standalone \texttt{signal-desktop-kt/}
+  verifier modules are mirrored byte-for-byte by the \texttt{signal-desktop-kt/} verifier
   package, while integration wiring and test scaffolding differ between the two.
 \end{itemize}
 
@@ -244,11 +244,11 @@ In \cref{fig:impl-e2e}, Alice and Bob each run an embedded verifier, while the d
 execute as separate processes. In the normal path Alice and Bob each register their session slot and
 commit. Bob's verifier
 then verifies its owner slot, the peer slot, and the shared warning slot through three
-label-bound, proof-verified lookups. These are its owner slot $\ell_B$, the peer slot $\ell_A$ that
+label-bound, proof-verified lookups. These are its owner slot $\ell^{\B}_{\mathsf{self}}$, the peer slot $\ell^{\B}_{\mathsf{peer}}$ ($=\ell^{\A}_{\mathsf{self}}$) that
 contains Alice's key, and the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably
 empty. The monitor emits a verified green result, while the auditor polls and replays to
 \textsc{Consistent}. In the
-branch for the A1b session-slot substitution, the server overwrites Alice's own dual-index slot $\ell_A$ (which is also Bob's peer slot).
+branch for the A1b session-slot substitution, the server overwrites Alice's own dual-index slot $\ell^{\A}_{\mathsf{self}}$ (which is also Bob's peer slot $\ell^{\B}_{\mathsf{peer}}$).
 Alice's monitor compares the substituted value with her local identity key, finds a mismatch, and
 writes the shared warning slot. Bob's monitor then reads that warning and both clients go red. Independently, the
 auditor's transition replay rejects the declared immutable rotation, so detection does not rest on the
@@ -377,17 +377,17 @@ of the ACKA framework~\cite{dowling2023acka}. The crates
 primitives, and the ECVRF of RFC~9381 is the one primitive implemented directly, checked against the published
 suite-\texttt{0x03} test vectors.
 
-A standalone HTTP server, built on the
+The HTTP server, built on the
 \texttt{axum} framework over the asynchronous \texttt{tokio} runtime, wraps the \texttt{KTServer}
 and serves the lookup, monitoring, and consistency operations as JSON, alongside a privileged
 testing interface used only by the adversarial scenario suite and the scripted attacker. An auditor binary, implemented as a small \texttt{ureq} HTTP client, verifies signed-head growth and
-replays declared epoch transitions against its own replica. The server enforces the write-once policy in its raw-label
+replays declared epoch transitions against a temporary copy of its accepted directory state. The server enforces the write-once policy in its raw-label
 update path, so a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
 \texttt{/update-raw} endpoint answers \texttt{409 Conflict}), while the privileged interface exposes
 an explicit unchecked overwrite so the adversarial suite can play a malicious operator. Every commit
 freezes a \emph{declared update set} that the server publishes at an \texttt{/epoch-delta} endpoint,
 which the auditor consumes (\cref{fig:impl-transition-audit}) by replaying each epoch's declared set
-against its own replica and accepting only if the replayed root equals the committed root. Its head-comparison step keeps a fork distinct from an unverified consistency proof. Two validly
+against that temporary copy and accepting only if the replayed root equals the committed root. Its head-comparison step keeps a fork distinct from an unverified consistency proof. Two validly
 signed roots at one tree size are reported as \texttt{[alert] fork: two validly signed roots exist
 at one tree size}. A required proof that is missing, malformed, or invalid yields \texttt{[alert]
 consistency unverified: required proof is missing, malformed, or invalid} and retains the baseline.
@@ -417,7 +417,7 @@ inactive (their last-active marker cleared, as when a conversation is deleted) w
 monitor archived ones, which keep that marker set. No live session-establishment hook
 exposes the X3DH shared secret. The
 peer-key-retrieval hook runs the full verification chain
-(\cref{ssec:design-verify}) on a peer's key at the retrieval boundary and reports the verdict without
+(\cref{ssec:design-verify}) on a peer's key at the peer-key-retrieval integration point and reports the verdict without
 blocking session establishment. The monitor keys its per-conversation state by the derived label
 rather than by any transient handle, so a verdict is bound to the slot it was computed for. Verdicts
 appear in the user interface through a conversation-header badge and a
