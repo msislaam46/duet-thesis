@@ -7,7 +7,7 @@ provides the verifier, background monitor, lifecycle hooks, and warning interfac
 covers their architecture, integration, testing, and engineering challenges.
 
 % ============================================================================
-\section{Architecture and Language Boundary}\label{sec:impl-strategy}
+\section{Architecture and Language Choices}\label{sec:impl-strategy}
 
 The \texttt{duet} Rust crate contains the directory server and cryptographic core, along with the
 auditor process and benchmark harness. An initial Python version prototyped the core constructions
@@ -36,7 +36,7 @@ libsignal, as discussed further in \cref{ch:discussion}.
 \begin{figure}[t]
 \centering
 \input{figures/tikz/fig-impl-overview}
-\caption[Implementation and process boundaries.]{Implementation and process boundaries. The Signal
+\caption[Implementation components and processes.]{Implementation components and processes. The Signal
 Desktop client communicates with the directory server over HTTP/JSON. The auditor is a separate
 process that replays declared transitions and compares signed-head views.}
 \label{fig:impl-overview}
@@ -171,9 +171,9 @@ reproduction procedure.
 The Signal Desktop verifier checks responses from the DUET directory server and reports results
 through a conversation badge and banner. The badge starts grey (pending) and turns green only when
 verification succeeds and the account-wide self-check is healthy. If the server is unreachable, the
-badge remains pending and an amber availability banner appears. A proof failure, key mismatch,
-authenticated peer warning, or fail-closed operational timeout produces a red badge and warning
-banner.
+badge remains pending and an amber availability banner appears. A proof failure, verified key
+mismatch, proof-verified warning-slot value, or fail-closed operational timeout produces a red
+badge and warning banner.
 
 \subsection{Client Verification and Lifecycle}\label{ssec:impl-verifier}
 \label{ssec:impl-hooks}
@@ -273,7 +273,8 @@ and the expected behaviour for the specified inputs only, without establishing e
 every input. For A5 (malicious key rotation), predecessor cross-signature checking remains limited
 to the \texttt{duet} crate's adversarial suite. The Signal Desktop client instead uses identity
 re-fetch and the shared warning path without performing this check.
-Appendix~\ref{sec:tests-evidence} gives the complete suite structure, counts, and outcomes.
+Appendix~\ref{sec:tests-adversarial} gives the individual adversarial outcomes, while
+Appendix~\ref{sec:tests-evidence} describes the complete evidence structure and suite counts.
 
 % ============================================================================
 \FloatBarrier

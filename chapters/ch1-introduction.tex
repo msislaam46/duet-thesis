@@ -62,8 +62,8 @@ that Alice's peer lookup and Bob's self-check cannot authenticate different valu
 head. \Cref{ch:design} establishes these properties, and \cref{ch:eval} evaluates their costs.
 
 \paragraph{Systems.} The systems contribution instantiates ACKA's abstract log
-component~\cite{dowling2023acka} as the DUET directory through a standalone Rust implementation
-comprising the \texttt{duet} crate, an HTTP directory server, and an auditor process. A
+component~\cite{dowling2023acka} as the DUET directory through the \texttt{duet} Rust crate,
+which provides the HTTP directory server and auditor process. A
 client verifier is integrated into a fork of Signal Desktop~(\cref{ch:impl}). Shared protocol
 operations are checked for byte-for-byte agreement using cross-language test vectors.
 
