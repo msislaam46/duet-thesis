@@ -14,7 +14,7 @@
   % ===== Panel (a): normal operation =====
   \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{Directory server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
-    \draw[dashed,black!45] (\x,-0.55) -- (\x,-6.3);}
+    \draw[dashed,black!45] (\x,-0.95) -- (\x,-6.3);}
   \node[font=\itshape,text=black!55,anchor=west,fill=white,inner sep=1.5pt] at (-0.95,-0.62) {(a) normal operation};
   \draw[m] (0,-1.15) -- node[above,mlbl]{register Alice's key at $\ell^{\A}_{\mathsf{self}}$ and commit} (7.0,-1.15);
   \draw[m] (3.4,-1.68) -- node[above,mlbl]{register Bob's key at $\ell^{\B}_{\mathsf{self}}$ and commit} (7.0,-1.68);
@@ -25,8 +25,8 @@
   \draw[m] (3.4,-4.5) -- node[above,mlbl]{3. search peer slot $\ell^{\B}_{\mathsf{peer}}$} (7.0,-4.5);
   \draw[m] (7.0,-5.0) -- node[above,mlbl]{peer key $+$ proof $+$ STH} (3.4,-5.0);
   \node[gact,anchor=north] at (3.4,-5.35) {all three checks pass\\$\Rightarrow$ verified (green)};
-  \draw[m] (10.6,-2.35) -- node[above,mlbl,font=\tiny]{poll STH $+$ delta} (7.0,-2.35);
-  \node[act,anchor=north] at (10.6,-2.7) {replay transition:\\consistent};
+  \draw[m] (10.6,-2.0) -- node[above,mlbl,font=\tiny]{poll STH $+$ delta} (7.0,-2.0);
+  \node[act,anchor=north] at (10.6,-2.35) {replay transition:\\consistent};
 \end{tikzpicture}%
 }
 
@@ -45,18 +45,18 @@
   % ===== Panel (b): under attack (A1b) =====
   \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{Directory server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
-    \draw[dashed,black!45] (\x,-0.55) -- (\x,-6.6);}
+    \draw[dashed,black!45] (\x,-1.1) -- (\x,-6.6);}
   \node[font=\itshape,text=red!60!black,anchor=west,fill=white,inner sep=1.5pt] at (-0.95,-0.9)
     {(b) under attack: A1b overwrite of the immutable dual-index slot $\ell^{\A}_{\mathsf{self}}$};
   \node[ract,anchor=north,text width=2.6cm] at (7.0,-1.25) {server overwrites the value at $\ell^{\A}_{\mathsf{self}}$ with Mallory's key};
-  \draw[red] (10.6,-2.55) -- node[above,mlbl,font=\tiny,pos=0.4]{poll STH $+$ delta} (7.0,-2.55);
+  \draw[m,red] (10.6,-2.55) -- node[above,mlbl,font=\tiny,pos=0.4]{poll STH $+$ delta} (7.0,-2.55);
   \node[ract,anchor=north] at (10.6,-2.9) {replay: immutable rotation $\to$ reject};
   \draw[m] (0,-3.2) -- node[above,mlbl]{Alice monitor: search own slot $\ell^{\A}_{\mathsf{self}}$} (7.0,-3.2);
-  \draw[red] (7.0,-3.7) -- node[above,mlbl]{Mallory's key} (0,-3.7);
+  \draw[m,red] (7.0,-3.7) -- node[above,mlbl]{Mallory's key} (0,-3.7);
   \node[ract,anchor=north] at (0,-4.05) {own-slot mismatch:\\local identity key $\ne$ Mallory};
-  \draw[red] (0,-4.95) -- node[above,mlbl]{write warning slot $\ell_{\mathsf{warn}}$} (7.0,-4.95);
+  \draw[m,red] (0,-4.95) -- node[above,mlbl]{write warning slot $\ell_{\mathsf{warn}}$} (7.0,-4.95);
   \draw[m] (3.4,-5.5) -- node[above,mlbl]{Bob monitor: search $\ell_{\mathsf{warn}}$} (7.0,-5.5);
-  \draw[red] (7.0,-6.0) -- node[above,mlbl]{warning present (proof-verified)} (3.4,-6.0);
+  \draw[m,red] (7.0,-6.0) -- node[above,mlbl]{warning present (proof-verified)} (3.4,-6.0);
   \node[ract,anchor=north] at (3.4,-6.35) {\textsc{warning} (red)};
 \end{tikzpicture}%
 }
