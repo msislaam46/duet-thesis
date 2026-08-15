@@ -16,10 +16,11 @@ latency, catch-up, scale, operating modes, and security outcomes.
 
 The benchmark harness in the \texttt{duet} crate measures local cryptographic and data structure
 operations within one process. It excludes HTTP, Electron, persistent storage, and network costs.
-For measurements produced by the manual harness, the reported medians and 95th percentiles are
-calculated over \num{2000} sequential iterations. An exception is the M7 large-directory scale
-experiment, which samples \num{1000} randomly selected lookups at each directory size to report
-proof-size and verification distributions.
+For the per-lookup latency and detection microbenchmarks, the reported medians and 95th percentiles
+are calculated over \num{2000} sequential iterations. The heavier maintenance and scale experiments
+use fewer samples, because each iteration is far more expensive. For example, the M7 large-directory
+experiment samples \num{1000} randomly selected lookups at each directory size, and the M9 epoch
+commit uses \num{200} iterations.
 
 All DUET timings reported in this chapter were measured on the Windows x86\_64 machine described in
 Appendix~\ref{sec:bench-env} (12th Gen Intel Core i7-12700H, 31.7\,GB RAM). Under the worked

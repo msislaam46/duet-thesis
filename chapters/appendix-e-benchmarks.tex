@@ -155,9 +155,11 @@ experiment. M17 now provides the clean-workflow evidence used in \cref{ssec:eval
 The timing families are reported below one per table, each preceded by a short statement of what it
 measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the marginal
 warning-slot lookup cost (\cref{tab:bench-detection}), operation rates and the maintenance operations
-(\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). Unless stated otherwise, the manual harness
-reports the median and 95th percentile over \num{2000} sequential iterations. These are descriptive
-statistics for the recorded run.
+(\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). The per-lookup latency and detection families
+report the median and 95th percentile over \num{2000} sequential iterations. The maintenance and
+scale families use fewer samples, because each iteration is far more expensive, such as \num{1000}
+sampled lookups per size for M7 and \num{200} iterations for the M9 epoch commit. These are
+descriptive statistics for the recorded run.
 
 \medskip\noindent\emph{Per-lookup latency (M2 generation, M3 verification): the server-side cost to
 produce a proof and the client-side cost to check it, broken into its pieces.}
@@ -174,9 +176,9 @@ Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\secon
 M2 search generation (dual-index)    & $10^3$ & 111.2 & 136.7 \\
 M2 search generation (dual-index)    & $10^4$ & 111.6 & 130.8 \\
 M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.2 \\
-M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.1 \\
+M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.0 \\
 M3 VRF verify (dual-index)           & $10^3$ & 75.0  & 92.0 \\
-M3 VRF verify (dual-index)           & $10^4$ & 75.0  & 92.0 \\
+M3 VRF verify (dual-index)           & $10^4$ & 75.0  & 90.9 \\
 M3 full signed-head lookup verification (windowed baseline) & $10^3$ & 128.7 & 155.8 \\
 M3 full signed-head lookup verification (windowed baseline) & $10^4$ & 128.9 & 146.3 \\
 \bottomrule

@@ -88,7 +88,7 @@ warning slot. A proof-verified empty slot raises the compound A2 signal. After c
 client's warning-slot check during windowed catch-up detects an in-window substitution only if the
 warning remains present. If the directory operator removes the committed warning before that check,
 the transition audit detects the invalid directory transition. Moreover, the separate persistence
-component can retain deletion evidence (\cref{ssec:design-catchup}).
+component can retain deletion evidence (\cref{ssec:design-detection}).
 
 \phantomsection\label{sc:threat-a3}\paragraph{A3: Network Man-in-the-Middle.} Without server
 collusion, a Dolev--Yao adversary may replace Bob's identity key and signed pre-key with an
