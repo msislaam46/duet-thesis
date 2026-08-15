@@ -168,7 +168,7 @@ $\Hleaf(\mathit{kind}\concat\ell\concat\mathit{value})$. For non-inclusion, it b
 default hash at the logical leaf position. It then applies the sibling hashes identified by the
 bitmap and accepts only when the reconstructed root equals $\prefroot{t}$. CONIKS uses Merkle
 prefix-tree proofs to authenticate presence and absence at an
-index~\cite[Section~3.1]{melara2015coniks}. The IETF KeyTrans draft also specifies inclusion and
+index~\cite[Section~3.2]{melara2015coniks}. The IETF KeyTrans draft also specifies inclusion and
 non-inclusion proof encodings for its prefix
 tree~\cite[Sections~3.3 and~12.2]{ietf-keytrans-protocol}.
 
@@ -199,6 +199,8 @@ as defined in \cref{eq:design-sth}. The signed tree head is
 Here, $\mathit{tree\_size}_t$ is the number of committed log leaves,
 $\logroot{t}$ is the Merkle-log root, $\mathit{timestamp}_t$ is the Unix time at which the epoch was
 committed, and $\Hash(\mathit{config})$ commits to the expected keys and directory configuration.
+For readability, $\STH_t.\mathit{tree\_size}$ and $\STH_t.\mathit{root}$ denote the
+corresponding components of $m_t$.
 Since epochs are zero-indexed and each epoch commit appends one directory root to the log, a
 well-formed head satisfies
 \[
@@ -219,7 +221,7 @@ $\logroot{t}$ to verify any proof. The signed tree head is used in
 \section{Verifiable Random Function}\label{sec:def-vrf}
 
 This section defines the verifiable random function (VRF) used to derive global identity labels. The
-server evaluates the VRF on a service identifier and returns a proof, allowing the client to verify
+server evaluates the VRF on an account identifier and returns a proof, allowing the client to verify
 the derivation. For an observer with neither the VRF secret key nor the corresponding proof, the
 published output is pseudorandom and protects the identifier against offline
 enumeration~\cite[Sections~1 and~3.4]{rfc9381}. The VRF underpins the global identity slots in
@@ -273,7 +275,7 @@ inputs of its choice~\cite[Section~3.4]{rfc9381}. The corresponding proof ${\pvr
 provided because an observer holding that proof can verify and distinguish
 $\beta^\star$~\cite[Section~3.4]{rfc9381}.
 
-In DUET, full uniqueness supports the binding between a service identifier and its verified global
+In DUET, full uniqueness supports the binding between an account identifier and its verified global
 label under the pinned VRF public key. The pseudorandomness of the 32-byte prefix
 $\beta[0{:}32]$ supports requirement G3 (Directory Privacy) for observers with neither the VRF
 secret key nor the corresponding proof. These properties are used in
@@ -315,7 +317,7 @@ where $\mathit{kind}\in\{\textsc{mutable},\textsc{immutable}\}$. An
 the previous and replacement values at an existing label. The format contains no deletion
 operation.
 
-For epoch $0$, the auditor begins with an empty candidate replica. For each later epoch, the
+For epoch $0$, the auditor begins with an empty candidate copy. For each later epoch, the
 candidate contains the state accepted through the preceding epoch. The disclosed prefix-tree root
 $\prefroot{t}$ must be included at leaf index $t$ in the Merkle log at the size given by the
 verified signed head. The auditor then processes the operations in their declared order. Before
@@ -326,7 +328,7 @@ $\prefroot{t}$.
 
 An undeclared modification or deletion causes the replayed root to differ from the committed root.
 A rotation of an \textsc{immutable} dual-index, CEA, or warning label is rejected directly. The
-auditor adopts the candidate replica and advances its cursor only after every unaudited transition
+auditor adopts the candidate directory state and advances its cursor only after every unaudited transition
 and the remaining signed-head checks succeed. The update flow is based on the IETF
 \texttt{AuditorUpdate} pattern~\cite[Section~15.2]{ietf-keytrans-protocol}, while DUET's operation
 format and replay checks are specific to this implementation. The design role is described in
@@ -499,7 +501,6 @@ parties. The derivation uses HKDF-SHA256 (\cref{def:hkdf}). The implementation u
 \begin{definition}[Dual-index registration and warning publication]\label{def:dualindex-write}
 \intuition{Each party registers its identity key at its own lookup slot and can notify the peer by
 publishing an authenticated value at their shared warning slot.}
-
 $\mathsf{Register}(\lblself,\mathit{pk}_{\mathsf{self}})$ attempts to write the party's identity
 public key to its own lookup slot. A successful new write becomes verifiable after an epoch commit.
 If the slot is already occupied, no new commit is required. In either case, registration accepts
@@ -542,7 +543,6 @@ given in \cref{alg:client,alg:dualindex}.
 \begin{definition}[Warning-slot check]\label{def:dualindex-check}
 \intuition{A warning slot is safe for this check only when a verified non-inclusion proof establishes
 that it is empty. Any committed value raises an alert.}
-
 $\mathsf{CheckWarning}(\lblwarn,\STH_t,k_{\mathrm{mac}})$ performs a verified lookup of
 $\lblwarn$ under the current verified signed head $\STH_t$. If a valid non-inclusion proof
 establishes that the slot is empty, it returns \textsc{Safe}. If the proof chain is invalid or does
@@ -571,7 +571,6 @@ in \cref{alg:detect}.
 \begin{definition}[Deletion evidence]\label{def:deletion-evidence}
 \intuition{Verifiable evidence that the directory operator signed an earlier state containing a
 warning and a later state in the same append-only history in which the warning slot is absent.}
-
 When publication of a warning is confirmed under a signed head $\STH_w$, DUET's separate
 persistence component retains $\lblwarn$, $\STH_w$, and the corresponding prefix-tree and
 log-inclusion proofs. The retained proofs must authenticate a non-empty value at $\lblwarn$ and
@@ -650,7 +649,6 @@ $v_{\mathsf{peer}}=v_{\mathsf{self}}$. The result does not depend on the secrecy
 \begin{definition}[Requirement G1 (Key-Substitution Detection)]\label{def:g1-consistency}
 \intuition{G1 combines same-head label consistency with global identity verification, authenticated
 peer warnings, rotation authentication, and warning-censorship controls.}
-
 Requirement G1 (Key-Substitution Detection) is defined in \cref{sec:threat-goals}. Its same-head
 property follows from \cref{lem:dualindex-consistency}. Let $\STH_t$ be a verified signed head, and
 let
@@ -677,7 +675,7 @@ slot (\cref{def:dualindex-write,def:dualindex-check}).
 Before their first use, the unpredictability of the raw dual-index labels depends on the high
 entropy of $\sharedS$ and the pseudorandomness of the HKDF outputs derived from it
 (\cref{def:hkdf,ssec:design-properties}). Warning authenticity depends on the UNF-CMA security of
-the warning MAC (\cref{def:mac}). The binding between a service identifier and its global label
+the warning MAC (\cref{def:mac}). The binding between an account identifier and its global label
 depends on VRF uniqueness under the pinned VRF public key (\cref{def:vrf-security}).
 
 The warning path is also subject to

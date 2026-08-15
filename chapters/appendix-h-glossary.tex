@@ -16,21 +16,21 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
 \item[Auditor] An independent party that observes the log from a second vantage point, cross-checks
   signed tree heads (fork detection), and replays each epoch's declared update set against the
   committed root (the transition audit) (\cref{def:epoch-delta}, \cref{alg:auditor}).
-\item[Auditor replica] The auditor's independently reconstructed copy of the committed directory,
+\item[Auditor copy] The auditor's independently reconstructed copy of the committed directory,
   rebuilt by replaying each epoch's declared update set from epoch~0. The transition audit checks
   each committed root against it rather than trusting server-supplied membership proofs
   (\cref{alg:auditor}).
-\item[Candidate replica] A temporary clone of the auditor replica onto which one epoch range is
-  replayed. It is committed back to the live replica only if the whole head passes every check, so a
-  rejected epoch leaves the replica untouched (\cref{alg:auditor}).
+\item[Candidate copy] A temporary clone of the accepted directory state onto which one epoch range is
+  replayed. It is committed back only if the whole head passes every check, so a
+  rejected epoch leaves the accepted directory state untouched (\cref{alg:auditor}).
 \item[CEA / CEAsec] Continuous entity authentication and its security notion within
   ACKA. The continuous operating mode delivers detection in this style.
 \item[CKA] Continuous Key Agreement, the abstraction of a ratcheting protocol as a stream of evolving
   keys, used by ACKA.
 \item[CKV] Contact Key Verification, Apple's key-transparency mechanism for
   iMessage~\cite{apple-ckv}.
-\item[CONIKS] An early key-transparency system that introduced VRF-derived labels and a sparse Merkle
-  directory. It is the closest published design point for proof size.
+\item[CONIKS] An early key-transparency system that introduced private indices derived through a
+  verifiable unpredictable function and a Merkle prefix directory. It is the closest published design point for proof size.
 \item[Consistency proof] A short proof that a later log is an append-only extension of an earlier one
   (\cref{def:consistency}).
 \item[Declared update set (epoch delta)] The list of inserts and value-disclosing rotations declared
@@ -73,11 +73,11 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
   from the operator.
 \item[Parakeet] A witness-quorum key-transparency system optimized for large-scale deployment.
 \item[PNI] Phone-number identifier: Signal's phone-number-scoped service identifier. The current DUET
-  integration excludes PNI inputs at the integration boundary, so they do not enter registration,
+  integration excludes PNI inputs at the integration point, so they do not enter registration,
   verification, background monitoring, or CEA processing.
+\item[PQXDH] The post-quantum variant of X3DH, augmenting the handshake with a KEM.
 \item[Prefix tree] A sparse Merkle tree over the space of 256-bit labels, storing the current
   directory (\cref{def:prefix-tree}).
-\item[PQXDH] The post-quantum variant of X3DH, augmenting the handshake with a KEM.
 \item[PRF] Pseudorandom function: a keyed function whose outputs are indistinguishable from random
   without knowledge of the key. HMAC-SHA256 serves as the PRF in the continuous-mode state update.
 \item[Safety number] Signal's manual verification code: a 60-digit fingerprint of the two parties'
@@ -104,7 +104,7 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
 \item[VRF] Verifiable Random Function: a keyed function whose outputs are pseudorandom to outsiders
   yet provably correct (\cref{def:vrf,def:vrf-security}).
 \item[Windowed consistency proof] A single consistency proof spanning an entire offline window, with
-  size logarithmic in the endpoint log sizes rather than one proof per missed epoch (\cref{def:windowed}, \cref{lem:windowed-size}).
+  size logarithmic in the endpoint log sizes and does not require one proof per missed epoch (\cref{def:windowed}, \cref{lem:windowed-size}).
 \item[Write-once policy] The directory's raw-label interface rejects a write to an occupied
   dual-index, CEA, or warning label, so a committed value cannot be overwritten through the honest
   interface (\cref{def:epoch-delta}, \cref{ssec:design-detection}).

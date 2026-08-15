@@ -33,7 +33,7 @@ The seventeen metric families referenced throughout \cref{ch:eval} are as follow
 \item[M9] Maintenance cost: key rotation and epoch commit.
 \item[M10] VRF prove and verify in isolation.
 \item[M11] One signed-head lookup verification corresponding to the verification performed
-  at the peer-key-retrieval boundary.
+  at the peer-key-retrieval integration point.
 \item[M12] STH signature verification, consistency-proof generation and verification, and
   a fork check against one observed head.
 \item[M13] Session-mode versus continuous-mode write counts and verification cost.
@@ -208,7 +208,7 @@ M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
 \end{table}
 
 \medskip\noindent\emph{Operation rates and maintenance (M8--M11): latency-derived single-thread rates, key
-rotation and epoch commit, the VRF in isolation, and lookup verification in the \texttt{duet} crate corresponding to the verification performed at the peer-key-retrieval boundary.}
+rotation and epoch commit, the VRF in isolation, and lookup verification in the \texttt{duet} crate corresponding to the verification performed at the peer-key-retrieval integration point.}
 
 \begin{table}[H]
 \centering
@@ -467,7 +467,7 @@ recomputation, head well-formedness, latest-state binding, and append-only-histo
 remain outside the timed body. Windowed catch-up proof generation is measured separately under M4. The M1 values stored under \texttt{dual\_index} measure the VRF-indexed \texttt{search\_by\_user\_id} lookup. \texttt{M8\_throughput} records per-operation latencies from which a
 single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures one signed-head lookup
 verification in the \texttt{duet} crate, corresponding to the verification performed at the
-peer-key-retrieval boundary. It excludes X3DH/PQXDH, network transfer, and session establishment.
+peer-key-retrieval integration point. It excludes X3DH/PQXDH, network transfer, and session establishment.
 
 \begin{table}[ht]
 \centering
