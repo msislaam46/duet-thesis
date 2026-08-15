@@ -664,9 +664,9 @@ $\ell$, the owner's comparison of the same slot with its local identity key must
 head. This property does not depend on the secrecy of $\sharedS$.
 
 The additional G1 checks depend on the attack scenario. For
-\hyperref[sc:threat-a1]{A1 (Server-Side Key Substitution)}, a client compares its self-slot value
+\hyperref[sc:threat-a1]{A1 (Key Substitution)}, a client compares its self-slot value
 with its local identity key and its peer-slot value with the pinned peer identity key. For
-\hyperref[sc:threat-a3]{A3 (Network Man-in-the-Middle Substitution)}, an honest directory allows
+\hyperref[sc:threat-a3]{A3 (Network Man-in-the-Middle)}, an honest directory allows
 the client to compare the identity key in the received pre-key bundle with the peer's global
 VRF-bound identity entry. For \hyperref[sc:threat-a5]{A5 (Malicious Key Rotation)}, the design
 requires the client to re-fetch the global identity entry and accept a changed key as an authorised

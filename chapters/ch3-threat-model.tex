@@ -15,13 +15,13 @@ messaging server, the directory server, and an independent auditor.
 The \textbf{clients} hold private keys, publish public key material, and verify directory responses
 locally. They are honest but may be intermittently connected. The \textbf{messaging server}
 distributes X3DH pre-key bundles and relays ciphertext. The \textbf{directory server} stores the
-verifiable directory, publishes a signed tree head each epoch, and answers lookup and monitoring
+verifiable directory, publishes a signed tree head (STH) each epoch, and answers lookup and monitoring
 queries. A single malicious operator may control both servers, which form one trust domain in the
 model. The \textbf{auditor} obtains signed heads and epoch disclosures, replays declared transitions
 against committed roots, and compares views. It performs transition auditing and uses an independent
 vantage for split-view (fork) detection.
 
-\Cref{fig:threat-arch} shows three trust boundaries. Each client relies on the service operator for
+\Cref{fig:threat-arch} shows the trust boundaries. Each client relies on the service operator for
 availability but verifies every directory response. A Dolev--Yao network adversary can intercept, modify,
 inject, replay, or drop traffic~\cite{dolevyao1983}. The auditor obtains its view separately from the
 clients. A malicious operator may substitute keys or present different internally consistent
@@ -83,22 +83,22 @@ the shared warning slot. The evaluation (\cref{ch:eval}) instantiates A1a at the
 identity slot and A1b at an immutable dual-index session slot.
 
 \phantomsection\label{sc:threat-a2}\paragraph{A2: Warning Censorship.} A2 covers warning suppression
-before and after commitment. Before commitment, a client that detects a key mismatch verifies the
-warning slot. A proof-verified empty slot raises the compound A2 signal. After commitment, a returning
-client's warning-slot check during windowed catch-up detects an in-window substitution only if the
-warning remains present. If the directory operator removes the committed warning before that check,
-the transition audit detects the invalid directory transition. Moreover, the separate persistence
-component can retain deletion evidence (\cref{ssec:design-detection}).
+before or after a warning is committed. Before commitment, a key mismatch along with
+proof-verified absence at the shared warning slot raises the warning-censorship alarm. After
+commitment, a returning client's warning-slot check during windowed catch-up detects the in-window
+substitution only if the warning remains present. If the directory operator removes the warning
+before this check, the transition audit detects the invalid deletion. The separate persistence
+component can also provide deletion evidence (\cref{ssec:design-detection}).
 
-\phantomsection\label{sc:threat-a3}\paragraph{A3: Network Man-in-the-Middle.} Without server
-collusion, a Dolev--Yao adversary may replace Bob's identity key and signed pre-key with an
-attacker-controlled pair whose signature verifies under the substituted identity. The attacker also
-replaces or withholds the optional one-time pre-key, then establishes separate X3DH sessions with
-Alice and Bob. As a result, Alice and Bob hold different conversation secrets and derive different
-dual-index labels. The received identity key also differs from Bob's global VRF-bound identity
-entry. When the directory is honest, comparing the received key with that entry detects the
-substitution. A peer-slot absence can provide supporting evidence of the substitution but is not
-sufficient on its own.
+\phantomsection\label{sc:threat-a3}\paragraph{A3: Network Man-in-the-Middle.} In A3, the directory
+server is assumed to be honest, while a Dolev--Yao network adversary may replace Bob's identity key
+and signed pre-key with an attacker-controlled pair whose signature verifies under the substituted
+identity. The attacker also replaces or withholds the optional one-time pre-key, then establishes
+separate X3DH sessions with Alice and Bob. As a result, Alice and Bob hold different conversation
+secrets and derive different dual-index labels. The received identity key differs from the key
+stored in Bob's global identity entry. Thus, the client detects the substitution by comparing the
+received key with the verified directory value. A peer-slot absence can also provide supporting
+evidence of the substitution but is not sufficient on its own.
 
 A post-compromise variant of the A3 network attack motivates the continuous mode defined in
 \cref{ssec:design-modes}. An adversary that has compromised a session may inject a forged ratchet
@@ -139,7 +139,7 @@ man-in-the-middle substitution (A3), and malicious key rotation (A5) do not requ
 Warning censorship (A2) spans both cases. Its pre-commit check is client-side, while post-commit
 removal is addressed through transition auditing or persistence evidence.
 
-The initial binding also relies on a trust-on-first-use
+The initial binding also relies on a trust-on-first-use (TOFU)
 assumption.\label{sec:threat-fair} DUET's monitoring guarantee begins only after a client pins a
 binding obtained from an honest directory. If a malicious operator controls the initial value,
 later monitoring detects changes but cannot establish whether the pinned value was authentic. A
