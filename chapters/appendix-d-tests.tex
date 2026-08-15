@@ -1,18 +1,18 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix summarizes the complete test corpus supporting the conformance claims in
-\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{134} tests: \num{97} unit and invariant
-tests across nine modules, the \num{8}-case adversarial integration suite, \num{25} tests in the
+\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{137} tests: \num{99} unit and invariant
+tests across nine modules, the \num{8}-case adversarial integration suite, \num{26} tests in the
 \texttt{kt\_auditor} binary, and \num{4} clean-workflow regression tests in
 \texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}), all run under
-\texttt{cargo test}. The \texttt{signal-desktop-kt} client verifier harness contains \num{180} Jest
+\texttt{cargo test}. The \texttt{signal-desktop-kt} client verifier harness contains \num{190} Jest
 tests in thirteen suites, along with \num{35} embedded electron-mocha tests in six Signal Desktop
 suites. The embedded tests pass realistic account identifiers through the client integration. Fixed
 vectors also require the crate and client component to produce byte-identical outputs.
 
-The \num{25} \texttt{kt\_auditor} tests comprise the delta-replay test, six \texttt{classify\_head}
-rollback/fork cases, five \texttt{commit\_decision} transaction cases, one partial-fetch-failure
-integration test, and twelve \texttt{PollStatus} tests covering every poll verdict,
+The \num{26} \texttt{kt\_auditor} tests comprise the delta-replay test, six \texttt{classify\_head}
+rollback/fork cases, five \texttt{commit\_decision} transaction cases, two integration tests (a
+partial-fetch failure and the comparison-head skip-after-failure), and twelve \texttt{PollStatus} tests covering every poll verdict,
 including the missing, unparseable, and failing consistency-proof cases that return
 \textsc{ConsistencyUnverified}, and the exact status-line mapping.
 
@@ -65,13 +65,13 @@ key-fetch status integrity & hook (TS) & only a proof-verified match emits \text
 \section{\texttt{duet} Crate Tests}\label{sec:tests-rust}
 
 The unit and invariant tests divide into three groups: the cryptographic primitives and data
-structures (\cref{tab:tests-rust-prim}), the server and its verification chain
+structures (\cref{tab:tests-rust-prim,tab:tests-rust-prim-b}), the server and its verification chain
 (\cref{tab:tests-rust-server}), and the auditor, warning monitor, and continuous-authentication
 mode (\cref{tab:tests-rust-system}).
 
 \begin{table}[H]
 \centering
-\caption{\texttt{duet} crate tests: primitives and data structures (\num{41} tests).}
+\caption{\texttt{duet} crate tests: primitives and data structures, part 1 of 2 (\num{23} tests).}
 \label{tab:tests-rust-prim}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -102,6 +102,21 @@ Module & Test & Property checked \\
 \texttt{prefix\_tree} & \texttt{get\_rejects\_short\_label} & \texttt{get} rejects a mis-sized (short) label \\
 \texttt{prefix\_tree} & \texttt{search\_rejects\_long\_label} & \texttt{search} rejects a mis-sized (long) label \\
 \texttt{prefix\_tree} & \texttt{get\_kind\_rejects\_short\_label} & \texttt{get\_kind} rejects a mis-sized (short) label \\
+\texttt{prefix\_tree} & \texttt{update\_rejects\_invalid\_kind} & \texttt{update} rejects an out-of-domain leaf kind (only \textsc{mutable}/\textsc{immutable} are admissible) \\
+\texttt{prefix\_tree} & \texttt{recompute\_root\_rejects\_present\_invalid\_kind} & a present leaf carrying an out-of-domain kind yields no root (the proof is unverifiable) \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{\texttt{duet} crate tests: primitives and data structures, part 2 of 2 (\num{20} tests).}
+\label{tab:tests-rust-prim-b}
+\footnotesize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llp{7.0cm}@{}}
+\toprule
+Module & Test & Property checked \\
 \midrule
 \texttt{vrf} & \texttt{test\_prove\_then\_verify} & an honest proof verifies \\
 \texttt{vrf} & \texttt{test\_deterministic\_output} & evaluation is deterministic for fixed key and input \\
@@ -226,7 +241,7 @@ conflicting signed heads as a fork \\
 % ----------------------------------------------------------------------------
 \section{Client Verifier and Signal Desktop Tests}\label{sec:tests-ts}
 
-The \texttt{signal-desktop-kt} client verifier harness contains \num{180} Jest tests in thirteen
+The \texttt{signal-desktop-kt} client verifier harness contains \num{190} Jest tests in thirteen
 suites: a live-server wire-parity suite, an in-process integration suite, a source-parity suite,
 and ten unit suites.
 Some catalogue rows represent parameterized cases (twelve decoder mutations, three status mappings,
@@ -471,7 +486,7 @@ for the HKDF dual-index derivation, warning MAC, and CEA construction. In the cr
 \texttt{dual\_index::cross\_impl\_test\_vectors},
 \texttt{dual\_index::warn\_mac\_cross\_impl\_vector}, and
 \texttt{cea::cross\_impl\_test\_vectors}. The CEA vector covers three ratchet epochs
-(\cref{tab:tests-rust-prim,tab:tests-rust-system}). The corresponding client evidence comes from
+(\cref{tab:tests-rust-prim-b,tab:tests-rust-system}). The corresponding client evidence comes from
 the \texttt{kt\_integration} v1, v3, and warning-MAC vectors and the \texttt{cea} vector test
 (\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The opt-in wire-parity suite additionally checks
 the client verifiers against Ed25519 and Merkle outputs returned by the running directory server.
@@ -527,7 +542,7 @@ ECVRF-EDWARDS25519-SHA512-TAI vectors~\cite[Appendix~B.3]{rfc9381}. Signed-head 
 tampered, and wrong-key signatures. Auditor tests cover honest transitions, genuine equivocation,
 and rejection of a divergent head carrying an invalid signature.
 
-The \texttt{signal-desktop-kt} client verifier harness contains \num{180} Jest tests. Its opt-in
+The \texttt{signal-desktop-kt} client verifier harness contains \num{190} Jest tests. Its opt-in
 wire-parity suite requires the running directory server and checks the complete client verification
 chain against live responses. The checked paths include multi-entry inclusion, proven
 non-inclusion, signed-head verification and tamper rejection, VRF verification, and windowed

@@ -188,8 +188,10 @@ The key-upload path registers the client's global identity binding, while the pe
 path verifies the fetched binding. Before these directory operations, Signal service-ID strings are
 converted to canonical 16-byte account identifiers. A background monitor first checks the client's
 own global VRF-derived identity entry. For each conversation, it then verifies append-only consistency, the
-client's own lookup slot, the peer's lookup slot, and the shared warning slot, emitting a green
-verdict only when all checks succeed and the global self-check is healthy. A proof-verified peer-slot
+client's own lookup slot, the shared warning slot, and the peer's lookup slot, emitting a green
+verdict only when all checks succeed and the global self-check is healthy. The warning slot is checked
+before the peer slot, so a committed warning takes precedence over a pending or fail-closed
+\texttt{NotPosted} verdict for an absent peer. A proof-verified peer-slot
 absence remains pending for two checks. If the slot is still absent on the third check, the client
 reports a fail-closed \texttt{NotPosted} timeout, since the peer may not yet have run the client. A
 periodic lifecycle check stops monitoring deleted conversations, while archived conversations remain
