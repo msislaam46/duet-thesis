@@ -451,7 +451,7 @@ ECVRF (\cref{ssec:impl-core-crypto}), together with the operator's two public ke
 key and the VRF key. Because the prototype obtains these keys from the service during initialization,
 their initial authenticity remains a trust assumption, and independent authenticated provisioning is a
 production requirement. Subject to that assumption, the server, network, and log are not trusted, and
-every response is re-checked. The verifier is fail-closed for integrity checks: any cryptographic or
+each lookup response is verified before its value is used. The verifier is fail-closed for integrity checks: any cryptographic or
 proof-validation failure yields a reject verdict rather than falling through to acceptance. The present
 key-fetch hook reports explicit mismatches and proof failures as a red warning but does not abort bundle
 processing, so complete error-to-UI routing and session-blocking enforcement remain prototype

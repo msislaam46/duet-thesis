@@ -106,7 +106,8 @@ sending, and receiving chains, while the figure follows one sending direction. A
 Diffie--Hellman output enters $\KDF_{RK}$, which produces the next root key and a chain key.
 Each $\KDF_{CK}$ step produces the next chain key and one message
 key~\cite[Sections~2.1--2.3]{doubleratchet}. Message keys do not derive later keys and may be
-retained temporarily for out-of-order delivery~\cite[Sections~2.2 and 2.6]{doubleratchet}.}
+retained temporarily for out-of-order delivery~\cite[Sections~2.2 and 2.6]{doubleratchet}. The
+labels $rk$, $ck$, and $mk$ denote root, chain, and message keys, respectively.}
 \label{fig:bg-ratchet}
 \end{figure}
 

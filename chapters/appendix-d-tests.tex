@@ -121,7 +121,8 @@ Module & Test & Property checked \\
 \texttt{dual\_index} & \texttt{hkdf\_deterministic} & the HKDF derivation is reproducible \\
 \texttt{dual\_index} & \texttt{warning\_mac\_roundtrip\_and\_shared\_key\_verification} & a warning MAC under the pair-bound key verifies for either party \\
 \texttt{dual\_index} & \texttt{warning\_mac\_rejects\_injected\_or\_tampered\_payload} & an injected or tampered warning payload fails MAC verification (but still alerts, \cref{ssec:design-detection}) \\
-\texttt{dual\_index} & \texttt{warn\_mac\_cross\_impl\_vector} & byte-for-byte agreement with the TypeScript implementation on a fixed authenticated-warning MAC vector \\
+\texttt{dual\_index} & \texttt{warn\_mac\_cross\_impl\_vector} & byte-for-byte agreement with the TypeScript implementation on a fixed warning-MAC vector for an
+authenticated warning payload \\
 \texttt{dual\_index} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte label agreement with the TypeScript implementation on fixed vectors \\
 \texttt{dual\_index} & \texttt{derive\_rejects\_non\_16\_byte\_identity} & label derivation rejects an identity that is not exactly 16 bytes \\
 \bottomrule
@@ -292,7 +293,8 @@ Suite & Test \\
 \texttt{kt\_integration} & cross-implementation vector v3 (fixed-width 16-byte ids) \\
 \texttt{kt\_integration} & warn-MAC vector: authenticated warning payload matches the \texttt{duet} crate \\
 \texttt{kt\_integration} & ECVRF vector $i$: RFC~9381 proof verifies to $\beta$ (3 RFC vectors) \\
-\texttt{kt\_integration} & ECVRF vector $i$: deterministic prove reproduces the RFC~9381 $\pi$ (3 RFC vectors) \\
+\texttt{kt\_integration} & ECVRF vector $i$: deterministic proof generation reproduces the
+RFC~9381 VRF proof (3 RFC vectors) \\
 \texttt{kt\_integration} & tampered proof and wrong alpha are rejected \\
 \texttt{kt\_integration} & \texttt{vrfVerify} binds $\beta$ to the label (hash argument) \\
 \texttt{kt\_integration} & raw-label write-once rejection \\

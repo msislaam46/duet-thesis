@@ -12,8 +12,8 @@ DUET models asynchronous communication between Alice and Bob through provider-op
 key-transparency services. Either client may be offline. The model has four actor roles: clients, the
 messaging server, the directory server, and an independent auditor.
 
-The \textbf{clients} hold private keys, publish public key material, and verify directory responses
-locally. They are honest but may be intermittently connected. The \textbf{messaging server}
+The \textbf{clients} hold private keys, publish public key material, and verify signed heads and
+directory proofs locally. They are honest but may be intermittently connected. The \textbf{messaging server}
 distributes X3DH pre-key bundles and relays ciphertext. The \textbf{directory server} stores the
 verifiable directory, publishes a signed tree head (STH) each epoch, and answers lookup and monitoring
 queries. A single malicious operator may control both servers, which form one trust domain in the
@@ -22,7 +22,7 @@ against committed roots, and compares views. It performs transition auditing and
 vantage for split-view (fork) detection.
 
 \Cref{fig:threat-arch} shows the trust boundaries. Each client relies on the service operator for
-availability but verifies every directory response. A Dolev--Yao network adversary can intercept, modify,
+availability but verifies signed heads and directory proofs before use. A Dolev--Yao network adversary can intercept, modify,
 inject, replay, or drop traffic~\cite{dolevyao1983}. The auditor obtains its view separately from the
 clients. A malicious operator may substitute keys or present different internally consistent
 histories~\cites[Sections~1 and 3.3]{ietf-keytrans-architecture}
@@ -38,8 +38,8 @@ construction.
 \centering
 \input{figures/tikz/fig-threat-arch}
 \caption[System model and trust boundaries.]{System model and trust boundaries. The clients verify
-directory responses received across an untrusted network, while an auditor observes the directory
-from an independent vantage.}
+signed heads and directory proofs received across an untrusted network, while an auditor observes
+the directory from an independent vantage.}
 \label{fig:threat-arch}
 \end{figure}
 

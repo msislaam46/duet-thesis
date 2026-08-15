@@ -27,11 +27,11 @@ key-transparency implementation~\cite{signal-kt-server}. \Cref{fig:impl-overview
 implementation components and the separate auditor process.
 
 The directory server is an in-memory, single-machine prototype that clones the directory tree at
-each epoch commit. The Signal integration uses the deterministic conversation-secret substitute and
-seeded Double Ratchet simulation described in \cref{sec:impl-strategy}. The client performs
-identity-key verification when Signal Desktop retrieves the peer's identity key. However, production
-integration would require access to the live conversation secret and ratchet state from libsignal,
-as discussed further in \cref{ch:discussion}.
+each epoch commit. The Signal integration uses a deterministic conversation-secret substitute and
+seeded Double Ratchet simulation to test label derivation and CEA state transitions. The client
+performs identity-key verification when Signal Desktop retrieves the peer's identity key. However,
+production integration would require access to the live conversation secret and ratchet state from
+libsignal, as discussed further in \cref{ch:discussion}.
 
 \begin{figure}[t]
 \centering
@@ -103,8 +103,8 @@ The directory materializes only populated prefix paths and compresses each proof
 bitmap. A compressed leaf terminates the fixed-depth tree walk early. Empty sibling hashes are
 omitted from the transmitted proof. The implementation memoizes a small window of each compressed
 leaf's empty-sibling hash chain when it is first needed, avoiding repeated computation on later
-lookups. For the pseudorandom labels used here, a proof contains about $\lceil \lg N \rceil$
-non-empty sibling hashes. Tree-update work is separate. Updating $k$ labels visits at most $d=256$
+lookups. For a directory containing $N$ populated pseudorandom labels, a proof contains about
+$\lceil \lg N \rceil$ non-empty sibling hashes. Tree-update work is separate. Updating $k$ labels visits at most $d=256$
 tree levels per label, giving $O(kd)$ tree-update work. Since $d$ is fixed, this is $O(k)$ in $k$
 and independent of $N$.
 
@@ -179,10 +179,10 @@ banner.
 \label{ssec:impl-hooks}
 
 Node's cryptographic APIs provide SHA-256, SHA-512, HMAC-SHA256, Ed25519, and X25519, while the
-ECVRF arithmetic is implemented in TypeScript. At Signal Desktop's peer-key-retrieval boundary, the
-client applies the complete verification chain described in \cref{ssec:design-verify} to the fetched identity
-key. An invalid or missing signed head, a failed proof, or a key mismatch causes verification to
-fail. The prototype reports the resulting verdict but does not prevent session establishment.
+ECVRF arithmetic is implemented in TypeScript. At Signal Desktop's peer-key-retrieval integration
+point, the client applies the verification chain in \cref{ssec:design-verify} to the directory
+lookup response and compares its verified value with the fetched identity key. An invalid or
+missing signed head, a failed proof, or a key mismatch causes verification to fail. The prototype reports the resulting verdict but does not prevent session establishment.
 
 The key-upload path registers the client's global identity binding, while the peer-key-retrieval
 path verifies the fetched binding. Before these directory operations, Signal service-ID strings are
