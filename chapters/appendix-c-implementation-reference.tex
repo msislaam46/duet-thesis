@@ -243,10 +243,10 @@ writes a warning that Bob later reads. The auditor separately rejects the immuta
 In \cref{fig:impl-e2e}, Alice and Bob each run an embedded verifier, while the directory server and auditor
 execute as separate processes. In the normal path Alice and Bob each register their session slot and
 commit. Bob's verifier
-then verifies its owner slot, the peer slot, and the shared warning slot through three
-label-bound, proof-verified lookups. These are its owner slot $\ell^{\B}_{\mathsf{self}}$, the peer slot $\ell^{\B}_{\mathsf{peer}}$ ($=\ell^{\A}_{\mathsf{self}}$) that
-contains Alice's key, and the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably
-empty. The monitor emits a verified green result, while the auditor polls and replays to
+then verifies its owner slot, the shared warning slot, and the peer slot through three
+label-bound, proof-verified lookups. These are its owner slot $\ell^{\B}_{\mathsf{self}}$, the shared warning slot $\ell_{\mathsf{warn}}$, which is verifiably
+empty, and the peer slot $\ell^{\B}_{\mathsf{peer}}$ ($=\ell^{\A}_{\mathsf{self}}$) that
+contains Alice's key. The monitor emits a verified green result, while the auditor polls and replays to
 \textsc{Consistent}. In the
 branch for the A1b session-slot substitution, the server overwrites Alice's own dual-index slot $\ell^{\A}_{\mathsf{self}}$ (which is also Bob's peer slot $\ell^{\B}_{\mathsf{peer}}$).
 Alice's monitor compares the substituted value with her local identity key, finds a mismatch, and
@@ -313,8 +313,9 @@ red warning state.}
 \centering
 \includegraphics[width=0.90\textwidth]{figures/cea-bob-appendix.png}
 \caption[CEA fork detection and warning.]{Continuous CEA detection after a one-shot ratchet-key
-injection. The verifier reports \textsc{Fork}, writes the authenticated in-band warning, and displays
-the red warning state for the selected conversation.}
+injection. The verifier establishes the \textsc{Fork} verdict independently of the
+warning-publication outcome, then publishes the authenticated in-band warning (here confirmed), and
+displays the red warning state for the selected conversation.}
 \label{fig:impl-cea-front}
 \end{figure}
 
