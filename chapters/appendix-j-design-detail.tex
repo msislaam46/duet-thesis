@@ -37,11 +37,11 @@ freshness additionally requires a client-side maximum-age or publication-interva
 the DUET prototype does not implement. The trailing $\Hash(\mathit{config})$ is a CONIKS-style
 policy commitment, corresponding to the field that CONIKS calls $P$~\cite[Section~3.3]{melara2015coniks}. In DUET, this commitment binds the VRF and signing keys,
 suite, protocol version, epoch interval, and raw-label policy into the signature. A client
-recomputes the commitment from its expected keys and constants and rejects a mismatch. Different
-signed configuration commitments served to different clients would constitute equivocation on the
-configuration. Detecting this case requires comparing the configuration commitments in separately
-observed heads. Note that the prototype's A4 comparison currently checks roots and tree sizes but
-does not compare configuration commitments.
+recomputes the commitment from its expected keys and constants and rejects a mismatch. A client or
+auditor rejects a signed head whose configuration commitment differs from its expected keys and
+parameters. Therefore, the heads admitted to the A4 comparison already carry the expected commitment.
+The comparison then checks their tree sizes and roots and, for different tree sizes, requires a valid
+consistency proof.
 
 \paragraph{Verification-chain current-snapshot binding.} The verification chain in
 \cref{ssec:design-verify} has three properties that the figure does not make explicit. First,
