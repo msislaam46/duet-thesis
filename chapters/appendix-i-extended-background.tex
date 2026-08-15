@@ -168,7 +168,7 @@ not instructed to compare encryption keys. Only two of twelve pairs succeeded in
 completing the ceremony in at least one of WhatsApp, Viber, or Facebook Messenger. Across all
 pair--application trials, the success rate was 14\%~\cite[Sections~4.1 and 5]{vaziripour2017}.
 Application-independent instructions about comparing encryption keys raised the overall success rate
-to 78\%, while Viber reached 96\%~\cite[Section~5]{vaziripour2017}. Even with these instructions,
+to 78\%, while Viber reached 96\%~\cite[Section~6.1 and Table~2]{vaziripour2017}. Even with these instructions,
 users took an average of 3.2 minutes to find the ceremony and a further 7.8 minutes to complete
 it~\cite[Section~6.3]{vaziripour2017}.
 
@@ -324,7 +324,7 @@ witnesses~\cite[Sections~II-A and~V]{malvai2023parakeet}. Quorum intersection pr
 conflicting commitments for the same epoch from both obtaining valid
 certificates~\cite[Section~V-B]{malvai2023parakeet}. This introduces a distributed witness set as
 an operational and trust assumption, while detecting an unauthorised key change still depends on
-the client monitoring its own binding~\cite[p.~14]{malvai2023parakeet}.
+the client monitoring its own binding~\cite[Section~II-A]{malvai2023parakeet}.
 
 \paragraph{ELEKTRA.}
 ELEKTRA extends the VKD abstraction to multiple devices. Each account is represented by a keychain
@@ -400,7 +400,7 @@ sibling, this gives the fixed \num{8192}-byte copath used as a baseline in
 ProtonKT applies a verifiable directory to email and reuses Certificate Transparency to support
 consistency checking~\cite[pp.~35, 37]{goebel2023proton}. It supports owner and external auditing~\cite[pp.~44 and~47]{goebel2023proton}.
 Its warning model notifies the key owner but not the communication
-partner~\cite[pp.~8, 47, 67]{goebel2023proton}. The Proton thesis also describes the investigation
+partner~\cite[pp.~2 and~44--45]{goebel2023proton}. The Proton thesis also describes the investigation
 of KT warnings as an open user-experience
 challenge~\cite[pp.~81--82]{goebel2023proton}.
 

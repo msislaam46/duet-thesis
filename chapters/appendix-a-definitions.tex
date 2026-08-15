@@ -206,7 +206,7 @@ t+1=\mathit{tree\_size}_t.
 \]
 
 This follows the signed-head role of Certificate Transparency, whose signed tree head includes a
-timestamp, tree size, and Merkle-tree root~\cite[Section~3.2]{rfc6962}. DUET additionally signs the
+timestamp, tree size, and Merkle-tree root~\cite[Section~3.5]{rfc6962}. DUET additionally signs the
 epoch and configuration commitment. A client or auditor recomputes $m_t$, checks the expected
 configuration commitment, verifies $\sigma_t$ under the pinned
 $\mathit{pk}_{\mathsf{sth}}$, and checks the well-formedness condition before using
