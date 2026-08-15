@@ -155,11 +155,11 @@ experiment. M17 now provides the clean-workflow evidence used in \cref{ssec:eval
 The timing families are reported below one per table, each preceded by a short statement of what it
 measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the marginal
 warning-slot lookup cost (\cref{tab:bench-detection}), operation rates and the maintenance operations
-(\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). The per-lookup latency and detection families
-report the median and 95th percentile over \num{2000} sequential iterations. The maintenance and
-scale families use fewer samples, because each iteration is far more expensive, such as \num{1000}
-sampled lookups per size for M7 and \num{200} iterations for the M9 epoch commit. These are
-descriptive statistics for the recorded run.
+(\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). The manual timing CSV uses \num{2000} sequential iterations for every recorded operation except the
+M9 epoch commit, which uses \num{200}. The M7 experiment samples \num{1000} random lookups at each
+directory size. M14 uses \num{500} lookups per grid point for proof-size distributions and
+\num{1000} iterations for verification timings. M15 uses \num{1000} iterations per mode and
+ratchet depth, while M16 uses \num{2000}. These are descriptive statistics for the recorded run.
 
 \medskip\noindent\emph{Per-lookup latency (M2 generation, M3 verification): the server-side cost to
 produce a proof and the client-side cost to check it, broken into its pieces.}
