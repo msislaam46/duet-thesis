@@ -60,7 +60,7 @@ clones the directory tree at each epoch commit. The Signal Desktop integration u
 substitute for the conversation secret and a seeded Double Ratchet simulation. These demonstrate
 the label derivation and CEA state transitions but do not establish label unpredictability or the
 security of Signal's live Double Ratchet. The identity-key verification path runs at Signal
-Desktop's peer-key-retrieval boundary. However, if a signed head or proof is invalid, or the fetched
+Desktop's peer-key-retrieval integration point. However, if a signed head or proof is invalid, or the fetched
 identity key does not match the verified directory binding, the prototype reports a rejecting
 verdict without blocking session establishment. Warning persistence checks are implemented and
 tested but are not called by the live monitor. Continuous mode also uses the raw Diffie--Hellman

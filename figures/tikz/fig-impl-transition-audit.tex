@@ -61,7 +61,7 @@
   \draw[edge,very thick] (gob) -- (b0);
 
   % ===== panel (b): replay and comparison =====
-  \node[loop] (b1) at (0,-13.1) {\textbf{for each unaudited epoch} $e$: fetch $\mathrm{delta}_e$ and its root-inclusion proof; verify the disclosed root under the primary head; replay each insertion or rotation; reject a duplicate insert or immutable rotation; require temporary-copy root $=$ disclosed root};
+  \node[loop] (b1) at (0,-13.1) {\textbf{for each unaudited epoch} $e$: fetch $\mathrm{delta}_e$ and its root-inclusion proof; verify the disclosed root under the primary head; replay each insertion or rotation; reject a duplicate insert or immutable rotation; require the temporary copy's root to equal the disclosed root};
   \node[wdec] (bcv) at (0,-15.1) {valid comparison head available?};
   \node[wdec] (bcmp) at (0,-16.5) {compare the comparison head with the primary head};
   \node[good] (b2) at (0,-18.3) {advance the accepted directory state, cursor, and baseline together};

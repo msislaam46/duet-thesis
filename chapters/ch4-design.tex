@@ -225,8 +225,8 @@ including the sender and receiver state-transition outcomes in continuous mode.}
 \subsection{The Catch-Up Problem and the Bound}\label{ssec:design-catchup}
 
 The windowed proof implements G2 (Consistency Across Offline Windows). A returning client that
-retains a trusted head requests one RFC~9162 consistency proof from its last verified log size $m$
-to the current size $n$~\cite[Section~2.1.4]{rfc9162}. Its size is bounded by:
+retains a trusted head requests one RFC~9162 consistency proof $\pcons(m,n)$ from its last verified
+log size $m$ to the current size $n$~\cite[Section~2.1.4]{rfc9162}. Its size is bounded by:
 \begin{equation}\label{eq:design-proofsize}
   |\pcons(m, n)| \le \lceil \log_2 m \rceil + \lceil \log_2 n \rceil
   \quad\text{hashes}.

@@ -212,8 +212,9 @@ log~\cite[pp.~10--11]{dowling2023acka}.
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-bg-acka}
-\caption[ACKA composition]{ACKA composes CKA and CEA with the abstract
-secure-log interface $\Log$, whose required security notion is $\Logsec$. Adapted from Dowling and
+\caption[ACKA composition]{ACKA composes CKA and CEA with the abstract secure-log interface
+$\Log$, whose required security notion is $\Logsec$. Here, $T_t$ is the public keying material
+authenticated at epoch $t$, while $I_t$ is the secret epoch input. Adapted from Dowling and
 Hale~\cite{dowling2023acka}.}
 \label{fig:bg-acka}
 \end{figure}
@@ -260,7 +261,7 @@ System & What it logs & Primary detection mechanism & In-band peer warning &
 CONIKS~\cite{melara2015coniks} & username $\to$ key binding & self-monitoring & No & linear in the number of missed epochs &
   hash-linked STRs, auditor gossip and client--auditor STR comparison \\
 SEEMless~\cite{chase2019seemless} & identity key (versioned) & self-monitoring (client history checks) & No & history cost scales with key updates & adjacent-epoch audits, commitment gossip or blockchain publication \\
-Parakeet~\cite{malvai2023parakeet} & identifier $\to$ public key & self-monitoring & No & one check between tombstoning and deletion & witness-verified transitions, $2f{+}1$-of-$3f{+}1$ witness certificates \\
+Parakeet~\cite{malvai2023parakeet} & identifier $\to$ public key & self-monitoring & No & one check between tombstoning and deletion & witness-verified transitions, $2f{+}1$ signatures from $3f{+}1$ witnesses, at most $f$ faulty \\
 ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Reset warning recommended & keychain updates since the last query &
   audited append-only transitions, agreement on published commitments assumed \\
 OPTIKS~\cite{optiks2024} & identity key and device entries & self-monitoring (single proof, common case) & No &
