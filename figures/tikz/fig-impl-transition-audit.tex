@@ -57,22 +57,22 @@
   \draw[edge] (gob.east -| chan) -- (gob.east);
 
   % ===== continuation arrow (a) -> (b) =====
-  \node[wide] (b0) at (0,-11.0) {\textbf{(b) transactional replay}\\clone the committed replica into a candidate; set $\mathit{cursor}\gets\mathit{audited\_epochs}$};
+  \node[wide] (b0) at (0,-11.0) {\textbf{(b) transactional replay}\\clone the accepted directory state into a temporary copy; set $\mathit{cursor}\gets\mathit{audited\_epochs}$};
   \draw[edge,very thick] (gob) -- (b0);
 
   % ===== panel (b): replay and comparison =====
-  \node[loop] (b1) at (0,-13.1) {\textbf{for each unaudited epoch} $e$: fetch $\mathrm{delta}_e$ and its root-inclusion proof; verify the disclosed root under the primary head; replay each insertion or rotation; reject a duplicate insert or immutable rotation; require candidate root $=$ disclosed root};
+  \node[loop] (b1) at (0,-13.1) {\textbf{for each unaudited epoch} $e$: fetch $\mathrm{delta}_e$ and its root-inclusion proof; verify the disclosed root under the primary head; replay each insertion or rotation; reject a duplicate insert or immutable rotation; require temporary-copy root $=$ disclosed root};
   \node[wdec] (bcv) at (0,-15.1) {valid comparison head available?};
   \node[wdec] (bcmp) at (0,-16.5) {compare the comparison head with the primary head};
-  \node[good] (b2) at (0,-18.3) {advance the local replica, cursor, and baseline together};
+  \node[good] (b2) at (0,-18.3) {advance the accepted directory state, cursor, and baseline together};
   \draw[edge] (b0) -- (b1);
   \draw[edge] (b1) -- node[left,lbl]{all epochs verified} (bcv);
   \draw[edge] (bcv) -- node[left,lbl]{yes} (bcmp);
   \draw[edge] (bcmp) -- node[left,lbl,align=center]{same root, or valid\\consistency proof: agree} (b2);
   % replay-stage terminals
-  \node[nop] (r1) at (10.0,-12.5) {\textsc{Incomplete}: discard candidate, retain state, retry};
+  \node[nop] (r1) at (10.0,-12.5) {\textsc{Incomplete}: discard the copy, retain state, retry};
   \draw[edge] (b1.east) -- node[above,lbl,fill=white,inner sep=1pt,pos=0.5]{fetch fail} (r1.west);
-  \node[bad] (r2) at (10.0,-13.9) {\textsc{TransitionFailed}: discard candidate, retain state};
+  \node[bad] (r2) at (10.0,-13.9) {\textsc{TransitionFailed}: discard the copy, retain state};
   \draw[edge] (b1.east) -- node[below,lbl,fill=white,inner sep=1pt,pos=0.5]{replay fail} (r2.west);
   % comparison terminals
   \node[bad] (rf) at (10.0,-15.8) {\textsc{Fork}: retain state};

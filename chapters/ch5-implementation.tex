@@ -1,8 +1,8 @@
 \chapter{Implementation}\label{ch:impl}
 
-The implementation has two components. The standalone DUET component, implemented in Rust,
-provides the directory server, cryptographic operations, an auditor process, and a benchmark
-harness. The client component, implemented in TypeScript and integrated into Signal Desktop,
+The implementation has two components. The \texttt{duet} Rust crate provides the directory server,
+cryptographic operations, an auditor process, and a benchmark harness. The client component,
+implemented in TypeScript and integrated into Signal Desktop,
 provides the verifier, background monitor, lifecycle hooks, and warning interface. This chapter
 covers their architecture, integration, testing, and engineering challenges.
 
@@ -26,13 +26,12 @@ differing prefix-proof encodings currently prevent interoperability with Signal'
 key-transparency implementation~\cite{signal-kt-server}. \Cref{fig:impl-overview} shows the two
 implementation components and the separate auditor process.
 
-The directory server is an in-memory, single-machine prototype. The Signal Desktop integration uses
-a deterministic substitute for the live conversation secret and a seeded Double Ratchet simulation.
-These allow the label derivation and CEA state transitions to be tested, but do not establish
-secrecy-dependent label unpredictability or the security of Signal's live Double Ratchet. However,
-the identity-key verification path is not simulated as it runs at Signal Desktop's peer-key-retrieval
-boundary. Production integration would require access to the live conversation secret and ratchet
-state from libsignal, as discussed further in \cref{ch:discussion}.
+The directory server is an in-memory, single-machine prototype that clones the directory tree at
+each epoch commit. The Signal integration uses the deterministic conversation-secret substitute and
+seeded Double Ratchet simulation described in \cref{sec:impl-strategy}. The client performs
+identity-key verification when Signal Desktop retrieves the peer's identity key. However, production
+integration would require access to the live conversation secret and ratchet state from libsignal,
+as discussed further in \cref{ch:discussion}.
 
 \begin{figure}[t]
 \centering
@@ -136,9 +135,9 @@ compares that view with the primary head to detect equivocation.
 The auditor also verifies every committed directory transition. For each epoch, the
 \texttt{/epoch-delta} endpoint returns the declared insertions and rotations, including the previous
 value for every rotation. \Cref{fig:impl-transition-audit} shows the complete verification flow. The
-auditor replays every unaudited delta on a temporary copy of its local directory replica. It verifies
+auditor replays every unaudited delta on a temporary copy of its accepted directory state. It verifies
 that each disclosed root is included in the signed log and that the replay reproduces that root. The
-live replica and cursor advance only after every unaudited epoch is verified and any available
+accepted directory state and cursor advance only after every unaudited epoch is verified and any available
 signed-head comparison succeeds. The auditor's update flow is based on the IETF
 \texttt{AuditorUpdate} pattern, in which the service operator sends an update for each new log entry
 to a third-party auditor for
@@ -154,8 +153,8 @@ Signal Desktop monitor.
 \centering
 \input{figures/tikz/fig-impl-transition-audit}
 \caption[Auditor verification flow.]{Auditor verification flow. The auditor classifies the primary
-signed head, replays every unaudited epoch delta on a candidate replica, and checks a comparison head
-when available. It updates its local replica, cursor, and baseline only after all checks succeed.}
+signed head, replays every unaudited epoch delta on a temporary directory copy, and checks a comparison head
+when available. It updates its accepted directory state, cursor, and baseline only after all checks succeed.}
 \label{fig:impl-transition-audit}
 \end{figure}
 
