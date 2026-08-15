@@ -15,7 +15,7 @@
   \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{Directory server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
     \draw[dashed,black!45] (\x,-0.95) -- (\x,-6.3);}
-  \node[font=\itshape,text=black!55,anchor=west,fill=white,inner sep=1.5pt] at (-1.7,-0.7) {(a) normal operation};
+  \node[font=\scriptsize\itshape,text=black!55,anchor=west,fill=white,inner sep=1pt] at (-1.55,-0.65) {(a) normal operation};
   \draw[m] (0,-1.15) -- node[above,mlbl]{register Alice's key at $\ell^{\A}_{\mathsf{self}}$ and commit} (7.0,-1.15);
   \draw[m] (3.4,-1.68) -- node[above,mlbl]{register Bob's key at $\ell^{\B}_{\mathsf{self}}$ and commit} (7.0,-1.68);
   \draw[m] (3.4,-2.25) -- node[above,mlbl]{1. search own slot $\ell^{\B}_{\mathsf{self}}$} (7.0,-2.25);
@@ -46,7 +46,7 @@
   \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{Directory server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
     \draw[dashed,black!45] (\x,-1.1) -- (\x,-6.6);}
-  \node[font=\itshape,text=red!60!black,anchor=west,fill=white,inner sep=1.5pt] at (-1.7,-0.7)
+  \node[font=\scriptsize\itshape,text=red!60!black,anchor=west,fill=white,inner sep=1pt] at (-1.55,-0.65)
     {(b) under attack: A1b overwrite of the immutable dual-index slot $\ell^{\A}_{\mathsf{self}}$};
   \node[ract,anchor=north,text width=2.6cm] at (7.0,-1.25) {server overwrites the value at $\ell^{\A}_{\mathsf{self}}$ with Mallory's key};
   \draw[m,red] (10.6,-2.55) -- node[above,mlbl,font=\tiny,pos=0.4]{poll STH $+$ delta} (7.0,-2.55);
