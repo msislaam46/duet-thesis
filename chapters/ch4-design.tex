@@ -65,7 +65,7 @@ configuration-substitution cases are given in \cref{sec:design-detail-sth}.
 
 \subsection{The Client Verification Chain}\label{ssec:design-verify}
 
-A client verifies every directory response through the six checks in
+A client verifies each lookup response through applicable checks shown in
 \cref{fig:design-verify}. A global identity lookup binds the proof label to the verified VRF output.
 For a client-derived raw label, the proof must be bound to the requested label. An occupied raw slot is
 accepted only if its committed entry is immutable. The signed head for the result must have a valid
@@ -75,13 +75,15 @@ latest log leaf under that head, preventing acceptance of an older committed dir
 \begin{figure}[H]
 \centering
 \input{figures/tikz/fig-design-verify}
-\caption[The six-step client verification chain.]{The six-step client verification chain. Every lookup is checked locally
-against a verified signed tree head.}
+\caption[The six-step client verification chain.]{The six-step client verification chain. Every
+lookup is checked locally against a verified signed tree head. Here, $\pprefix$ denotes the
+prefix-tree proof returned with the lookup, $\pvrf$ denotes the VRF proof for a global lookup, and
+$\beta$ is the verified VRF output.}
 \label{fig:design-verify}
 \end{figure}
 
 The \texttt{duet} crate provides the proof and signed-head verification functions. The Signal
-Desktop client applies the complete verification chain to directory responses.
+Desktop client applies this verification chain to lookup responses.
 \Cref{sec:design-detail-sth} examines signed-head freshness and binding in greater detail.
 
 % ============================================================================
