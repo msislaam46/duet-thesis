@@ -151,8 +151,8 @@ censoring writes, and presenting divergent signed views (equivocation).
 % ----------------------------------------------------------------------------
 \section{STRIDE Threat Analysis}\label{sec:sec-stride}
 
-The STRIDE threat analysis~\cite{stride} covers the server (Merkle log, prefix tree, signed tree head), the client
-(registration, verification, warning monitor), and the auditor. Of twenty threats, sixteen are
+The threat analysis applies STRIDE~\cite{stride} to the server (Merkle log, prefix tree, signed
+tree head), the client (registration, verification, warning monitor), and the auditor. Of twenty threats, sixteen are
 addressed by an implemented control and four are residual. The control column distinguishes attacks
 that are cryptographically prevented from those detected after they are attempted. Forgery of a VRF
 label, a Merkle proof, or a signature is cryptographically prevented, whereas several actions a malicious
@@ -198,7 +198,7 @@ in \cref{sec:def-structures}. The endpoint, auditor, and trust-on-first-use assu
 
 The four residuals arise from the trust model and deployment requirements. One follows from the
 operator's position in the trust model: the operator learns the association between an account and its VRF-derived
-identity label. This limitation also appears in CONIKS~\cite{melara2015coniks} and the IETF KeyTrans
+identity label. This limitation also appears in CONIKS~\cite[Section~3.4]{melara2015coniks} and the IETF KeyTrans
 protocol, where the service operator evaluates the VRF used to derive each prefix-tree search
 key~\cite[Section~11.7]{ietf-keytrans-protocol}. The other three concern availability: write flooding,
 published-epoch staleness, and omitted proofs. These deployment tasks are discussed in
