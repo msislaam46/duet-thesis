@@ -324,22 +324,22 @@ windowed catch-up before checking the owner, warning, and peer slots.
 }
 
 \clearpage
-\paragraph{Detection and persistence (Algorithm~\ref{alg:detect}).} This is the monitoring loop that
-turns a substituted key into an alert. \textsf{CheckPeerKeyAndWarn} represents the peer-key comparison
-and warning-publication branch. In the implementation,
-\texttt{RemoteKTClient.detectMitm} checks the owner and warning slots, and \texttt{monitorConversation}
-adds the peer-slot comparison. The shared warning slot is checked
-\emph{before} the peer slot, so a committed warning takes precedence over a \textsc{Pending}
-or operational \texttt{NotPosted} verdict for an absent peer. A
-proof-verified peer-slot absence is reported as
-\textsc{Pending} for the first two checks and as an operational \texttt{NotPosted} timeout on the
-third (a fail-closed outcome, distinct from the CEA verdict \textsc{NotPosted}), because
-the peer may not have run the client. A slot that was present and later
-absent is an immediate alert.
+\paragraph{Detection and persistence (Algorithm~\ref{alg:detect}).} Algorithm~\ref{alg:detect} specifies
+the monitoring loop that turns a substituted key into an alert. \textsf{CheckPeerKeyAndWarn} compares
+the peer key and attempts to publish a warning when a mismatch is found. In the implementation,
+\texttt{RemoteKTClient.detectMitm} provides the owner- and warning-slot checks used by the standalone
+demonstrations and tests. The live \texttt{monitorConversation} path performs the owner-, warning-, and
+peer-slot checks directly.
+The shared warning slot is checked \emph{before} the peer slot, so a committed warning takes precedence
+over a pending state or an operational \texttt{NotPosted} timeout for an absent peer. A proof-verified
+peer-slot absence is reported as pending for the first two checks and as an operational
+\texttt{NotPosted} timeout on the third. This fail-closed outcome is distinct from the CEA verdict
+\textsc{NotPosted} and does not prove an attack because the peer may not have run the client. A slot
+that was present and later becomes absent produces an immediate alert.
 \textsf{RecordWarning} and \textsf{PersistenceCheck} retain verified evidence so that a later
 deletion of a committed warning becomes publicly verifiable. They are unit-tested as a separate
-persistence component and are not integrated into the live background monitor. The monitor
-performs detection and attempts warning publication.
+persistence component and are not integrated into the live background monitor. The live monitor
+performs detection and attempts to publish a warning.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
@@ -393,7 +393,7 @@ performs detection and attempts warning publication.
     $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer)$ \tcp*{peer slot ($pk=\bot$ is proven non-inclusion)}
     \uIf{$pk=\bot$}{
       \uIf{$\lpeer\in \mathit{seen}$}{\textbf{raise} SecurityAlert \tcp*{removal after prior presence: immediate red}}
-      \uElseIf{$\mathit{absent}[\lpeer]<2$}{$\mathit{absent}[\lpeer]\gets \mathit{absent}[\lpeer]+1$;\ \ \textbf{emit} \textsc{Pending};\ \ \textbf{continue} \tcp*{checks 1--2: pending, no UI event}}
+      \uElseIf{$\mathit{absent}[\lpeer]<2$}{$\mathit{absent}[\lpeer]\gets \mathit{absent}[\lpeer]+1$;\ \ \textbf{emit} pending state;\ \ \textbf{continue} \tcp*{checks 1--2: pending, no UI event}}
       \Else{\textbf{emit} operational \texttt{NotPosted} for this conversation;\ \ \textbf{continue} \tcp*{third check: fail-closed timeout, not proof of an attack}}
     }\Else{
       $\mathit{absent}[\lpeer]\gets 0$;\ \ $\mathit{seen}\gets \mathit{seen}\cup\{\lpeer\}$ \tcp*{present: reset the absence counter}
@@ -408,13 +408,16 @@ performs detection and attempts warning publication.
 }
 
 \clearpage
-\paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor is an external verifier that
-replays each declared root against its own local directory copy, reconstructed from
-epoch~0 (IETF KeyTrans \textsf{AuditorUpdate}~\cite{ietf-keytrans-protocol}), and commits a head as
-one all-or-nothing transaction only if every stage passes (a failed delta fetch is retried). For the
-split-view check it obtains a comparison head through \textsf{GetComparisonHead}; in this prototype
-that is the server's own staged \texttt{view=b} head, whereas a deployment obtains the comparison head
-from an independent vantage. The
+\paragraph{The auditor (Algorithm~\ref{alg:auditor}).} The auditor is an external verifier that replays
+each declared transition on a temporary copy of its accepted directory state. DUET begins this replay
+at epoch~0 and advances the accepted state, cursor, and signed-head baseline together only after every
+stage succeeds. A failed delta fetch leaves them unchanged so that the epoch can be retried. This
+update flow follows the IETF KeyTrans \texttt{AuditorUpdate} pattern, in which the service operator
+supplies an update for each new log entry to a third-party auditor~\cite[Section~15.2]{ietf-keytrans-protocol}.
+
+For the split-view check, \textsf{GetComparisonHead} obtains the server's staged \texttt{view=b} head in
+the prototype. A deployment would instead obtain a signed comparison head from an independent vantage.
+The
 verdicts separate availability from equivocation. \textsc{ConsistencyUnverified} covers any
 consistency proof, primary or comparison-head, that is missing, unparseable, or fails to verify, and it
 holds the baseline. \textsc{Fork} is reserved for directly evidenced equivocation: two validly signed heads of the same
@@ -487,24 +490,32 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
 
 \clearpage
 \paragraph{Continuous mode (Algorithm~\ref{alg:cea}).} CEA authenticates the Double Ratchet epoch by
-epoch, following the ACKA CEA construction~\cite{dowling2023acka}. It folds each epoch's secret into a chained key $k_t$ and
-publishes a directional fingerprint over the new ratchet public key, which the receiver recomputes and
-compares. A mismatch shows that the committed fingerprint is inconsistent with the receiver's chained state and
-authenticated ratchet public key $T_t$. The verifier reports this as a fork without attributing the
-divergence to a particular input. Because the committed
-fingerprint is immutable, an operator that later overwrites it is caught by the auditor's transition
-audit, not the receiver's per-epoch verdict. Labels use the canonical $\min/\max$ identity
-order, so both parties address one slot per epoch, and the fingerprint is directional
-(sender-then-receiver) and computed over the current, pre-update state. Both procedures read the
-epoch slot through \textsf{VerifiedCeaLookup}: it runs the full proof chain of \textsf{VerifiedLookup}
-(Algorithm~\ref{alg:client}, with no VRF step) against the signed head returned with the lookup, then
-anchors that head to the retained history with a \emph{read-only, bidirectional} continuity check.
-After trust-on-first-use a CEA read can run mid-commit, so its head may legitimately lag or lead the
-monitor's baseline, and continuity is proved in whichever direction holds \emph{without} advancing the
-shared baseline. It is retried on \textsc{NotPosted} before a verdict is reached. On registration the sender
-first checks that its label is unoccupied, since an occupied label signals impersonation, and advances
-its chain only after confirming that the write committed. The receiver advances only on a
-\textsc{Consistent} verdict, leaving its state unchanged on \textsc{Fork} or \textsc{NotPosted}.
+epoch, following ACKA's CEA construction and composition order~\cite[Figures~8 and~10]{dowling2023acka}.
+It publishes a directional fingerprint over the current public ratchet key $T_t$, which the receiver
+recomputes and compares, and folds the epoch's secret input $I_t$ into the chained key $k_t$ only after
+the directory operation succeeds. A mismatch shows that the committed fingerprint is inconsistent with
+the receiver's chained state and received ratchet public key $T_t$. The verifier reports this as
+\textsc{Fork} without attributing the divergence to a particular input.
+
+Since the committed fingerprint is immutable, a later operator-side overwrite is detected by the
+transition audit. The receiver does not repeat the lookup after accepting the epoch, so the overwrite
+is outside its per-epoch verdict. The label uses the canonical $\min/\max$ identity order, so both
+parties address the same slot in an epoch. The fingerprint remains directional (sender-then-receiver)
+and is computed over the current, pre-update state.
+
+Both sender and receiver read the epoch slot through \textsf{VerifiedCeaLookup}, which runs the full
+proof chain of \textsf{VerifiedLookup} (Algorithm~\ref{alg:client}, without the VRF step) against the
+signed head returned with the lookup. If no baseline exists, the verified head establishes the
+trust-on-first-use baseline. Otherwise, a read-only, bidirectional continuity check relates the
+returned head to the retained history. CEA reads can interleave with directory commits and monitor
+checks, so the returned head may precede or follow the retained baseline. The check proves continuity
+in the applicable direction without advancing that baseline.
+
+The receiver retries a proof-verified absence before returning \textsc{NotPosted}. Before writing, the
+sender verifies that its label is unoccupied. An occupied label indicates impersonation. The sender
+advances its chain only after a verified read-back confirms the committed fingerprint. The receiver
+advances only on a \textsc{Consistent} verdict and leaves its state unchanged on \textsc{Fork} or
+\textsc{NotPosted}.
 
 \begin{algorithm}[H]
 \caption{ACKA Continuous Entity Authentication Mode}\label{alg:cea}
