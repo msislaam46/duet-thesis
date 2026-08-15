@@ -28,29 +28,30 @@ retrieving one proof per epoch.
 
 We propose DUET (\emph{DU}al-index, \emph{E}poch-windowed \emph{T}ransparency), which performs
 key-substitution checks automatically and reports warnings in band. These checks require no separate
-manual comparison and do not change the asymptotic complexity of an individual lookup proof. The
-complete mechanism performs additional label-bound lookups and writes. DUET combines the dual-index
+manual comparison. However, detection requires additional label-bound lookups and writes, which do
+not change the asymptotic complexity of an individual lookup proof. DUET combines the dual-index
 warning scheme with windowed consistency verification and is integrated into a Signal Desktop
 prototype (\cref{ch:impl}). The windowed consistency mechanism replaces one proof per missed epoch
 with a single proof whose size grows logarithmically in the endpoint log sizes.
 
-DUET does not prevent a malicious provider from denying service. Its narrower goal is to ensure that a
-substituted key, an invalid or missing proof, or an inconsistent directory history causes verification
-to fail, preventing the client from silently accepting an attacker's key. \Cref{ch:threat}
-formalizes this distinction between detectable interference and availability.
+DUET does not prevent a malicious directory operator from denying service. Its narrower goal is to
+ensure that a substituted key, an invalid or missing proof, or an inconsistent directory history
+causes verification to fail, preventing the client from silently accepting an attacker's key.
+\Cref{ch:threat} formalizes this distinction between detectable interference and availability.
 
 \section{Contributions}\label{sec:intro-contributions}
 
-This thesis makes four principal contributions.
+This thesis makes four contributions.
 
 \paragraph{Conceptual.} The \emph{dual-index warning scheme} derives a separate lookup label for each
-party and a shared warning label from the conversation's shared secret. The warning label identifies a
-shared slot to which either party can write an authenticated warning payload. For an honestly established and
-monitored conversation, a malicious server cannot predict and pre-position that slot before the label
-is first used. Before committing the warning, the client detects censorship when a key mismatch accompanies a
-proof-verified empty slot. If the committed warning is later removed, the transition audit rejects
-the invalid directory transition. The committed warning allows both parties to detect the
-substitution automatically and in band (\cref{sec:design-dual}).
+party and a shared warning label from the conversation's shared secret. The warning label identifies
+a shared slot to which either party can write an authenticated warning payload. For an honestly
+established and monitored conversation, a malicious server cannot predict and pre-position that
+slot before the label is first used. Before a warning is committed, a key mismatch along with
+proof-verified absence at the shared warning slot raises the warning-censorship alarm. If the
+committed warning is later removed, the transition audit rejects the invalid directory transition.
+The committed warning allows both parties to detect the substitution automatically and in band
+(\cref{sec:design-dual}).
 
 \paragraph{Cryptographic.} The cryptographic contribution applies an RFC~9162~\cite{rfc9162}
 distant-head consistency proof to offline monitoring. With a retained signed-head checkpoint, a client
@@ -62,7 +63,7 @@ head. \Cref{ch:design} establishes these properties, and \cref{ch:eval} evaluate
 
 \paragraph{Systems.} The systems contribution instantiates ACKA's abstract log
 component~\cite{dowling2023acka} as the DUET directory through a standalone Rust implementation
-comprising the \texttt{duet} crate, an HTTP directory server, and a separate auditor process. A
+comprising the \texttt{duet} crate, an HTTP directory server, and an auditor process. A
 client verifier is integrated into a fork of Signal Desktop~(\cref{ch:impl}). Shared protocol
 operations are checked for byte-for-byte agreement using cross-language test vectors.
 
