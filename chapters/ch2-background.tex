@@ -42,8 +42,8 @@ substitution, whose full derivation and message sequence are in \cref{sec:ext-si
 \subsection{The Double Ratchet Protocol}\label{ssec:bg-ratchet}
 
 The Double Ratchet evolves a shared secret established by X3DH or PQXDH into per-message keys and
-provides forward secrecy~\cite{doubleratchet,pqxdh}. Once the adversary becomes passive, it can
-also provide post-compromise recovery~\cite{doubleratchet}. It does not re-authenticate the
+provides forward secrecy~\cite{doubleratchet,pqxdh}. Once the adversary becomes passive, the Double
+Ratchet can also provide post-compromise recovery~\cite{doubleratchet}. It does not re-authenticate the
 session-establishment keys, so authentication still depends on an authentic initial binding. \Cref{sec:ext-ratchet} explains the key-schedule details.
 
 \subsection{Safety Numbers and the Verification Gap}\label{ssec:bg-gap}
@@ -148,7 +148,7 @@ updates~\cite[Sections~1--2 and 4.2]{chase2019seemless}. Parakeet combines histo
 witness quorum~\cite[Sections~IV--V]{malvai2023parakeet}, and ELEKTRA supports multi-device key
 histories and privacy recovery after server
 compromise~\cite[Sections~1, 2.1, and 3.1]{len2023elektra}. OPTIKS reduces the cost of monitoring an
-unchanged key to a single non-membership proof~\cite[p.~4356]{optiks2024}. PRISM uses
+unchanged key to a single non-membership proof~\cite[Section~5]{optiks2024}. PRISM uses
 whole-directory verification~\cite[Sections~1 and 4]{pusch2025prism}. Across the surveyed designs,
 clients, auditors, or witness quorums perform verification, but none defines a conversation-specific
 peer-warning channel for an individual key substitution.
@@ -162,7 +162,7 @@ embedding commitments in encrypted messages as an additional gossip
 safeguard~\cite[p.~5]{pusch2025prism}. A warning about one substituted key therefore remains
 distinct from both mechanisms.
 
-CONIKS is the principal baseline for this thesis because it combines private lookup indices, signed
+CONIKS is the main baseline for this thesis because it combines private lookup indices, signed
 tree roots, and client self-monitoring~\cite[Sections~3.2--3.3 and
 4.1.3]{melara2015coniks}. A client monitors its own binding every epoch and compares the provider's
 signed tree root with one observed by an auditor to detect
@@ -200,7 +200,7 @@ The ACKA construction proposed by Dowling and Hale combines continuous key agree
 Continuous Entity Authentication (CEA), and an abstract secure
 log~\cite[pp.~20--21]{dowling2023acka}. At each epoch, CEA derives a public label from the
 pre-update state and a fingerprint that authenticates the public update produced by the
-CKA~\cite[pp.~13--14]{dowling2023acka}. The sender stores the label and fingerprint in the log,
+CKA~\cite[pp.~13--14]{dowling2023acka}. The sender appends the label and fingerprint to the log,
 and the receiver queries the expected label before accepting the
 update~\cite[pp.~7--8]{dowling2023acka}. A substituted update either produces conflicting
 fingerprints at the expected label or leaves no matching fingerprint
@@ -289,7 +289,7 @@ warning used by DUET.\par}
 \FloatBarrier
 \subsection{Implications for the Design}\label{ssec:bg-implications}
 
-The preceding comparison identifies three requirements for DUET. First, a client that detects a
+The preceding comparison identifies three system-level requirements for DUET. First, a client that detects a
 substitution must be able to warn its peer. Existing systems leave detection to the key owner, an
 auditor, a witness set, or a global verifier. In the cited WhatsApp configuration, a failed
 automatic verification leads to manual comparison~\cite[pp.~5, 10]{whatsapp2023whitepaper}, and
@@ -306,7 +306,7 @@ trusted head to the current head to cover the complete missed window.
 Third, DUET should detect split-view equivocation. A locally verified proof shows that one response
 matches a committed state, but it cannot show whether another client received a different state.
 Detection therefore requires comparing signed heads observed by different parties or through
-separate channels. Together, the three requirements motivate the dual-index warning, windowed
+separate channels. Together, the three system-level requirements motivate the dual-index warning, windowed
 consistency, and auditor mechanisms in \cref{ch:design}.
 
 Finally, ACKA provides the framework for authenticating evolving session state. DUET should

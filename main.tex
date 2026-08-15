@@ -99,33 +99,35 @@
 % ===================== FRONT MATTER =====================
 \begin{abstract}
 The security of end-to-end encrypted messaging rests on an assumption that its cryptography does
-not itself establish. The public keys handed out by the server must be authentic. Signal's
+not itself establish. The public keys supplied by the server must be authentic. Signal's
 original built-in defence, the Safety Number, covers only the long-term identity keys and requires a
 manual out-of-band comparison that a usability study found few pairs complete without guidance.
 Key transparency makes unauthorised key changes detectable by committing public-key directory states
 to a verifiable, append-only log, and is now deployed in production systems. Existing
 approaches expose changes through self-monitoring, external auditing, witness validation, or
 whole-directory verification. None of these provides an automatic, conversation-specific channel
-through which a party that detects a substitution can warn its peer. Moreover, a returning client that verifies each missed epoch incurs a catch-up cost that grows with the number
-of missed epochs and therefore with the time spent offline.
+through which a party that detects a substitution can warn its peer. Moreover, a returning client
+that verifies each missed epoch incurs a catch-up cost that grows with the number of missed epochs
+and therefore with the time spent offline.
 
-To close both gaps, this thesis proposes DUET (DUal-index, Epoch-windowed Transparency), a key
-transparency scheme for secure messaging that remains aligned with the emerging IETF Key
-Transparency protocol and is demonstrated through an implementation in Signal Desktop. DUET
-rests on two underlying mechanisms. First, the
-\emph{dual-index warning scheme} derives two party-specific lookup labels and a shared warning
-label from each conversation's shared secret. In an honestly established
-and subsequently monitored conversation, these enable automatic, in-band detection of key
-substitution by both parties without additional user interaction.
-Second, \emph{windowed consistency proofs} replace per-epoch catch-up with one proof between the last
-trusted and current tree heads. One proof covers all $W$ missed epochs, and its size grows
+To close both gaps, we propose DUET (DUal-index, Epoch-windowed Transparency), a key transparency
+scheme for secure messaging that remains aligned with the emerging IETF Key Transparency protocol
+and is demonstrated through an implementation in Signal Desktop. From an implementation
+perspective, DUET uses two main mechanisms. First, the \emph{dual-index warning scheme} derives two
+party-specific lookup labels and a shared warning label from each conversation's shared secret. In
+an honestly established and subsequently monitored conversation, these enable automatic, in-band
+detection of key substitution by both parties without additional user interaction. Second,
+\emph{windowed consistency proofs} replace per-epoch catch-up with one proof between the last
+trusted and current tree heads. One proof covers all missed epochs, and its size grows
 logarithmically with the endpoint log sizes.
 
 Benchmark results show that, at a matched directory size, DUET's lookup proof is comparable in size
-to the corresponding CONIKS proof. Median full client verification remains below \SI{150}{\micro\second}
-through ten million labels, and one short proof covers a 30-day offline period with hourly epochs. A two-client Signal
-Desktop prototype runs verification automatically in the background and raises key-substitution
-warnings in band. The prototype also demonstrates continuous authentication as simulated session state evolves. An auditor process checks invalid directory changes and can compare independently obtained signed views.
+to the corresponding CONIKS proof. Median full client verification remains below
+\SI{150}{\micro\second} through ten million labels, and one short proof covers a 30-day offline
+period with hourly epochs. A two-client Signal Desktop prototype runs verification automatically in
+the background and raises key-substitution warnings in band. The prototype also demonstrates
+continuous authentication as simulated session state evolves. Furthermore, an auditor process
+detects invalid directory changes and can compare signed views for split-view detection.
 \end{abstract}
 
 \chapter*{Acknowledgements}
