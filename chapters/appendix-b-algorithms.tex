@@ -41,10 +41,10 @@ Algorithm & Purpose \\
 \paragraph{Notation.} $\Hash(\cdot)$ is SHA-256. Tree hashing is domain-separated per RFC 6962/9162~\cite{rfc6962,rfc9162}: a
 leaf hashes as $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and an internal node as
 $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. The operator $\concat$ denotes byte
-concatenation. Identities are fixed-width 16-byte service IDs. This is a precondition of the
-dual-index derivation (Algorithm~\ref{alg:dualindex}), since without a fixed width the
-$\mathit{id_{self}}\concat\mathit{id_{peer}}$ split would be ambiguous, and the Rust
-implementation enforces it at the API boundary.
+concatenation. Identities are canonical 16-byte account identifiers. Their fixed width makes the
+$\mathit{id_{self}}\concat\mathit{id_{peer}}$ concatenation unambiguous without length prefixes
+(Algorithm~\ref{alg:dualindex}). Both the \texttt{duet} crate and client component enforce this
+requirement before label derivation.
 
 % NOTE: a bare \small inside an algorithm has no effect; algorithm2e takes its
 % body font from \AlFnt, so it must be set via \SetAlFnt.
@@ -169,8 +169,9 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 \Fn{\normalfont\textsf{UpdateByUserId}($\mathit{user\_id},pk$)}{
   $(\beta,\pvrf)\gets \mathsf{VRF.Prove}(sk_{\mathrm{vrf}},\mathit{user\_id})$ \tcp*{ECVRF, RFC 9381}
   $\mathit{label}\gets\beta[0{:}32]$ \tcp*{32-byte truncation}
-  $\mathit{live}.\textsf{Insert}(\mathit{label},pk,\textsc{mutable})$ \tcp*{global-VRF identity: leaf hash $\Hleaf(\textsc{mutable}\concat\mathit{label}\concat pk)$}
-  record \textsf{Insert}/\textsf{Rotate} with $\mathit{kind}=\textsc{mutable}$ in the epoch's declared delta\;
+  $\mathit{old}\gets\mathit{live}.\textsf{Lookup}(\mathit{label}).\mathit{value}$ \tcp*{the previous value decides insert vs.\ rotation}
+  $\mathit{live}.\textsf{Insert}(\mathit{label},pk,\textsc{mutable})$ \tcp*{leaf $\Hleaf(\textsc{mutable}\concat\mathit{label}\concat pk)$}
+  \eIf{$\mathit{old}=\bot$}{record $\textsf{Insert}(\mathit{label},\textsc{mutable},pk)$ in the declared delta\;}{record $\textsf{Rotate}(\mathit{label},\textsc{mutable},\mathit{old},pk)$ in the declared delta\;}
   \KwRet $(\mathit{label},\pvrf)$\;
 }
 \Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
@@ -187,7 +188,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
   freeze the declared delta for this epoch \tcp*{served to auditors via \textsf{GetEpochDelta} (Alg.~\ref{alg:auditor})}
   $\mathit{config\_hash}\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{epoch\_interval}\concat \mathit{raw\_label\_policy})$ \tcp*{policy commitment (CONIKS $P$), where $\mathit{raw\_label\_policy}$ binds the write-once/delta policy}
   $\mathit{timestamp}\gets\textsf{CurrentUnixTime}()$\;
-  $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ e\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{timestamp}\concat \mathit{config\_hash})$ \tcp*{88-byte LE}
+  $\sigma\gets \textsf{Sign}(sk_{\mathrm{sth}},\ e\concat \mathit{log}.\mathit{size}\concat \mathit{log}.\textsf{Root}\concat \mathit{timestamp}\concat \mathit{config\_hash})$ \tcp*{88-byte signing message}
   $\mathit{sth}\gets(e,\mathit{log}.\mathit{size},\mathit{log}.\textsf{Root},\mathit{timestamp},\mathit{config\_hash},\sigma)$\;
   $\mathit{sth}_{\mathrm{latest}}\gets \mathit{sth}$ \tcp*{published head served by \textsf{Search}}
   $\mathit{epoch}\gets \mathit{epoch}+1$ \tcp*{advance only after signing this epoch's head}
@@ -214,7 +215,7 @@ conflict, confirming publication by a verified read-back. \textsf{CheckWarning} 
 \textsc{Alert} on any proven non-empty slot.
 \begin{algorithm}[H]
 \caption{Dual-Index Label Derivation (HKDF-SHA256, RFC 5869)}\label{alg:dualindex}
-\KwIn{shared secret $\sharedS$ from X3DH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width). The warning-MAC key is derived separately by \textsf{DeriveWarnMacKey}, which orders the identities canonically}
+\KwIn{shared secret $\sharedS$ from X3DH or PQXDH; identities $\mathit{id_{self}},\mathit{id_{peer}}$ (fixed-width). The warning-MAC key is derived separately by \textsf{DeriveWarnMacKey}, which orders the identities canonically}
 \Fn{\normalfont\textsf{DeriveLabels}($\sharedS,\mathit{id_{self}},\mathit{id_{peer}}$)}{
   $\mathit{PRK}\gets \textsf{HKDF-Extract}(\text{salt}=\texttt{"duet-dual-index"},\ \sharedS)$\;
   $\lself\gets \textsf{HKDF-Expand}(\mathit{PRK},\texttt{"lookup"}\concat \mathit{id_{self}}\concat \mathit{id_{peer}},32)$\;
@@ -305,11 +306,12 @@ windowed catch-up before checking the owner, warning, and peer slots.
 }
 \Fn{\normalfont\textsf{WindowedCatchUp}($\mathit{server}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$;\ \ \Req $\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})$\;
+  $c\gets \Hash(pk_{\mathrm{vrf}}\concat pk_{\mathrm{sth}}\concat \mathit{suite}\concat \mathit{version}\concat \mathit{epoch\_interval}\concat \mathit{raw\_label\_policy})$;\ \ \Req $\mathit{sth_{new}}.\mathit{config\_hash}=c$ \tcp*{policy pin: reject an unexpected configuration}
   \Req $\mathit{sth_{new}}.\mathit{epoch}+1=\mathit{sth_{new}}.\mathit{tree\_size}$ \tcp*{reject an epoch/tree-size mismatch before folding}
   \uIf{$\mathit{last\_sth}=\bot$}{
     $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{trust-on-first-use anchor (\cref{sec:threat-fair})}
   }\Else{
-    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch} \lor \mathit{sth_{new}}.\mathit{tree\_size}<\mathit{last\_sth}.\mathit{tree\_size}$}{\textbf{raise} Fork \tcp*[f]{a smaller epoch or tree size is a rollback}}
+    \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch} \lor \mathit{sth_{new}}.\mathit{tree\_size}<\mathit{last\_sth}.\mathit{tree\_size}$}{\textbf{reject} \tcp*[f]{a smaller epoch or tree size is a rollback}}
     \uIf{$\mathit{sth_{new}}.\mathit{tree\_size}=\mathit{last\_sth}.\mathit{tree\_size}$}{
       \Req $\mathit{sth_{new}}.\mathit{root}=\mathit{last\_sth}.\mathit{root}$ \tcp*{equal size with a differing root is same-epoch equivocation}
     }\Else{
@@ -327,7 +329,7 @@ windowed catch-up before checking the owner, warning, and peer slots.
 \paragraph{Detection and persistence (Algorithm~\ref{alg:detect}).} Algorithm~\ref{alg:detect} specifies
 the monitoring loop that turns a substituted key into an alert. \textsf{CheckPeerKeyAndWarn} compares
 the peer key and attempts to publish a warning when a mismatch is found. In the implementation,
-\texttt{RemoteKTClient.detectMitm} provides the owner- and warning-slot checks used by the standalone
+\texttt{RemoteKTClient.detectMitm} provides the owner- and warning-slot checks used by the
 demonstrations and tests. The live \texttt{monitorConversation} path performs the owner-, warning-, and
 peer-slot checks directly.
 The shared warning slot is checked \emph{before} the peer slot, so a committed warning takes precedence
@@ -351,7 +353,7 @@ performs detection and attempts to publish a warning.
 \Fn{\normalfont\textsf{CheckPeerKeyAndWarn}($\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{expected\_pk}$)}{
   $pk\gets \textsf{RetrieveKey}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
   \If{$pk\ne\mathit{expected\_pk}$}{
-    \textbf{verdict} $\gets$ SecurityAlert \tcp*{preserve the red verdict before publication}
+    \textbf{verdict} $\gets$ \textsc{Alert} \tcp*{preserve the red verdict before publication}
     $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
     $\textsf{TryPublish}(\mathit{server},\lwarn,\texttt{"peer-slot-replaced"},k_{\mathrm{mac}})$;\ \ \textbf{raise} \textbf{verdict}\;
   }
@@ -376,7 +378,7 @@ performs detection and attempts to publish a warning.
 \Fn{\normalfont\textsf{BackgroundMonitor}($\mathit{server},\mathit{conversations},\mathit{id_{self}},\mathit{own\_pk}$)}{
   $(v_{\mathsf{vrf}},\mathit{healthy})\gets \textsf{CheckOwnVrfKey}()$ \tcp*{global VRF identity self-check, or ends the tick if unreachable}
   \If{$\neg\,\mathit{healthy}$}{
-    \textbf{verdict} $\gets$ SecurityAlert \tcp*{preserve the red verdict before publication}
+    \textbf{verdict} $\gets$ \textsc{Alert} \tcp*{preserve the red verdict before publication}
     \ForEach{$(\sharedS,\mathit{id_{peer}})\in \mathit{conversations}$}{
       $(\lself,\lpeer,\lwarn)\gets \textsf{DeriveLabels}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $k_{\mathrm{mac}}\gets \textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$\;
       $\textsf{TryPublish}(\mathit{server},\lwarn,\texttt{"key-replaced"},k_{\mathrm{mac}})$\;
@@ -388,20 +390,20 @@ performs detection and attempts to publish a warning.
     \lIf{$\lself\notin \mathit{registered}$}{$\textsf{Register}(\mathit{server},\sharedS,\mathit{id_{self}},\mathit{id_{peer}},\mathit{own\_pk})$;\ \ $\mathit{registered}\gets \mathit{registered}\cup\{\lself\}$ \tcp*[f]{once per derived label}}
     $\textsf{WindowedCatchUp}(\mathit{server})$ \tcp*{append-only and STH growth}
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself)$ \tcp*{owner slot}
-    \lIf{$v\ne\mathit{own\_pk}$}{\textbf{verdict} $\gets$ SecurityAlert;\ \ $\textsf{TryPublish}(\mathit{server},\lwarn,\texttt{"lookup-replaced"},k_{\mathrm{mac}})$;\ \ \textbf{raise} \textbf{verdict}}
-    \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,k_{\mathrm{mac}})=\textsc{Alert}$}{\textbf{raise} SecurityWarning \tcp*[f]{warning slot, checked before peer absence is classified}}
+    \lIf{$v\ne\mathit{own\_pk}$}{\textbf{verdict} $\gets$ \textsc{Alert};\ \ $\textsf{TryPublish}(\mathit{server},\lwarn,\texttt{"lookup-replaced"},k_{\mathrm{mac}})$;\ \ \textbf{raise} \textbf{verdict}}
+    \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,k_{\mathrm{mac}})=\textsc{Alert}$}{\textbf{raise} \textsc{Alert} \tcp*[f]{warning slot, checked before peer absence is classified}}
     $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer)$ \tcp*{peer slot ($pk=\bot$ is proven non-inclusion)}
     \uIf{$pk=\bot$}{
-      \uIf{$\lpeer\in \mathit{seen}$}{\textbf{raise} SecurityAlert \tcp*{removal after prior presence: immediate red}}
+      \uIf{$\lpeer\in \mathit{seen}$}{\textbf{raise} \textsc{Alert} \tcp*{removal after prior presence: immediate red}}
       \uElseIf{$\mathit{absent}[\lpeer]<2$}{$\mathit{absent}[\lpeer]\gets \mathit{absent}[\lpeer]+1$;\ \ \textbf{emit} pending state;\ \ \textbf{continue} \tcp*{checks 1--2: pending, no UI event}}
       \Else{\textbf{emit} operational \texttt{NotPosted} for this conversation;\ \ \textbf{continue} \tcp*{third check: fail-closed timeout, not proof of an attack}}
     }\Else{
       $\mathit{absent}[\lpeer]\gets 0$;\ \ $\mathit{seen}\gets \mathit{seen}\cup\{\lpeer\}$ \tcp*{present: reset the absence counter}
       $\mathit{pinned}\gets\mathsf{PeerPin}[\mathit{id_{peer}}]$\;
       \uIf{$\mathit{pinned}=\bot$}{$\mathsf{PeerPin}[\mathit{id_{peer}}]\gets pk$ \tcp*[f]{first sight: pin the peer key}}
-      \uElseIf{$pk\ne\mathit{pinned}$}{\textbf{verdict} $\gets$ SecurityAlert;\ \ $\textsf{TryPublish}(\mathit{server},\lwarn,\texttt{"peer-slot-replaced"},k_{\mathrm{mac}})$;\ \ \textbf{raise} \textbf{verdict} \tcp*[f]{verified peer-key mismatch}}
+      \uElseIf{$pk\ne\mathit{pinned}$}{\textbf{verdict} $\gets$ \textsc{Alert};\ \ $\textsf{TryPublish}(\mathit{server},\lwarn,\texttt{"peer-slot-replaced"},k_{\mathrm{mac}})$;\ \ \textbf{raise} \textbf{verdict} \tcp*[f]{verified peer-key mismatch}}
     }
-    \lIf{$\mathit{healthy}$}{\textbf{emit} \textsc{Green} \tcp*[f]{green only when the global self-check is healthy}}
+    \lIf{$\mathit{healthy}$}{\textbf{emit} a green verdict \tcp*[f]{green only when the global self-check is healthy}}
   }
 }
 \end{algorithm}
@@ -415,24 +417,23 @@ stage succeeds. A failed delta fetch leaves them unchanged so that the epoch can
 update flow follows the IETF KeyTrans \texttt{AuditorUpdate} pattern, in which the service operator
 supplies an update for each new log entry to a third-party auditor~\cite[Section~15.2]{ietf-keytrans-protocol}.
 
-For the split-view check, \textsf{GetComparisonHead} obtains the server's staged \texttt{view=b} head in
-the prototype. A deployment would instead obtain a signed comparison head from an independent vantage.
-The
-verdicts separate availability from equivocation. \textsc{ConsistencyUnverified} covers any
-consistency proof, primary or comparison-head, that is missing, unparseable, or fails to verify, and it
-holds the baseline. \textsc{Fork} is reserved for directly evidenced equivocation: two validly signed heads of the same
-size with different roots. \textsc{ConsistentNoVantage} marks a commit reached with no valid
-comparison head.
+Split-view detection requires comparison with a signed head obtained from an independent vantage.
+The A4 demonstration instead uses a staged second signed head supplied by the same directory server.
+Therefore, it tests the signed-head comparison only. Two validly signed heads at the same tree size
+with different roots produce \textsc{Fork}. Heads of different sizes require a valid consistency proof.
+A missing or invalid proof produces \textsc{ConsistencyUnverified} without establishing equivocation.
+If no valid comparison head is available, a successful transition audit returns
+\textsc{ConsistentNoVantage}.
 
 {\SetAlFnt{\footnotesize}\SetInd{0.35em}{0.35em}%
 \begin{algorithm}[H]
 \caption{Networked auditor: per-epoch audit (\textsf{AuditEpoch})}\label{alg:auditor}
 \KwData{last trusted signed head $\mathit{last\_sth}$ (initially $\bot$); committed $\mathit{replica}$ (a PrefixTree,
-empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$}
+empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted STH key $pk_{\mathrm{sth}}$; expected configuration commitment $\mathit{expected\_config\_hash}$}
 \Fn{\normalfont\textsf{AuditEpoch}($\mathit{server}$)}{
   $\mathit{sth_{new}}\gets \mathit{server}.\textsf{GetCurrentSTH}()$\;
   \lIf{$\mathit{sth_{new}}=\bot$}{\KwRet \textsc{Unavailable} \tcp*[f]{retryable}}
-  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})\ \vee\ \mathit{sth_{new}}.\mathit{epoch}+1\ne \mathit{sth_{new}}.\mathit{tree\_size}$}{\textbf{alarm};\ \KwRet \textsc{Malformed}}
+  \lIf{$\neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_{new}})\ \vee\ \mathit{sth_{new}}.\mathit{config\_hash}\ne\mathit{expected\_config\_hash}\ \vee\ \mathit{sth_{new}}.\mathit{epoch}+1\ne \mathit{sth_{new}}.\mathit{tree\_size}$}{\textbf{alarm};\ \KwRet \textsc{Malformed}}
   \If{$\mathit{last\_sth}\ne\bot$}{
     \lIf{$\mathit{sth_{new}}.\mathit{epoch}<\mathit{last\_sth}.\mathit{epoch}\ \vee\ \mathit{sth_{new}}.\mathit{tree\_size}<\mathit{last\_sth}.\mathit{tree\_size}$}{\textbf{alarm};\ \KwRet \textsc{Rollback}}
     \lIf{$\mathit{sth_{new}}.\mathit{tree\_size}=\mathit{last\_sth}.\mathit{tree\_size}\ \wedge\ \mathit{sth_{new}}.\mathit{root}\ne\mathit{last\_sth}.\mathit{root}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
@@ -449,7 +450,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
   \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
-  $\mathit{vb}\gets\textsf{DetectFork}(\mathit{server}.\textsf{GetComparisonHead}(),\mathit{sth_{new}},\mathit{server})$ \tcp*{comparison-head check runs only after successful, complete replay (prototype: server \texttt{view=b})}
+  $\mathit{vb}\gets\textsf{DetectFork}(\mathit{server}.\textsf{GetComparisonHead}(),\mathit{sth_{new}},\mathit{server})$ \tcp*{comparison check only after complete replay}
   \lIf{$\mathit{vb}=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
   \lIf{$\mathit{vb}=\textsc{ConsistencyUnverified}$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{hold, no fork}}
   $\mathit{replica}\gets \mathit{candidate}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{advance the copy, cursor, and baseline together}
@@ -475,7 +476,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \KwRet \textsc{Pass}\;
 }
 \Fn{\normalfont\textsf{DetectFork}($\mathit{sth_b},\mathit{sth_{new}},\mathit{server}$)}{
-  \lIf{$\mathit{sth_b}=\bot\ \vee\ \neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_b})\ \vee\ \mathit{sth_b}.\mathit{epoch}+1\ne\mathit{sth_b}.\mathit{tree\_size}$}{\KwRet \textsc{InvalidHead} \tcp*[f]{no split-view verdict, commit proceeds}}
+  \lIf{$\mathit{sth_b}=\bot\ \vee\ \neg\,\STH.\textsf{Verify}(pk_{\mathrm{sth}},\mathit{sth_b})\ \vee\ \mathit{sth_b}.\mathit{config\_hash}\ne\mathit{expected\_config\_hash}\ \vee\ \mathit{sth_b}.\mathit{epoch}+1\ne\mathit{sth_b}.\mathit{tree\_size}$}{\KwRet \textsc{InvalidHead} \tcp*[f]{no split-view verdict, commit proceeds}}
   \uIf{$\mathit{sth_b}.\mathit{tree\_size}=\mathit{sth_{new}}.\mathit{tree\_size}$}{
     \lIf{$\mathit{sth_b}.\mathit{root}\ne\mathit{sth_{new}}.\mathit{root}$}{\KwRet \textsc{Fork}}
   }
@@ -497,9 +498,8 @@ the directory operation succeeds. A mismatch shows that the committed fingerprin
 the receiver's chained state and received ratchet public key $T_t$. The verifier reports this as
 \textsc{Fork} without attributing the divergence to a particular input.
 
-Since the committed fingerprint is immutable, a later operator-side overwrite is detected by the
-transition audit. The receiver does not repeat the lookup after accepting the epoch, so the overwrite
-is outside its per-epoch verdict. The label uses the canonical $\min/\max$ identity order, so both
+Because the receiver does not repeat the lookup after accepting the epoch, the transition audit detects
+a later operator-side overwrite of the immutable fingerprint. The label uses the canonical $\min/\max$ identity order, so both
 parties address the same slot in an epoch. The fingerprint remains directional (sender-then-receiver)
 and is computed over the current, pre-update state.
 
@@ -519,9 +519,14 @@ advances only on a \textsc{Consistent} verdict and leaves its state unchanged on
 
 \begin{algorithm}[H]
 \caption{ACKA Continuous Entity Authentication Mode}\label{alg:cea}
-\KwData{per conversation: shared secret $\sharedS$ and identities $\mathit{id_{self}},\mathit{id_{peer}}$; chained secret $k_t$; epoch $t$; warning label $\lwarn$ and warn-MAC key
-$k_{\mathrm{mac}}\gets\textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ (Alg.~\ref{alg:dualindex}; the label uses canonical $\min/\max$ id order: one slot per epoch;
-the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
+\KwData{per conversation: shared secret $\sharedS$ and identities $\mathit{id_{self}},\mathit{id_{peer}}$; chained secret $k_t$; epoch $t$; warning label $\lwarn$ and warn-MAC key $k_{\mathrm{mac}}\gets\textsf{DeriveWarnMacKey}(\sharedS,\mathit{id_{self}},\mathit{id_{peer}})$ (Alg.~\ref{alg:dualindex})}
+\Fn{\normalfont\textsf{VerifiedCeaLookup}($\mathit{server},L$)}{
+  $(v,\pprefix,\pincl,\mathit{sth})\gets \mathit{server}.\textsf{Search}(L)$\;
+  run the raw-label checks of \textsf{VerifiedLookup} (Alg.~\ref{alg:client}, no VRF): signed head, expected configuration, label and value binding, immutable kind on a present leaf, inclusion at the current size\;
+  \uIf{no baseline yet}{adopt $\mathit{sth}$ as the trust-on-first-use baseline}
+  \lElse{\Req $\mathit{sth}$ chains from the baseline in whichever direction holds, without advancing it}
+  \KwRet $v$ \tcp*{$v=\bot$ only for verified non-inclusion, an invalid proof or head is rejected}
+}
 \Fn{\normalfont\textsf{CeaSetup}($\mathit{pss},\mathit{id}_{\A},\mathit{id}_{\B}$)}{
   $k_0\gets \KDF(\mathit{pss},\min(\mathit{id}_{\A},\mathit{id}_{\B})\concat \max(\mathit{id}_{\A},\mathit{id}_{\B}))$;\ \ $t\gets 0$\;
 }
@@ -538,7 +543,7 @@ the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
 \Fn{\normalfont\textsf{CeaRegister}($\mathit{server},\mathit{id_{self}},\mathit{id_{peer}},T_t,I_t$)}{
   $L_t\gets \textsf{CeaLprint}(\mathit{id_{self}},\mathit{id_{peer}})$;\ \ $F_t\gets \textsf{CeaFprint}(\mathit{id_{self}},\mathit{id_{peer}},T_t)$\;
   \If{$\textsf{VerifiedCeaLookup}(\mathit{server},L_t)\ne\bot$}{
-    \textbf{raise} SecurityAlert\;
+    \textbf{raise} \textsc{Alert}\;
   }
   $\mathit{server}.\textsf{UpdateRaw}(L_t,F_t)$;\ \ $\mathit{server}.\textsf{CommitEpoch}()$\;
   \Req $\textsf{VerifiedCeaLookup}(\mathit{server},L_t)=F_t$ \tcp*{confirm under the head returned with this read}
@@ -549,8 +554,9 @@ the fingerprint is directional, sender-then-receiver, \cref{ssec:design-modes})}
   $v\gets \textsf{VerifiedCeaLookup}(\mathit{server},L_t)$ \tcp*{chain and read-only bidirectional anchor, no VRF, retried on \textsc{NotPosted} before concluding}
   \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{no advance}}
   \If{$v\ne F^{*}_t$}{
-    establish \textsc{Fork}, \textbf{then try} $\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"ratchet-fork"},k_{\mathrm{mac}})$, and record any publication failure as \emph{unconfirmed}\;
-    \KwRet \textsc{Fork} \tcp*{no advance, and the verdict is independent of the warning publication}
+    $\mathit{verdict}\gets\textsc{Fork}$\;
+    \textbf{try} $\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"ratchet-fork"},k_{\mathrm{mac}})$ \textbf{catch}: report the failure separately\;
+    \KwRet $\mathit{verdict}$ \tcp*{no advance, verdict independent of publication}
   }
   $\textsf{CeaUpdate}(I_t)$ \tcp*{advance on \textsc{Consistent}}
   \KwRet \textsc{Consistent}\;

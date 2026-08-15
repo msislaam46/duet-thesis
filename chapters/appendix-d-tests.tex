@@ -1,8 +1,8 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix summarizes the complete test corpus supporting the conformance claims in
-\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{137} tests: \num{99} unit and invariant
-tests across nine modules, the \num{8}-case adversarial integration suite, \num{26} tests in the
+\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{142} tests: \num{102} unit and invariant
+tests across nine modules, the \num{8}-case adversarial integration suite, \num{28} tests in the
 \texttt{kt\_auditor} binary, and \num{4} clean-workflow regression tests in
 \texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}), all run under
 \texttt{cargo test}. The \texttt{signal-desktop-kt} client verifier harness contains \num{190} Jest
@@ -10,9 +10,10 @@ tests in thirteen suites, along with \num{35} embedded electron-mocha tests in s
 suites. The embedded tests pass realistic account identifiers through the client integration. Fixed
 vectors also require the crate and client component to produce byte-identical outputs.
 
-The \num{26} \texttt{kt\_auditor} tests comprise the delta-replay test, six \texttt{classify\_head}
+The \num{28} \texttt{kt\_auditor} tests comprise the delta-replay test, six \texttt{classify\_head}
 rollback/fork cases, five \texttt{commit\_decision} transaction cases, two integration tests (a
-partial-fetch failure and the comparison-head skip-after-failure), and twelve \texttt{PollStatus} tests covering every poll verdict,
+partial-fetch failure and the comparison-head skip-after-failure), two configuration-mismatch tests
+(primary and comparison head), and twelve \texttt{PollStatus} tests covering every poll verdict,
 including the missing, unparseable, and failing consistency-proof cases that return
 \textsc{ConsistencyUnverified}, and the exact status-line mapping.
 
