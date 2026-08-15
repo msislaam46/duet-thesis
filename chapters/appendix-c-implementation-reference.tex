@@ -49,8 +49,8 @@ GET  & \texttt{/health} & liveness probe \\
 
 A separate administrative API, bound to an internal-only port, is used exclusively by the
 adversarial scenario suite to stage attacks. It is not part of the protocol. In the
-prototype these endpoints are unauthenticated, and a production deployment would place them
-behind account-layer authorisation. \Cref{tab:apiref-admin} lists them.
+prototype these endpoints are unauthenticated. They are test-only and would be omitted or
+disabled in production. \Cref{tab:apiref-admin} lists them.
 
 \begin{table}[ht]
 \centering
@@ -112,7 +112,9 @@ Presentation & Meaning & DOM event \\
 grey badge & verification pending & none \\
 green badge & key verified & \texttt{kt:verified} \\
 amber banner & directory server unreachable with the badge unchanged & \texttt{kt:unreachable} \\
-red badge and banner & verified warning or operational timeout & \texttt{kt:warning} \\
+red badge and banner &
+proof failure, verified key mismatch, proof-verified warning-slot value, or operational timeout &
+\texttt{kt:warning} \\
 demonstration control & stage one CEA fork for the selected conversation & \texttt{kt:cea-inject} \\
 \bottomrule
 \end{tabularx}
@@ -439,7 +441,7 @@ dynamic import for the key-transparency code was removed and the whole layer now
 with the networked path made opt-in and its failure caught separately. Second, with context isolation
 enabled, property assignments to \texttt{window} in the preload world are not visible to the renderer,
 so objects injected through the console had no effect, whereas DOM custom events on \texttt{window}
-cross the boundary. Finally, the application exposes both a typed event bus and DOM custom events.
+pass from the preload context to the renderer. Finally, the application exposes both a typed event bus and DOM custom events.
 Dispatching verdicts through both interfaces resolved the delivery mismatch. Several robustness issues appeared only end to end: a
 server that generated a fresh signing key on each launch invalidated cached public keys, fixed by
 deriving the server's keys deterministically from a seed. A panic on a freshly emptied log poisoned the

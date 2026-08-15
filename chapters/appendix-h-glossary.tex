@@ -13,9 +13,10 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
   WhatsApp~\cite{whatsapp2023whitepaper}.
 \item[AKV] Automatic Key Verification, Signal's deployed key-transparency lookup check. It verifies a
   fetched key against the log but carries no peer-warning channel.
-\item[Auditor] An independent party that observes the log from a second vantage point, cross-checks
-  signed tree heads (fork detection), and replays each epoch's declared update set against the
-  committed root (the transition audit) (\cref{def:epoch-delta}, \cref{alg:auditor}).
+\item[Auditor] A verifier that checks signed heads and replays each epoch's declared update set
+  against the committed root (the transition audit). Fork detection additionally requires comparison
+  with a signed head obtained from an independent vantage
+  (\cref{def:epoch-delta,alg:auditor}).
 \item[Auditor copy] The auditor's independently reconstructed copy of the committed directory,
   rebuilt by replaying each epoch's declared update set from epoch~0. The transition audit checks
   each committed root against it rather than trusting server-supplied membership proofs
@@ -36,9 +37,9 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
 \item[Declared update set (epoch delta)] The list of inserts and value-disclosing rotations declared
   for a committed epoch and provided for auditor replay. The format cannot express a deletion
   (\cref{def:epoch-delta}).
-\item[Deletion evidence] The verifiable bundle (inclusion proof at commit, later proven
-  non-inclusion, and the consistency proof between the two heads) by which a warning's writer proves
-  the operator removed a committed leaf (\cref{def:deletion-evidence}).
+\item[Deletion evidence] A bundle showing that the operator signed an earlier state containing a
+  warning and a later state in the same append-only history in which the same warning slot is absent
+  (\cref{def:deletion-evidence}).
 \item[Dolev--Yao] The standard active-network adversary model: full control of the wire (intercept,
   modify, inject, delete, replay).
 \item[Double Ratchet] Signal's per-message key-ratcheting algorithm (\cref{def:doubleratchet}).
@@ -103,8 +104,9 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
   of its answers.
 \item[VRF] Verifiable Random Function: a keyed function whose outputs are pseudorandom to outsiders
   yet provably correct (\cref{def:vrf,def:vrf-security}).
-\item[Windowed consistency proof] A single consistency proof spanning an entire offline window, with
-  size logarithmic in the endpoint log sizes and does not require one proof per missed epoch (\cref{def:windowed}, \cref{lem:windowed-size}).
+\item[Windowed consistency proof] A single consistency proof spanning an entire offline window.
+  Its size is logarithmic in the endpoint log sizes, and it does not require one proof per missed
+  epoch (\cref{def:windowed,lem:windowed-size}).
 \item[Write-once policy] The directory's raw-label interface rejects a write to an occupied
   dual-index, CEA, or warning label, so a committed value cannot be overwritten through the honest
   interface (\cref{def:epoch-delta}, \cref{ssec:design-detection}).

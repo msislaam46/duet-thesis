@@ -116,7 +116,7 @@ valid in isolation, so only a cross-vantage comparison of the signed heads expos
 \phantomsection\label{sc:threat-a5}\paragraph{A5: Malicious Key Rotation.} A5 concerns an identity-key
 change presented as a legitimate rotation. Since a legitimate rotation changes the identity key,
 the changed binding alone cannot establish an attack. A malicious operator exploits this ambiguity
-by substituting its own key during a claimed rotation. The peer re-fetches the global identity
+by substituting its own key during the rotation. The peer re-fetches the global identity
 entry. A valid cross-signature under the previously trusted identity key binds the new key to its
 predecessor and authorises the rotation. Without a valid predecessor cross-signature, the new key
 cannot be accepted as authentic.
