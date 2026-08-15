@@ -5,7 +5,7 @@ instantiation of ACKA. \Cref{app:algorithms} gives the pseudocode, and \cref{ch:
 associated costs.
 
 \paragraph{Notation.} The construction uses SHA-256 with RFC~6962 leaf and node tags, byte-string
-concatenation $\concat$, and fixed-width service identifiers. \Cref{sec:def-primitives}
+concatenation $\concat$, and fixed-width account identifiers. \Cref{sec:def-primitives}
 defines the primitives and encodings used below.
 
 % ============================================================================
@@ -42,8 +42,8 @@ enumeration.
 \FloatBarrier
 \subsection{Epoch Lifecycle: Update, Commit, and the Signed Tree Head}\label{ssec:design-epoch}
 
-An $\textsf{update}(\mathit{label},\mathit{value})$ changes one path in the current 256-level sparse
-tree. A subsequent $\textsf{commit\_epoch}()$ appends the resulting prefix root to the log,
+An update operation changes one path in the current 256-level sparse
+tree. A subsequent $\textsf{CommitEpoch}()$ appends the resulting prefix root to the log,
 snapshots the tree for later lookups, and signs the new head. Lookups use only the last committed
 snapshot. The live tree is not queried because its root has not yet been included in the log
 authenticated by a signed head.
@@ -51,7 +51,7 @@ authenticated by a signed head.
 The signed message is:
 \begin{equation}\label{eq:design-sth}
   \mathit{epoch} \concat \mathit{tree\_size} \concat \mathit{root} \concat
-  \mathit{timestamp} \concat \Hash(\mathit{config}),
+  \mathit{timestamp} \concat \Hash(\mathit{config}).
 \end{equation}
 In \cref{eq:design-sth}, $\Hash(\mathit{config}) = \Hash(\mathit{pk}_{\mathsf{vrf}} \concat
 \mathit{pk}_{\mathsf{sth}} \concat \mathit{suite} \concat \mathit{version} \concat
@@ -67,7 +67,7 @@ configuration-substitution cases are given in \cref{sec:design-detail-sth}.
 
 A client verifies every directory response through the six checks in
 \cref{fig:design-verify}. A global identity lookup binds the proof label to the verified VRF output.
-For a client-derived raw label, the proof must concern the requested label. An occupied raw slot is
+For a client-derived raw label, the proof must be bound to the requested label. An occupied raw slot is
 accepted only if its committed entry is immutable. The signed head for the result must have a valid
 signature and belong to the client's accepted append-only history. The prefix root must also be the
 latest log leaf under that head, preventing acceptance of an older committed directory state.
@@ -80,7 +80,7 @@ against a verified signed tree head.}
 \label{fig:design-verify}
 \end{figure}
 
-The standalone DUET crate provides the proof and signed-head verification functions. The Signal
+The \texttt{duet} crate provides the proof and signed-head verification functions. The Signal
 Desktop client applies the complete verification chain to directory responses.
 \Cref{sec:design-detail-sth} examines signed-head freshness and binding in greater detail.
 
@@ -102,7 +102,7 @@ Extract and Expand steps~\cite[Sections~2.2--2.3]{rfc5869}:
   \mathit{PRK} &= \HKDFex(\text{salt} = \text{\texttt{"duet-dual-index"}},\ \sharedS)\\
   \ell_{\mathsf{self}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"lookup"}} \concat \mathit{id}_{\mathsf{self}} \concat \mathit{id}_{\mathsf{peer}},\ 32\big)\\
   \ell_{\mathsf{peer}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"lookup"}} \concat \mathit{id}_{\mathsf{peer}} \concat \mathit{id}_{\mathsf{self}},\ 32\big)\\
-  \ell_{\mathsf{warn}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"warning"}} \concat \min(\mathit{id}_{\A}, \mathit{id}_{\B}) \concat \max(\mathit{id}_{\A}, \mathit{id}_{\B}),\ 32\big).
+  \ell_{\mathsf{warn}} &= \HKDFexp\!\big(\mathit{PRK},\ \text{\texttt{"warning"}} \concat \min(\mathit{id}_{\mathsf{self}}, \mathit{id}_{\mathsf{peer}}) \concat \max(\mathit{id}_{\mathsf{self}}, \mathit{id}_{\mathsf{peer}}),\ 32\big).
 \end{aligned}
 \end{equation}
 In \cref{eq:design-labels}, $\mathit{PRK}$ is the extracted pseudorandom key. The fixed-width
@@ -137,7 +137,7 @@ slot to two different keys, even if the conversation secret is known.
 in the broader G1 key-substitution requirement.
 
 \paragraph{Pre-Use Unpredictability.} Before a conversation label is used, the operator does not
-know the high-entropy secret $\sharedS$. Under the HKDF assumption, the outputs are therefore
+know the high-entropy secret $\sharedS$. Under the HKDF assumption, the outputs are
 pseudorandom from the operator's perspective. Therefore, the operator cannot derive or recognize the
 warning label except with negligible probability and cannot identify its slot in advance to
 pre-position a value or selectively censor it. A read or write reveals the label to the operator and
@@ -163,7 +163,7 @@ monitors read the shared slot.
 The warning payload carries a MAC under a key derived from the shared secret and the canonically
 ordered identities
 ($\HKDFexp(\mathit{PRK}, \text{\texttt{"warn-mac"}} \concat
-\min(\mathit{id}_{\A},\mathit{id}_{\B}) \concat \max(\mathit{id}_{\A},\mathit{id}_{\B}), 32)$).
+\min(\mathit{id}_{\mathsf{self}},\mathit{id}_{\mathsf{peer}}) \concat \max(\mathit{id}_{\mathsf{self}},\mathit{id}_{\mathsf{peer}}), 32)$).
 While their endpoints remain uncompromised, only Alice and Bob can derive this key. A valid MAC
 shows that a holder of the shared key produced the warning but does not identify which party wrote
 it. Any value at the warning slot causes an alert, so a value without a valid MAC is reported as
@@ -242,7 +242,7 @@ It is not part of $\pcons(m,n)$ and does not alter its size bound.
 represent the synthetic evaluation baseline, which verifies one consistency proof for each missed
 epoch at $O(W\log n)$. The lower arc represents one RFC~9162 consistency proof between the trusted
 head at $m$ and the current head at $n$~\cite[Section~2.1.4]{rfc9162}. Its size is logarithmic in
-the log size.}
+the endpoint log sizes.}
 \label{fig:design-windowed}
 \end{figure}
 
@@ -338,7 +338,7 @@ cited precedents and technical basis.
 \FloatBarrier
 \begin{table}[htbp]
 \centering
-\caption{Principal design decisions.}
+\caption{Main design decisions.}
 \label{tab:design-decisions}
 \setlength{\extrarowheight}{2pt}
 \small
