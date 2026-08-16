@@ -30,9 +30,8 @@ trust on first use, endpoint security, and independent head comparison for split
 \section{Limitations}\label{sec:disc-limitations}
 
 DUET's monitoring guarantee begins only after a client pins an initial directory binding and
-therefore cannot establish whether that binding was authentic. A proof-verified peer-slot absence remains pending
-before becoming a fail-closed \texttt{NotPosted} timeout. Since the absence may instead mean that
-the peer has not run the client, timely detection assumes active peer participation. Monitoring
+therefore cannot establish whether that binding was authentic. Timely detection also assumes active
+peer participation as an absent peer slot may mean that the peer has not run the client. Monitoring
 applies only to retained conversations. Deleting a conversation stops its monitoring, while
 archiving it preserves monitoring. The prototype retains the signed-head checkpoint, peer-key pins,
 and per-label monitor state only while the application process is running. An application restart
@@ -53,7 +52,7 @@ proof~\cite[Sections~1, 3.4, and 7.6]{rfc9381}, but the public interface permits
 known identifiers. Moreover, a valid warning MAC shows only that a holder of the conversation
 secret created the payload. It neither identifies the writer nor establishes that the report is
 true. Write-rate limits, signed-head freshness checks, gossip for detecting omitted proofs, and
-warning attribution remain unimplemented.
+warning attribution also remain unimplemented.
 
 The key directory server is an in-memory, single-machine prototype that
 clones the directory tree at each epoch commit. The Signal Desktop integration uses a deterministic
