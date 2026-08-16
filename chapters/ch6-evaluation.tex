@@ -122,7 +122,7 @@ timings. They exclude the Signal Desktop client, HTTP transport, background poll
 and warning publication. Thus, they do not represent end-to-end detection latency.
 
 M17 evaluates clean-workflow outcomes without measuring their latency. All seven specified clean
-workflows produce their expected clean verdicts, and none produces a warning as shown in
+workflows produce their expected clean verdicts, and none produces a warning, as shown in
 \cref{tab:bench-m17}. The corresponding adversarial outcomes are evaluated in
 \cref{sec:eval-security}.
 
@@ -165,6 +165,13 @@ include server-side proof generation. The \SI{0.4}{\micro\second} difference is 
 variation. Thus, the measurements do not establish that either mode is faster, and equivalence was
 not tested.
 
+The directory-write count comparison in M13 assumes one continuous-mode write per modelled hourly
+epoch and one session-mode write every $R=720$ epochs, where $R$ is the assumed interval between
+new session-mode conversation secrets. Across $E\in\{24,168,720,4320\}$ modelled epochs, the
+resulting ratio ranges from 24 to
+720. These counts follow from the assumed intervals and do not represent measured Signal traffic or
+a fixed deployment value. Appendix~\ref{sec:bench-modes} gives the complete write-count table.
+
 The M15 ratchet-depth experiment evolves independent simulated continuous-mode chains through
 $K\in\{1,10,100,720\}$ epochs and then measures verification of the final epoch. A session-mode raw
 lookup is timed on the same resulting directory, controlling for directory and log depth. Across
@@ -173,13 +180,6 @@ the tested values of $K$, the continuous-mode medians range from
 \SI{27.0}{\micro\second} to \SI{27.5}{\micro\second}. These results show that final-state
 verification remains stable across the tested ratchet depths. Note that the experiment does not
 measure the cost of replaying the preceding epochs.
-
-The directory-write count comparison in M13 assumes one continuous-mode write per modelled hourly
-epoch and one session-mode write every $R=720$ epochs, where $R$ is the assumed interval between
-new session-mode conversation secrets. Across $E\in\{24,168,720,4320\}$ modelled epochs, the
-resulting ratio ranges from 24 to
-720. These counts follow from the assumed intervals and do not represent measured Signal traffic or
-a fixed deployment value. Appendix~\ref{sec:bench-modes} gives the complete write-count table.
 
 % ============================================================================
 \section{Comparison with Existing Systems}\label{sec:eval-compare}

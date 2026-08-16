@@ -60,10 +60,10 @@ only 14\% of pair--application trials succeeded, and only two of twelve pairs co
 in any tested application~\cite[Section~5]{vaziripour2017}. Instructions improved
 success~\cite[Section~6.1]{vaziripour2017}, but even instructed users took an average of 3.2 minutes to
 find the ceremony and another 7.8 minutes to complete
-it~\cite{vaziripour2017}. MoDUSA authenticates evolving protocol state but retains a
+it~\cite{vaziripour2017}. The supporting measurements are reported in
+\cref{sec:ext-usability}. MoDUSA authenticates evolving protocol state but retains a
 user-initiated comparison, while ACKA replaces that comparison with an assumed secure
-log~\cite{dowling2021meta,dowling2023acka}. The supporting measurements are reported in
-\cref{sec:ext-usability}.
+log~\cite{dowling2021meta,dowling2023acka}.
 
 These limitations lead to three requirements for DUET. It must detect coordinated substitution of
 session-establishment keys, avoid reliance on a rarely completed verification ceremony, and communicate
@@ -310,7 +310,7 @@ Detection therefore requires comparing signed heads observed by different partie
 separate channels. Together, the three system-level requirements motivate the dual-index warning, windowed
 consistency, and auditor mechanisms in \cref{ch:design}.
 
-Finally, ACKA provides the framework for authenticating evolving session state. DUET should
+In addition, ACKA also provides the framework for authenticating evolving session state. DUET should
 instantiate ACKA's generic $\Log$ interface with the verifiable directory and retain its per-epoch
 CEA construction for successive CKA
 updates~\cite{dowling2023acka}.
