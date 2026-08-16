@@ -12,7 +12,7 @@ run the system.
 
 The directory server exposes a public API used by clients and auditors. Requests and
 responses are JSON, and byte strings are hex-encoded. The verified-lookup endpoints return the
-value together with the prefix proof, the log-inclusion proof, and the signed tree head, so
+value along with the prefix proof, the log-inclusion proof, and the signed tree head, so
 that the client can run the full verification chain (\cref{ssec:design-verify}).
 \Cref{tab:apiref-public} lists these public endpoints.
 
@@ -354,7 +354,7 @@ exist at one tree size.}
 % ============================================================================
 \section{Implementation and Engineering Details}\label{sec:apiref-engineering}
 
-This section provides the module, server, integration, and engineering detail summarized in
+This section provides the module, server, integration, and engineering details summarized in
 \cref{ch:impl}.
 
 \subsection{Directory State, Cryptography, and Server}\label{ssec:apiref-eng-core}
@@ -363,10 +363,10 @@ The directory's state lives entirely in memory, in the cooperating structures th
 authenticated-data-structure stack of the design (\cref{ssec:design-structures}). The base
 \texttt{hashing} module fixes the RFC~6962 leaf and node domain tags shared by both structures.
 The \texttt{merkle\_log} module maintains the append-only log as a vector of hashes and implements
-the RFC~9162 inclusion and consistency verifiers, each proof costing time logarithmic in the
-number of entries. The \texttt{prefix\_tree} module implements the directory itself as a
+the RFC~9162 inclusion and consistency verifiers. Verifying either proof runs in logarithmic time
+with respect to the number of entries. The \texttt{prefix\_tree} module implements the directory itself as a
 path-compressed sparse Merkle tree, held as a pointer-based structure so that only the nodes
-actually populated are materialized. Each compressed leaf lazily memoizes the top of its
+actually populated are materialized. Each compressed leaf lazily memoizes a short top segment of its
 empty-sibling hash chain, so that serving a proof whose copath meets a compressed leaf does not
 recompute the up-to-256-level chain on every lookup. A single \texttt{Arc<Mutex<KTServer>{}>} protects the server state, so reads and writes are serialized.
 The prototype does not shard or replicate this state.
@@ -378,7 +378,7 @@ from the shared secret by HKDF-SHA256 (RFC~5869), exactly as specified in
 \cref{ssec:design-labels}, and the \texttt{cea} module implements ACKA's example CEA
 construction~\cite[Section~5.1]{dowling2023acka}. The crates
 \texttt{sha2}, \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard
-primitives, and the ECVRF of RFC~9381 is the one primitive implemented directly, checked against the published
+primitives, and the ECVRF of RFC~9381 is the only primitive implemented directly, checked against the published
 suite-\texttt{0x03} test vectors.
 
 The HTTP server, built on the
@@ -388,7 +388,7 @@ testing interface used only by the scripted attacker and the demonstration runne
 replays declared epoch transitions against a temporary copy of its accepted directory state. The server enforces the write-once policy in its raw-label
 update path, so a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
 \texttt{/update-raw} endpoint answers \texttt{409 Conflict}), while the privileged interface exposes
-an explicit unchecked overwrite so the demonstration scripts can play a malicious operator. Every commit
+an explicit unchecked overwrite so the demonstration scripts can act as a malicious operator. Every commit
 freezes a \emph{declared update set} that the server publishes at an \texttt{/epoch-delta} endpoint,
 which the auditor consumes (\cref{fig:impl-transition-audit}) by replaying each epoch's declared set
 against that temporary copy and accepting only if the replayed root equals the committed root. Its head-comparison step keeps a fork distinct from an unverified consistency proof. Two validly
@@ -403,9 +403,9 @@ Independently of any auditor, the \texttt{monitor} module retains a writer-side 
 (the inclusion proof and signed tree head from the epoch in which a warning commits) as an available
 capability, so that a later removal yields a bundle verifying against the server's own signed heads.
 The client's live detection (\cref{alg:detect}) does not depend on it.
-Authenticated ownership of raw-label writes is not implemented, so without account-layer authorisation a
-malicious client could occupy an unclaimed peer slot before its legitimate owner writes to it. The one
-core cost that is not sublinear is the epoch commit, which snapshots the tree by a deep clone.
+Authenticated ownership of raw-label writes is not implemented. Thus, without account-layer
+authorisation, a malicious client could occupy an unclaimed peer slot before its legitimate owner
+writes to it. The epoch commit snapshots the complete tree by a deep clone.
 
 \subsection{Signal Desktop Integration Wiring}\label{ssec:apiref-eng-wiring}
 
@@ -414,7 +414,7 @@ service-ID string to its canonical 16 raw UUID bytes before registration, verifi
 or CEA processing. Phone-number identifiers (PNIs) are excluded before these operations and
 therefore produce no lookup verdict, user-interface event, or monitoring state.
 
-The integration uses key-upload and peer-key-retrieval hooks together with a background monitor.
+The integration uses key-upload and peer-key-retrieval hooks along with a background monitor.
 Peer identity material is recorded during key retrieval and through a periodic identity-record
 sweep. That sweep tracks the still-active direct conversations, dropping those that have gone
 inactive (their last-active marker cleared, as when a conversation is deleted) while continuing to
@@ -422,8 +422,9 @@ monitor archived ones, which keep that marker set. No live session-establishment
 exposes the X3DH shared secret. The
 peer-key-retrieval hook runs the full verification chain
 (\cref{ssec:design-verify}) on a peer's key at the peer-key-retrieval integration point and reports the verdict without
-blocking session establishment. The monitor keys its per-conversation state by the derived label
-rather than by any transient handle, so a verdict is bound to the slot it was computed for. Verdicts
+blocking session establishment. The monitor keys its warning-publication guards and peer-absence
+state by the corresponding derived labels, rather than by transient handles. Peer-key pins are keyed
+by peer identity. Verdicts
 appear in the user interface through a conversation-header badge and a
 banner, driven by DOM events. The specific hook functions and event names are
 listed in \cref{tab:apiref-hooks,tab:apiref-events}.
@@ -437,25 +438,27 @@ corresponding checks independently in \texttt{monitorConversation} (\cref{alg:de
 
 \subsection{Electron, Determinism, and Fail-Closed Behaviour}\label{ssec:apiref-eng-robust}
 
-Three Electron obstacles arose. First, the bundler splits a chunk at every dynamic import, so every
+Two Electron obstacles arose. First, the bundler splits a chunk at every dynamic import, so every
 dynamic import for the key-transparency code was removed and the whole layer now lives in one bundle,
 with the networked path made opt-in and its failure caught separately. Second, with context isolation
-enabled, property assignments to \texttt{window} in the preload world are not visible to the renderer,
-so objects injected through the console had no effect, whereas DOM custom events on \texttt{window}
-pass from the preload context to the renderer. Finally, the application exposes both a typed event bus and DOM custom events.
-Dispatching verdicts as DOM custom events resolved the delivery mismatch. Several robustness issues appeared only end to end: a
-server that generated a fresh signing key on each launch invalidated cached public keys, fixed by
-deriving the server's keys deterministically from a seed. A panic on a freshly emptied log poisoned the
-shared mutex, resolved by bootstrapping a genesis epoch at initialization. An administrative reset
-that rebuilds the server from its seed makes the demonstration repeatable.
+enabled, property assignments to \texttt{window} in the preload world are not visible to the
+renderer. DOM custom events on \texttt{window} pass from the preload context to the renderer, so
+dispatching verdicts through these events resolved the delivery mismatch.
+
+End-to-end testing exposed two implementation failures. A server initially generated a fresh
+signing key on each launch, which invalidated cached public keys. Deriving the server's keys
+deterministically from a seed resolved this problem. An empty log also caused a panic that poisoned
+the shared mutex. Bootstrapping a genesis epoch at initialization prevented this poisoning. An
+administrative reset that rebuilds the server from its seed makes the demonstration repeatable.
 
 On the client, the trusted computing
 base is the verifier implementation, its cryptographic dependencies, and the directly implemented
-ECVRF (\cref{ssec:impl-core-crypto}), together with the operator's two public keys, the STH signing
-key and the VRF key. Because the prototype obtains these keys from the service during initialization,
+ECVRF (\cref{ssec:impl-core-crypto}), along with the operator's two public keys, the STH signing
+key and the VRF key. Since the prototype obtains these keys from the service during initialization,
 their initial authenticity remains a trust assumption, and independent authenticated provisioning is a
-production requirement. Subject to that assumption, the server, network, and log are not trusted, and
-each lookup response is verified before its value is used. The verifier is fail-closed for integrity checks: any cryptographic or
+production requirement. Subject to the stated assumption, the server, network, and log are not
+trusted, and clients verify each lookup response through the applicable checks before using its
+value. The verifier is fail-closed for integrity checks: any cryptographic or
 proof-validation failure yields a reject verdict rather than falling through to acceptance. The present
 key-fetch hook reports explicit mismatches and proof failures as a red warning but does not abort bundle
 processing, so complete error-to-UI routing and session-blocking enforcement remain prototype
