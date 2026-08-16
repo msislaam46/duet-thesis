@@ -47,7 +47,7 @@ in-place rotation only on a mutable leaf, and \textbf{rejects any rotation of an
 outright} (as well as any rotation that misdeclares the leaf's kind). An adversary that has
 compromised the pre-shared state and tries to overwrite a committed CEA fingerprint $F_t$ with one
 over its injected key must route the write through the privileged interface and declare it as a
-rotation. Because the target leaf is immutable the transition audit rejects that rotation, so the
+rotation. Since the target leaf is immutable, the transition audit rejects that rotation, so the
 epoch fails the auditor's validation and raises an alarm. Entry immutability is thus enforced
 \emph{as an auditor acceptance condition}: an immutable-leaf rotation is detected and rejected, not merely surfaced. The owner-side self-checks remain as defence
 in depth for the dual-index labels: a replaced lookup slot fails the owner's self-check and a

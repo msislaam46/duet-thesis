@@ -499,7 +499,7 @@ the directory operation succeeds. A mismatch shows that the committed fingerprin
 the receiver's chained state and received ratchet public key $T_t$. The verifier reports this as
 \textsc{Fork} without attributing the divergence to a particular input.
 
-Because the receiver does not repeat the lookup after accepting the epoch, the transition audit detects
+Since the receiver does not repeat the lookup after accepting the epoch, the transition audit detects
 a later operator-side overwrite of the immutable fingerprint. The label uses the canonical $\min/\max$ identity order, so both
 parties address the same slot in an epoch. The fingerprint remains directional (sender-then-receiver)
 and is computed over the current, pre-update state.
