@@ -110,7 +110,7 @@ Module & Test and property \\
 \texttt{dual\_index} & \texttt{label\_derivation\_properties}: directional and warning-label symmetry, separation across pairs and secrets, and determinism \\
 \texttt{dual\_index} & \idt{warning\_mac\_roundtrip\_and\_shared\_key\_verification}: both parties derive the same MAC key and verify an authenticated warning payload \\
 \texttt{dual\_index} & \idt{warning\_mac\_rejects\_injected\_or\_tampered\_payload}: an injected payload, a flipped tag, another pair's key, and an undersized payload are all rejected \\
-\texttt{dual\_index} & \texttt{derive\_rejects\_non\_16\_byte\_identity}: derivation refuses non-16-byte account identifiers \\
+\texttt{dual\_index} & \texttt{derive\_rejects\_non\_16\_byte\_identity}: derivation rejects an identity input that is not 16 bytes \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -124,8 +124,8 @@ Module & Test and property \\
 \toprule
 Test & Property \\
 \midrule
-\idt{verify\_search\_result\_covers\_present\_absent\_and\_wrong\_user} & the VRF, prefix and log verification chain accepts present and absent labels in empty, one-user, and 50-user directories. It rejects the same response for a different account identifier \\
-\idt{server\_vrf\_proof\_binds\_the\_queried\_user} & the returned VRF proof reproduces the label used by the server and fails for another account identifier \\
+\idt{verify\_search\_result\_covers\_present\_absent\_and\_wrong\_user} & the VRF, prefix and log verification chain accepts present and absent labels in empty directories and directories containing one or 50 users. It rejects the same response when verification uses a different identifier \\
+\idt{server\_vrf\_proof\_binds\_the\_queried\_user} & the returned VRF proof reproduces the label used by the server and fails when verification uses a different identifier \\
 \idt{raw\_verification\_is\_label\_bound} & a genuine proof for a different real leaf passes the bare verifier but is rejected by the label-bound one (\texttt{LabelMismatch}) \\
 \idt{against\_verifier\_rejects\_stale\_snapshot} & a genuine inclusion proof for an older leaf under the current signed root is refused as \texttt{StaleSnapshot} \\
 \idt{snapshot\_is\_current\_pins\_the\_last\_leaf} & the currency predicate accepts only leaf $\mathit{tree\_size}-1$ at exactly the signed size \\
