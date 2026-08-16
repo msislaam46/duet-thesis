@@ -9,8 +9,7 @@ covers their architecture, integration, testing, and engineering challenges.
 % ============================================================================
 \section{Architecture and Language Choices}\label{sec:impl-strategy}
 
-The \texttt{duet} Rust crate contains the directory server and cryptographic core, along with the
-auditor process and benchmark harness. An initial Python version prototyped the core constructions
+An initial Python version prototyped the core constructions
 but was too slow for the required large-directory benchmarks. The measured implementation was
 therefore rebuilt in Rust to use established cryptographic libraries for timing-sensitive operations
 and support future integration with libsignal~\cite{libsignal}. Keeping the crate separate from
@@ -280,7 +279,7 @@ Appendix~\ref{sec:tests-evidence} describes the complete evidence structure and 
 \FloatBarrier
 \section{Engineering Challenges}\label{sec:impl-challenges}
 
-Three areas required substantial implementation changes. First, the client component's initial
+Three areas required significant implementation changes. First, the client component's initial
 ECVRF implementation produced different outputs from the \texttt{duet} crate as their
 encode-to-curve steps differed. Both implementations were aligned with the
 ECVRF-EDWARDS25519-SHA512-TAI suite and checked against the RFC test
@@ -295,10 +294,10 @@ race condition arose when an epoch was committed between reading a signed head a
 consistency proof. The client and auditor now request each proof using the size of the validated
 signed head so that a later commit cannot change the proof's upper bound.
 
-Third, Electron integration produced two delivery problems. First, dynamic imports split the
+Third, Electron integration produced two delivery problems. Dynamic imports split the
 key-transparency code across bundles, so the complete key-transparency layer was kept in one bundle.
-Second, context isolation prevents properties assigned in the preload context from being read by
-the renderer. Therefore, verdicts are dispatched as DOM custom events on \texttt{window}, which
-pass from the preload context to the renderer.
+Context isolation also prevents properties assigned in the preload context from being read by the
+renderer. Therefore, verdicts are dispatched as DOM custom events on \texttt{window}, which pass
+from the preload context to the renderer.
 Appendix~\ref{sec:apiref-engineering} provides further details on bundling, deterministic keys,
 reset behaviour, and fail-closed handling.
