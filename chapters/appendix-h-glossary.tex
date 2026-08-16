@@ -19,7 +19,7 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
   (\cref{def:epoch-delta,alg:auditor}).
 \item[Auditor copy] The auditor's independently reconstructed copy of the committed directory,
   rebuilt by replaying each epoch's declared update set from epoch~0. The transition audit checks
-  each committed root against it rather than trusting server-supplied membership proofs
+  each committed root against it instead of trusting server-supplied membership proofs
   (\cref{alg:auditor}).
 \item[Candidate copy] A temporary clone of the accepted directory state onto which one epoch range is
   replayed. It is committed back only if the whole head passes every check, so a

@@ -1,38 +1,50 @@
 \chapter{Test Catalogue}\label{app:tests}
 
-This appendix summarizes the complete test corpus supporting the conformance claims in
+This appendix summarizes the complete set of tests supporting the conformance claims in
 \cref{sec:impl-tests}. The \texttt{duet} crate contains \num{86} tests: \num{61} unit and invariant
 tests across nine modules, the \num{8}-case adversarial integration suite, \num{13} tests in the
 \texttt{kt\_auditor} binary, and \num{4} clean-workflow regression tests in
-\texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}), all run under
+\texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}). All crate tests run using
 \texttt{cargo test}. The \texttt{signal-desktop-kt} client verifier harness contains \num{93} Jest
 tests in thirteen suites, along with \num{13} embedded electron-mocha tests in six Signal Desktop
 suites. The embedded tests pass realistic account identifiers through the client integration. Fixed
 vectors also require the crate and client component to produce byte-identical outputs.
 
-The totals count executed tests. Some catalogue rows group related tests, while parameterized tests
-such as the RFC~9381 vectors, decoder mutations, and shared-source parity files iterate over several
-cases internally.
+The totals report all tests executed by the runners. Some catalogue rows group related tests.
+Parameterized tests, including the RFC~9381 vectors, decoder mutations, and shared-source parity
+files, check several internal cases but count as one executed test.
 
-The \num{13} \texttt{kt\_auditor} tests comprise the wrong-leaf replay rejection test, the
+The \num{13} \texttt{kt\_auditor} tests consist of the wrong-leaf replay rejection test, the
 \texttt{classify\_head} verdict table, the \texttt{commit\_decision} transaction table, two
 configuration-mismatch tests (primary and comparison head), the exact status-line mapping, five
 remaining poll-outcome tests, the partial-fetch retry, and the check-ordering test. The five
 poll-outcome tests cover availability failures, withheld or invalid consistency proofs on the
 primary chain and on the comparison head, an inadmissible vantage, and a malformed head. The
 check-ordering test also pins the consistent, transition-failed, and rollback outcomes. These tests
-are summarized by category here rather than listed individually.
+are summarized by category here instead of being listed individually.
 
 \Cref{tab:impl-t5a} lists representative correctness tests and the requirement each protects, and
 \cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
 verdicts. The unit, crate--client agreement, and client-component tests are catalogued in the tables
 that follow. \Cref{fig:impl-testing} summarizes the five evidence classes.
 
-The complete per-test listing is held in the test sources. Running \texttt{cargo test} prints every
-crate test name, \texttt{npm test} prints every Jest test, and \texttt{npm run test:wire} runs the
-opt-in wire-parity suite against a running directory server. The sources are
-\texttt{crate/src/*.rs}, \texttt{crate/tests/}, \texttt{crate/src/bin/kt\_auditor.rs},
-\texttt{signal-desktop-kt/\_\_tests\_\_/}, and \texttt{signal-desktop/ts/test-node/kt/}.
+The complete per-test listing is held in the test sources.
+
+\paragraph{Running the tests.}
+\begin{itemize}
+  \item From \texttt{crate/}, \texttt{cargo test} runs the Rust tests and prints every test name.
+  \item From \texttt{signal-desktop-kt/}, \texttt{npm test} runs the Jest suites.
+  \item With a directory server running, \texttt{npm run test:wire} runs the opt-in wire-parity
+  suite from \texttt{signal-desktop-kt/}.
+  \item From \texttt{signal-desktop/}, \texttt{pnpm run test-node} runs the embedded
+  electron-mocha tests, including the six key-transparency suites.
+\end{itemize}
+
+The sources are \texttt{crate/\allowbreak src/\allowbreak *.rs},
+\texttt{crate/\allowbreak tests/},
+\texttt{crate/\allowbreak src/\allowbreak bin/\allowbreak kt\_auditor.rs},
+\texttt{signal-desktop-kt/\allowbreak \_\_tests\_\_/}, and
+\texttt{signal-desktop/\allowbreak ts/\allowbreak test-node/\allowbreak kt/}.
 
 \begin{figure}[ht]
 \centering
@@ -201,9 +213,9 @@ and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
 phone-number identifier (PNI) event-silence added with the canonical-identity fix.
 \Cref{tab:tests-jest-wire} lists the suites and the properties each establishes.
 Beyond this harness, \num{13} embedded electron-mocha tests run in six suites under Signal
-Desktop's own test runner (\cref{tab:tests-embedded}). They drive realistic ACI strings through the
-same integration point the live preload callers use, so a regression at that integration point fails an
-embedded test rather than passing silently.
+Desktop's own test runner (\cref{tab:tests-embedded}). They pass realistic ACI strings through the
+integration point used by the live preload callers. Therefore, a regression at that point fails an
+embedded test instead of passing silently.
 
 \begin{table}[H]
 \centering
@@ -221,7 +233,7 @@ Suite & Tests & Properties established \\
 \texttt{cea} & 6 & continuous-mode agreement and the verdict trichotomy. The cross-implementation vectors are checked, fork alerts are routed to the warning path, and fork injection is scoped to the conversation \\
 \texttt{decoder\_validation} & 4 & every malformed search field and key-endpoint payload is rejected as \texttt{MalformedResponse}, with well-formed controls \\
 \texttt{kt\_log} & 4 & peer-id shortening, log-line format, and the verbose and demo gates \\
-\texttt{canonical\_service\_id} & 2 & the 36-byte UTF-8 and PNI-prefixed forms throw rather than truncating. Canonical labels satisfy symmetry \\
+\texttt{canonical\_service\_id} & 2 & the 36-byte UTF-8 and PNI-prefixed forms are rejected without truncation. Canonical labels satisfy symmetry \\
 \texttt{secret\_store} & 2 & the shared secret is order-independent and pair-dependent. The store prunes a forgotten peer \\
 \texttt{wire\_parity} & 1 & against the live Rust server: inclusion, proven non-inclusion, STH signature and tamper rejection, the VRF path, and windowed consistency \\
 \texttt{tree\_parity} & 1 & the twenty shared implementation files are byte-identical across the two trees \\

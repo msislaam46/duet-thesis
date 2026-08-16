@@ -77,7 +77,7 @@ The persistence check gives the warning's \emph{writer} evidence of deletion but
 epoch validation. With these safeguards in place, the server's only remaining suppression strategy is
 refusal. It can withhold the lookup, the epoch, or the auditor's disclosure, whether for all clients
 or selectively for the one revealed warning label. Either way the refusal is observable, since a
-client treats anything other than a proof-verified response as a failed check rather than a clean
+client treats anything other than a proof-verified response as a failed check instead of a clean
 absence. A refusal therefore never masquerades as a verified absence. The prototype reports an
 unreachable or withheld response as an unavailable check (amber), while a malformed, invalid, or
 mismatching response rejects as a failed check (red). Neither verdict attributes a specific cause. The \hyperref[sc:threat-a2]{A2}
@@ -203,7 +203,7 @@ operator's position in the trust model: the operator learns the association betw
 identity label. This limitation also appears in CONIKS~\cite[Section~3.4]{melara2015coniks} and the IETF KeyTrans
 protocol, where the service operator evaluates the VRF used to derive each prefix-tree search
 key~\cite[Section~11.7]{ietf-keytrans-protocol}. The other three concern availability: write flooding,
-published-epoch staleness, and omitted proofs. These deployment tasks are discussed in
+published-epoch staleness, and withheld proofs. These deployment tasks are discussed in
 \cref{ch:discussion}.
 
 The \hyperref[sc:threat-a2]{A2 warning-censorship scenario} is distinct from those availability
