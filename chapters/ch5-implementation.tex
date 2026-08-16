@@ -124,11 +124,11 @@ Appendix~\ref{sec:apiref-engineering}.
 \label{ssec:impl-bench}
 
 The HTTP server uses \texttt{axum} and \texttt{tokio} and holds the directory behind a single
-\texttt{Arc<Mutex<KTServer>>}. This serializes access within the single-machine prototype. The public
+\texttt{Arc<Mutex<KTServer>{}>}. This serializes access within the single-machine prototype. The public
 interface provides registration, lookup, raw-label updates, consistency proofs, epoch deltas, and
-epoch commits. The adversarial harness uses a separate privileged testing interface to overwrite or
+epoch commits. The demonstration harness uses a separate privileged testing interface to overwrite or
 delete entries and reset the server. A public write to an occupied dual-index, warning, or CEA label
-returns \texttt{409 Conflict}. For the A4 split-view scenario, the adversarial harness uses the
+returns \texttt{409 Conflict}. For the A4 split-view scenario, the demonstration harness uses the
 privileged interface to stage a second signed-head view. The auditor runs as a separate process and
 compares that view with the primary head to detect equivocation.
 
@@ -297,7 +297,8 @@ signed head so that a later commit cannot change the proof's upper bound.
 
 Third, Electron integration produced two delivery problems. First, dynamic imports split the
 key-transparency code across bundles, so the complete key-transparency layer was kept in one bundle.
-Second, context isolation prevents properties assigned in the preload context from being read by the
-renderer. Therefore, verdicts are dispatched through both the typed event bus and DOM custom events.
+Second, context isolation prevents properties assigned in the preload context from being read by
+the renderer. Therefore, verdicts are dispatched as DOM custom events on \texttt{window}, which
+pass from the preload context to the renderer.
 Appendix~\ref{sec:apiref-engineering} provides further details on bundling, deterministic keys,
 reset behaviour, and fail-closed handling.

@@ -163,8 +163,8 @@ in-window substitution. The warning channel itself does not depend on windowing.
 
 \paragraph{Directory structure.} DUET retains a path-compressed sparse binary Merkle prefix tree
 because the warning channel requires direct inclusion and non-inclusion proofs, including proof that
-a warning slot is empty. An $n$-ary trie would reduce the number of levels but require up to $k-1$
-sibling hashes at each $k$-ary node and a wider proof encoding. Path compression collapses
+a warning slot is empty. An $n$-ary trie would reduce the number of levels but require up to $n-1$
+sibling hashes at each $n$-ary node and a wider proof encoding. Path compression collapses
 single-child chains, leaving sibling hashes only at populated branching points. Therefore, binary
 branching matches the implemented proof format while retaining direct non-inclusion proofs.
 

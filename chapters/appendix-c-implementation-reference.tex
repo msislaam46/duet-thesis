@@ -47,8 +47,8 @@ GET  & \texttt{/health} & liveness probe \\
 \FloatBarrier
 \section{Privileged Testing Interface}\label{sec:apiref-admin}
 
-A separate administrative API, bound to an internal-only port, is used exclusively by the
-adversarial scenario suite to stage attacks. It is not part of the protocol. In the
+A separate administrative API, bound to an internal-only port, is used by the scripted attacker and
+the demonstration runner to stage attacks. It is not part of the protocol. In the
 prototype these endpoints are unauthenticated. They are test-only and would be omitted or
 disabled in production. \Cref{tab:apiref-admin} lists them.
 
@@ -368,7 +368,7 @@ number of entries. The \texttt{prefix\_tree} module implements the directory its
 path-compressed sparse Merkle tree, held as a pointer-based structure so that only the nodes
 actually populated are materialized. Each compressed leaf lazily memoizes the top of its
 empty-sibling hash chain, so that serving a proof whose copath meets a compressed leaf does not
-recompute the up-to-256-level chain on every lookup. A single \texttt{Arc<Mutex<KTServer>>} protects the server state, so reads and writes are serialized.
+recompute the up-to-256-level chain on every lookup. A single \texttt{Arc<Mutex<KTServer>{}>} protects the server state, so reads and writes are serialized.
 The prototype does not shard or replicate this state.
 
 The \texttt{vrf} module implements the
@@ -384,11 +384,11 @@ suite-\texttt{0x03} test vectors.
 The HTTP server, built on the
 \texttt{axum} framework over the asynchronous \texttt{tokio} runtime, wraps the \texttt{KTServer}
 and serves the lookup, monitoring, and consistency operations as JSON, alongside a privileged
-testing interface used only by the adversarial scenario suite and the scripted attacker. An auditor binary, implemented as a small \texttt{ureq} HTTP client, verifies signed-head growth and
+testing interface used only by the scripted attacker and the demonstration runner. An auditor binary, implemented as a small \texttt{ureq} HTTP client, verifies signed-head growth and
 replays declared epoch transitions against a temporary copy of its accepted directory state. The server enforces the write-once policy in its raw-label
 update path, so a write to an already-occupied dual-index, CEA, or warning label is rejected (the public
 \texttt{/update-raw} endpoint answers \texttt{409 Conflict}), while the privileged interface exposes
-an explicit unchecked overwrite so the adversarial suite can play a malicious operator. Every commit
+an explicit unchecked overwrite so the demonstration scripts can play a malicious operator. Every commit
 freezes a \emph{declared update set} that the server publishes at an \texttt{/epoch-delta} endpoint,
 which the auditor consumes (\cref{fig:impl-transition-audit}) by replaying each epoch's declared set
 against that temporary copy and accepting only if the replayed root equals the committed root. Its head-comparison step keeps a fork distinct from an unverified consistency proof. Two validly
@@ -443,7 +443,7 @@ with the networked path made opt-in and its failure caught separately. Second, w
 enabled, property assignments to \texttt{window} in the preload world are not visible to the renderer,
 so objects injected through the console had no effect, whereas DOM custom events on \texttt{window}
 pass from the preload context to the renderer. Finally, the application exposes both a typed event bus and DOM custom events.
-Dispatching verdicts through both interfaces resolved the delivery mismatch. Several robustness issues appeared only end to end: a
+Dispatching verdicts as DOM custom events resolved the delivery mismatch. Several robustness issues appeared only end to end: a
 server that generated a fresh signing key on each launch invalidated cached public keys, fixed by
 deriving the server's keys deterministically from a seed. A panic on a freshly emptied log poisoned the
 shared mutex, resolved by bootstrapping a genesis epoch at initialization. An administrative reset
