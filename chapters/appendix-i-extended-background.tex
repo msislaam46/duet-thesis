@@ -116,28 +116,28 @@ labels $rk$, $ck$, and $mk$ denote root, chain, and message keys, respectively.}
 
 A continuous key agreement (CKA) is a multi-stage key-exchange protocol in which participants
 continually exchange public key-shares and output a new symmetric key after each protocol
-message~\cite[p.~9]{dowling2023acka}. Signal's Double Ratchet is one of the ratcheting protocols
-captured by this abstraction~\cite[pp.~4--5]{dowling2023acka}.
+message~\cite{dowling2023acka}. Signal's Double Ratchet is one of the ratcheting protocols
+captured by this abstraction~\cite{dowling2023acka}.
 
 ACKA combines a CKA with Continuous Entity Authentication (CEA) and a secure log. For each update,
 CEA derives a label from the previous shared state and a fingerprint over the current public
 keying material. The sender appends the label and fingerprint to the log, while the receiver queries
-the expected label before accepting the update~\cite[pp.~7--8 and 20--21]{dowling2023acka}. The
+the expected label before accepting the update~\cite{dowling2023acka}. The
 log must be append-only and immutable, support label queries, and prove consistency between two
 views. ACKA leaves its implementation generic and notes that it could use a blockchain or another
-distributed-ledger protocol~\cite[pp.~10--11]{dowling2023acka}.
+distributed-ledger protocol~\cite{dowling2023acka}.
 
 ACKA considers an active man-in-the-middle after compromise of the shared state and long-term
-authentication secrets~\cite[pp.~4--6]{dowling2023acka}. Its security experiment also allows the
+authentication secrets~\cite{dowling2023acka}. Its security experiment also allows the
 adversary to control the sender's randomness and inject forged update
-messages~\cite[pp.~19--20]{dowling2023acka}.
+messages~\cite{dowling2023acka}.
 
 Three differences clarify how DUET extends this framework. First, ACKA uses its secure log as an
 additional channel that an active adversary cannot fully
-control~\cite[pp.~2 and 7]{dowling2023acka}. In its composed construction, the receiver detects a
+control~\cite{dowling2023acka}. In its composed construction, the receiver detects a
 forged update. A sender can also detect an attack when its expected label is already occupied, after
 which the paper suggests appropriate, likely out-of-band
-action~\cite[pp.~8 and 21]{dowling2023acka}. The paper does not define a conversation-specific
+action~\cite{dowling2023acka}. The paper does not define a conversation-specific
 in-band mechanism through which a detecting party publishes a warning that the peer's monitor can
 retrieve. DUET adds this shared warning channel. Second, ACKA authenticates successive CKA updates
 in sequence and defines no windowed catch-up procedure. Third, although its log interface verifies
@@ -151,7 +151,7 @@ directory views. DUET's peer-warning, catch-up, and auditor mechanisms are speci
 Dowling and Hale observe that Signal's user-controlled comparison authenticates the state at session
 initiation but not the current protocol state because the compared keys are not used in CKA
 evolution. The same limitation applies to trust on first use, where the initial keys are assumed to
-be valid but later protocol state is not re-authenticated~\cite[p.~4]{dowling2023acka}. Their
+be valid but later protocol state is not re-authenticated~\cite{dowling2023acka}. Their
 earlier MoDUSA construction instead derives per-epoch authentication keys and fingerprints over the
 ratchet history. It detects an active man-in-the-middle attack during a session and can be run
 multiple times during the lifetime of that session~\cite[Sections~1 and 4]{dowling2021meta}.
@@ -161,7 +161,7 @@ state without providing automatic re-authentication.
 Dowling and Hale illustrate this limitation using a three-year communication period and a compromise
 after the first year. In their active-attacker example, the CKA exposes two years of data, whereas
 each scheduled TLS session exposes one hour of session data. The comparison assumes that the attack
-remains undetected~\cite[p.~3]{dowling2023acka}.
+remains undetected~\cite{dowling2023acka}.
 
 Manual comparison also introduces a usability cost. In the first phase of one study, pairs were
 asked to authenticate each other and ensure that no other party could read their messages, but were
@@ -175,10 +175,10 @@ it~\cite[Section~6.3]{vaziripour2017}.
 
 The responses also showed limited understanding of the threat model. Among the 32 responses that did
 not mention key verification, 28 (88\%) relied instead on features of the other person, such as
-voice, appearance, or shared knowledge~\cite[p.~39]{vaziripour2017}. A man-in-the-middle attacker
+voice, appearance, or shared knowledge~\cite{vaziripour2017}. A man-in-the-middle attacker
 was not explicitly identified as a possible attack vector. The authors suggest that a system such
 as CONIKS could automate key discovery without relying on one trusted party while preventing a key
-server from presenting inconsistent views without detection~\cite[p.~40]{vaziripour2017}.
+server from presenting inconsistent views without detection~\cite{vaziripour2017}.
 
 % ============================================================================
 \section{Merkle Commitments and Transparency Proofs}\label{sec:ext-merkle}
@@ -297,7 +297,7 @@ clients compare the provider's STR with one observed by an auditor to detect
 equivocation~\cite[Section~4.1.4]{melara2015coniks}.
 
 Three limitations of CONIKS are directly relevant to DUET. A returning client must perform a series
-of checks covering the missed epochs~\cite[pp.~389--390]{melara2015coniks}. Direct exchange of observed
+of checks covering the missed epochs~\cite{melara2015coniks}. Direct exchange of observed
 STRs between clients remains future work~\cite[Section~4.1.4, footnote~5]{melara2015coniks}.
 Finally, CONIKS can expose an attack but cannot stop a provider that accepts the resulting public
 evidence~\cite[Section~2.1]{melara2015coniks}.
@@ -345,10 +345,10 @@ full account reset, not the substitution of an individual key.
 \paragraph{OPTIKS.}
 OPTIKS simplifies the two-tree structure used by SEEMless and Parakeet. The \emph{all tree} stores
 every key version, while the \emph{old tree} stores versions that are no longer
-current~\cite[p.~4356]{optiks2024}. OPTIKS removes the old tree and instead proves freshness in the
+current~\cite{optiks2024}. OPTIKS removes the old tree and instead proves freshness in the
 remaining tree through membership of the current version and non-membership of the next version.
 Since the two trees have approximately the same size, this reduces storage and update costs by
-approximately half~\cite[p.~4356]{optiks2024}. After checking a key once in the current time period,
+approximately half~\cite{optiks2024}. After checking a key once in the current time period,
 the client needs only one non-membership proof if that key remains
 unchanged~\cite[Section~5]{optiks2024}. However, the client must complete the required history
 checks before data from an old time period is deleted~\cite[Section~5]{optiks2024}. OPTIKS does not
@@ -361,9 +361,9 @@ transitions over a Jellyfish Merkle tree. The resulting epoch proofs are publish
 data-availability layer, allowing light clients to verify the whole directory state instead of
 monitoring only their own entries~\cite[Sections~1 and~4]{pusch2025prism}. PRISM identifies the
 wider reliance of existing systems on external checks performed by users, gossiping clients,
-blockchains, auditors, or witness committees~\cite[p.~6]{pusch2025prism}. The authors state that the
+blockchains, auditors, or witness committees~\cite{pusch2025prism}. The authors state that the
 paper provides an overview and does not attempt a complete
-specification~\cite[p.~1]{pusch2025prism}. Its construction relies on Celestia for ordered and
+specification~\cite{pusch2025prism}. Its construction relies on Celestia for ordered and
 globally available data and uses a designated sequencer/prover to batch operations and generate
 epoch proofs~\cite[Sections~3.2 and~4]{pusch2025prism}.
 
@@ -383,10 +383,10 @@ privacy~\cite[Section~VIII]{hu2021merkle2}.
 \paragraph{WhatsApp Key Transparency (AKD).}
 WhatsApp deploys an Auditable Key Directory at production scale, with signed directory roots and
 retained audit material for independent consistency
-checking~\cite[pp.~4, 7, 8, 11, 12]{whatsapp2023whitepaper}. The WhatsApp whitepaper states that
+checking~\cite{whatsapp2023whitepaper}. The WhatsApp whitepaper states that
 key-history requests were not yet enabled in its
-clients~\cite[p.~5]{whatsapp2023whitepaper}. A failed automatic check directs the user to verify the
-session manually with the contact~\cite[pp.~10, 13]{whatsapp2023whitepaper}. The cited workflow
+clients~\cite{whatsapp2023whitepaper}. A failed automatic check directs the user to verify the
+session manually with the contact~\cite{whatsapp2023whitepaper}. The cited workflow
 does not define the automatic in-band peer warning targeted by this thesis.
 
 \paragraph{Signal Key Transparency.}
@@ -399,11 +399,11 @@ sibling, this gives the fixed \num{8192}-byte copath used as a baseline in
 
 \paragraph{Proton Mail Key Transparency.}
 ProtonKT applies a verifiable directory to email and reuses Certificate Transparency to support
-consistency checking~\cite[pp.~35 and~39]{goebel2023proton}. It supports owner and external auditing~\cite[pp.~44 and~47]{goebel2023proton}.
+consistency checking~\cite{goebel2023proton}. It supports owner and external auditing~\cite{goebel2023proton}.
 Its warning model notifies the key owner but not the communication
-partner~\cite[pp.~2 and~44--45]{goebel2023proton}. The Proton thesis also describes the investigation
+partner~\cite{goebel2023proton}. The Proton thesis also describes the investigation
 of KT warnings as an open user-experience
-challenge~\cite[pp.~81--82]{goebel2023proton}.
+challenge~\cite{goebel2023proton}.
 
 \paragraph{Google KT and Apple CKV.}
 Google Key Transparency is an archived CONIKS-inspired implementation
