@@ -431,20 +431,23 @@ service-ID string to its canonical 16 raw UUID bytes before registration, verifi
 or CEA processing. Phone-number identifiers (PNIs) are excluded before these operations and
 therefore produce no lookup verdict, user-interface event, or monitoring state.
 
-The integration uses key-upload and peer-key-retrieval hooks along with a background monitor.
-Peer identity material is recorded during key retrieval and through a periodic identity-record
-sweep. That sweep tracks the still-active direct conversations, dropping those that have gone
-inactive (their last-active marker cleared, as when a conversation is deleted) while continuing to
-monitor archived ones, which keep that marker set. No live session-establishment hook
-exposes the X3DH shared secret. The
-peer-key-retrieval hook runs the full verification chain
-(\cref{ssec:design-verify}) on a peer's key at the peer-key-retrieval integration point and reports the verdict without
-blocking session establishment. The monitor keys its warning-publication guards and peer-absence
-state by the corresponding derived labels instead of transient handles. Peer-key pins are keyed
-by peer identity. Verdicts
-appear in the user interface through a conversation-header badge and a
-banner, driven by DOM events. The specific hook functions and event names are
-listed in \cref{tab:apiref-hooks,tab:apiref-events}.
+The integration uses key-upload and peer-key-retrieval hooks along with a background monitor. Peer
+identity material is recorded during key retrieval and through a periodic check of direct
+conversations and their identity records. This check keeps active direct conversations under
+monitoring, stops monitoring a conversation when its last-active marker is cleared, as when it is
+deleted, and continues monitoring archived conversations because they retain that marker. No live
+session-establishment hook exposes the X3DH shared secret. The peer-key-retrieval hook runs the full
+verification chain (\cref{ssec:design-verify}) on a peer's key at the peer-key-retrieval integration
+point and reports the verdict without blocking session establishment.
+
+The monitor stores each warning-publication guard under the warning label and each peer-absence
+record under the peer lookup label. When the conversation secret changes, these labels also change,
+so the records associated with the previous labels are not reused. By contrast, pinned peer
+identity keys are stored under the corresponding canonical ACIs, so each pin remains associated
+with the same peer even when the derived labels change. Verdicts are passed to the user interface
+through DOM events and appear in a conversation-header badge and banner. The specific hook
+functions and event names are listed in
+\cref{tab:apiref-hooks,tab:apiref-events}.
 \Cref{fig:impl-verify} illustrates the matching branch of the networked \texttt{RemoteKTClient.detectMitm}
 path: the client reads its own dual-index lookup slot $\ell_{\mathsf{self}}$, verifies the prefix
 proof, log-inclusion proof, and signed tree head, and only on a verified owner slot issues a second
