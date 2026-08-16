@@ -48,7 +48,7 @@ encoding fields. Let $\pi^{\mathsf{lookup}}$ denote the serialized lookup-proof 
 In \cref{eq:eval-proofsize}, $N$ is the number of populated directory labels, $E$ is the number of
 committed epochs in the append-only log, $h$ is the number of non-empty siblings on the queried
 label's path, and $h_{\mathrm{log}}$ is the log-inclusion path length. The \num{177}-byte constant
-comprises the \num{80}-byte ECVRF proof, a \num{32}-byte label, a \num{32}-byte value, a one-byte
+consists of the \num{80}-byte ECVRF proof, a \num{32}-byte label, a \num{32}-byte value, a one-byte
 leaf-kind commitment, and a \num{32}-byte sibling bitmap. Raw-label warning responses omit the
 \num{80}-byte VRF proof because the client supplies the derived label directly. The median lookup
 proof is \num{817} bytes at $N=10^{6}$ and \num{945} bytes at $N=10^{7}$. This \num{128}-byte

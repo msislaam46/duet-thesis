@@ -49,7 +49,7 @@ GET  & \texttt{/health} & liveness probe \\
 
 A separate administrative API, bound to an internal-only port, is used by the scripted attacker and
 the demonstration runner to stage attacks. It is not part of the protocol. In the
-prototype these endpoints are unauthenticated. They are test-only and would be omitted or
+prototype these endpoints are unauthenticated. They are test-only and would be removed or
 disabled in production. \Cref{tab:apiref-admin} lists them.
 
 \begin{table}[ht]
@@ -179,22 +179,36 @@ The implementation is organized as follows:
   package, while integration wiring and test scaffolding differ between the two.
 \end{itemize}
 
-The system is driven by single commands: \texttt{cargo test} and \texttt{cargo bench}, run from
-\texttt{crate/}, for the Rust tests and benchmarks, and the runner script
-\texttt{demo/run.ps1} for the multi-actor demonstration. That script's native subcommands are
-\texttt{server}, \texttt{auditor}, \texttt{build}, \texttt{client1}, \texttt{client2},
-\texttt{attack}, \texttt{fork}, \texttt{delete}, \texttt{simulate-delete}, \texttt{stop-fork},
-\texttt{stop}, and \texttt{reset}. \texttt{client1} and \texttt{client2} launch the two Signal
-instances the two-client demonstration needs, and \texttt{reset} (equivalently \texttt{demo/reset.ps1})
-returns the directory server to a fresh genesis tree between runs. Both Signal instances must then be
-fully quit and relaunched so they re-register their keys and clear any staged in-memory one-shot CEA
-injection, so each demonstration starts clean. A self-contained walk-through of the client
-verifier, independent of Signal Desktop, runs from the \texttt{signal-desktop-kt/} package with
-\texttt{npm run demo}. A containerized path (\texttt{up}, \texttt{logs}, \texttt{down}) runs the directory server,
-auditor, and log viewer under Docker. The attacker runs only when invoked. The networked-in-app mode
-is enabled by setting a server URL in the client's environment
-before launch.
+\paragraph{Running the implementation.}
+From \texttt{crate/}, \texttt{cargo test} runs the Rust tests and \texttt{cargo bench} runs the
+benchmarks. From \texttt{signal-desktop-kt/}, \texttt{npm run demo} runs a self-contained
+walk-through of the client verifier without Signal Desktop.
 
+\paragraph{Running the demonstration.}
+The demonstration commands are run from \texttt{demo/}. Attack commands run only when explicitly
+invoked.
+\begin{itemize}
+  \item \texttt{.\textbackslash run.ps1 build} builds the bundled Signal Desktop fork.
+  \item \texttt{.\textbackslash run.ps1 server} and
+  \texttt{.\textbackslash run.ps1 auditor} start the directory server and auditor.
+  \item \texttt{.\textbackslash run.ps1 client1} and
+  \texttt{.\textbackslash run.ps1 client2} launch the two Signal instances.
+  \item \texttt{.\textbackslash run.ps1 attack}, \texttt{.\textbackslash run.ps1 fork},
+  \texttt{.\textbackslash run.ps1 delete}, and \texttt{.\textbackslash run.ps1 simulate-delete}
+  stage the controlled attacks. \texttt{.\textbackslash run.ps1 stop-fork} clears the staged
+  comparison view.
+  \item \texttt{.\textbackslash run.ps1 stop} stops the demonstration processes.
+  \item \texttt{.\textbackslash run.ps1 reset} returns the directory to a fresh genesis tree.
+  \item The Docker commands \texttt{.\textbackslash run.ps1 up},
+  \texttt{.\textbackslash run.ps1 logs}, and \texttt{.\textbackslash run.ps1 down} run the
+  directory server, auditor, and log viewer in containers.
+\end{itemize}
+
+After a reset, both Signal instances must be fully quit and relaunched. This causes them to
+re-register their keys and clears any staged in-memory CEA injection. Networked in-app operation
+also requires the directory server URL to be set in the client environment before launch.
+
+\paragraph{Demonstration output.}
 The client and auditor use a structured \texttt{[KT]} prefix to identify the component that
 produced each log line. When applicable, client logs also identify the affected peer or label. Additional proof
 details and attack targets are shown when the verbose or demonstration options are enabled.
@@ -405,7 +419,7 @@ capability, so that a later removal yields a bundle verifying against the server
 The client's live detection (\cref{alg:detect}) does not depend on it.
 Authenticated ownership of raw-label writes is not implemented. Thus, without account-layer
 authorisation, a malicious client could occupy an unclaimed peer slot before its legitimate owner
-writes to it. The epoch commit snapshots the complete tree by a deep clone.
+writes to it.
 
 \subsection{Signal Desktop Integration Wiring}\label{ssec:apiref-eng-wiring}
 
@@ -423,7 +437,7 @@ exposes the X3DH shared secret. The
 peer-key-retrieval hook runs the full verification chain
 (\cref{ssec:design-verify}) on a peer's key at the peer-key-retrieval integration point and reports the verdict without
 blocking session establishment. The monitor keys its warning-publication guards and peer-absence
-state by the corresponding derived labels, rather than by transient handles. Peer-key pins are keyed
+state by the corresponding derived labels, instead of by transient handles. Peer-key pins are keyed
 by peer identity. Verdicts
 appear in the user interface through a conversation-header badge and a
 banner, driven by DOM events. The specific hook functions and event names are
@@ -459,7 +473,7 @@ their initial authenticity remains a trust assumption, and independent authentic
 production requirement. Subject to the stated assumption, the server, network, and log are not
 trusted, and clients verify each lookup response through the applicable checks before using its
 value. The verifier is fail-closed for integrity checks: any cryptographic or
-proof-validation failure yields a reject verdict rather than falling through to acceptance. The present
+proof-validation failure yields a reject verdict instead of falling through to acceptance. The present
 key-fetch hook reports explicit mismatches and proof failures as a red warning but does not abort bundle
 processing, so complete error-to-UI routing and session-blocking enforcement remain prototype
 limitations (\cref{ch:discussion}). Production request handlers must also recover from poisoned locks

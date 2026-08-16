@@ -56,7 +56,7 @@ pre-key, and $\mathrm{DH2}$ combines Bob's identity key with Alice's ephemeral
 key, so that both parties' long-term identities are bound into session
 establishment. $\mathrm{DH3}$ and $\mathrm{DH4}^{*}$ incorporate Bob's signed
 pre-key and one-time pre-key material, contributing forward secrecy, and the
-fourth term is omitted when no one-time pre-key is
+fourth term is not included when no one-time pre-key is
 available~\cite[Section~3.3]{x3dh}.
 
 The resulting $\sharedS$ depends on Alice's identity and ephemeral keys and on Bob's identity key,
@@ -65,9 +65,9 @@ withheld, an attacker who substitutes Bob's identity key and a signed pre-key va
 identity can derive the resulting shared secret and impersonate Bob. DUET is designed to detect this
 coordinated substitution. Substituting only the signed pre-key causes Alice's signature check to
 fail because she verifies $\spk{\B}$ under $\pkid{\B}$ and aborts on failure. Substituting only the
-one-time pre-key normally causes Alice and Bob to derive different secrets, so the session fails
-rather than enabling impersonation. Omitting the one-time pre-key weakens the initial
-forward-secrecy contribution but does not by itself enable impersonation~\cite[Sections~3.3, 3.4, and 4.7]{x3dh}. \Cref{fig:bg-x3dh} shows the protocol sequence from
+one-time pre-key normally causes Alice and Bob to derive different secrets, so session establishment
+fails and impersonation does not succeed. Not using the one-time pre-key weakens initial forward
+secrecy but does not enable impersonation~\cite[Sections~3.3, 3.4, and 4.7]{x3dh}. \Cref{fig:bg-x3dh} shows the protocol sequence from
 publication of Bob's pre-key bundle to Alice's initial message.
 
 \begin{figure}[H]
@@ -375,7 +375,7 @@ node~\cite[Section~IV]{hu2021merkle2}. This structure gives $O(\log^2 n)$ append
 owner downloads only $O(\log^2 n)$ data for monitoring throughout the system's
 lifetime~\cite[Table~I and Section~V]{hu2021merkle2}. The paper explains that VRF-derived indices
 can reduce identifier leakage~\cite[Section~VII-B]{hu2021merkle2}. However, VRF is not implemented
-as the evaluation concentrates on system performance rather than
+as the evaluation concentrates on system performance instead of
 privacy~\cite[Section~VIII]{hu2021merkle2}.
 
 \subsection{Production VKDs and R\&D Projects}

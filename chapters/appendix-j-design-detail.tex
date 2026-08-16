@@ -22,7 +22,7 @@ domain separation in a production design.
 The prefix tree maps each 256-bit label to a value. For a user-identity entry, the value is an
 identity public key, while the label is derived from the user identifier through the VRF. Labels
 belong to two types. The first is a global slot computed server-side as a VRF over the user
-identifier. The second comprises the client-derived raw slots, which include the dual-index lookup
+identifier. The second type consists of the client-derived raw slots, which include the dual-index lookup
 and warning slots and, in continuous mode, the per-epoch CEA slots. Each committed prefix-tree root
 is appended to the Merkle log as one leaf. Therefore, the log records every committed directory
 state, while a consistency proof verifies that the sequence of committed roots is append-only. At
@@ -97,7 +97,7 @@ Ephemeral key ($\ek{}$) & No &
 The ordering of operations within an epoch follows ACKA's composed construction~\cite[Figure~8]{dowling2023acka} in three aspects. First, the label $L_t$ is computed from the
 current pre-update CEA state, while the fingerprint $F_t$ binds that state to the public ratchet key
 $T_t$. Only after the fingerprint has been committed and verified is the secret epoch input $I_t$
-mixed into the CEA chain. Using the secret epoch input rather than the public ratchet key means that
+mixed into the CEA chain. Using the secret epoch input instead of the public ratchet key means that
 an honest, uncompromised $I_t$ contributes fresh secret material to the chain. Before it is mixed
 into the CEA state, the input is domain-separated as
 $\KDF(I_t,\text{\texttt{"CEA"}})$. In ACKA's mapping to Signal, $T_t$ corresponds to the public
@@ -169,7 +169,7 @@ single-child chains, leaving sibling hashes only at populated branching points. 
 branching matches the implemented proof format while retaining direct non-inclusion proofs.
 
 \paragraph{Global-label derivation.} Global slots use
-ECVRF-EDWARDS25519-SHA512-TAI rather than a bare hash for the directory-privacy reason described in
+ECVRF-EDWARDS25519-SHA512-TAI instead of a bare hash for the directory-privacy reason described in
 \cref{ssec:design-structures}. The selected suite is defined by
 RFC~9381~\cite[Section~5.5]{rfc9381} and matches Signal's key-transparency implementation~\cite{signal-kt-server}. This avoids introducing a second, incompatible VRF suite.
 

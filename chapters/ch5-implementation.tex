@@ -100,7 +100,7 @@ Module & Standards or design basis & Verification and test evidence \\
 
 The directory materializes only populated prefix paths and compresses each proof with a 256-bit
 bitmap. A compressed leaf terminates the fixed-depth tree walk early. Empty sibling hashes are
-omitted from the transmitted proof. The implementation memoizes a small window of each compressed
+not included in the transmitted proof. The implementation memoizes a small window of each compressed
 leaf's empty-sibling hash chain when it is first needed, avoiding repeated computation on later
 lookups. For a directory containing $N$ populated pseudorandom labels, a proof contains about
 $\lceil \lg N \rceil$ non-empty sibling hashes. Tree-update work is separate. Updating $k$ labels visits at most $d=256$
