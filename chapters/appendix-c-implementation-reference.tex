@@ -134,7 +134,7 @@ selected conversation. \Cref{fig:apiref-ui-components} shows the five rendered c
   \centering
   \includegraphics[height=0.75cm]{figures/ui-component-pending.png}
   \par\smallskip
-  \small (a) pending badge
+  \small (a) Pending badge
 \end{minipage}\hfill
 \begin{minipage}[t]{0.30\textwidth}
   \centering
@@ -342,8 +342,9 @@ as shown in the lower panel of \cref{fig:impl-auditor}.}
 \caption[Auditor outcomes for A1a, A1b, and A4.]{Auditor outcomes for the controlled attacks. The
 upper capture belongs to the run in \cref{fig:demo-cmd}. The auditor verifies the declared history
 through epoch 6, including the mutable identity-entry rotation and the subsequent valid update. It
-then rejects the immutable-slot replacement at epoch 7 because replay does not reproduce the
-committed state. The lower capture shows the A4 equivocation in a separate reset run, where two validly signed roots
+then rejects the immutable-slot replacement at epoch 7. The change is declared as a rotation of a
+write-once leaf, so the transition audit rejects it before recomputing the root. All replay
+rejections produce the same \textsc{TransitionFailed} verdict. The lower capture shows the A4 equivocation in a separate reset run, where two validly signed roots
 exist at one tree size.}
 \label{fig:impl-auditor}
 \end{figure}
@@ -374,8 +375,8 @@ The \texttt{vrf} module implements the
 ECVRF-EDWARDS25519-SHA512-TAI construction of RFC~9381 (suite \texttt{0x03}). The \texttt{dual\_index} module
 derives the three labels $\ell_{\mathsf{self}}$, $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$
 from the shared secret by HKDF-SHA256 (RFC~5869), exactly as specified in
-\cref{ssec:design-labels}, and the \texttt{cea} module implements the continuous example construction
-of the ACKA framework~\cite{dowling2023acka}. The crates
+\cref{ssec:design-labels}, and the \texttt{cea} module implements ACKA's example CEA
+construction~\cite[Section~5.1]{dowling2023acka}. The crates
 \texttt{sha2}, \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard
 primitives, and the ECVRF of RFC~9381 is the one primitive implemented directly, checked against the published
 suite-\texttt{0x03} test vectors.

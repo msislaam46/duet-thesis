@@ -1,7 +1,7 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix summarizes the complete test corpus supporting the conformance claims in
-\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{142} tests: \num{102} unit and invariant
+\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{146} tests: \num{106} unit and invariant
 tests across nine modules, the \num{8}-case adversarial integration suite, \num{28} tests in the
 \texttt{kt\_auditor} binary, and \num{4} clean-workflow regression tests in
 \texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}), all run under
@@ -13,9 +13,10 @@ vectors also require the crate and client component to produce byte-identical ou
 The \num{28} \texttt{kt\_auditor} tests comprise the delta-replay test, six \texttt{classify\_head}
 rollback/fork cases, five \texttt{commit\_decision} transaction cases, two integration tests (a
 partial-fetch failure and the comparison-head skip-after-failure), two configuration-mismatch tests
-(primary and comparison head), and twelve \texttt{PollStatus} tests covering every poll verdict,
-including the missing, unparseable, and failing consistency-proof cases that return
-\textsc{ConsistencyUnverified}, and the exact status-line mapping.
+(primary and comparison head), and twelve \texttt{PollStatus} tests. The twelve tests cover the
+remaining head and replay outcomes, including missing, unparseable, and failing consistency proofs
+that return \textsc{ConsistencyUnverified}. They also verify the exact status-line mapping.
+\textsc{Fork} is covered by the \texttt{classify\_head} and \texttt{commit\_decision} tests.
 
 \Cref{tab:impl-t5a} lists representative correctness tests and the requirement each protects, and
 \cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
@@ -194,7 +195,7 @@ Test & Property checked \\
 
 \begin{table}[H]
 \centering
-\caption{\texttt{duet} crate tests: auditor, warning monitor, and continuous mode (\num{28} tests).}
+\caption{\texttt{duet} crate tests: auditor, warning monitor, and continuous mode (\num{35} tests, with representative rows shown).}
 \label{tab:tests-rust-system}
 \footnotesize
 \resizebox{\textwidth}{!}{%
@@ -232,6 +233,8 @@ conflicting signed heads as a fork \\
 \texttt{cea} & \texttt{cea\_register\_verify\_honest\_advances\_both\_chains} & sender and receiver advance only after the confirmed write and the successful verify, respectively \\
 \texttt{cea} & \texttt{cea\_verify\_does\_not\_advance\_on\_fork} & a fork verdict leaves the receiver's chain untouched \\
 \texttt{cea} & \texttt{cea\_verify\_does\_not\_advance\_when\_not\_posted} & a pending lookup leaves the chain untouched, so the check can be retried \\
+\texttt{cea} & \texttt{cea\_verify\_rejects\_an\_unexpected\_configuration} & a head carrying an unexpected configuration commitment is rejected, not read as a verdict \\
+\texttt{cea} & \texttt{cea\_verify\_rejects\_a\_foreign\_signing\_key} & a head not signed by the pinned key is rejected, so the server cannot validate its own answer \\
 \texttt{cea} & \texttt{cea\_register\_detects\_occupied\_label\_as\_impersonation} & the ACKA sender-side pre-post check: an occupied label raises an alert \\
 \texttt{cea} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte fingerprint agreement with the TypeScript implementation \\
 \bottomrule
@@ -272,7 +275,7 @@ embedded test rather than passing silently.
 \begin{table}[H]
 \centering
 \caption{Jest tests: live directory-server wire parity and the integration suite
-(\num{39} tests).}
+(\num{42} tests).}
 \label{tab:tests-jest-wire}
 \footnotesize
 \begin{tabular}{@{}lp{10.2cm}@{}}

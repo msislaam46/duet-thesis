@@ -38,8 +38,8 @@ in-place rotations whose disclosed old value must match the leaf being replaced)
 beyond the declared operations changed (the delta format cannot express a deletion), and accepts only
 when the recomputed root equals the committed root. The epoch root's inclusion in the append-only log
 binds the accepted transition to the signed history.
-Each leaf commits its \emph{kind}, \emph{mutable} (the global-VRF identity slots, which the server
-may rotate) or \emph{immutable} (the raw dual-index, CEA, and warning labels, which are write-once),
+Each leaf commits its $\mathit{kind}$, \textsc{mutable} (the global-VRF identity slots, which the server
+may rotate) or \textsc{immutable} (the raw dual-index, CEA, and warning labels, which are write-once),
 bound into the leaf hash as $\Hleaf(\mathit{kind} \concat \mathit{label} \concat \mathit{value})$,
 so the kind is authenticated by the very inclusion proof that authenticates the value and the server
 cannot relabel it. The auditor therefore \emph{distinguishes} the two families: it accepts a declared
@@ -66,8 +66,8 @@ inclusion proof and signed tree head of the epoch at which its warning committed
 check re-verifies the warning's inclusion on a later head. In the prototype this check is implemented
 and separately unit-tested as a persistence component. It is not wired into the live background monitor
 (\cref{alg:detect}). If the leaf later disappears,
-the writer holds an inclusion proof under $\STH_t$, a non-inclusion proof under
-$\STH_{t'}$, and a valid consistency proof from $t$ to $t'$: together these three proofs
+the writer holds an inclusion proof under $\STH_w$, a non-inclusion proof under
+a later $\STH_t$, and a valid consistency proof from $\STH_w$ to $\STH_t$: together these three proofs
 constitute publicly verifiable evidence, attributable to the server's signing key, that the server
 deleted a committed leaf, since all three verify against heads the server itself signed.
 \end{enumerate}
@@ -97,16 +97,18 @@ publishes the warning when the victim notices the wrong key under its own name. 
 that has trust-on-first-use-pinned the victim's key detects a substituted peer slot and publishes the
 warning on the victim's behalf, so an offline victim is still covered. For a server-side substitution
 (\hyperref[sc:threat-a1]{A1}), where the server makes the served bundle agree with the log, a peer comparing the freshly
-served bundle against the log sees no mismatch. Detection then comes either from the victim's own-key
-self-check or from a peer that has already trust-on-first-use-pinned the victim's key and compares the
-substituted log value against its pin. Only against a pre-first-contact substitution, where no peer
+served bundle against the log sees no mismatch. Detection can occur through the victim's own-key
+self-check or through a peer that has already trust-on-first-use-pinned the victim's key. For A1b,
+the peer's background monitor performs this comparison on every tick. For A1a, the comparison occurs
+when the peer next retrieves the victim's global identity key. Only against a pre-first-contact substitution, where no peer
 has yet pinned a key, is the victim's self-check the sole detector. The residual limitation is the
 trust-on-first-use caveat of \cref{sec:threat-fair}, since a substitution that predates first contact
 pins the incorrect key.
 
-The closest related design, KTACA, reaches client-side detection through \emph{anonymous}
-lookups~\cite{yadav2020poster,yadav2022fakekey}, a cost Parakeet explicitly objects
-to~\cite[p.~14]{malvai2023parakeet}. The derived, pre-use unpredictable labels used here obtain the
+The closest related design, KTACA, reaches client-side detection through anonymous
+lookups~\cite{yadav2020poster,yadav2022fakekey}. Parakeet argues that anonymous lookups conflict
+with its requirement that only authenticated and permitted users may
+query~\cite[p.~14]{malvai2023parakeet-eprint}. The derived, pre-use unpredictable labels used here obtain the
 same peer-facing detection without anonymity infrastructure.
 
 % ----------------------------------------------------------------------------
@@ -352,8 +354,8 @@ assumes an honest directory.}
 \subsection{Detection Timeline}\label{ssec:eval-timeline}
 
 \Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1). The attack
-occurs at epoch $E$. The victim's self-check flags it at $E{+}1$, the warning commits at $E{+}2$,
-and the peer's monitor reads it at $E{+}3$. These epochs follow the demonstration's
+occurs at epoch $t$. The victim's self-check flags it at $t{+}1$, the warning commits at $t{+}2$,
+and the peer's monitor reads it at $t{+}3$. These epochs follow the demonstration's
 one-action-per-epoch schedule. Monitoring itself requires no user action.
 
 \begin{figure}[ht]

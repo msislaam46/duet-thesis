@@ -86,15 +86,17 @@ and its relationship to previously trusted history. The structures are illustrat
 changes the root unless collision resistance is broken.}
 For an ordered list of entries $D=(d_0,\dots,d_{n-1})$, the Merkle Tree Hash $\MTH(D)$ is defined
 recursively as follows~\cite[Section~2.1]{rfc6962}:
-$\MTH(\varnothing)=\Hash(\text{``''})$,
-$\MTH((d_0))=\Hash(\texttt{0x00}\concat d_0)$, and, for $n>1$,
+For the empty list, $\MTH(\varnothing)=\Hash(\varepsilon)$, where $\varepsilon$ is the empty byte
+string. For a one-entry list, $\MTH((d_0))=\Hash(\texttt{0x00}\concat d_0)$. For $n>1$,
 \[
   \MTH(D)=\Hash\!\big(\texttt{0x01}\concat \MTH(D[0{:}k])
   \concat \MTH(D[k{:}n])\big),
 \]
 where $k$ is the largest power of two strictly less than $n$. The domain-separation prefixes
 \texttt{0x00} for a leaf and \texttt{0x01} for an internal node provide second-preimage resistance
-across the two node types. For the ordered leaf list $D_t$ committed at epoch $t$, the log root is
+across the two node types. We write $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and
+$\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$ for leaf and internal-node hashing,
+respectively. For the ordered leaf list $D_t$ committed at epoch $t$, the log root is
 $\logroot{t}=\MTH(D_t)$. DUET uses this construction for the append-only log in
 \cref{ssec:design-structures}.
 \end{definition}
@@ -177,7 +179,8 @@ $\pprefix.\mathit{label}$ to equal the label requested by the client. For a glob
 requires the label to equal the first 32 bytes of the verified VRF output. For
 \hyperref[sc:threat-a2]{A2 (Warning Censorship)}, a key mismatch along with proof-verified
 non-inclusion at the warning slot forms the compound signal defined in
-\cref{def:dualindex-check}. Non-inclusion alone is a verified empty result, not a warning. The proof
+\cref{def:g1-consistency}. \Cref{def:dualindex-check} gives the warning-slot check it uses.
+Non-inclusion alone is a verified empty result, not a warning. The proof
 is used in \cref{ssec:design-verify}.
 \end{definition}
 

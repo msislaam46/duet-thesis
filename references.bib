@@ -40,7 +40,7 @@
   title  = {key-transparency-server},
   year   = {2024},
   url    = {https://github.com/signalapp/key-transparency-server},
-  note   = {Signal server implementation of draft-ietf-keytrans-protocol with modifications; Go and gRPC},
+  note   = {Signal server implementation of draft-ietf-keytrans-protocol with modifications; Go and gRPC. Copath width verified at commit 811496b7398bdc4f35abd768f4005b0ee8d72c60: \texttt{tree/prefix/prefix.go}:26 sets \texttt{IndexLength = 32}, and \texttt{tree/prefix/verify.go}:14--23 uses \texttt{8 * IndexLength} proof elements of 32 bytes each},
 }
 @misc{libsignal,
   author = {{Signal Messenger}},
@@ -296,6 +296,14 @@
   booktitle = {NDSS},
   year      = {2023},
   doi       = {10.14722/ndss.2023.24545},
+}
+@misc{malvai2023parakeet-eprint,
+  author       = {Malvai, Harjasleen and Kokoris-Kogias, Lefteris and Sonnino, Alberto and Ghosh, Esha and {\"O}zt{\"u}rk, Ercan and Lewi, Kevin and Lawlor, Sean},
+  title        = {Parakeet: Practical Key Transparency for End-to-End Encrypted Messaging},
+  howpublished = {Cryptology ePrint Archive, Paper 2023/081},
+  year         = {2023},
+  url          = {https://eprint.iacr.org/2023/081},
+  note         = {Revised 15 March 2023. Cited for material added after the NDSS 2023 version},
 }
 @inproceedings{len2023elektra,
   author    = {Len, Julia and Chase, Melissa and Ghosh, Esha and Jost, Daniel and Kesavan, Balachandar and Marcedone, Antonio},
