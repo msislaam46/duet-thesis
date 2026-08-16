@@ -101,16 +101,16 @@ Module & Test and property \\
 \texttt{prefix\_tree} & \texttt{recompute\_root\_rejects\_present\_invalid\_kind}: the verifier refuses to reconstruct a root from a proof carrying an invalid kind byte \\
 \midrule
 \texttt{vrf} & \texttt{rfc9381\_b3\_vectors}: for every RFC~9381 Appendix~B.3 vector, encode-to-curve reproduces $H$ and the verifier reproduces $\beta$~\cite[Appendix~B.3]{rfc9381} \\
-\texttt{vrf} & \texttt{vrf\_output\_varies\_with\_key\_and\_input}: the output is deterministic for a given key and input, and changes when either one changes \\
+\texttt{vrf} & \texttt{vrf\_output\_varies\_with\_key\_and\_input}: repeated evaluation with the same key and input gives the same output. The tested changes to the input and key give different outputs \\
 \texttt{vrf} & \texttt{test\_prove\_then\_verify}: a freshly generated key's own proof verifies to the same hash \\
 \texttt{vrf} & \texttt{test\_verify\_rejects\_corrupted\_proof}: a single-bit flip at any of the 80 proof bytes fails or yields a different hash \\
 \texttt{vrf} & \texttt{test\_verify\_rejects\_wrong\_alpha}, \texttt{test\_verify\_rejects\_wrong\_key}: verification rejects a proof under the wrong input or public key \\
 \midrule
 \texttt{dual\_index} & \texttt{cross\_impl\_test\_vectors}, \texttt{warn\_mac\_cross\_impl\_vector}: fixed label and authenticated warning payload vectors reproduce byte-for-byte against the TypeScript reference \\
 \texttt{dual\_index} & \texttt{label\_derivation\_properties}: directional and warning-label symmetry, separation across pairs and secrets, and determinism \\
-\texttt{dual\_index} & \idt{warning\_mac\_roundtrip\_and\_shared\_key\_verification}: both parties derive the same MAC key and open an authenticated warning payload \\
+\texttt{dual\_index} & \idt{warning\_mac\_roundtrip\_and\_shared\_key\_verification}: both parties derive the same MAC key and verify an authenticated warning payload \\
 \texttt{dual\_index} & \idt{warning\_mac\_rejects\_injected\_or\_tampered\_payload}: an injected payload, a flipped tag, another pair's key, and an undersized payload are all rejected \\
-\texttt{dual\_index} & \texttt{derive\_rejects\_non\_16\_byte\_identity}: derivation refuses non-16-byte service identifiers \\
+\texttt{dual\_index} & \texttt{derive\_rejects\_non\_16\_byte\_identity}: derivation refuses non-16-byte account identifiers \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -124,8 +124,8 @@ Module & Test and property \\
 \toprule
 Test & Property \\
 \midrule
-\idt{verify\_search\_result\_covers\_present\_absent\_and\_wrong\_user} & the VRF, prefix and log chain verifies for present and absent labels on one-user, empty and 50-user directories, and fails under a different user id \\
-\idt{server\_vrf\_proof\_binds\_the\_queried\_user} & the returned VRF proof verifies to the label the server used and fails for another id \\
+\idt{verify\_search\_result\_covers\_present\_absent\_and\_wrong\_user} & the VRF, prefix and log verification chain accepts present and absent labels in empty, one-user, and 50-user directories. It rejects the same response for a different account identifier \\
+\idt{server\_vrf\_proof\_binds\_the\_queried\_user} & the returned VRF proof reproduces the label used by the server and fails for another account identifier \\
 \idt{raw\_verification\_is\_label\_bound} & a genuine proof for a different real leaf passes the bare verifier but is rejected by the label-bound one (\texttt{LabelMismatch}) \\
 \idt{against\_verifier\_rejects\_stale\_snapshot} & a genuine inclusion proof for an older leaf under the current signed root is refused as \texttt{StaleSnapshot} \\
 \idt{snapshot\_is\_current\_pins\_the\_last\_leaf} & the currency predicate accepts only leaf $\mathit{tree\_size}-1$ at exactly the signed size \\
@@ -156,22 +156,22 @@ Module & Test and property \\
 \texttt{auditor} & \texttt{honest\_server\_audits\_clean\_across\_epochs}: ten epochs of honest growth audit clean and are recorded as observed heads \\
 \texttt{auditor} & \texttt{transition\_audit\_passes\_for\_honest\_directory}: every honest delta, including a genesis epoch and mixed insert kinds, replays exactly \\
 \texttt{auditor} & \idt{transition\_audit\_catches\_undeclared\_root\_changes}: a deletion and an undeclared in-place modification both diverge the replayed root \\
-\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite}, \texttt{\ldots\_overwrite\_disguised\_as\_insert}: an overwrite of a write-once leaf is rejected however it is declared \\
+\texttt{auditor} & \idt{transition\_audit\_rejects\_immutable\_overwrite}, \idt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert}: an overwrite of a write-once leaf is rejected whether it is declared as a rotation or as an insert \\
 \texttt{auditor} & \idt{rejected\_transition\_does\_not\_poison\_the\_replica}: a rejected epoch leaves the replica byte-identical to its pre-epoch root \\
-\texttt{auditor} & \idt{audit\_rejects\_a\_primary\_head\_with\_an\_unexpected\_configuration}, \texttt{detect\_fork\_rejects\_a\_comparison\_head\_\ldots}: a configuration commitment that differs from its pinned value is refused \\
+\texttt{auditor} & \idt{audit\_rejects\_a\_primary\_head\_with\_an\_unexpected\_configuration}, \idt{detect\_fork\_rejects\_a\_comparison\_head\_with\_an\_unexpected\_configuration}: a configuration commitment that differs from its pinned value is refused \\
 \texttt{auditor} & \texttt{detect\_fork\_flags\_same\_epoch\_different\_root}: a second validly signed head at an observed epoch is flagged \textsc{Fork} with both heads as evidence \\
 \texttt{auditor} & \texttt{detect\_fork\_flags\_append\_only\_violations}: a smaller log at a later epoch, and a same-size different root, are forks from observed heads alone \\
 \texttt{auditor} & \texttt{detect\_fork\_accepts\_consistent\_head}, \texttt{detect\_fork\_rejects\_unsigned\_head}, \texttt{audit\_rejects\_inadmissible\_inputs}: consistent heads raise no alarm, while an unsigned head and inadmissible inputs are refused \\
 \midrule
-\texttt{monitor} & \idt{persistence\_check\_passes\_while\_warning\_persists}, \texttt{\ldots\_is\_indeterminate\_under\_a\_forged\_head}: the persistence check fails closed \\
+\texttt{monitor} & \idt{persistence\_check\_passes\_while\_warning\_persists}, \idt{persistence\_check\_is\_indeterminate\_under\_a\_forged\_head}: the persistence check fails closed \\
 \texttt{monitor} & \idt{persistence\_check\_produces\_verifiable\_deletion\_evidence}: deletion yields evidence verifying against the server's own signatures \\
 \texttt{monitor} & \idt{deletion\_evidence\_rejects\_stale\_non\_inclusion}: a forged deletion built from an old snapshot is refused by the currency pin \\
 \midrule
 \texttt{cea} & \texttt{honest\_parties\_agree\_each\_epoch}: sender and receiver agree on label and fingerprint over five epochs \\
 \texttt{cea} & \idt{cea\_register\_verify\_honest\_advances\_both\_chains}: the composed register/verify flow advances both chains exactly once \\
-\texttt{cea} & \texttt{cea\_verify\_does\_not\_advance\_on\_fork}, \texttt{\ldots\_when\_not\_posted}: a disputed or missing epoch never advances state \\
+\texttt{cea} & \idt{cea\_verify\_does\_not\_advance\_on\_fork}, \idt{cea\_verify\_does\_not\_advance\_when\_not\_posted}: a disputed or missing epoch never advances state \\
 \texttt{cea} & \idt{cea\_register\_detects\_occupied\_label\_as\_impersonation}: the sender's pre-post check refuses to overwrite \\
-\texttt{cea} & \idt{cea\_register\_rejects\_an\_unexpected\_configuration}, \texttt{cea\_verify\_rejects\_\ldots}, \texttt{cea\_verify\_rejects\_a\_foreign\_signing\_key}: pinned key and configuration enforced on both paths \\
+\texttt{cea} & \idt{cea\_register\_rejects\_an\_unexpected\_configuration}, \idt{cea\_verify\_rejects\_an\_unexpected\_configuration}, \idt{cea\_verify\_rejects\_a\_foreign\_signing\_key}: pinned key and configuration enforced on both paths \\
 \texttt{cea} & \idt{cea\_rejects\_an\_uncommitted\_server\_on\_both\_paths}: the head check precedes the search, so a missing head fails closed without panicking \\
 \texttt{cea} & \texttt{cross\_impl\_test\_vectors}: three consecutive epochs' labels and fingerprints match the TypeScript reference \\
 \bottomrule
@@ -195,7 +195,7 @@ the verifier against a real in-process \texttt{KTServer} (a genuine prefix tree,
 and Ed25519 signer). The remaining unit suites use test doubles by design: \texttt{background\_monitor}
 and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to-event routing,
 \texttt{decoder\_validation} drives the DTO decoders through a mocked transport to check
-malformed-response rejection, \texttt{kt\_log} checks the structured screenshot-readable log format,
+malformed-response rejection, \texttt{kt\_log} checks the structured log format used by the screenshots,
 and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
 \texttt{pni\_silence} suites cover the ACI canonicalization, display-string preservation, and
 phone-number identifier (PNI) event-silence added with the canonical-identity fix.
@@ -216,8 +216,8 @@ Suite & Tests & Properties established \\
 \midrule
 \texttt{remote\_kt\_client} & 26 & the verdict matrix over the full chain. The currency pin, invalid VRF evidence, kind commitment and label binding are all refused. The suite covers own-slot self-monitoring, peer-absence pending, the \texttt{NotPosted} timeout, and the re-key and removal branches. Write-once 409 handling completes with a verified read-back. It also covers the three censorship shapes, the publication guard advancing only on a confirmed write, and a fork verdict independent of publication \\
 \texttt{kt\_integration} & 17 & hashing, Merkle log and prefix-tree primitives in TypeScript. Write-once raw slots are checked against mutable VRF slots, along with the in-process end-to-end flow. The vectors cover dual-index labels, the warning MAC, and all three ECVRF RFC vectors \\
-\texttt{background\_monitor} & 18 & availability routing against integrity routing. Own-key health gates a green badge, and secret rotation re-registers and re-warns. An unreachable server is handled once per tick. The suite also checks the screenshot-readable log format \\
-\texttt{getKeysForServiceId\_status} & 10 & every verdict-to-status and status-to-event mapping. The hook fails open on unreachability and fails closed on a verification fault. No path fabricates a green badge \\
+\texttt{background\_monitor} & 18 & availability and integrity handling. A green badge requires a healthy owner key. A change in the conversation secret causes registration at the new lookup label and, if a warning exists, it publishes at the new warning label. An unreachable server is handled once per tick. The suite also checks the structured log format used by the screenshots \\
+\texttt{getKeysForServiceId\_status} & 10 & every verdict-to-status and status-to-event mapping. An unreachable result permits key retrieval to continue without emitting \texttt{kt:verified}. A verification fault stops key retrieval. No path produces a green badge without verification \\
 \texttt{cea} & 6 & continuous-mode agreement and the verdict trichotomy. The cross-implementation vectors are checked, fork alerts are routed to the warning path, and fork injection is scoped to the conversation \\
 \texttt{decoder\_validation} & 4 & every malformed search field and key-endpoint payload is rejected as \texttt{MalformedResponse}, with well-formed controls \\
 \texttt{kt\_log} & 4 & peer-id shortening, log-line format, and the verbose and demo gates \\
@@ -241,11 +241,11 @@ six suites).}
 \toprule
 Suite & Test and property \\
 \midrule
-\texttt{aci\_integration} & adapter-derived ids drive clean verify, dual-index substitution detection, and global-path mismatch \\
+\texttt{aci\_integration} & account identifiers derived by the adapter drive clean verification, dual-index substitution detection, and global-path mismatch \\
 \texttt{aci\_integration} & a tampered slot makes Alice publish a warning whose MAC Bob verifies \\
 \midrule
-\texttt{ktServiceId} & the peer matcher accepts every service-id encoding, never matches across peers, and is permissive when an id is unknown \\
-\texttt{ktServiceId} & strict mode returns false when either id is missing (fail closed for verified) \\
+\texttt{ktServiceId} & the peer matcher accepts every service-identifier encoding, never matches across peers, and remains permissive when a service identifier is unavailable \\
+\texttt{ktServiceId} & strict matching returns false when either service identifier is missing \\
 \midrule
 \texttt{ktStatusMachine} & the badge starts pending, turns green on a verified result and red on a warning, while an unreachable result leaves it unchanged \\
 \texttt{ktStatusMachine} & a matching verified turns it green under any encoding, while an unattributable one changes neither the status nor the message \\
