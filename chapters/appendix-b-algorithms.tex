@@ -160,7 +160,7 @@ non-inclusion proof establishes that the warning slot is empty.
 \clearpage
 \paragraph{The server (Algorithm~\ref{alg:server}).} The directory server composes the two structures into the
 key-transparency service: raw-label writes are write-once, \textsf{CommitEpoch} appends the prefix
-root to the log and signs the head (binding epoch, size, root, timestamp, and the policy
+root to the log and signs the head (binding epoch, size, root, timestamp, and the configuration
 commitment), and \textsf{Search} answers with the value plus the full proof chain a verifier needs.
 \textsf{SearchByUserId} adds the VRF step (ECVRF, RFC~9381~\cite{rfc9381}) that derives global labels through the server's ECVRF evaluation.
 \begin{algorithm}[H]
@@ -177,7 +177,7 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 \Fn{\normalfont\textsf{UpdateRaw}($\mathit{label},\mathit{value}$)}{
   \Req $\mathit{live}.\textsf{Lookup}(\mathit{label}).\mathit{value}=\bot$ \tcp*{write-once: occupied labels rejected (\cref{ssec:design-detection})}
   $\mathit{live}.\textsf{Insert}(\mathit{label},\mathit{value},\textsc{immutable})$ \tcp*{dual-index/CEA leaf $\Hleaf(\textsc{immutable}\concat\mathit{label}\concat\mathit{value})$}
-  record \textsf{Insert}$(\mathit{label},\mathit{value},\textsc{immutable})$ in the epoch's declared delta\;
+  record \textsf{Insert}$(\mathit{label},\textsc{immutable},\mathit{value})$ in the epoch's declared delta\;
 }
 \Fn{\normalfont\textsf{CommitEpoch}()}{
   $e\gets \mathit{epoch}$ \tcp*{capture the epoch being committed}
