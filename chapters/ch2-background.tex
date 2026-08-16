@@ -50,8 +50,8 @@ session-establishment keys, so authentication still depends on an authentic init
 
 To detect man-in-the-middle key substitution, Signal provides Safety Numbers for out-of-band
 comparison and an optional Automatic Key Verification (AKV). AKV checks the peer's identity-key
-binding against Signal's transparency service, but requires Signal to have the contact's phone
-number. When AKV is unavailable, including for chats started with a username, Signal recommends
+binding against Signal's key-transparency service, but requires Signal to have the contact's phone
+number~\cite{signal-akv,signal-kt-server}. When AKV is unavailable, including for chats started with a username, Signal recommends
 manual Safety Number comparison. Its documented workflow returns the result to the verifying
 client and does not describe a way to warn the peer~\cite{signal-akv}.
 
@@ -163,14 +163,14 @@ safeguard~\cite[p.~5]{pusch2025prism}. A warning about one substituted key there
 distinct from both mechanisms.
 
 CONIKS is the main baseline for this thesis because it combines private lookup indices, signed
-tree roots, and client self-monitoring~\cite[Sections~3.2--3.3 and
+tree roots, and client self-monitoring~\cite[Sections~3.2--3.4 and
 4.1.3]{melara2015coniks}. A client monitors its own binding every epoch and compares the provider's
 signed tree root with one observed by an auditor to detect
 equivocation~\cite[Sections~4.1.3--4.1.4]{melara2015coniks}. CONIKS relies on auditors for this
 comparison, while direct exchange between clients remains future
 work~\cite[Section~4.1.4, footnote~5]{melara2015coniks}. A returning client that misses several
 epochs must also perform a series of checks to confirm that its last verified inclusion proofs and
-signed tree roots remain consistent with the recent proofs~\cite[pp.~7--8]{melara2015coniks}. This
+signed tree roots remain consistent with the recent proofs~\cite[pp.~389--390]{melara2015coniks}. This
 missed-epoch procedure provides the baseline for DUET's windowed catch-up evaluation.
 
 Beyond academic designs, key transparency is already used in production communication services and
@@ -301,7 +301,7 @@ peer can retrieve after reconnecting.
 
 Second, a returning client that retains its last trusted head should verify the missed history
 efficiently. CONIKS catches up by performing a series of checks after missed
-epochs~\cite[pp.~7--8]{melara2015coniks}. Thus, DUET should use one consistency proof from that
+epochs~\cite[pp.~389--390]{melara2015coniks}. Thus, DUET should use one consistency proof from that
 trusted head to the current head to cover the complete missed window.
 
 Third, DUET should detect split-view equivocation. A locally verified proof shows that one response

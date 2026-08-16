@@ -3,10 +3,10 @@
 \begin{tikzpicture}[>=Stealth,font=\scriptsize]
   \draw[thick,black!40] (-0.3,0) -- (12.3,0);
   \foreach \x/\ep/\ev/\c in {%
-     0/{Epoch $E$}/{key substituted}/{red!70!black},%
-     4/{Epoch $E{+}1$}/{self-check $\to$ mismatch}/{orange!80!black},%
-     8/{Epoch $E{+}2$}/{warning committed}/{orange!80!black},%
-     12/{Epoch $E{+}3$}/{peer reads warning}/{green!50!black}}{%
+     0/{Epoch $t$}/{key substituted}/{red!70!black},%
+     4/{Epoch $t{+}1$}/{self-check $\to$ mismatch}/{orange!80!black},%
+     8/{Epoch $t{+}2$}/{warning committed}/{orange!80!black},%
+     12/{Epoch $t{+}3$}/{peer reads warning}/{green!50!black}}{%
      \filldraw[fill=white,draw=\c,thick] (\x,0) circle (5pt);
      \node[above=5pt,font=\scriptsize\bfseries,text=\c] at (\x,0) {\ep};
      \node[below=6pt,align=center] at (\x,0) {\ev};

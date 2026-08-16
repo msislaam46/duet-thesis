@@ -31,14 +31,14 @@ by Bob. Following the X3DH specification~\cite[Section~2.4]{x3dh}, this thesis d
 $\xIK{}$, signed pre-keys by $\xSPK{}$, one-time pre-keys by $\xOPK{}$, and ephemeral keys by
 $\xEK{}$. Thus, $\xIK{U}=\pkid{U}$, $\xSPK{U}=\spk{U}$, and
 $\xOPK{U}=\opk{U}{i}$. Each notation denotes a public key whose corresponding private key is held by
-its owner. Alice generates an ephemeral key $\xEK{A}$ and computes the Diffie--Hellman
+its owner. Alice generates an ephemeral key $\xEK{\A}$ and computes the Diffie--Hellman
 values in \cref{eq:bg-x3dh}.
 \begin{equation}\label{eq:bg-x3dh}
 \begin{aligned}
-\mathrm{DH1}    &= \DH{\xIK{A}}{\xSPK{B}}, \\
-\mathrm{DH2}    &= \DH{\xEK{A}}{\xIK{B}}, \\
-\mathrm{DH3}    &= \DH{\xEK{A}}{\xSPK{B}}, \\
-\mathrm{DH4}^{*} &= \DH{\xEK{A}}{\xOPK{B}}
+\mathrm{DH1}    &= \DH{\xIK{\A}}{\xSPK{\B}}, \\
+\mathrm{DH2}    &= \DH{\xEK{\A}}{\xIK{\B}}, \\
+\mathrm{DH3}    &= \DH{\xEK{\A}}{\xSPK{\B}}, \\
+\mathrm{DH4}^{*} &= \DH{\xEK{\A}}{\xOPK{\B}}
    \qquad\text{(if the bundle contains a one-time pre-key)}, \\
 \sharedS &= \KDF\!\left(\mathrm{DH1}\concat\mathrm{DH2}\concat\mathrm{DH3}
    \concat\mathrm{DH4}^{*}\right).
@@ -64,7 +64,7 @@ signed pre-key, and optional one-time pre-key. When Bob's genuine one-time pre-k
 withheld, an attacker who substitutes Bob's identity key and a signed pre-key valid under that
 identity can derive the resulting shared secret and impersonate Bob. DUET is designed to detect this
 coordinated substitution. Substituting only the signed pre-key causes Alice's signature check to
-fail because she verifies $\spk{B}$ under $\pkid{B}$ and aborts on failure. Substituting only the
+fail because she verifies $\spk{\B}$ under $\pkid{\B}$ and aborts on failure. Substituting only the
 one-time pre-key normally causes Alice and Bob to derive different secrets, so the session fails
 rather than enabling impersonation. Omitting the one-time pre-key weakens the initial
 forward-secrecy contribution but does not by itself enable impersonation~\cite[Sections~3.3, 3.4, and 4.7]{x3dh}. \Cref{fig:bg-x3dh} shows the protocol sequence from
@@ -189,7 +189,7 @@ find a distinct $D'\neq D$ such that $\Hash(D')=\Hash(D)$
 (\cref{def:hash}).
 
 RFC~9162 defines the Merkle Tree Hash over an ordered list of records
-$D=(d_0,\ldots,d_{N-1})$. Each record has a leaf hash
+$D=(d_0,\ldots,d_{n-1})$. Each record has a leaf hash
 $h_i=\Hleaf(d_i)=\Hash(\texttt{0x00}\concat d_i)$, while an internal node is
 $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. These prefixes separate leaf hashes from
 internal-node hashes and provide second-preimage resistance across the two node
@@ -199,8 +199,8 @@ $\MTH(D)$ is a single hash that commits to the ordered list.
 An inclusion proof for $d_i$ contains the additional tree nodes needed to reconstruct $\MTH(D)$
 from $h_i$. The verifier combines these nodes according to the leaf index and tree size, then
 accepts only if the reconstructed value equals the log root in the trusted signed tree
-head~\cite[Section~2.1.3]{rfc9162}. For a tree of $N$ records, the proof contains at most
-$\lceil\log_2 N\rceil$ hash values.
+head~\cite[Section~2.1.3]{rfc9162}. For a tree of $n$ records, the proof contains at most
+$\lceil\log_2 n\rceil$ hash values.
 
 A consistency proof between an earlier tree of size $m$ and a later tree of size $n$ contains the
 nodes needed to verify that the first $m$ records are identical in both trees. Therefore, it
@@ -297,7 +297,7 @@ clients compare the provider's STR with one observed by an auditor to detect
 equivocation~\cite[Section~4.1.4]{melara2015coniks}.
 
 Three limitations of CONIKS are directly relevant to DUET. A returning client must perform a series
-of checks covering the missed epochs~\cite[pp.~7--8]{melara2015coniks}. Direct exchange of observed
+of checks covering the missed epochs~\cite[pp.~389--390]{melara2015coniks}. Direct exchange of observed
 STRs between clients remains future work~\cite[Section~4.1.4, footnote~5]{melara2015coniks}.
 Finally, CONIKS can expose an attack but cannot stop a provider that accepts the resulting public
 evidence~\cite[Section~2.1]{melara2015coniks}.

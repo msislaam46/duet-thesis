@@ -23,7 +23,7 @@ experiment samples \num{1000} randomly selected lookups at each directory size, 
 commit uses \num{200} iterations.
 
 All DUET timings reported in this chapter were measured on the Windows x86\_64 machine described in
-Appendix~\ref{sec:bench-env} (12th Gen Intel Core i7-12700H, 31.7\,GB RAM). Under the worked
+Appendix~\ref{sec:bench-env} (12th Gen Intel Core i7-12700H, 31.7\,GiB RAM). Under the worked
 parameterization established in \cref{ssec:design-param}, epochs are hourly, so a window of $W=720$
 epochs spans 30 days. Proof-size values are exact for the fixed seeds used in the recorded runs.
 Timing values that are close to the timer resolution are treated as approximate. Cross-system timing
@@ -133,7 +133,7 @@ workflows produce their expected clean verdicts, and none produces a warning as 
 
 The M7 large-directory scale experiment records directory-build time and resident set size after
 build. Building the $N=10^{7}$ directory takes approximately 26 minutes, with a resident set size
-of \SI{21.3}{\giga\byte} after build. The single-process benchmark keeps the complete directory in
+of \SI{20.8}{\gibi\byte} after build. The single-process benchmark keeps the complete directory in
 memory. Therefore, its memory requirement is a major constraint for deployment at this scale.
 
 The M9 maintenance experiment measures key rotation and the epoch-commit path at
@@ -254,7 +254,7 @@ CONIKS already makes routine owner self-monitoring efficient by allowing a clien
 own binding with a logarithmic proof. Under its stated model, daily monitoring requires less than
 20\,kB~\cite[Section~5.3 and Table~1]{melara2015coniks}. However, after missing several epochs, a
 returning client performs a series of checks until its previously verified inclusion proofs and
-signed tree roots are consistent with the more recent proofs~\cite[pp.~7--8]{melara2015coniks}.
+signed tree roots are consistent with the more recent proofs~\cite[pp.~389--390]{melara2015coniks}.
 DUET's M4 experiment evaluates this returning-client case with one endpoint consistency proof.
 Since CONIKS does not publish a matched byte total for $W=720$, no direct catch-up byte ratio is
 reported in \cref{tab:eval-compare}.

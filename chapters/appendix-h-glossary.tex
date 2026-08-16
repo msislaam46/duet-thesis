@@ -52,8 +52,9 @@ Formal cryptographic definitions appear in \cref{app:definitions}.
 \item[ELEKTRA] A multi-device key-transparency system with device cross-signing.
 \item[Epoch] A committed version of the directory. A commit appends the prefix root to the log and
   publishes a signed tree head (\cref{def:epoch}).
-\item[Equivocation / fork] A malicious server signing two divergent views at one epoch, caught by
-  cross-vantage auditing for A4 split-view equivocation under G4 (Fork Detection).
+\item[Equivocation / fork] A malicious server signs two divergent views at one epoch. Detection
+  requires comparing signed heads obtained from independent vantage points (A4, under G4 Fork
+  Detection).
 \item[HKDF] HMAC-based key-derivation function (RFC~5869), used for the dual-index label derivation
   (\cref{def:hkdf}).
 \item[Inclusion proof] A proof that a value is present at a position in the log or prefix tree

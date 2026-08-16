@@ -23,7 +23,7 @@ The seventeen metric families referenced throughout \cref{ch:eval} are as follow
   and full signed-head lookup verification.
 \item[M4] Synthetic repeated-proof and windowed catch-up proof bytes and
   proof-generation latency as a function of $W$.
-\item[M5] The marginal cost of one unverified warning-slot read, reported as a component
+\item[M5] Label derivation and one unverified warning-slot read, reported as a component
   measurement.
 \item[M6] Clean-session false-alarm count from the original deterministic experiment,
   retained for reproducibility.
@@ -70,7 +70,7 @@ Item & Value \\
 \midrule
 CPU & 12th Gen Intel Core i7-12700H (20 logical cores) \\
 CPU SHA extensions (SHA-NI) & yes (hardware SHA-256) \\
-RAM & 31.7\,GB \\
+RAM & 31.7\,GiB \\
 OS / architecture & Windows, x86\_64 \\
 Rust toolchain & \texttt{rustc 1.96.0} \\
 Profile & \texttt{bench} (opt-level 3), single-threaded loops \\
@@ -153,8 +153,9 @@ experiment. M17 now provides the clean-workflow evidence used in \cref{ssec:eval
 \section{Latency, Operation Rates, and Maintenance (M2, M3, M5, M8--M12)}\label{sec:bench-timings}
 
 The timing families are reported below one per table, each preceded by a short statement of what it
-measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), the marginal
-warning-slot lookup cost (\cref{tab:bench-detection}), operation rates and the maintenance operations
+measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), label
+derivation and one unverified warning-slot read (\cref{tab:bench-detection}), operation rates and
+the maintenance operations
 (\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). The manual timing CSV uses \num{2000} sequential iterations for every recorded operation except the
 M9 epoch commit, which uses \num{200}. The M7 experiment samples \num{1000} random lookups at each
 directory size. M14 uses \num{500} lookups per grid point for proof-size distributions and
@@ -185,24 +186,25 @@ M3 full signed-head lookup verification (windowed baseline) & $10^4$ & 128.9 & 1
 \end{tabular}
 \end{table}
 
-\medskip\noindent\emph{The marginal warning-slot lookup (M5) measures one unverified clean-state
-read, not the complete detector. At $N=10^3$, the \num{1000} sampled conversations give a median
-of \SI{1.6}{\micro\second} and a 95th percentile of \SI{2.0}{\micro\second}.
+\medskip\noindent\emph{The M5 warning-slot component measures label derivation followed by one
+unverified warning-slot read in a clean state. It does not measure the complete detector. At
+$N=10^3$, \num{2000} iterations over \num{1000} sampled conversations give a median of
+\SI{1.6}{\micro\second} and a 95th percentile of \SI{2.0}{\micro\second}.
 \Cref{ssec:eval-detection} reports the proof-verified detector paths. Since M5 contains one
 directory size, it does not establish how this cost changes with $N$.}
 
 \begin{table}[H]
 \centering
-\caption[M5: marginal warning-slot lookup cost.]{M5 marginal warning-slot lookup cost. The
-distribution covers \num{1000} sampled conversations and measures one unverified warning-slot read.
-\Cref{ssec:eval-detection} reports the verified one- and two-lookup detection paths.}
+\caption[M5: unverified warning-slot read.]{M5 measures label derivation and one unverified
+warning-slot read across \num{1000} sampled conversations. \Cref{ssec:eval-detection} reports the
+verified one- and two-lookup detection paths.}
 \label{tab:bench-detection}
 \small
 \begin{tabular}{@{}llrr@{}}
 \toprule
 Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
-M5 warning-slot read, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
+M5 warning-slot component, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -288,7 +290,7 @@ Prefix verify (median / p95, \si{\micro\second}) & 26.3 / 26.6 & 26.4 / 30.6 \\
 VRF verify (median / p95, \si{\micro\second}) & 84.0 / 99.7 & 85.8 / 212.9 \\
 Full signed-head lookup verification (median / p95, \si{\micro\second}) & 133.6 / 161.1 & 139.2 / 171.1 \\
 Build time & 150.5\,s & 1{,}558.0\,s \\
-RSS after build & 2{,}810\,MB & 21{,}309\,MB \\
+RSS after build & 2{,}810\,MiB & 21{,}309\,MiB \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
@@ -389,13 +391,14 @@ calculations used to obtain the matched quantities.
 
 \paragraph{Lookup Proof Size.}
 CONIKS calls each signed directory commitment a signed tree root (STR). Table~1 counts one
-verifiable unpredictable function (VUF) proof, one STR signature, and approximately $\lg_2N+1$
+verifiable unpredictable function (VUF) proof, one STR signature, and approximately $\lg N+1$
 authentication-path hashes. It reports \num{1216}\,bytes for the elliptic-curve configuration at
 $N\approx2^{32}$. Using the same accounting at $N\approx10^6$ gives
-$\lceil\lg_2N\rceil+1=21$ hashes and a total of
+$\lceil\lg N\rceil+1=21$ hashes and a total of
 $32\times21+96+64=832$ bytes, or \num{768}\,bytes when the signature is
 excluded~\cite[Section~5.3 and Table~1]{melara2015coniks}. DUET's \num{817}-byte median also
-excludes its signed head and is approximately 6.4 percent larger than this matched CONIKS
+excludes its signed head and carries no log-inclusion term, because M7 uses a single-epoch log and
+M14 measures that term separately. It is approximately 6.4 percent larger than this matched CONIKS
 quantity.
 
 Signal's prefix verifier uses a \num{32}-byte index and requires one sibling hash for each of its
@@ -408,7 +411,7 @@ sibling copath with DUET's serialized lookup proof. They are not ratios between 
 SEEMless reports an average query-proof size of approximately 8.6\,kB for 10 million users. The
 reported proof includes the username and public key, a commitment and its opening, a VRF proof, and
 authentication-path material. Its construction uses three authentication paths for each
-query~\cite[p.~12]{chase2019seemless}. This result provides additional context but is not directly
+query~\cite[p.~1650]{chase2019seemless}. This result provides additional context but is not directly
 matched to the DUET or Signal quantities.
 
 \paragraph{CONIKS Routine Monitoring and Missed Epochs.}
@@ -418,7 +421,7 @@ an average of \num{736}\,bytes per epoch and reports approximately \num{19.1}\,k
 day~\cite[Section~5.3]{melara2015coniks}. Table~1 of the same paper instead gives
 \num{726}\,bytes per epoch and \num{17.6}\,kB per day for the same elliptic-curve
 configuration~\cite[Table~1]{melara2015coniks}. The \num{726}-byte table entry does not match the
-expression $64+\lg_2(n)\times32$ in Section~5.3. Under that section's assumption that
+expression $64+\lg(n)\times32$ in Section~5.3. Under that section's assumption that
 $n\approx2^{21}$, the expression evaluates to
 \num{736}\,bytes~\cite[Section~5.3]{melara2015coniks}. The main chapter therefore uses
 only the conclusion supported by both presentations: the reported routine-monitoring cost is less
@@ -426,7 +429,7 @@ than 20\,kB per day.
 
 For a client that has missed several epochs, CONIKS requires a series of checks connecting the
 previously verified inclusion proofs and signed tree roots to the more recent
-proofs~\cite[pp.~7--8]{melara2015coniks}. The paper does not provide a total byte cost for a
+proofs~\cite[pp.~389--390]{melara2015coniks}. The paper does not provide a total byte cost for a
 $W=720$ missed window. If the reported \num{736}-byte average routine-monitoring cost were applied
 to each of the \num{720} missed epochs, the resulting checks would total
 \num{529920}\,bytes. This is an illustrative calculation, not a published CONIKS catch-up result.

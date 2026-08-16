@@ -260,7 +260,7 @@ safeguards that apply after commitment are described in \cref{ssec:design-detect
 \subsection{Worked Parameterization}\label{ssec:design-param}
 
 For an illustrative analytic model, let $n_{\mathsf{users}}=10^7$ be the number of users, let $c=5$ be the active
-conversations per user, and let $R=30$ days be the assumed interval between new session-mode
+conversations per user, and let $R=720$ hourly epochs, or 30 days, be the assumed interval between new session-mode
 conversation secrets. The model uses hourly epochs~\cite[Section~5.3]{melara2015coniks}. This gives
 $n_{\mathsf{users}}c/2=25$ million conversations and $n_{\mathsf{users}}c=50$ million directional lookup slots. A client offline for
 30 days misses $W=720$ hourly epochs.

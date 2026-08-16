@@ -157,7 +157,7 @@ The adversary model and assumptions lead to four security requirements for DUET,
 substitution (A1), network man-in-the-middle substitution with an honest directory (A3), and
 malicious key rotation (A5). For an established conversation affected by A1 or A5, the peer must
 receive an authenticated in-band warning. If the directory operator suppresses that warning,
-verification must fail.
+the detecting client must raise a warning-censorship alarm.
 
 \paragraph{G2: Consistency Across Offline Windows.} A returning client that retains a trusted head
 must verify that the current log extends that head without separately processing every missed epoch.
