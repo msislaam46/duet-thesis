@@ -101,14 +101,14 @@ mixed into the CEA chain. Using the secret epoch input rather than the public ra
 an honest, uncompromised $I_t$ contributes fresh secret material to the chain. Before it is mixed
 into the CEA state, the input is domain-separated as
 $\KDF(I_t,\text{\texttt{"CEA"}})$. In ACKA's mapping to Signal, $T_t$ corresponds to the public
-ratchet key and $I_t$ corresponds to the chain key $ck$~\cite[pp.~13--14]{dowling2023acka}. The separate \texttt{"CEA"} and \texttt{"CKA"} tags distinguish
+ratchet key and $I_t$ corresponds to the chain key $ck$~\cite{dowling2023acka}. The separate \texttt{"CEA"} and \texttt{"CKA"} tags distinguish
 the CEA state update from the session-key output. A production Signal integration would obtain
 $I_t$ from the live Double Ratchet state. The DUET prototype instead uses the simulated epoch input
 described in \cref{sec:impl-strategy}.
 
 Second, before posting, the sender verifies that $L_t$ is unoccupied. ACKA states that an existing
 fingerprint at the expected label indicates impersonation and should cause the sender to take
-appropriate, likely out-of-band, action~\cite[p.~8]{dowling2023acka}. Therefore, when the label is
+appropriate, likely out-of-band, action~\cite{dowling2023acka}. Therefore, when the label is
 already occupied, the DUET sender procedure rejects the registration and leaves the CEA state
 unchanged. After writing to an empty label, the sender advances its chain only after a verified
 read-back confirms the committed fingerprint. Third, the receiver advances only after a
@@ -141,7 +141,7 @@ comparison of signed heads obtained from independent vantage points.
 
 Windowed catch-up must account for a substitution introduced and reverted between the retained and
 current heads. CONIKS requires a returning client to perform a series of checks after missed
-epochs~\cite[pp.~389--390]{melara2015coniks}. A malicious provider could insert a false binding and
+epochs~\cite{melara2015coniks}. A malicious provider could insert a false binding and
 later revert it before the client returns~\cite[Section~4.2]{chase2019seemless}. A client that verifies only endpoint consistency and the
 current value of its binding would not detect such a transient substitution. The same limitation
 applies to DUET's windowed check.

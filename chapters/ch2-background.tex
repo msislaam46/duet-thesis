@@ -60,7 +60,7 @@ only 14\% of pair--application trials succeeded, and only two of twelve pairs co
 in any tested application~\cite[Section~5]{vaziripour2017}. Instructions improved
 success~\cite[Section~6.1]{vaziripour2017}, but even instructed users took an average of 3.2 minutes to
 find the ceremony and another 7.8 minutes to complete
-it~\cite[p.~36]{vaziripour2017}. MoDUSA authenticates evolving protocol state but retains a
+it~\cite{vaziripour2017}. MoDUSA authenticates evolving protocol state but retains a
 user-initiated comparison, while ACKA replaces that comparison with an assumed secure
 log~\cite{dowling2021meta,dowling2023acka}. The supporting measurements are reported in
 \cref{sec:ext-usability}.
@@ -157,9 +157,9 @@ A comparison with ELEKTRA and PRISM clarifies this peer-warning gap. A full acco
 ELEKTRA invokes \texttt{AddFirstKey}, which appends another \texttt{AddFirst} statement that
 contacts can detect when they query the keychain. The paper recommends that client applications
 show an urgent warning for this event~\cite[Section~2.2]{len2023elektra}. PRISM frames the wider problem as reliance on external checks
-such as client gossip and third-party auditing~\cite[p.~6]{pusch2025prism}. It also proposes
+such as client gossip and third-party auditing~\cite{pusch2025prism}. It also proposes
 embedding commitments in encrypted messages as an additional gossip
-safeguard~\cite[p.~5]{pusch2025prism}. A warning about one substituted key therefore remains
+safeguard~\cite{pusch2025prism}. A warning about one substituted key therefore remains
 distinct from both mechanisms.
 
 CONIKS is the main baseline for this thesis because it combines private lookup indices, signed
@@ -170,7 +170,7 @@ equivocation~\cite[Sections~4.1.3--4.1.4]{melara2015coniks}. CONIKS relies on au
 comparison, while direct exchange between clients remains future
 work~\cite[Section~4.1.4, footnote~5]{melara2015coniks}. A returning client that misses several
 epochs must also perform a series of checks to confirm that its last verified inclusion proofs and
-signed tree roots remain consistent with the recent proofs~\cite[pp.~389--390]{melara2015coniks}. This
+signed tree roots remain consistent with the recent proofs~\cite{melara2015coniks}. This
 missed-epoch procedure provides the baseline for DUET's windowed catch-up evaluation.
 
 Beyond academic designs, key transparency is already used in production communication services and
@@ -185,28 +185,28 @@ individual key substitution. Their mechanisms and limitations are examined in
 
 The surveyed systems also make different engineering choices. The WhatsApp whitepaper reports
 publicly verifiable audit proofs and states that key-history requests were not yet enabled in its
-clients~\cite[pp.~5--6 and 11]{whatsapp2023whitepaper}. Signal's repository states that its
+clients~\cite{whatsapp2023whitepaper}. Signal's repository states that its
 implementation uses the IETF protocol with application-specific modifications, and its verifier
 requires a fixed-length prefix copath~\cite{signal-kt-server}. ProtonKT combines client
 self-auditing and external auditing with Certificate
-Transparency~\cite[pp.~39, 44, 47]{goebel2023proton}. The Proton thesis also describes the
+Transparency~\cite{goebel2023proton}. The Proton thesis also describes the
 investigation of KT warnings as an open user-experience
-challenge~\cite[pp.~81--82]{goebel2023proton}.
+challenge~\cite{goebel2023proton}.
 
 % ============================================================================
 \section{The ACKA (Authenticated Continuous Key Agreement) Framework}\label{sec:bg-acka}
 
 The ACKA construction proposed by Dowling and Hale combines continuous key agreement (CKA),
 Continuous Entity Authentication (CEA), and an abstract secure
-log~\cite[pp.~20--21]{dowling2023acka}. At each epoch, CEA derives a public label from the
+log~\cite{dowling2023acka}. At each epoch, CEA derives a public label from the
 pre-update state and a fingerprint that authenticates the public update produced by the
-CKA~\cite[pp.~13--14]{dowling2023acka}. The sender appends the label and fingerprint to the log,
+CKA~\cite{dowling2023acka}. The sender appends the label and fingerprint to the log,
 and the receiver queries the expected label before accepting the
-update~\cite[pp.~7--8]{dowling2023acka}. A substituted update either produces conflicting
+update~\cite{dowling2023acka}. A substituted update either produces conflicting
 fingerprints at the expected label or leaves no matching fingerprint
-there~\cite[pp.~7--8]{dowling2023acka}. The required security notions are $\CEAsec$ for
-CEA~\cite[p.~18]{dowling2023acka} and $\Logsec$ for the
-log~\cite[pp.~10--11]{dowling2023acka}.
+there~\cite{dowling2023acka}. The required security notions are $\CEAsec$ for
+CEA~\cite{dowling2023acka} and $\Logsec$ for the
+log~\cite{dowling2023acka}.
 \Cref{fig:bg-acka} summarizes this composition.
 
 \begin{figure}[H]
@@ -220,21 +220,21 @@ Hale~\cite{dowling2023acka}.}
 \end{figure}
 
 ACKA targets an active channel adversary and provides continuous authentication when CEA satisfies
-$\CEAsec$ and the secure log satisfies $\Logsec$~\cite[pp.~6--7]{dowling2023acka}. It begins from
+$\CEAsec$ and the secure log satisfies $\Logsec$~\cite{dowling2023acka}. It begins from
 a common initial state, corresponding to correctly assumed trust on first use or authenticated
-initial keying material~\cite[p.~6]{dowling2023acka}. It then authenticates each subsequent CKA
-update in sequence through a CEA label and fingerprint~\cite[pp.~7--8]{dowling2023acka}. The
+initial keying material~\cite{dowling2023acka}. It then authenticates each subsequent CKA
+update in sequence through a CEA label and fingerprint~\cite{dowling2023acka}. The
 construction presented in the paper provides one-sided detection, in which the receiver detects a
-forgery~\cite[p.~21]{dowling2023acka}. Its secure-log interface supports consistency verification
-between views~\cite[pp.~10--11]{dowling2023acka}. However, the paper does not define a third-party
-auditor for comparing those views~\cite[p.~21]{dowling2023acka}. The formal CKA definition,
+forgery~\cite{dowling2023acka}. Its secure-log interface supports consistency verification
+between views~\cite{dowling2023acka}. However, the paper does not define a third-party
+auditor for comparing those views~\cite{dowling2023acka}. The formal CKA definition,
 adversary model, secure-log construction, and one-sided detection result are examined further in
 \cref{sec:ext-acka}.
 
 The ACKA paper formalizes the per-epoch CEA construction and evaluates it through security proofs, but
 does not report a software implementation or empirical
 evaluation~\cite[Sections~4--6]{dowling2023acka}. Moreover, it leaves $\Log$ as a generic secure-log
-interface~\cite[pp.~10, 21]{dowling2023acka}. The paper therefore leaves open how this interface can
+interface~\cite{dowling2023acka}. The paper therefore leaves open how this interface can
 be instantiated as a verifiable key directory that exposes misbehaviour by a malicious operator.
 
 % ============================================================================
@@ -293,7 +293,7 @@ warning used by DUET.\par}
 The preceding comparison identifies three system-level requirements for DUET. First, a client that detects a
 substitution must be able to warn its peer. Existing systems leave detection to the key owner, an
 auditor, a witness set, or a global verifier. In the cited WhatsApp configuration, a failed
-automatic verification leads to manual comparison~\cite[pp.~5, 10]{whatsapp2023whitepaper}, and
+automatic verification leads to manual comparison~\cite{whatsapp2023whitepaper}, and
 Signal similarly recommends Safety Number comparison when Automatic Key Verification is
 unavailable~\cite{signal-akv}. ELEKTRA recommends warning contacts after a full account
 reset~\cite[Section~2.2]{len2023elektra}. DUET therefore needs a conversation-specific warning that the
@@ -301,7 +301,7 @@ peer can retrieve after reconnecting.
 
 Second, a returning client that retains its last trusted head should verify the missed history
 efficiently. CONIKS catches up by performing a series of checks after missed
-epochs~\cite[pp.~389--390]{melara2015coniks}. Thus, DUET should use one consistency proof from that
+epochs~\cite{melara2015coniks}. Thus, DUET should use one consistency proof from that
 trusted head to the current head to cover the complete missed window.
 
 Third, DUET should detect split-view equivocation. A locally verified proof shows that one response
@@ -313,4 +313,4 @@ consistency, and auditor mechanisms in \cref{ch:design}.
 Finally, ACKA provides the framework for authenticating evolving session state. DUET should
 instantiate ACKA's generic $\Log$ interface with the verifiable directory and retain its per-epoch
 CEA construction for successive CKA
-updates~\cite[pp.~10, 13--14, 20--21]{dowling2023acka}.
+updates~\cite{dowling2023acka}.
