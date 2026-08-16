@@ -375,7 +375,7 @@ The \texttt{vrf} module implements the
 ECVRF-EDWARDS25519-SHA512-TAI construction of RFC~9381 (suite \texttt{0x03}). The \texttt{dual\_index} module
 derives the three labels $\ell_{\mathsf{self}}$, $\ell_{\mathsf{peer}}$, and $\ell_{\mathsf{warn}}$
 from the shared secret by HKDF-SHA256 (RFC~5869), exactly as specified in
-\cref{ssec:design-labels}, and the \texttt{cea} module implements ACKA's example CEA
+\cref{ssec:design-labels}, and the \texttt{cea} module implements ACKA's CEA
 construction~\cite[Section~5.1]{dowling2023acka}. The crates
 \texttt{sha2}, \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} supply the standard
 primitives, and the ECVRF of RFC~9381 is the only primitive implemented directly, checked against the published
