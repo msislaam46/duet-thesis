@@ -1,28 +1,39 @@
 \chapter{Test Catalogue}\label{app:tests}
 
 This appendix summarizes the complete test corpus supporting the conformance claims in
-\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{146} tests: \num{106} unit and invariant
-tests across nine modules, the \num{8}-case adversarial integration suite, \num{28} tests in the
+\cref{sec:impl-tests}. The \texttt{duet} crate contains \num{86} tests: \num{61} unit and invariant
+tests across nine modules, the \num{8}-case adversarial integration suite, \num{13} tests in the
 \texttt{kt\_auditor} binary, and \num{4} clean-workflow regression tests in
 \texttt{tests/clean\_path\_coverage.rs} (\cref{ssec:eval-detection}), all run under
-\texttt{cargo test}. The \texttt{signal-desktop-kt} client verifier harness contains \num{190} Jest
-tests in thirteen suites, along with \num{35} embedded electron-mocha tests in six Signal Desktop
+\texttt{cargo test}. The \texttt{signal-desktop-kt} client verifier harness contains \num{93} Jest
+tests in thirteen suites, along with \num{13} embedded electron-mocha tests in six Signal Desktop
 suites. The embedded tests pass realistic account identifiers through the client integration. Fixed
 vectors also require the crate and client component to produce byte-identical outputs.
 
-The \num{28} \texttt{kt\_auditor} tests comprise the delta-replay test, six \texttt{classify\_head}
-rollback/fork cases, five \texttt{commit\_decision} transaction cases, two integration tests (a
-partial-fetch failure and the comparison-head skip-after-failure), two configuration-mismatch tests
-(primary and comparison head), and twelve \texttt{PollStatus} tests. The twelve tests cover the
-remaining head and replay outcomes, including missing, unparseable, and failing consistency proofs
-that return \textsc{ConsistencyUnverified}. They also verify the exact status-line mapping.
-\textsc{Fork} is covered by the \texttt{classify\_head} and \texttt{commit\_decision} tests.
+Each catalogue row is one executed test, and the totals count executed tests. Some rows represent
+parameterized cases, such as the RFC~9381 vectors, the decoder mutations, and the shared-source
+parity files. Those tests iterate their cases internally and report every failing case, so a single
+failing input does not hide the others.
+
+The \num{13} \texttt{kt\_auditor} tests comprise the wrong-leaf replay rejection test, the
+\texttt{classify\_head} verdict table, the \texttt{commit\_decision} transaction table, two
+configuration-mismatch tests (primary and comparison head), the exact status-line mapping, five
+remaining poll-outcome tests, the partial-fetch retry, and the check-ordering test. The five
+poll-outcome tests cover availability failures, withheld or invalid consistency proofs on the
+primary chain and on the comparison head, an inadmissible vantage, and a malformed head. The
+check-ordering test also pins the consistent, transition-failed, and rollback outcomes. These tests
+are summarized by category here rather than listed individually.
 
 \Cref{tab:impl-t5a} lists representative correctness tests and the requirement each protects, and
 \cref{tab:tests-adversarial} lists the adversarial scenarios with their expected and observed
-verdicts. The unit, crate--client agreement, and client-component tests are catalogued in the tables that follow. The
-\texttt{kt\_auditor} binary tests are summarized by category above rather than listed individually.
-\Cref{fig:impl-testing} summarizes the five evidence classes.
+verdicts. The unit, crate--client agreement, and client-component tests are catalogued in the tables
+that follow. \Cref{fig:impl-testing} summarizes the five evidence classes.
+
+The complete per-test listing is held in the test sources. Running \texttt{cargo test} prints every
+crate test name, \texttt{npm test} prints every Jest test, and \texttt{npm run test:wire} runs the
+opt-in wire-parity suite against a running directory server. The sources are
+\texttt{crate/src/*.rs}, \texttt{crate/tests/}, \texttt{crate/src/bin/kt\_auditor.rs},
+\texttt{signal-desktop-kt/\_\_tests\_\_/}, and \texttt{signal-desktop/ts/test-node/kt/}.
 
 \begin{figure}[ht]
 \centering
@@ -67,195 +78,119 @@ key-fetch status integrity & hook (TS) & only a proof-verified match emits \text
 \section{\texttt{duet} Crate Tests}\label{sec:tests-rust}
 
 The unit and invariant tests divide into three groups: the cryptographic primitives and data
-structures (\cref{tab:tests-rust-prim,tab:tests-rust-prim-b}), the server and its verification chain
+structures (\cref{tab:tests-rust-prim}), the server and its verification chain
 (\cref{tab:tests-rust-server}), and the auditor, warning monitor, and continuous-authentication
 mode (\cref{tab:tests-rust-system}).
 
 \begin{table}[H]
 \centering
-\caption{\texttt{duet} crate tests: primitives and data structures, part 1 of 2 (\num{23} tests).}
+\caption{\texttt{duet} crate tests: primitives and data structures (\num{19} tests).}
 \label{tab:tests-rust-prim}
 \footnotesize
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llp{7.0cm}@{}}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{9.4cm}@{}}
 \toprule
-Module & Test & Property checked \\
+Module & Test and property \\
 \midrule
-\texttt{hashing} & \texttt{domain\_separation} & leaf (\texttt{0x00}) and node (\texttt{0x01}) tags give distinct hashes \\
-\texttt{hashing} & \texttt{empty\_hash\_deterministic} & the empty hash is fixed and reproducible \\
-\texttt{hashing} & \texttt{leaf\_hash\_different\_data} & distinct inputs yield distinct leaf hashes \\
+\texttt{hashing} & \texttt{hash\_domain\_separation\_and\_basic\_properties}: leaf and internal hashing are domain-separated, the empty hash is fixed, distinct data gives distinct leaves \\
 \midrule
-\texttt{merkle\_log} & \texttt{append\_and\_root} & appending updates the root as specified \\
-\texttt{merkle\_log} & \texttt{inclusion\_proof\_verifies} & every leaf's inclusion proof verifies (exhaustive to size 64) \\
-\texttt{merkle\_log} & \texttt{consistency\_proof\_verifies} & every $(m,n)$ consistency pair verifies (exhaustive to size 64) \\
-\texttt{merkle\_log} & \texttt{consistency\_proof\_many\_epochs} & consistency holds across many committed epochs \\
-\texttt{merkle\_log} & \texttt{exhaustive\_small\_trees} & roots, inclusion, and consistency remain mutually consistent on every tree up to size 64 \\
+\texttt{merkle\_log} & \texttt{exhaustive\_small\_trees}: for every log size to 64, every leaf's inclusion proof verifies, every $(m,n)$ consistency pair verifies, and forged leaves and consistency claims are rejected \\
 \midrule
-\texttt{prefix\_tree} & \texttt{insert\_and\_search} & inserted labels are retrievable \\
-\texttt{prefix\_tree} & \texttt{proof\_verifies} & an inclusion proof recomputes the root \\
-\texttt{prefix\_tree} & \texttt{proof\_verifies\_multiple\_entries} & proofs verify with many populated leaves \\
-\texttt{prefix\_tree} & \texttt{non\_inclusion} & an absent label has a verifying non-inclusion proof \\
-\texttt{prefix\_tree} & \texttt{root\_hash\_deterministic} & the root is order-independent and reproducible \\
-\texttt{prefix\_tree} & \texttt{update\_overwrites\_value} & the tree-level insert overwrites a value. The write-once policy is enforced one layer above, in \texttt{update\_raw} (\cref{tab:tests-rust-server}) \\
-\texttt{prefix\_tree} & \texttt{remove\_deletes\_leaf\_and\_restores\_sibling\_structure} & the admin-only removal leaves a structurally valid tree, so a deletion is detectable only by the transition audit, never by malformedness \\
-\texttt{prefix\_tree} & \texttt{chain\_memo\_is\_transparent} & the compressed-leaf chain memo is purely an optimization: warm and cold trees yield byte-identical roots and proofs across inserts, rotations, splits, removals, and non-inclusion lookups \\
-\texttt{prefix\_tree} & \texttt{update\_rejects\_short\_label} & \texttt{update} rejects a label shorter than 32 bytes (no aliasing to another slot) \\
-\texttt{prefix\_tree} & \texttt{remove\_rejects\_long\_label} & \texttt{remove} rejects a label longer than 32 bytes \\
-\texttt{prefix\_tree} & \texttt{get\_rejects\_short\_label} & \texttt{get} rejects a mis-sized (short) label \\
-\texttt{prefix\_tree} & \texttt{search\_rejects\_long\_label} & \texttt{search} rejects a mis-sized (long) label \\
-\texttt{prefix\_tree} & \texttt{get\_kind\_rejects\_short\_label} & \texttt{get\_kind} rejects a mis-sized (short) label \\
-\texttt{prefix\_tree} & \texttt{update\_rejects\_invalid\_kind} & \texttt{update} rejects an out-of-domain leaf kind (only \textsc{mutable}/\textsc{immutable} are admissible) \\
-\texttt{prefix\_tree} & \texttt{recompute\_root\_rejects\_present\_invalid\_kind} & a present leaf carrying an out-of-domain kind yields no root (the proof is unverifiable) \\
+\texttt{prefix\_tree} & \texttt{sparse\_tree\_basic\_operations}: insert, search, overwrite, proven non-inclusion, and verifying proofs on one-entry and 100-entry trees \\
+\texttt{prefix\_tree} & \texttt{remove\_deletes\_leaf\_and\_restores\_sibling\_structure}: removal returns the value, yields valid non-inclusion, and reproduces the root of a tree that never held the leaf \\
+\texttt{prefix\_tree} & \texttt{chain\_memo\_is\_transparent}: roots, bitmaps and sibling lists from a warm-memo tree are byte-identical to a cold-built tree \\
+\texttt{prefix\_tree} & \texttt{prefix\_tree\_public\_entry\_point\_preconditions}: every public entry point rejects a non-32-byte label, and \texttt{update} rejects an out-of-domain leaf kind \\
+\texttt{prefix\_tree} & \texttt{recompute\_root\_rejects\_present\_invalid\_kind}: the verifier refuses to reconstruct a root from a proof carrying an invalid kind byte \\
+\midrule
+\texttt{vrf} & \texttt{rfc9381\_a2\_vectors}: for every RFC~9381 Appendix~A.2 vector, encode-to-curve reproduces $H$ and the verifier reproduces $\beta$~\cite[Appendix~B.3]{rfc9381} \\
+\texttt{vrf} & \texttt{vrf\_output\_varies\_with\_key\_and\_input}: deterministic for one (key, input), and separating on either \\
+\texttt{vrf} & \texttt{test\_prove\_then\_verify}: a freshly generated key's own proof verifies to the same hash \\
+\texttt{vrf} & \texttt{test\_verify\_rejects\_corrupted\_proof}: a single-bit flip at any of the 80 proof bytes fails or yields a different hash \\
+\texttt{vrf} & \texttt{test\_verify\_rejects\_wrong\_alpha}, \texttt{test\_verify\_rejects\_wrong\_key}: verification rejects a proof under the wrong input or public key \\
+\midrule
+\texttt{dual\_index} & \texttt{cross\_impl\_test\_vectors}, \texttt{warn\_mac\_cross\_impl\_vector}: fixed label and sealed-warning vectors reproduce byte-for-byte against the TypeScript reference \\
+\texttt{dual\_index} & \texttt{label\_derivation\_properties}: directional and warning-label symmetry, separation across pairs and secrets, and determinism \\
+\texttt{dual\_index} & \texttt{warning\_mac\_roundtrip\_and\_shared\_key\_verification}: both parties derive the same MAC key and open a sealed warning \\
+\texttt{dual\_index} & \texttt{warning\_mac\_rejects\_injected\_or\_tampered\_payload}: an injected payload, a flipped tag, another pair's key, and an undersized payload are all rejected \\
+\texttt{dual\_index} & \texttt{derive\_rejects\_non\_16\_byte\_identity}: derivation refuses non-16-byte service identifiers \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{\texttt{duet} crate tests: primitives and data structures, part 2 of 2 (\num{20} tests).}
-\label{tab:tests-rust-prim-b}
-\footnotesize
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llp{7.0cm}@{}}
-\toprule
-Module & Test & Property checked \\
-\midrule
-\texttt{vrf} & \texttt{test\_prove\_then\_verify} & an honest proof verifies \\
-\texttt{vrf} & \texttt{test\_deterministic\_output} & evaluation is deterministic for fixed key and input \\
-\texttt{vrf} & \texttt{test\_different\_inputs\_different\_outputs} & distinct inputs give distinct outputs \\
-\texttt{vrf} & \texttt{test\_different\_keys\_different\_outputs} & distinct keys give distinct outputs \\
-\texttt{vrf} & \texttt{test\_encode\_to\_curve\_try\_and\_increment} & RFC~9381 hash-to-curve conformance \\
-\texttt{vrf} & \texttt{test\_proof\_to\_hash\_matches\_rfc\_vectors} & proof-to-hash matches RFC~9381 vectors \\
-\texttt{vrf} & \texttt{test\_verify\_rfc\_vectors} & full RFC~9381 suite-\texttt{0x03} test vectors \\
-\texttt{vrf} & \texttt{test\_verify\_rejects\_corrupted\_proof} & a tampered proof is rejected \\
-\texttt{vrf} & \texttt{test\_verify\_rejects\_wrong\_alpha} & a proof under the wrong input is rejected \\
-\texttt{vrf} & \texttt{test\_verify\_rejects\_wrong\_key} & a proof under the wrong key is rejected \\
-\midrule
-\texttt{dual\_index} & \texttt{label\_symmetry} & Alice and Bob agree on the two lookup slots ($\ell^\A_{\mathsf{self}} = \ell^\B_{\mathsf{peer}}$ and vice versa) \\
-\texttt{dual\_index} & \texttt{warning\_labels\_symmetric} & both parties derive the identical shared warning label \\
-\texttt{dual\_index} & \texttt{warning\_label\_differs\_across\_pairs} & distinct conversation pairs derive distinct warning labels \\
-\texttt{dual\_index} & \texttt{different\_secrets\_different\_labels} & the tested distinct secrets produce different labels \\
-\texttt{dual\_index} & \texttt{hkdf\_deterministic} & the HKDF derivation is reproducible \\
-\texttt{dual\_index} & \texttt{warning\_mac\_roundtrip\_and\_shared\_key\_verification} & a warning MAC under the pair-bound key verifies for either party \\
-\texttt{dual\_index} & \texttt{warning\_mac\_rejects\_injected\_or\_tampered\_payload} & an injected or tampered warning payload fails MAC verification (but still alerts, \cref{ssec:design-detection}) \\
-\texttt{dual\_index} & \texttt{warn\_mac\_cross\_impl\_vector} & byte-for-byte agreement with the TypeScript implementation on a fixed warning-MAC vector for an
-authenticated warning payload \\
-\texttt{dual\_index} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte label agreement with the TypeScript implementation on fixed vectors \\
-\texttt{dual\_index} & \texttt{derive\_rejects\_non\_16\_byte\_identity} & label derivation rejects an identity that is not exactly 16 bytes \\
-\bottomrule
-\end{tabular}}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{\texttt{duet} crate tests: server and verification chain (\num{28} tests).}
+\caption{\texttt{duet} crate tests: server and verification chain (\num{15} tests).}
 \label{tab:tests-rust-server}
 \footnotesize
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lp{9.4cm}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.0cm}>{\raggedright\arraybackslash}p{8.8cm}@{}}
 \toprule
-Test & Property checked \\
+Test & Property \\
 \midrule
-\texttt{update\_and\_search} & a committed update is returned by search \\
-\texttt{non\_existent\_user} & an unregistered user yields proven non-inclusion \\
-\texttt{epoch\_increments} & committing advances the epoch counter \\
-\texttt{search\_serves\_committed\_epoch} & search serves the frozen committed snapshot, never the live tree \\
-\texttt{vrf\_proof\_verifies} & the search VRF proof verifies \\
-\texttt{vrf\_proof\_rejects\_wrong\_user} & a VRF proof for the wrong user is rejected \\
-\midrule
-\texttt{verify\_search\_result\_end\_to\_end} & the full client chain accepts an honest result \\
-\texttt{verify\_search\_result\_non\_inclusion} & an absent value is accepted only with a valid non-inclusion proof \\
-\texttt{verify\_search\_result\_rejects\_wrong\_user} & the VRF label binding rejects a proof for another identity \\
-\texttt{verify\_search\_result\_raw\_dual\_index} & the raw (VRF-less) chain verifies dual-index lookups \\
-\texttt{raw\_verification\_rejects\_proof\_for\_a\_different\_label} & the raw verifier rejects a genuine proof presented for a label other than the one queried (label binding without a VRF) \\
-\texttt{verify\_search\_result\_against\_binds\_to\_head} & the head-bound verifier rejects a valid proof served against any head other than the caller's pinned, signed head (the head binding, \cref{ssec:design-verify}) \\
-\texttt{against\_verifier\_rejects\_stale\_snapshot} & the head-bound verifier refuses an old-leaf inclusion presented under a newer signed head (current-snapshot check) \\
-\texttt{snapshot\_is\_current\_pins\_the\_last\_leaf} & the current-snapshot check pins the last committed leaf, so a superseded snapshot is not accepted as current \\
-\texttt{verify\_many\_users\_end\_to\_end} & the chain holds across a populated directory \\
-\midrule
-\texttt{sth\_signature\_verifies} & a correctly signed tree head is accepted \\
-\texttt{sth\_signature\_rejects\_tampered\_root} & a tampered root breaks the STH signature \\
-\texttt{sth\_signature\_rejects\_wrong\_key} & a foreign signing key is rejected \\
-\texttt{sth\_multiple\_epochs} & heads verify across successive epochs \\
-\midrule
-\texttt{windowed\_consistency} & a windowed consistency proof verifies across epochs \\
-\texttt{windowed\_consistency\_proof\_to\_pins\_upper\_bound} & the proof between two committed heads respects the RFC~9162 $\lceil\lg m\rceil + \lceil\lg n\rceil$ hash bound \\
-\midrule
-\texttt{update\_raw\_is\_write\_once} & a second write to an occupied raw label is rejected (\texttt{WriteOnceViolation}) and the directory is unchanged \\
-\texttt{update\_raw\_unchecked\_bypasses\_write\_once} & the explicit malicious-server path does overwrite: the bypass that the transition audit must catch \\
-\texttt{epoch\_delta\_records\_inserts\_and\_rotations} & each epoch's declared delta records VRF inserts, raw inserts, and rotations \\
-\texttt{attack\_remove\_raw\_is\_not\_declared} & a raw deletion changes the committed root but never appears in the declared delta: exactly the mismatch the transition audit detects \\
-\midrule
-\texttt{equivocate\_produces\_conflicting\_signed\_head} & the test server can mint two validly signed heads at one epoch (the A4 fixture) \\
-\texttt{equivocate\_requires\_committed\_epoch} & equivocation requires a committed epoch to fork from \\
-\texttt{verify\_rejects\_malformed\_epoch\_size\_head} & a validly signed head with $\text{epoch}+1\neq\text{tree\_size}$ is refused (\texttt{MalformedHead}), so a server cannot grow the log past the epoch it signs and hide the later leaves from the auditor \\
+\texttt{verify\_search\_result\_covers\_present\_absent\_and\_wrong\_user} & the VRF, prefix and log chain verifies for present and absent labels on one-user, empty and 50-user directories, and fails under a different user id \\
+\texttt{server\_vrf\_proof\_binds\_the\_queried\_user} & the returned VRF proof verifies to the label the server used and fails for another id \\
+\texttt{raw\_verification\_is\_label\_bound} & a genuine proof for a different real leaf passes the bare verifier but is rejected by the label-bound one (\texttt{LabelMismatch}) \\
+\texttt{against\_verifier\_rejects\_stale\_snapshot} & a genuine inclusion proof for an older leaf under the current signed root is refused as \texttt{StaleSnapshot} \\
+\texttt{snapshot\_is\_current\_pins\_the\_last\_leaf} & the currency predicate accepts only leaf $\mathit{tree\_size}-1$ at exactly the signed size \\
+\texttt{verify\_search\_result\_against\_binds\_to\_head} & a proof verifies only against the exact signed head supplied; a later head gives \texttt{HeadMismatch}, an unpinned key \texttt{SthSignatureInvalid} \\
+\texttt{verify\_rejects\_malformed\_epoch\_size\_head} & a validly signed head with $\mathit{epoch}+1\ne\mathit{tree\_size}$ is refused \\
+\texttt{search\_serves\_committed\_epoch} & uncommitted updates are invisible to lookups; pre- and post-commit results both verify \\
+\texttt{sth\_signature\_and\_epoch\_accounting} & an honest head verifies and reports the expected epoch, size and root; a tampered root, altered timestamp and foreign key all fail; the counters track across five epochs \\
+\texttt{equivocate\_semantics} & the adversarial server emits a second validly signed head at one epoch and size with a different root, and only once an epoch is committed \\
+\texttt{update\_raw\_is\_write\_once} & a second write to an occupied raw label is rejected, directory unchanged \\
+\texttt{update\_raw\_unchecked\_bypasses\_write\_once} & the privileged path overwrites in place, establishing the capability the transition audit must catch \\
+\texttt{epoch\_delta\_records\_inserts\_and\_rotations} & each committed epoch declares inserts with their leaf kind and rotations with the prior value \\
+\texttt{attack\_remove\_raw\_is\_not\_declared} & removing a committed warning changes the root but leaves the declared delta empty \\
+\texttt{windowed\_consistency\_proofs} & a windowed proof verifies between two epoch roots, and a proof pinned to an upper bound survives concurrent growth \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{\texttt{duet} crate tests: auditor, warning monitor, and continuous mode (\num{35} tests, with representative rows shown).}
+\caption{\texttt{duet} crate tests: auditor, warning monitor, and continuous mode (\num{27} tests,
+with representative rows shown).}
 \label{tab:tests-rust-system}
 \footnotesize
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llp{7.0cm}@{}}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{9.4cm}@{}}
 \toprule
-Module & Test & Property checked \\
+Module & Test and property \\
 \midrule
-\texttt{auditor} & \texttt{honest\_server\_audits\_clean\_across\_epochs} & an honest server passes epoch-by-epoch auditing \\
-\texttt{auditor} & \texttt{transition\_audit\_passes\_for\_honest\_directory} & the declared delta replays to the committed root for an honest directory \\
-\texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_deletion} & a deleted leaf makes the replay diverge and alarm \\
-\texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_modification} & an in-place modification likewise diverges and alarms \\
-\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite} & an overwrite of a write-once (immutable) leaf declared as a rotation is rejected: the kind-commitment pre-shared-secret-compromise path \\
-\texttt{auditor} & \texttt{transition\_audit\_rejects\_overwrite\_disguised\_as\_insert} & the same overwrite declared as an \textsf{Insert} of an already-present label is rejected (A1): closing the other delta-op variant \\
-\texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_replica} & a rejected transition leaves the accepted directory state unchanged, so a single bad epoch cannot corrupt later audits \\
-\texttt{auditor} & \texttt{audit\_rejects\_unsigned\_or\_foreign\_sth} & an unsigned or foreign-key head is rejected before auditing \\
-\texttt{auditor} & \texttt{audit\_requires\_committed\_epoch} & auditing requires a committed epoch \\
-\texttt{auditor} & \texttt{detect\_fork\_flags\_same\_epoch\_different\_root} & two validly signed roots at one epoch are reported as a fork \\
-\texttt{auditor} & \texttt{detect\_fork\_flags\_same\_size\_different\_root\_across\_epochs} & two heads of equal tree size but different root across epochs are a fork \\
-\texttt{auditor} & \texttt{detect\_fork\_flags\_rollback\_to\_smaller\_tree} & a head that rolls the log back to a smaller tree than one already observed is a fork \\
-\texttt{auditor} & \texttt{detect\_fork\_accepts\_consistent\_head} & a consistent supplied head
-is not misreported as a fork \\
-\texttt{auditor} & \texttt{detect\_fork\_rejects\_unsigned\_head} & a divergent head with an invalid signature is not misclassified as a fork \\
-\texttt{auditor} & \texttt{equivocation\_is\_detected\_as\_fork} & the A4 fixture reports supplied
-conflicting signed heads as a fork \\
-\texttt{auditor} & \texttt{sth\_timestamp\_is\_signed} & the timestamp is inside the signed message, so altering it invalidates the signature. Freshness still depends on a client policy \\
+\texttt{auditor} & \texttt{honest\_server\_audits\_clean\_across\_epochs}: ten epochs of honest growth audit clean and are recorded as observed heads \\
+\texttt{auditor} & \texttt{transition\_audit\_passes\_for\_honest\_directory}: every honest delta, including a genesis epoch and mixed insert kinds, replays exactly \\
+\texttt{auditor} & \texttt{transition\_audit\_catches\_undeclared\_root\_changes}: a deletion and an undeclared in-place modification both diverge the replayed root \\
+\texttt{auditor} & \texttt{transition\_audit\_rejects\_immutable\_overwrite}, \texttt{\ldots\_overwrite\_disguised\_as\_insert}: an overwrite of a write-once leaf is rejected however it is declared \\
+\texttt{auditor} & \texttt{rejected\_transition\_does\_not\_poison\_the\_replica}: a rejected epoch leaves the replica byte-identical to its pre-epoch root \\
+\texttt{auditor} & \texttt{audit\_rejects\_a\_primary\_head\_with\_an\_unexpected\_configuration}, \texttt{detect\_fork\_rejects\_a\_comparison\_head\_\ldots}: a configuration commitment one bit off its pin is refused \\
+\texttt{auditor} & \texttt{detect\_fork\_flags\_same\_epoch\_different\_root}: a second validly signed head at an observed epoch is flagged \textsc{Fork} with both heads as evidence \\
+\texttt{auditor} & \texttt{detect\_fork\_flags\_append\_only\_violations}: a smaller log at a later epoch, and a same-size different root, are forks from observed heads alone \\
+\texttt{auditor} & \texttt{detect\_fork\_accepts\_consistent\_head}, \texttt{detect\_fork\_rejects\_unsigned\_head}, \texttt{audit\_rejects\_inadmissible\_inputs}: agreeing and inadmissible evidence \\
 \midrule
-\texttt{monitor} & \texttt{persistence\_check\_passes\_while\_warning\_persists} & a committed warning that remains present passes the persistence re-check \\
-\texttt{monitor} & \texttt{persistence\_check\_produces\_verifiable\_deletion\_evidence} & on deletion, the assembled bundle (inclusion + proven non-inclusion + consistency) verifies against the server's own signatures \\
-\texttt{monitor} & \texttt{deletion\_evidence\_rejects\_stale\_non\_inclusion} & a stale (superseded) non-inclusion proof cannot certify a deletion: the bundle must be current \\
-\texttt{monitor} & \texttt{persistence\_check\_is\_indeterminate\_under\_a\_forged\_head} & a persistence check against an unverifiable/forged head returns \textsc{Indeterminate}, never a false clean (fail-closed) \\
+\texttt{monitor} & \texttt{persistence\_check\_passes\_while\_warning\_persists}, \texttt{\ldots\_is\_indeterminate\_under\_a\_forged\_head}: the persistence check fails closed \\
+\texttt{monitor} & \texttt{persistence\_check\_produces\_verifiable\_deletion\_evidence}: deletion yields evidence verifying against the server's own signatures \\
+\texttt{monitor} & \texttt{deletion\_evidence\_rejects\_stale\_non\_inclusion}: a forged deletion built from an old snapshot is refused by the currency pin \\
 \midrule
-\texttt{cea} & \texttt{honest\_parties\_agree\_each\_epoch} & both chains derive the same label and fingerprint every epoch \\
-\texttt{cea} & \texttt{labels\_evolve\_with\_the\_ratchet} & labels change as the chained secret advances \\
-\texttt{cea} & \texttt{end\_to\_end\_via\_log} & the full register-then-verify round trip runs over the real log \\
-\texttt{cea} & \texttt{cea\_register\_verify\_honest\_advances\_both\_chains} & sender and receiver advance only after the confirmed write and the successful verify, respectively \\
-\texttt{cea} & \texttt{cea\_verify\_does\_not\_advance\_on\_fork} & a fork verdict leaves the receiver's chain untouched \\
-\texttt{cea} & \texttt{cea\_verify\_does\_not\_advance\_when\_not\_posted} & a pending lookup leaves the chain untouched, so the check can be retried \\
-\texttt{cea} & \texttt{cea\_verify\_rejects\_an\_unexpected\_configuration} & a head carrying an unexpected configuration commitment is rejected, not read as a verdict \\
-\texttt{cea} & \texttt{cea\_verify\_rejects\_a\_foreign\_signing\_key} & a head not signed by the pinned key is rejected, so the server cannot validate its own answer \\
-\texttt{cea} & \texttt{cea\_register\_detects\_occupied\_label\_as\_impersonation} & the ACKA sender-side pre-post check: an occupied label raises an alert \\
-\texttt{cea} & \texttt{cross\_impl\_test\_vectors} & byte-for-byte fingerprint agreement with the TypeScript implementation \\
+\texttt{cea} & \texttt{honest\_parties\_agree\_each\_epoch}: sender and receiver agree on label and fingerprint over five epochs \\
+\texttt{cea} & \texttt{cea\_register\_verify\_honest\_advances\_both\_chains}: the composed register/verify flow advances both chains exactly once \\
+\texttt{cea} & \texttt{cea\_verify\_does\_not\_advance\_on\_fork}, \texttt{\ldots\_when\_not\_posted}: a disputed or missing epoch never advances state \\
+\texttt{cea} & \texttt{cea\_register\_detects\_occupied\_label\_as\_impersonation}: the sender's pre-post check refuses to overwrite \\
+\texttt{cea} & \texttt{cea\_register\_rejects\_an\_unexpected\_configuration}, \texttt{cea\_verify\_rejects\_\ldots}, \texttt{cea\_verify\_rejects\_a\_foreign\_signing\_key}: pinned key and configuration enforced on both paths \\
+\texttt{cea} & \texttt{cea\_rejects\_an\_uncommitted\_server\_on\_both\_paths}: the head check precedes the search, so a missing head fails closed without panicking \\
+\texttt{cea} & \texttt{cross\_impl\_test\_vectors}: three consecutive epochs' labels and fingerprints match the TypeScript reference \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table}
 
 \clearpage
 % ----------------------------------------------------------------------------
 \section{Client Verifier and Signal Desktop Tests}\label{sec:tests-ts}
 
-The \texttt{signal-desktop-kt} client verifier harness contains \num{190} Jest tests in thirteen
+The \texttt{signal-desktop-kt} client verifier harness contains \num{93} Jest tests in thirteen
 suites: a live-server wire-parity suite, an in-process integration suite, a source-parity suite,
-and ten unit suites.
-Some catalogue rows represent parameterized cases (twelve decoder mutations, three status mappings,
-three VRF vectors), and the totals count executed tests.
-The \emph{wire-parity} suite runs the full client verification chain against a \emph{live} DUET directory
-server over the network. It is a separate, opt-in test target (\texttt{npm run test:wire}) that requires the server
-to be running, and its five tests early-return as no-ops when the server is absent, so a bare
-\texttt{npm test} run does not by itself establish wire parity. The \emph{source-parity} suite
-(\texttt{tree\_parity}) asserts that the shared verifier sources are byte-identical between the two shared verifier source
-trees, one parameterized case per file across the twenty-seven shared files. The integration suite and the
+and ten unit suites. The \emph{wire-parity} suite runs the full client verification chain against a
+\emph{live} DUET directory server over the network. A normal Jest run permits its five live paths to
+return without assertions when the server is unavailable. The dedicated \texttt{npm run test:wire}
+command requires the server and fails if it cannot be reached. The \emph{source-parity} suite
+(\texttt{tree\_parity}) asserts that the shared verifier sources are byte-identical between the two
+verifier source trees across the twenty shared implementation files. The integration suite and the
 cryptographic unit suites (\texttt{remote\_kt\_client}, \texttt{cea}, \texttt{secret\_store}) run
 the verifier against a real in-process \texttt{KTServer} (a genuine prefix tree, Merkle log, ECVRF,
 and Ed25519 signer). The remaining unit suites use test doubles by design: \texttt{background\_monitor}
@@ -264,223 +199,67 @@ and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to
 malformed-response rejection, \texttt{kt\_log} checks the structured screenshot-readable log format,
 and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
 \texttt{pni\_silence} suites cover the ACI canonicalization, display-string preservation, and
-phone-number identifier (PNI) event-silence added with the canonical-identity fix. \Cref{tab:tests-jest-wire} lists the
-wire-parity and integration tests, and
-\cref{tab:tests-jest-unit,tab:tests-jest-unit-b,tab:tests-jest-canonical} list nine of the ten unit suites (\texttt{kt\_log} is described above but not separately tabulated).
-Beyond this harness, \num{35} embedded electron-mocha tests run in six suites under Signal
+phone-number identifier (PNI) event-silence added with the canonical-identity fix.
+\Cref{tab:tests-jest-wire} lists the suites and the properties each establishes.
+Beyond this harness, \num{13} embedded electron-mocha tests run in six suites under Signal
 Desktop's own test runner (\cref{tab:tests-embedded}). They drive realistic ACI strings through the
 same integration point the live preload callers use, so a regression at that integration point fails an
 embedded test rather than passing silently.
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: live directory-server wire parity and the integration suite
-(\num{42} tests).}
+\caption{Jest client verifier suites and the properties they establish (\num{93} tests).}
 \label{tab:tests-jest-wire}
 \footnotesize
-\begin{tabular}{@{}lp{10.2cm}@{}}
+\begin{tabular}{@{}ll>{\raggedright\arraybackslash}p{7.6cm}@{}}
 \toprule
-Suite & Test \\
+Suite & Tests & Properties established \\
 \midrule
-\texttt{wire\_parity} & multi-entry dual-index inclusion proofs verify \\
-\texttt{wire\_parity} & proven non-inclusion verifies (value null, chain valid) \\
-\texttt{wire\_parity} & STH Ed25519 signature verifies and tamper is rejected \\
-\texttt{wire\_parity} & VRF path: \texttt{searchByUserId} proof verifies under the server VRF key \\
-\texttt{wire\_parity} & windowed consistency proof verifies across a gap \\
-\midrule
-\texttt{kt\_integration} & domain separation produces different hashes \\
-\texttt{kt\_integration} & empty hash is deterministic \\
-\texttt{kt\_integration} & SHA-256 concatenates inputs \\
-\texttt{kt\_integration} & append and root hash \\
-\texttt{kt\_integration} & inclusion proof verifies \\
-\texttt{kt\_integration} & inclusion proof fails for wrong data \\
-\texttt{kt\_integration} & insert and search \\
-\texttt{kt\_integration} & non-inclusion proof for absent label \\
-\texttt{kt\_integration} & proof verifies against root \\
-\texttt{kt\_integration} & non-inclusion proof verifies \\
-\texttt{kt\_integration} & \texttt{update} rejects an out-of-domain leaf kind \\
-\texttt{kt\_integration} & \texttt{rootFromProof} rejects a present proof carrying an out-of-domain kind \\
-\texttt{kt\_integration} & \texttt{rootFromProof} rejects a non-32-byte label or bitmap \\
-\texttt{kt\_integration} & label symmetry between Alice and Bob \\
-\texttt{kt\_integration} & different shared secrets produce different labels \\
-\texttt{kt\_integration} & update and search round trip \\
-\texttt{kt\_integration} & non-existent user returns null \\
-\texttt{kt\_integration} & \texttt{commitEpoch} increments the epoch \\
-\texttt{kt\_integration} & register and verify (honest scenario) \\
-\texttt{kt\_integration} & detect key mismatch (MitM scenario) \\
-\texttt{kt\_integration} & key not in log (first contact) \\
-\texttt{kt\_integration} & dual-index MitM detection (honest case) \\
-\texttt{kt\_integration} & windowed catch-up after an offline period \\
-\texttt{kt\_integration} & cross-implementation vector v1 (alice/bob) \\
-\texttt{kt\_integration} & cross-implementation vector v3 (fixed-width 16-byte ids) \\
-\texttt{kt\_integration} & warn-MAC vector: authenticated warning payload matches the \texttt{duet} crate \\
-\texttt{kt\_integration} & ECVRF vector $i$: RFC~9381 proof verifies to $\beta$ (3 RFC vectors) \\
-\texttt{kt\_integration} & ECVRF vector $i$: deterministic proof generation reproduces the
-RFC~9381 VRF proof (3 RFC vectors) \\
-\texttt{kt\_integration} & tampered proof and wrong alpha are rejected \\
-\texttt{kt\_integration} & \texttt{vrfVerify} binds $\beta$ to the label (hash argument) \\
-\texttt{kt\_integration} & raw-label write-once rejection \\
-\texttt{kt\_integration} & unchecked raw-label overwrite \\
-\texttt{kt\_integration} & VRF-path user-key rotation \\
+\texttt{remote\_kt\_client} & 26 & the verdict matrix over the full chain; the currency pin, invalid VRF evidence, kind commitment and label binding all refused; own-slot self-monitoring; peer-absence pending, \texttt{NotPosted} timeout, re-key and removal branches; write-once 409 handling with a verified read-back; the three censorship shapes; the publication guard advancing only on a confirmed write; a fork verdict independent of publication \\
+\texttt{kt\_integration} & 17 & hashing, Merkle log and prefix-tree primitives in TypeScript; write-once raw slots against mutable VRF slots; the in-process end-to-end flow; the dual-index label vectors, warn-MAC vector, and all three ECVRF RFC vectors \\
+\texttt{background\_monitor} & 18 & availability against integrity routing; own-key health gating a green badge; secret rotation re-registering and re-warning; once-per-tick unreachable handling; the screenshot-readable log axis \\
+\texttt{getKeysForServiceId\_status} & 10 & every verdict-to-status and status-to-event mapping; fail-open on unreachability and fail-closed on a verification fault; no path fabricates a green badge \\
+\texttt{cea} & 6 & continuous-mode agreement and the verdict trichotomy; the cross-implementation vectors; fork alerts routed to the warning axis; conversation-scoped fork injection \\
+\texttt{decoder\_validation} & 4 & every malformed search field and key-endpoint payload is rejected as \texttt{MalformedResponse}, with well-formed controls \\
+\texttt{kt\_log} & 4 & peer-id shortening, log-line format, and the verbose and demo gates \\
+\texttt{canonical\_service\_id} & 2 & the 36-byte UTF-8 and PNI-prefixed forms throw rather than truncating; canonical labels satisfy symmetry \\
+\texttt{secret\_store} & 2 & the shared secret is order-independent and pair-dependent; the store prunes a forgotten peer \\
+\texttt{wire\_parity} & 1 & against the live Rust server: inclusion, proven non-inclusion, STH signature and tamper rejection, the VRF path, and windowed consistency \\
+\texttt{tree\_parity} & 1 & the twenty shared implementation files are byte-identical across the two trees \\
+\texttt{display\_string} & 1 & warnings show the original ACI UUID, with a hex fallback \\
+\texttt{pni\_silence} & 1 & a PNI drives no client call while an ACI control does \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Jest tests: representative client unit-suite rows, part 1 of 2.}
-\label{tab:tests-jest-unit}
-\footnotesize
-\renewcommand{\arraystretch}{0.90}
-\begin{tabular}{@{}lp{10.2cm}@{}}
-\toprule
-Suite & Test \\
-\midrule
-\texttt{remote\_kt\_client} & \texttt{SAFE} when the fetched key matches the logged key \\
-\texttt{remote\_kt\_client} & \texttt{KEY\_MISMATCH} when the fetched key differs from the logged key \\
-\texttt{remote\_kt\_client} & \texttt{KEY\_NOT\_IN\_LOG} (proven non-inclusion) for an unregistered peer \\
-\texttt{remote\_kt\_client} & a stale old-leaf inclusion under the current STH is refused (current-snapshot check) \\
-\texttt{remote\_kt\_client} & \texttt{matches=true} after honest registration \\
-\texttt{remote\_kt\_client} & \texttt{matches=false} after a malicious server overwrites the client's slot \\
-\texttt{remote\_kt\_client} & kind commitment: a present raw leaf tagged \textsc{mutable} is rejected (owner-side kind check) \\
-\texttt{remote\_kt\_client} & concurrent catch-ups do not produce a spurious append-only failure \\
-\texttt{remote\_kt\_client} & null (safe) when the own lookup slot is intact and the warning slot is empty \\
-\texttt{remote\_kt\_client} & returns a warning when the client's lookup slot was replaced \\
-\texttt{remote\_kt\_client} & green on a clean conversation \\
-\texttt{remote\_kt\_client} & red when the per-conversation lookup slot is replaced \\
-\texttt{remote\_kt\_client} & true on a validly signed head (TOFU baseline) \\
-\texttt{remote\_kt\_client} & false when the head carries a bad signature (foreign key) \\
-\texttt{remote\_kt\_client} & rejects a genuine proof presented for a different label than queried \\
-\texttt{remote\_kt\_client} & \texttt{writeWarning}: a forged 409 over a provably empty slot is censorship (throws, guard unset) \\
-\texttt{remote\_kt\_client} & \texttt{writeWarning}: an accepted-then-dropped write (slot still empty) is censorship (throws) \\
-\texttt{remote\_kt\_client} & \texttt{writeWarning}: a genuine occupied slot with a valid inclusion proof counts as published \\
-\texttt{remote\_kt\_client} & \texttt{writeWarning}: a successful confirmed publication resolves \\
-\texttt{remote\_kt\_client} & \texttt{writeWarning}: a proof failure on the confirmation read is censorship (throws) \\
-\texttt{remote\_kt\_client} & caller guard: a censored publication leaves the guard unset (retried next tick) \\
-\texttt{remote\_kt\_client} & caller guard: a confirmed publication sets the guard, suppressing re-writes \\
-\texttt{remote\_kt\_client} & session caller guard: \texttt{sessionWarnedLabels} advances only on a confirmed \texttt{lookup-replaced} write \\
-\midrule
-\texttt{background\_monitor} & \texttt{emitToSignalUI} emits \texttt{kt:warning} (DOM) and does not touch the Whisper bus \\
-\texttt{background\_monitor} & \texttt{emitOfflineToSignalUI} emits \texttt{kt:unreachable} only (never a MitM alert) \\
-\texttt{background\_monitor} & server unreachable $\to$ \texttt{kt:unreachable}, not a red MitM alert \\
-\texttt{background\_monitor} & error from a server that did respond $\to$ red (\texttt{kt:warning}) \\
-\texttt{background\_monitor} & own key replaced (\texttt{matches=false}) $\to$ red \\
-\texttt{background\_monitor} & own key intact (\texttt{matches=true}), no conversation verdict $\to$ no alert \\
-\texttt{background\_monitor} & C5: a green verdict with a healthy own key dispatches \texttt{kt:verified} \\
-\texttt{background\_monitor} & C5: own-key mismatch with a green conversation dispatches \texttt{kt:warning}, never \texttt{kt:verified} \\
-\midrule
-\texttt{cea} & honest parties agree each epoch (fold secret $I_t$, authenticate public $T_t$) \\
-\texttt{cea} & labels evolve with the ratchet \\
-\texttt{cea} & verdicts: \textsc{Consistent} / \textsc{Fork} / \textsc{NotPosted} returned as specified \\
-\texttt{cea} & cross-implementation vectors (locked with the \texttt{duet} crate's suite, 3 ratchet epochs) \\
-\midrule
-\texttt{secret\_store} & the pair key is order-independent ($A{,}B = B{,}A$) and 32 bytes \\
-\texttt{secret\_store} & the derived secret is deterministic and depends on the key pair \\
-\texttt{secret\_store} & remember / has / conversations / forget round trip \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Jest tests: representative client unit-suite rows, part 2 of 2.}
-\label{tab:tests-jest-unit-b}
-\footnotesize
-\renewcommand{\arraystretch}{0.90}
-\begin{tabular}{@{}lp{10.2cm}@{}}
-\toprule
-Suite & Test \\
-\midrule
-\texttt{getKeysForServiceId\_status} & \texttt{SAFE} $\to$ verified \\
-\texttt{getKeysForServiceId\_status} & \texttt{KEY\_NOT\_IN\_LOG} $\to$ absent, not verified \\
-\texttt{getKeysForServiceId\_status} & \texttt{KEY\_MISMATCH} / \texttt{PROOF\_INVALID} / \texttt{MITM\_WARNING} $\to$ warning with \texttt{shouldProceed=false} (3 cases) \\
-\texttt{getKeysForServiceId\_status} & a network/init failure (\texttt{KtUnreachableError}) $\to$ unreachable, not verified \\
-\texttt{getKeysForServiceId\_status} & a malformed or unexpected verifier error $\to$ error, \texttt{shouldProceed=false} (fail-closed) \\
-\texttt{getKeysForServiceId\_status} & \texttt{verified} $\to$ \texttt{kt:verified} \\
-\texttt{getKeysForServiceId\_status} & \texttt{warning} $\to$ \texttt{kt:warning} \\
-\texttt{getKeysForServiceId\_status} & \texttt{unreachable} $\to$ \texttt{kt:unreachable} carrying the \texttt{serviceId} \\
-\texttt{getKeysForServiceId\_status} & \texttt{absent} $\to$ no status event, no \texttt{kt:verified} emission \\
-\texttt{getKeysForServiceId\_status} & \texttt{error} $\to$ no status event, no \texttt{kt:verified} emission \\
-\texttt{getKeysForServiceId\_status} & \texttt{KEY\_NOT\_IN\_LOG} never produces \texttt{kt:verified} \\
-\texttt{getKeysForServiceId\_status} & a thrown exception never produces \texttt{kt:verified} \\
-\midrule
-\texttt{decoder\_validation} & a well-formed \texttt{/search} response decodes, and a non-object body is rejected \\
-\texttt{decoder\_validation} & inclusion path: non-array, non-hex element, and wrong-length element each rejected \\
-\texttt{decoder\_validation} & numeric fields (\texttt{leafIndex}, \texttt{treeSize}, \texttt{epoch}, \texttt{timestamp}) must be non-negative safe integers \\
-\texttt{decoder\_validation} & prefix proof: missing \texttt{kind} and non-array \texttt{siblings} rejected, and bad-hex/short root and wrong-length signature rejected \\
-\texttt{decoder\_validation} & STH \texttt{configHash} required as exactly 32 bytes (missing or wrong-length rejected) \\
-\texttt{decoder\_validation} & \texttt{/vrf-public-key}: non-object, invalid-hex, and wrong-length responses rejected. \texttt{/sth-public-key}: a malformed response rejected independently (valid VRF). Both-valid accepted \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Jest tests: canonical-identity integration suites added with the ACI fix.}
-\label{tab:tests-jest-canonical}
-\footnotesize
-\renewcommand{\arraystretch}{0.90}
-\begin{tabular}{@{}lp{10.2cm}@{}}
-\toprule
-Suite & Test \\
-\midrule
-\texttt{canonical\_service\_id} & the canonical form of an ACI string is exactly 16 bytes \\
-\texttt{canonical\_service\_id} & canonical 16-byte ids derive three 32-byte labels \\
-\texttt{canonical\_service\_id} & the 36-byte UTF-8 form the live path once used throws (the defect) \\
-\texttt{canonical\_service\_id} & a PNI-prefixed service id is not 16 bytes and would throw \\
-\texttt{canonical\_service\_id} & canonical labels satisfy the symmetry property \\
-\midrule
-\texttt{display\_string} & \texttt{conversations()} returns the original UUID when it was supplied \\
-\texttt{display\_string} & falls back to the byte-hex key when no display string is supplied \\
-\texttt{display\_string} & \texttt{forget()} removes both the secret and the display name \\
-\midrule
-\texttt{pni\_silence} & a PNI drives no client call, no CEA step, and no warning \\
-\texttt{pni\_silence} & an ACI control does reach the client, proving the guard is specific \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering
-\caption{Embedded electron-mocha tests at the Signal Desktop integration point (\num{35} tests in
-six suites, representative rows shown).}
+\caption{Embedded electron-mocha tests at the Signal Desktop integration point (\num{13} tests in
+six suites).}
 \label{tab:tests-embedded}
 \footnotesize
-\renewcommand{\arraystretch}{0.90}
-\begin{tabular}{@{}lp{9.6cm}@{}}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{9.2cm}@{}}
 \toprule
-Suite & Test \\
+Suite & Test and property \\
 \midrule
-\texttt{service\_id\_bytes} & a realistic ACI string converts to the exact 16 raw UUID bytes \\
-\texttt{service\_id\_bytes} & a PNI-prefixed service id is rejected with a typed error \\
-\texttt{service\_id\_bytes} & a malformed string throws, never truncating \\
+\texttt{aci\_integration} & adapter-derived ids drive clean verify, dual-index substitution detection, and global-path mismatch \\
+\texttt{aci\_integration} & mismatch-driven: a tampered slot makes Alice publish a warning whose MAC Bob verifies \\
 \midrule
-\texttt{ktServiceId} & matches the raw ACI string \\
-\texttt{ktServiceId} & matches the raw 16-byte UUID hex the monitor emits after the fix \\
-\texttt{ktServiceId} & still matches the legacy UTF-8-hex encoding (back-compat) \\
-\texttt{ktServiceId} & does not match a different peer under any encoding \\
-\texttt{ktServiceId} & accepts when either id is unknown, to avoid hiding a real warning \\
+\texttt{ktServiceId} & the peer matcher accepts every service-id encoding, never matches across peers, and is permissive when an id is unknown \\
+\texttt{ktServiceId} & strict mode returns false when either id is missing (fail closed for verified) \\
 \midrule
-\texttt{aci\_integration} & derives 16-byte ids from real ACI strings via the ACI adapter \\
-\texttt{aci\_integration} & registers, verifies clean (\texttt{SAFE}), and monitors the dual-index path clean \\
-\texttt{aci\_integration} & detects a substituted lookup slot via \texttt{detectMitm} (dual-index) \\
-\texttt{aci\_integration} & flags a mismatched fetched key as \texttt{KEY\_MISMATCH} (global path) \\
-\texttt{aci\_integration} & a tampered slot makes Alice publish a warning whose MAC Bob verifies \\
+\texttt{ktStatusMachine} & badge transitions: pending start, green on verified, red on warning, unreachable a no-op \\
+\texttt{ktStatusMachine} & a matching verified turns it green under any encoding, while an unattributable one changes neither the status nor the message \\
+\texttt{ktStatusMachine} & a matching warning turns it red and is shown even when unattributable \\
+\midrule
+\texttt{peer\_sweep} & the sweep decision matrix over (active, keyed, monitored), with self, group and non-ACI exclusions \\
+\texttt{peer\_sweep} & delete regression: a monitored active peer is forgotten once \texttt{active\_at} clears \\
 \midrule
 \texttt{pni\_getkeys\_silence} & a PNI calls none of verify, dispatch, or record \\
-\texttt{pni\_getkeys\_silence} & an ACI drives verify, dispatch (\texttt{kt:verified}), and record \\
-\texttt{pni\_getkeys\_silence} & an ACI with no own identity key still verifies but does not record \\
+\texttt{pni\_getkeys\_silence} & an ACI drives verify and dispatch, and records only when an own identity key exists \\
 \midrule
-\texttt{ktStatusMachine} & the initial state is grey pending with no message \\
-\texttt{ktStatusMachine} & a matching \texttt{kt:verified} turns it green and clears the message \\
-\texttt{ktStatusMachine} & a matching \texttt{kt:warning} turns it red and stores the message \\
-\texttt{ktStatusMachine} & an unrelated \texttt{kt:verified} (peer or conversation mismatch) changes neither field \\
-\texttt{ktStatusMachine} & a \texttt{kt:warning} with a missing id is still shown (permissive) \\
-\midrule
-\texttt{peer\_sweep} & registers an active, keyed, not-yet-monitored peer \\
-\texttt{peer\_sweep} & forgets an inactive peer that is monitored (pruned) \\
-\texttt{peer\_sweep} & keeps monitoring an archived conversation while \texttt{active\_at} is set \\
-\texttt{peer\_sweep} & delete regression: a monitored active peer is forgotten once \texttt{active\_at} clears \\
+\texttt{service\_id\_bytes} & a realistic ACI string converts to the exact 16 raw UUID bytes \\
+\texttt{service\_id\_bytes} & PNI-prefixed and malformed ids raise a typed error, never truncating \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -493,9 +272,9 @@ for the HKDF dual-index derivation, warning MAC, and CEA construction. In the cr
 \texttt{dual\_index::cross\_impl\_test\_vectors},
 \texttt{dual\_index::warn\_mac\_cross\_impl\_vector}, and
 \texttt{cea::cross\_impl\_test\_vectors}. The CEA vector covers three ratchet epochs
-(\cref{tab:tests-rust-prim-b,tab:tests-rust-system}). The corresponding client evidence comes from
-the \texttt{kt\_integration} v1, v3, and warning-MAC vectors and the \texttt{cea} vector test
-(\cref{tab:tests-jest-wire,tab:tests-jest-unit}). The opt-in wire-parity suite additionally checks
+(\cref{tab:tests-rust-prim,tab:tests-rust-system}). The corresponding client evidence comes from
+the \texttt{kt\_integration} dual-index and warning-MAC vectors and the \texttt{cea} vector test
+(\cref{tab:tests-jest-wire}). The opt-in wire-parity suite additionally checks
 the client verifiers against Ed25519 and Merkle outputs returned by the running directory server.
 Together, these tests establish agreement for the specified vectors and server responses without
 establishing equivalence for every input (\cref{sec:impl-tests}).
@@ -549,12 +328,13 @@ ECVRF-EDWARDS25519-SHA512-TAI vectors~\cite[Appendix~B.3]{rfc9381}. Signed-head 
 tampered, and wrong-key signatures. Auditor tests cover honest transitions, genuine equivocation,
 and rejection of a divergent head carrying an invalid signature.
 
-The \texttt{signal-desktop-kt} client verifier harness contains \num{190} Jest tests. Its opt-in
+The \texttt{signal-desktop-kt} client verifier harness contains \num{93} Jest tests. Its opt-in
 wire-parity suite requires the running directory server and checks the complete client verification
 chain against live responses. The checked paths include multi-entry inclusion, proven
 non-inclusion, signed-head verification and tamper rejection, VRF verification, and windowed
-consistency. A normal Jest run without the server does not establish live wire parity. In addition,
-\num{35} embedded tests in six Signal Desktop suites pass realistic account identifiers through the
+consistency. A normal Jest run does not by itself establish live wire parity; \texttt{npm run
+test:wire} requires the server and fails if it is unreachable. In addition,
+\num{13} embedded tests in six Signal Desktop suites pass realistic account identifiers through the
 client's integration path (\cref{sec:tests-ts}).
 
 The adversarial suite is implemented in \texttt{tests/adversarial.rs} within the \texttt{duet}
