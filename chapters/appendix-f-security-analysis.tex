@@ -184,7 +184,7 @@ Spoofing & 4 & 4 & None \\
 Tampering & 3 & 3 & None (all three addressed by detection) \\
 Repudiation & 3 & 3 & None \\
 Information disclosure & 3 & 2 & operator learns the label$\leftrightarrow$user mapping \\
-Denial of service & 4 & 1 & write flooding, epoch staleness, and proof omission \\
+Denial of service & 4 & 1 & write flooding, withheld epoch publication, and proof omission \\
 Elevation of privilege & 3 & 3 & None \\
 \midrule
 \textbf{Total} & \textbf{20} & \textbf{16} & \textbf{4} \\
@@ -200,11 +200,11 @@ in \cref{sec:def-structures}. The endpoint, auditor, and trust-on-first-use assu
 
 The four residuals arise from the trust model and deployment requirements. One follows from the
 operator's position in the trust model: the operator learns the association between an account and its VRF-derived
-identity label. This limitation also appears in CONIKS~\cite[Section~3.4]{melara2015coniks} and the IETF KeyTrans
-protocol, where the service operator evaluates the VRF used to derive each prefix-tree search
-key~\cite[Section~11.7]{ietf-keytrans-protocol}. The other three concern availability: write flooding,
-published-epoch staleness, and withheld proofs. These deployment tasks are discussed in
-\cref{ch:discussion}.
+identity label. The same property follows in CONIKS, where the provider computes the VUF-derived
+index~\cite[Section~3.4]{melara2015coniks}, and in IETF KeyTrans, where each prefix-tree search key
+is the VRF output for a label--version pair~\cite[Section~11.7]{ietf-keytrans-protocol}. The other
+three concern availability: write flooding, withheld epoch publication, and withheld proofs. These
+deployment tasks are discussed in \cref{ch:discussion}.
 
 The \hyperref[sc:threat-a2]{A2 warning-censorship scenario} is distinct from those availability
 residuals. Its pre-commit compound signal and transition-audit detection are established in
@@ -295,7 +295,7 @@ Leak the shared secret from a label & HKDF-Expand outputs (dual-index labels) ar
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Withhold epoch publication & auditor observes the head not advancing & \emph{no staleness timeout implemented, freshness alarm left to deployment} \\
+Withhold epoch publication & auditor observes the head not advancing & \emph{no publication-delay check implemented, freshness alarm left to deployment} \\
 Refuse to serve proofs & not prevented: the KT layer cannot compel an unavailable server to serve. A refusal is a visible availability failure, not a silent key compromise & \emph{no gossip transport in the prototype, counted as an availability residual} \\
 Censor warning writes & a strong compound signal (A2): a key mismatch from the self-check together with a proof-verified \emph{absence} of the warning & surfacing beyond the prototype warning UI (for example an out-of-band alert) left to deployment \\
 Flood with fake registrations & \emph{none}: no deployment rate limit is implemented in the prototype & \emph{deployment-level rate limiting, left to deployment (operational)} \\
