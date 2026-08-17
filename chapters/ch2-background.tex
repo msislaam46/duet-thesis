@@ -130,9 +130,8 @@ directories~\cite{melara2015coniks,chase2019seemless}. Zero-knowledge-set varian
 what proofs reveal beyond the queried binding. SEEMless uses an append-only ZKS (aZKS), Parakeet an
 ordered ZKS (oZKS), and ELEKTRA a rotatable ZKS
 (RZKS)~\cite{chase2019seemless,malvai2023parakeet,len2023elektra,chen2022rzks}.
-Merkle\textsuperscript{2}, a general transparency-log system with applications to public-key
-transparency, uses chronological Merkle trees in the outer layer, with a prefix tree corresponding
-to each internal node~\cite{hu2021merkle2}.
+Merkle\textsuperscript{2} nests two authenticated structures: an outer chronological Merkle tree
+and a prefix tree committed by each of its internal nodes~\cite{hu2021merkle2}.
 \Cref{sec:ext-vkd-blocks} explains the structural differences and terminology.
 
 \subsection{Academic and Deployed Systems}\label{ssec:bg-vkd-academic}
