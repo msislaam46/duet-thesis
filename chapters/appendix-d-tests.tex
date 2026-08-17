@@ -76,7 +76,7 @@ identical labels & both parties must address one shared warning slot (G1) \\
 STH-signature acceptance, tampering, and wrong-key tests & \texttt{server} & only a correctly signed head is accepted & signed-head authenticity, the prerequisite of every downstream verdict \\
 equivocation detected & \texttt{auditor} & one signer, two roots at one epoch $\Rightarrow$ fork & split-view detection (A4, G4) \\
 unsigned head rejected & \texttt{auditor} & a divergent head with an invalid signature is not a fork & soundness of fork detection (no false alarm) \\
-windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding: a stale or foreign signed head is rejected \\
+windowed catch-up check & client (TS) & catch-up fails on a foreign-key signed head & per-lookup head binding: a regressing or foreign signed head is rejected \\
 availability routing & monitor (TS) & an unreachable server yields amber, not red & distinguishes an unavailable check from an integrity alarm \\
 key-fetch status integrity & hook (TS) & only a proof-verified match emits \texttt{kt:verified}, while absent, unreachable, and error do not & a first-contact or unreachable verifier must not read as verified \\
 \bottomrule
