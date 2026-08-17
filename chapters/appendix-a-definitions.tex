@@ -17,7 +17,7 @@ Each definition also identifies where it is used in DUET.
 infeasible.}
 A hash function $\Hash:\{0,1\}^*\to\{0,1\}^{256}$ is collision-resistant if it is computationally
 infeasible to find $x\neq x'$ such that
-$\Hash(x)=\Hash(x')$~\cite[Slides~9 and~11]{dowling2025hashfunctions}.
+$\Hash(x)=\Hash(x')$~\cite{dowling2025hashfunctions}.
 DUET instantiates $\Hash$ with SHA-256. The collision-resistance assumption underlies the
 authenticated structures in \cref{sec:def-structures}.
 \end{definition}
@@ -27,7 +27,7 @@ authenticated structures in \cref{sec:def-structures}.
 input keying material.}
 HKDF uses an extract-and-expand construction. The input keying material must provide sufficient
 entropy. The context string separates different derivation
-purposes~\cite[Slides~14--15 and~19--22]{dowling2025mackdfs}.
+purposes~\cite{dowling2025mackdfs}.
 Following RFC~5869, $\HKDFex(\mathit{salt},\mathit{IKM})\to\mathit{PRK}$ extracts a pseudorandom key
 from the input keying material, while
 $\HKDFexp(\mathit{PRK},\mathit{info},L)\to\mathit{OKM}$ expands it into $L$ bytes of output key
@@ -49,8 +49,8 @@ Correctness requires
 for every key produced by $\mathsf{KGen}$ and every message $m$. The scheme is unforgeable under
 chosen-message attack (UNF-CMA) if an efficient adversary, after
 obtaining tags for messages of its choice, can produce a new valid message--tag pair only with
-negligible probability~\cite[Slides~5--7]{dowling2025mackdfs}. HMAC is a hash-based message authentication
-code~\cite[Slide~10]{dowling2025mackdfs}. DUET uses HMAC-SHA256 for HKDF and to authenticate warning
+negligible probability~\cite{dowling2025mackdfs}. HMAC is a hash-based message authentication
+code~\cite{dowling2025mackdfs}. DUET uses HMAC-SHA256 for HKDF and to authenticate warning
 payloads (\cref{def:hkdf,def:dualindex-write}).
 \end{definition}
 
@@ -67,7 +67,7 @@ $\mathsf{Vfy}(\mathit{pk},m,\sigma)$ returns a Boolean value. Correctness requir
 for every key pair produced by $\mathsf{KGen}$ and every message $m$. The scheme is unforgeable
 under chosen-message attack (UNF-CMA) if an efficient adversary, after
 obtaining signatures for messages of its choice, can produce a new valid message--signature pair
-only with negligible probability~\cite[Slides~29 and~33--34]{dowling2025signatures}. Ed25519 is specified in
+only with negligible probability~\cite{dowling2025signatures}. Ed25519 is specified in
 RFC~8032~\cite[Section~5.1]{rfc8032}. DUET uses Ed25519 to sign the signed tree head
 (\cref{def:sth}).
 \end{definition}
