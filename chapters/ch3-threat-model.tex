@@ -25,8 +25,8 @@ vantage for split-view (fork) detection.
 availability but verifies signed heads and directory proofs before use. A Dolev--Yao network adversary can intercept, modify,
 inject, replay, or drop traffic~\cite{dolevyao1983}. The auditor obtains its view separately from the
 clients. A malicious operator may substitute keys or present different internally consistent
-histories~\cites[Sections~1 and 3.3]{ietf-keytrans-architecture}
-[Sections~4.2 and 5]{yadav2022fakekey}. DUET additionally considers censorship of warning writes.
+histories~\cites{ietf-keytrans-architecture}[Sections~4.2 and 5]{yadav2022fakekey}.
+DUET additionally considers censorship of warning writes.
 
 DUET relies on the cryptographic assumptions in
 \cref{sec:def-primitives,sec:def-vrf,def:x3dh}. The operator controls the directory's VRF secret key
