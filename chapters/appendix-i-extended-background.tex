@@ -153,8 +153,8 @@ initiation but not the current protocol state because the compared keys are not 
 evolution. The same limitation applies to trust on first use, where the initial keys are assumed to
 be valid but later protocol state is not re-authenticated~\cite{dowling2023acka}. Their
 earlier MoDUSA construction instead derives per-epoch authentication keys and fingerprints over the
-ratchet history. It detects an active man-in-the-middle attack during a session and can be run
-multiple times during the lifetime of that session~\cite[Sections~1 and 4]{dowling2020nocompromise}.
+ratchet history. It detects an active man-in-the-middle during a session and supports repeated
+authentication as the session continues~\cite[Sections~1 and 4]{dowling2020nocompromise}.
 However, MoDUSA still requires users to initiate the comparison. Thus, it authenticates evolving
 state without providing automatic re-authentication.
 
@@ -383,9 +383,8 @@ privacy~\cite[Section~VIII]{hu2021merkle2}.
 \paragraph{WhatsApp Key Transparency (AKD).}
 WhatsApp deploys an Auditable Key Directory at production scale, with signed directory roots and
 retained audit material for independent consistency
-checking~\cite{whatsapp2023whitepaper}. The WhatsApp whitepaper states that
-key-history requests were not yet enabled in its
-clients~\cite{whatsapp2023whitepaper}. A failed automatic check directs the user to verify the
+checking~\cite{whatsapp2023whitepaper}. At the time of the whitepaper, WhatsApp clients did not yet
+support key-history requests~\cite{whatsapp2023whitepaper}. A failed automatic check directs the user to verify the
 session manually with the contact~\cite{whatsapp2023whitepaper}. The cited workflow
 does not define the automatic in-band peer warning targeted by this thesis.
 
