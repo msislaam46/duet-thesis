@@ -298,8 +298,8 @@ approximately $2^{32}$ users requires a daily monitoring download below
 clients compare the provider's STR with one observed by an auditor to detect
 equivocation~\cite[Section~4.1.4]{melara2015coniks}.
 
-Three limitations of CONIKS are directly relevant to DUET. A returning client must perform a series
-of checks covering the missed epochs~\cite{melara2015coniks}. Direct exchange of observed
+Three limitations of CONIKS are directly relevant to DUET. A returning client verifies the directory
+states published since its last accepted state~\cite{melara2015coniks}. Direct exchange of observed
 STRs between clients remains future work~\cite[Section~4.1.4, footnote~5]{melara2015coniks}.
 Finally, CONIKS can expose an attack but cannot stop a provider that accepts the resulting public
 evidence~\cite[Section~2.1]{melara2015coniks}.
@@ -310,9 +310,10 @@ abstraction through completeness, soundness, and simulation-based
 privacy~\cite[Section~2]{chase2019seemless}. Its append-only zero-knowledge set (aZKS) stores
 successive versions under distinct label--version pairs so that earlier changes remain in the
 verified history. A \texttt{KeyHistory} query returns the values and epochs of the user's key
-updates. Its cost depends mainly on the number of updates, while marker checks add overhead
-logarithmic in the number of epochs~\cite[Sections~4.2--4.3]{chase2019seemless}. The client must
-compare the returned history with the updates it made. Auditors verify update proofs between
+updates. Its cost depends mainly on the number of key updates. Markers are inserted only at
+powers-of-two positions, giving $O(\log E)$ additional checks for an $E$-epoch
+history~\cite[Sections~4.2--4.3]{chase2019seemless}. The client checks whether the returned history
+agrees with its local record of key changes. Auditors verify update proofs between
 adjacent epochs~\cite[Section~4.3]{chase2019seemless}. The paper assumes agreement on the published
 commitment and suggests gossip or blockchain publication as possible
 mechanisms~\cite[Section~2.1]{chase2019seemless}.
@@ -345,15 +346,14 @@ urgent warning for this event~\cite[Section~2.2]{len2023elektra}. However, this 
 full account reset, not the substitution of an individual key.
 
 \paragraph{OPTIKS.}
-OPTIKS simplifies the two-tree structure used by SEEMless and Parakeet. The \emph{all tree} stores
-every key version, while the \emph{old tree} stores versions that are no longer
-current~\cite{optiks2024}. OPTIKS removes the old tree and instead proves freshness in the
-remaining tree through membership of the current version and non-membership of the next version.
-Since the two trees have approximately the same size, this reduces storage and update costs by
-approximately half~\cite{optiks2024}. After checking a key once in the current time period,
-the client needs only one non-membership proof if that key remains
-unchanged~\cite[Section~5]{optiks2024}. However, the client must complete the required history
-checks before data from an old time period is deleted~\cite[Section~5]{optiks2024}. OPTIKS does not
+SEEMless and Parakeet maintain one tree for the complete key history and another for versions that
+are no longer current. OPTIKS removes the second tree and establishes freshness by proving that the
+claimed version is present and that its successor is absent. Since the two trees have approximately
+the same size, the authors report that this change reduces storage and update work by about
+half~\cite{optiks2024}. Once a client has verified the existing history of a key, a later check of
+an unchanged key requires only proof that no successor version
+exists~\cite[Section~5]{optiks2024}. Clients must therefore verify each period's history before the
+service removes the data retained for that period~\cite[Section~5]{optiks2024}. OPTIKS does not
 define a conversation-specific peer-warning channel for an individual key substitution.
 
 \paragraph{PRISM.}
@@ -363,9 +363,9 @@ transitions over a Jellyfish Merkle tree. The resulting epoch proofs are publish
 data-availability layer, allowing light clients to verify the whole directory state instead of
 monitoring only their own entries~\cite[Sections~1 and~4]{pusch2025prism}. PRISM identifies the
 wider reliance of existing systems on external checks performed by users, gossiping clients,
-blockchains, auditors, or witness committees~\cite{pusch2025prism}. The authors state that the
-paper provides an overview and does not attempt a complete
-specification~\cite{pusch2025prism}. Its construction relies on Celestia for ordered and
+blockchains, auditors, or witness committees~\cite{pusch2025prism}. The paper presents the
+construction at a high level and leaves a complete protocol specification outside its
+scope~\cite{pusch2025prism}. Its construction relies on Celestia for ordered and
 globally available data and uses a designated sequencer/prover to batch operations and generate
 epoch proofs~\cite[Sections~3.2 and~4]{pusch2025prism}.
 
@@ -373,9 +373,9 @@ epoch proofs~\cite[Sections~3.2 and~4]{pusch2025prism}.
 Merkle\textsuperscript{2} is a general transparency log system that the authors identify as
 applicable to public-key transparency~\cite[Sections~I and~XI]{hu2021merkle2}. It nests two
 authenticated structures: an outer chronological Merkle tree and a prefix tree committed by each of
-its internal nodes~\cite[Section~IV]{hu2021merkle2}. This structure gives $O(\log^2 n)$ append cost, while a data
-owner downloads only $O(\log^2 n)$ data for monitoring throughout the system's
-lifetime~\cite[Table~I and Section~V]{hu2021merkle2}. The paper explains that VRF-derived indices
+its internal nodes~\cite[Section~IV]{hu2021merkle2}. This structure gives $O(\log^2 n)$ append cost.
+Across the lifetime of the system, monitoring one identifier requires $O(\log^2 n)$ proof data in
+total~\cite[Table~I and Section~V]{hu2021merkle2}. The paper explains that VRF-derived indices
 can reduce identifier leakage~\cite[Section~VII-B]{hu2021merkle2}. However, VRF is not implemented
 as the evaluation concentrates on system performance instead of
 privacy~\cite[Section~VIII]{hu2021merkle2}.
