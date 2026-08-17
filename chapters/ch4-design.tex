@@ -348,7 +348,7 @@ cited precedents and technical basis.
 \toprule
 Decision & Justification & Basis \\
 \midrule
-Path-compressed sparse binary Merkle prefix tree & provides inclusion and non-inclusion proofs with smaller transmitted paths in sparse regions & CONIKS~\cite[Sections~3.1--3.2]{melara2015coniks}, IETF KeyTrans~\cite[Sections~3.3 and 12.2]{ietf-keytrans-protocol}, this work (\cref{sec:design-detail-alternatives}) \\
+Path-compressed sparse binary Merkle prefix tree & provides inclusion and non-inclusion proofs with smaller transmitted paths in sparse regions & CONIKS~\cite{melara2015coniks}, IETF KeyTrans~\cite{ietf-keytrans-protocol}, this work (\cref{sec:design-detail-alternatives}) \\
 ECVRF-EDWARDS25519-SHA512-TAI for global labels & makes global-label derivation verifiable, protects published labels from outsider enumeration, and matches Signal's VRF suite & RFC~9381~\cite{rfc9381}, Signal keytrans~\cite{signal-kt-server} \\
 SHA-256 with RFC~6962 leaf and node prefixes & separates leaf and internal-node hashes for second-preimage resistance and follows the RFC~9162 Merkle-log construction & RFC~6962/9162~\cite{rfc6962,rfc9162} \\
 HKDF-SHA256 for dual-index labels & provides pre-use unpredictability and separates the two lookup directions from the shared warning channel & RFC~5869~\cite{rfc5869}, X3DH~\cite{x3dh}, this work (\cref{ssec:design-labels}) \\
