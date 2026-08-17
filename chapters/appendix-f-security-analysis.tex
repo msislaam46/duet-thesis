@@ -6,9 +6,9 @@ This appendix expands the security analysis supporting the main text.
 \cref{sec:sec-mitre} and the STRIDE analysis in \cref{sec:sec-stride}. The corresponding scenarios
 and outcomes are evaluated in \cref{sec:eval-security}. These analyses apply the threat model of
 \cref{ch:threat} to the mechanisms of \cref{ch:design} and the runnable adversarial suite described
-in \cref{sec:impl-tests}. The MITRE identifiers are real ATT\&CK Enterprise
-technique IDs, mapped to how each manifests against a key directory and the key-transparency control
-that answers it.
+in \cref{sec:impl-tests}. The MITRE identifiers are ATT\&CK Enterprise
+technique IDs, mapped to how they apply to a key directory and the DUET control that
+addresses the resulting attack outcome.
 
 % ----------------------------------------------------------------------------
 \section{Warning-Suppression Safeguards}\label{sec:sec-suppression}
@@ -40,8 +40,8 @@ when the recomputed root equals the committed root. The epoch root's inclusion i
 binds the accepted transition to the signed history.
 Each leaf commits its $\mathit{kind}$, \textsc{mutable} (the global-VRF identity slots, which the server
 may rotate) or \textsc{immutable} (the raw dual-index, CEA, and warning labels, which are write-once),
-bound into the leaf hash as $\Hleaf(\mathit{kind} \concat \mathit{label} \concat \mathit{value})$,
-so the kind is authenticated by the very inclusion proof that authenticates the value and the server
+bound into the leaf hash as $\Hleaf(\mathit{kind} \concat \mathit{label} \concat \mathit{value})$.
+The inclusion proof authenticates both the kind and the value, so the server
 cannot relabel it. The auditor therefore \emph{distinguishes} the two families: it accepts a declared
 in-place rotation only on a mutable leaf, and \textbf{rejects any rotation of an immutable leaf
 outright} (as well as any rotation that misdeclares the leaf's kind). An adversary that has
@@ -51,16 +51,17 @@ rotation. Since the target leaf is immutable, the transition audit rejects that 
 epoch fails the auditor's validation and raises an alarm. Entry immutability is thus enforced
 \emph{as an auditor acceptance condition}: an immutable-leaf rotation is detected and rejected, not merely surfaced. The owner-side self-checks remain as defence
 in depth for the dual-index labels: a replaced lookup slot fails the owner's self-check and a
-replaced warning slot still alerts (any value at the slot alerts). But note the CEA fingerprint
-overwrite is one the receiver's per-epoch verdict alone \emph{cannot} catch under a pre-shared-state
-compromise (the substituted fingerprint matches what the victim recomputes for the injected key), so
-it is the auditor's rejection of the immutable-leaf rotation, and the alarm it raises, that closes it. The IETF
+replaced warning slot still alerts (any value at the slot alerts). A later overwrite of a CEA
+fingerprint is different. The receiver's per-epoch verdict alone \emph{cannot} catch it under a
+pre-shared-state compromise, because the substituted fingerprint matches what the victim recomputes
+for the injected key, so it is the auditor's rejection of the immutable-leaf rotation, and the alarm
+it raises, that detects the overwrite. The IETF
 KeyTrans protocol assigns this update-validity role to third-party auditors. Its
 \texttt{AuditorUpdate} structure carries each log entry's added and removed prefix leaves with a
 proof against the prior tree, allowing the auditor to recompute both roots of the
-transition~\cite[Section~15.2]{ietf-keytrans-protocol}. A deletion or overwrite therefore cannot be committed
-without either failing the auditor's validation and raising its alarm, or presenting the auditor a transition that
-fails to replay.
+transition~\cite[Section~15.2]{ietf-keytrans-protocol}. A malicious operator can still commit such a
+state. The auditor rejects it when the disclosed transition fails validation or does not replay to
+the committed root.
 \item \textbf{Persistence check.} Independently of any auditor, the writer of a warning retains the
 inclusion proof and signed tree head of the epoch at which its warning committed, and the persistence
 check re-verifies the warning's inclusion on a later head. In the prototype this check is implemented
@@ -75,8 +76,8 @@ deleted a committed leaf, since all three verify against heads the server itself
 The persistence check gives the warning's \emph{writer} evidence of deletion but does not alert a
 \emph{peer} that missed the warning. The transition audit independently detects the deletion during
 epoch validation. With these safeguards in place, the server's only remaining suppression strategy is
-refusal. It can withhold the lookup, the epoch, or the auditor's disclosure, whether for all clients
-or selectively for the one revealed warning label. Either way the refusal is observable, since a
+refusal. It can withhold a lookup response from one client or all clients, withhold an epoch, or
+withhold the transition disclosure from the auditor. Either way the refusal is observable, since a
 client treats anything other than a proof-verified response as a failed check instead of a clean
 absence. A refusal therefore never masquerades as a verified absence. The prototype reports an
 unreachable or withheld response as an unavailable check (amber), while a malformed, invalid, or
@@ -100,55 +101,57 @@ warning on the victim's behalf, so an offline victim is still covered. For a ser
 served bundle against the log sees no mismatch. Detection can occur through the victim's own-key
 self-check or through a peer that has already trust-on-first-use-pinned the victim's key. For A1b,
 the peer's background monitor performs this comparison on every tick. For A1a, the comparison occurs
-when the peer next retrieves the victim's global identity key. Only against a pre-first-contact substitution, where no peer
-has yet pinned a key, is the victim's self-check the sole detector. The residual limitation is the
+when the peer next retrieves the victim's global identity key. For a substitution before first
+contact, no peer has yet pinned a key, so only the victim's self-check can detect it. The residual limitation is the
 trust-on-first-use caveat of \cref{sec:threat-fair}, since a substitution that predates first contact
 pins the incorrect key.
 
 The closest related design, KTACA, uses anonymous client auditing to provide automatic
 detection~\cite{yadav2022fakekey}. Parakeet argues that anonymous lookups conflict
 with its requirement that only authenticated and permitted users may
-query~\cite{malvai2023parakeet-eprint}. The derived, pre-use unpredictable labels used here obtain the
-same peer-facing detection without anonymity infrastructure.
+query~\cite{malvai2023parakeet-eprint}. DUET instead combines derived, pre-use unpredictable labels
+with peer monitoring and shared warnings, without requiring anonymity infrastructure.
 
 % ----------------------------------------------------------------------------
 \section{MITRE ATT\&CK Technique-to-Mitigation Matrix}\label{sec:sec-mitre}
 
 The adversary techniques relevant to a messaging key directory are mapped, using the MITRE
-ATT\&CK enterprise matrix~\cite{mitre-attack}, to their key-transparency mitigations in
-\cref{tab:sec-mitre}.
+ATT\&CK enterprise matrix~\cite{mitre-attack}. \Cref{tab:sec-mitre} maps each relevant
+technique to its application in the key-directory setting and the DUET control that addresses the
+resulting attack outcome.
 
 \begin{table}[H]
 \centering
-\caption[MITRE ATT\&CK techniques mapped to KT mitigations.]{MITRE ATT\&CK Enterprise techniques
-and their key-transparency mitigations. The mitigated families are T1557, including
-T1557.004, and T1565, including T1565.002. T1552.004 is the explicit endpoint-compromise
-boundary X1.}
+\caption[MITRE ATT\&CK techniques and the corresponding DUET controls.]{MITRE ATT\&CK Enterprise
+techniques, their application to a key directory, and the corresponding DUET controls. The addressed
+families are T1557, including T1557.004, and T1565, including T1565.002. T1552.004 is the explicit
+endpoint-compromise boundary X1.}
 \label{tab:sec-mitre}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.7cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{4.5cm}l@{}}
 \toprule
-ID & Technique & Vector in KT & KT mitigation & Scen. \\
+ID & Technique & Vector in KT & DUET control & Scen. \\
 \midrule
-T1557 & Adversary-in-the-Middle & network interception of X3DH & global VRF-bound identity check (honest directory) & \hyperref[sc:threat-a3]{A3} \\
-T1557.004 & Evil Twin & rogue Wi-Fi access point for bundle interception & global VRF-bound identity check (honest directory) & \hyperref[sc:threat-a3]{A3} \\
-T1565 & Data Manipulation & modify key bindings in the tree & expected-key comparison, peer warning, and transition or cross-vantage checks & \hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a3]{A3}, and \hyperref[sc:threat-a4]{A4} \\
+T1557 & Adversary-in-the-Middle & intercept and replace an X3DH/PQXDH pre-key bundle & global VRF-bound identity check (honest directory) & \hyperref[sc:threat-a3]{A3} \\
+T1557.004 & Evil Twin & rogue Wi-Fi access point enabling pre-key-bundle interception and replacement & global VRF-bound identity check (honest directory) & \hyperref[sc:threat-a3]{A3} \\
+T1565 & Data Manipulation & modify key bindings in the tree & expected-key comparison, peer warning, and transition or cross-vantage checks & \hyperref[sc:threat-a1]{A1}, \hyperref[sc:threat-a4]{A4}, and \hyperref[sc:threat-a5]{A5} \\
 T1565.002 & Transmitted Data Manipulation & replace a key in transit & global VRF-bound identity check (honest directory) & \hyperref[sc:threat-a3]{A3} \\
 T1552.004 & Private Keys & extract insecurely stored private keys from a device & \emph{none}: KT boundary (endpoint compromise) & \hyperref[sc:threat-x1]{X1} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The techniques span the Collection, Credential Access, and Impact tactics. Every
-technique except T1552.004 is mitigated by a key-transparency control. T1552.004 is the deliberate
-endpoint-compromise boundary, out of scope for any directory mechanism (\cref{ch:threat}). The table
-lists only techniques with a faithful ATT\&CK counterpart~\cite{mitre-attack}. Adversary behaviours
-specific to a malicious \emph{directory} have no precise Enterprise-technique match and
-are the thesis's own A1, A2, and A4 threats, analysed through the STRIDE threat analysis and the attack
-scenarios of \cref{ch:threat} instead. These behaviours include observing registration patterns,
-operating a parallel encrypted channel, abusing the server's own write authority, selectively
-censoring writes, and presenting divergent signed views (equivocation).
+The techniques span the Collection, Credential Access, and Impact tactics. For every technique
+except T1552.004, DUET addresses the resulting key-directory attack outcome. T1552.004 is the deliberate
+endpoint-compromise boundary, out of scope for any directory mechanism (\cref{ch:threat}). T1565 is a
+high-level counterpart but not an exact match. It names data manipulation in general,
+while the directory-specific semantics of abusing the server's own write authority (A1), rotating a
+key maliciously (A5), and presenting divergent signed views (A4) are captured more precisely by the
+thesis's own scenarios~\cite{mitre-attack}. Selective warning censorship (A2) has no
+Enterprise-technique match and is analysed through STRIDE and the threat scenarios. Observing
+registration patterns also has no Enterprise-technique match and is treated as a directory-privacy
+limitation in the STRIDE analysis.
 
 % ----------------------------------------------------------------------------
 \section{STRIDE Threat Analysis}\label{sec:sec-stride}
@@ -157,10 +160,10 @@ The threat analysis applies STRIDE~\cite{stride} to the server (Merkle log, pref
 tree head), the client (registration, verification, warning monitor), and the auditor. Of twenty threats, sixteen are
 addressed by an implemented control and four are residual. The control column distinguishes attacks
 that are cryptographically prevented from those detected after they are attempted. Forgery of a VRF
-label, a Merkle proof, or a signature is cryptographically prevented, whereas several actions a malicious
-server can still attempt (planting a first-write registration, censoring a warning, or fabricating a
-divergent head) are not prevented but detected by the transparency log, the warning channel, or the
-cross-vantage auditor. \Cref{tab:eval-stride} gives the summary, and
+label, a Merkle proof, or a signature is cryptographically prevented. Other
+actions remain possible but are detected after they occur, including an unauthorised identity
+registration, warning censorship, and the creation of divergent signed heads.
+\Cref{tab:eval-stride} gives the summary, and
 the per-category detail follows in \cref{tab:stride-s,tab:stride-t,tab:stride-r,tab:stride-i,tab:stride-d,tab:stride-e}.
 
 A threat is counted \emph{addressed} when an implemented control prevents or detects the main
@@ -170,7 +173,7 @@ seeing that a server refuses to serve) does not by itself count as addressing it
 records both cases: the four counted residual threats are \emph{italicized}, while upright entries
 are limitations of rows that are counted addressed.
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \caption[STRIDE coverage of DUET.]{STRIDE coverage of DUET. Addressed threats have an implemented
 preventive or detective control.}
@@ -184,7 +187,7 @@ Spoofing & 4 & 4 & None \\
 Tampering & 3 & 3 & None (all three addressed by detection) \\
 Repudiation & 3 & 3 & None \\
 Information disclosure & 3 & 2 & operator learns the label$\leftrightarrow$user mapping \\
-Denial of service & 4 & 1 & write flooding, withheld epoch publication, and withheld proofs \\
+Denial of service & 4 & 1 & write flooding, withheld epoch\newline publication, and withheld proofs \\
 Elevation of privilege & 3 & 3 & None \\
 \midrule
 \textbf{Total} & \textbf{20} & \textbf{16} & \textbf{4} \\
@@ -223,7 +226,7 @@ which is not wired into the live background monitor.
 Threat & KT control & Residual \\
 \midrule
 Forge a VRF label & ECVRF-EDWARDS25519-SHA512-TAI binding & none (cryptographic) \\
-Impersonate a user registration & \emph{detected}, not prevented: the write API is unauthenticated in the prototype, so a first write can be planted. The owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorisation (\cref{ch:discussion}) \\
+Impersonate a global identity registration & \emph{detected}, not prevented: the global registration API is unauthenticated in the prototype, so a binding can be planted or replaced at the victim's identity slot. The owner's self-check and peer warning (A1) catch it after the fact & prevention requires account-layer write authorisation (\cref{ch:discussion}) \\
 Forge a Merkle proof & SHA-256 collision resistance & approximately $2^{128}$ generic collision-security work \\
 Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \bottomrule
@@ -241,7 +244,7 @@ Forge an STH signature & Ed25519 verification & none (cryptographic) \\
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Modify a key at a label & owner's self-check detects the mismatch & observed within 1--2 epochs, not a protocol-wide latency bound \\
+Modify an identity key at a lookup label & owner's self-check detects the mismatch & the demonstration observes this within 1--2 epochs, which is not a protocol-wide latency bound \\
 Alter a historical entry & append-only log and consistency proofs & none (cryptographic) \\
 Tamper with a proof path & client-side \texttt{verify\_search\_result} & none (cryptographic) \\
 \bottomrule
@@ -278,8 +281,8 @@ Deny STH issuance & the Ed25519 signature is origin-authenticated evidence under
 Threat & KT control & Residual \\
 \midrule
 Link a label to a user identity & VRF-derived pseudorandom labels & \emph{server knows the mapping (operator knowledge)} \\
-Enumerate registered users & 256-bit pseudorandom labels prevent offline recovery & none offline for outsiders. The prototype's unauthenticated query endpoint still permits online tests of known identifiers (operator residual counted above) \\
-Leak the shared secret from a label & HKDF-Expand outputs (dual-index labels) are pseudorandom and ECVRF outputs (identity labels) are pseudorandom without the VRF secret & none (cryptographic) \\
+Offline enumeration of registered users from published labels & 256-bit pseudorandom labels prevent offline recovery & none offline for outsiders. Online tests of known identifiers through the prototype's unauthenticated query endpoint are a deployment limitation outside G3's offline-enumeration scope \\
+Recover the shared conversation secret from a client-derived label & the HKDF-derived dual-index, warning, and CEA labels are pseudorandom under their secret inputs & none (cryptographic) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -303,7 +306,9 @@ Flood with fake registrations & \emph{none}: no deployment rate limit is impleme
 \end{tabular}
 \end{table}
 
-\begin{table}[ht]
+\FloatBarrier
+
+\begin{table}[H]
 \centering
 \caption{Elevation of Privilege (three of three addressed).}
 \label{tab:stride-e}
@@ -314,9 +319,9 @@ Flood with fake registrations & \emph{none}: no deployment rate limit is impleme
 \toprule
 Threat & KT control & Residual \\
 \midrule
-Server forges an inclusion proof & SHA-256 cryptographic binding & none (cryptographic) \\
-Server fabricates a divergent tree head & \emph{detected}, not prevented: a head inconsistent with a pinned history is rejected locally, but detecting two internally consistent branches requires an honest independent vantage & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
-Client escalates to server writes & partly prevented, partly \emph{detected}: the honest public interface rejects any overwrite of an occupied dual-index or warning slot, and a race on a known label fails as a write-once violation on the honest registration. A privileged operator bypass remains possible but is detected as an immutable-leaf rotation by the transition audit. A first write to an empty slot by a party who knows the shared secret is not prevented but is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorisation on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
+Use the privileged raw-update capability to bypass the public write-once checks & \emph{detected}, not prevented: the honest public interface rejects any overwrite of an occupied dual-index or warning slot, and a privileged operator bypass is detected as an immutable-leaf rotation by the transition audit & privileged-interface separation left to deployment (\cref{ch:discussion}) \\
+Server fabricates divergent signed heads & \emph{detected}, not prevented: a head inconsistent with a pinned history is rejected locally, but detecting two internally consistent branches requires an honest independent vantage & needs an honest second vantage (\cref{ssec:eval-auditor}) \\
+Client occupies an unclaimed raw label without account-layer authorisation & \emph{detected}, not prevented: a race on a known label fails as a write-once violation on the honest registration, and a first write to an empty slot by a party who knows the shared secret is caught after the fact by the owner's label-bound self-check and the peer warning (A1) & explicit account-layer writer authorisation on the raw first-write endpoint left to deployment (\cref{ch:discussion}) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -353,16 +358,17 @@ assumes an honest directory.}
 \FloatBarrier
 \subsection{Detection Timeline}\label{ssec:eval-timeline}
 
-\Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1). The attack
-occurs at epoch $t$. The victim's self-check flags it at $t{+}1$, the warning commits at $t{+}2$,
-and the peer's monitor reads it at $t{+}3$. These epochs follow the demonstration's
-one-action-per-epoch schedule. Monitoring itself requires no user action.
+\Cref{fig:eval-timeline} traces the timing of a server-side substitution (A1). The substitution is
+committed at epoch $t$, and verification under that head detects the mismatch. The warning is
+committed at epoch $t{+}1$, and the peer can verify it under the same head. These positions describe
+the demonstration and do not establish a protocol-wide detection bound. Monitoring itself requires
+no user action.
 
 \begin{figure}[ht]
 \centering
 \input{figures/tikz/fig-eval-timeline}
 \caption[Detection timeline for a server-side key substitution.]{Detection timeline for a
-server-side A1 substitution. The epoch positions follow the demonstration's one-action-per-epoch
-schedule.}
+server-side A1 substitution. The epoch positions are those of the adversarial demonstration, whose
+tests require the warning to commit at the epoch after the attack.}
 \label{fig:eval-timeline}
 \end{figure}
