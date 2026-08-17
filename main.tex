@@ -169,7 +169,9 @@ $\sharedS$ & X3DH shared secret \\
 $\DH{X}{Y};\ \KDF$ & Diffie--Hellman value of two key pairs; key-derivation function \\
 $\Hash$ & collision-resistant hash $\{0,1\}^*\!\to\!\{0,1\}^{256}$ (SHA-256) \\
 $\mathsf{HKDF}\text{-}\mathsf{Extract},\ \mathsf{HKDF}\text{-}\mathsf{Expand}$ & HKDF (RFC~5869~\cite{rfc5869}): $\mathit{PRK}\gets\mathsf{Extract}(\text{salt},\sharedS)$, then a domain-separated $\mathsf{Expand}$ per label \\
-$\VRF,\ \VRFeval,\ \VRFvfy$;\ $\beta$ & verifiable random function (ECVRF, RFC~9381~\cite{rfc9381}): evaluate and verify; $\beta$ the output whose prefix is the global label \\
+$\VRF,\ \VRFeval,\ \VRFvfy$;\ $\beta$ & verifiable random function (ECVRF,
+RFC~9381~\cite{rfc9381}): evaluation and verification; $\beta$ is its output, and
+$\beta[0{:}32]$ is the global label \\
 $\MTH$ & Merkle Tree Hash: the log-tree root over an ordered leaf list (RFC~9162~\cite{rfc9162}) \\
 $\ell_{\mathsf{self}}, \ell_{\mathsf{peer}}, \ell_{\mathsf{warn}}$ & dual-index labels: own-key lookup, peer-key lookup, and shared warning slot \\
 $t$; $\STH_t$ & epoch number; signed tree head at epoch $t$ \\
