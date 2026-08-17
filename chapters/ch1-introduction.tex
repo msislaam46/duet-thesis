@@ -68,13 +68,13 @@ client verifier is integrated into a modified build of Signal Desktop~(\cref{ch:
 operations are checked for byte-for-byte agreement using cross-language test vectors.
 
 \paragraph{Empirical.} The benchmark evaluation yields four main findings. At a matched directory size, the implemented
-VRF-indexed lookup proof is comparable in size to the corresponding CONIKS
+VRF-indexed lookup proof is comparable in size to the derived corresponding CONIKS
 proof~\cite{melara2015coniks}. Detection adds label-bound lookups that reuse the same proof format,
 leaving individual proof size unchanged. Median full client verification remains below
 \SI{150}{\micro\second} through $10^7$ labels. A 30-day offline window with hourly epochs requires
 one proof containing \num{320} raw
 consistency-path hash bytes, compared with \num{222528} bytes for the synthetic repeated-proof
-baseline. Separately, the STRIDE and MITRE ATT\&CK evaluation distinguishes the attacks detected by
+baseline. Additionally, the STRIDE and MITRE ATT\&CK evaluation distinguishes the attacks detected by
 the implemented controls from the residual risks that remain (\cref{ch:eval}).
 
 \section{Thesis Roadmap}\label{sec:intro-roadmap}
