@@ -105,8 +105,8 @@ has yet pinned a key, is the victim's self-check the sole detector. The residual
 trust-on-first-use caveat of \cref{sec:threat-fair}, since a substitution that predates first contact
 pins the incorrect key.
 
-The closest related design, KTACA, reaches client-side detection through anonymous
-lookups~\cite{yadav2020poster,yadav2022fakekey}. Parakeet argues that anonymous lookups conflict
+The closest related design, KTACA, uses anonymous client auditing to provide automatic
+detection~\cite{yadav2022fakekey}. Parakeet argues that anonymous lookups conflict
 with its requirement that only authenticated and permitted users may
 query~\cite{malvai2023parakeet-eprint}. The derived, pre-use unpredictable labels used here obtain the
 same peer-facing detection without anonymity infrastructure.
