@@ -85,7 +85,7 @@ and its relationship to previously trusted history. The structures are illustrat
 \intuition{An ordered list represented by one root hash, so that changing an entry or its position
 changes the root unless collision resistance is broken.}
 For an ordered list of entries $D=(d_0,\dots,d_{n-1})$, the Merkle Tree Hash $\MTH(D)$ is defined
-recursively as follows~\cite[Section~2.1]{rfc6962}:
+recursively as follows~\cite[Section~2.1.1]{rfc9162}:
 For the empty list, $\MTH(\varnothing)=\Hash(\varepsilon)$, where $\varepsilon$ is the empty byte
 string. For a one-entry list, $\MTH((d_0))=\Hash(\texttt{0x00}\concat d_0)$. For $n>1$,
 \[
@@ -211,7 +211,7 @@ t+1=\mathit{tree\_size}_t.
 \]
 
 This follows the signed-head role of Certificate Transparency, whose signed tree head includes a
-timestamp, tree size, and Merkle-tree root~\cite[Section~3.5]{rfc6962}. DUET additionally signs the
+timestamp, tree size, and Merkle-tree root~\cite[Sections~4.9 and~4.10]{rfc9162}. DUET additionally signs the
 epoch and configuration commitment. A client or auditor recomputes $m_t$, checks that the
 configuration commitment matches its expected keys and parameters, verifies $\sigma_t$ under the pinned
 $\mathit{pk}_{\mathsf{sth}}$, and checks the well-formedness condition before using
