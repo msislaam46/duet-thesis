@@ -160,9 +160,9 @@ However, MoDUSA still requires users to initiate the comparison. Thus, it authen
 state without providing automatic re-authentication.
 
 Dowling and Hale illustrate this limitation using a three-year communication period and a compromise
-after the first year. In their active-attacker example, the CKA exposes two years of data, whereas
-each scheduled TLS session exposes one hour of session data. The comparison assumes that the attack
-remains undetected~\cite{dowling2023acka}.
+approximately one year into it. In their active-attacker example, the CKA exposes two years of data,
+whereas the TLS case exposes one hour of data. The comparison assumes that the attack remains
+undetected~\cite{dowling2023acka}.
 
 Manual comparison also introduces a usability cost. In the first phase of one study, pairs were
 asked to authenticate each other and ensure that no other party could read their messages, but were
@@ -176,7 +176,7 @@ it~\cite[Section~6.3]{vaziripour2017}.
 
 The responses also showed limited understanding of the threat model. Among the 32 responses that did
 not mention key verification, 28 (88\%) relied instead on features of the other person, such as
-voice, appearance, or shared knowledge~\cite{vaziripour2017}. A man-in-the-middle attacker
+voice, appearance, or shared knowledge~\cite[Section~9]{vaziripour2017}. A man-in-the-middle attacker
 was not explicitly identified as a possible attack vector. The authors suggest that a system such
 as CONIKS could automate key discovery without relying on one trusted party while preventing a key
 server from presenting inconsistent views without detection~\cite{vaziripour2017}.
