@@ -427,7 +427,8 @@ writes to it.
 \subsection{Signal Desktop Integration Wiring}\label{ssec:apiref-eng-wiring}
 
 The integration processes account identifiers (ACIs) only. It uses libsignal to convert each ACI
-service-ID string to its canonical 16 raw UUID bytes before registration, verification, monitoring,
+service-ID string to its canonical 16-byte raw UUID representation before registration,
+verification, monitoring,
 or CEA processing. Phone-number identifiers (PNIs) are excluded before these operations and
 therefore produce no lookup verdict, user-interface event, or monitoring state.
 
@@ -443,7 +444,8 @@ point and reports the verdict without blocking session establishment.
 The monitor stores each warning-publication guard under the warning label and each peer-absence
 record under the peer lookup label. When the conversation secret changes, these labels also change,
 so the records associated with the previous labels are not reused. By contrast, pinned peer
-identity keys are stored under the corresponding canonical ACIs, so each pin remains associated
+identity keys are indexed by the hexadecimal encoding of the peer's 16-byte ACI, so each pin
+remains associated
 with the same peer even when the derived labels change. Verdicts are passed to the user interface
 through DOM events and appear in a conversation-header badge and banner. The specific hook
 functions and event names are listed in

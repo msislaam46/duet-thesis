@@ -210,7 +210,7 @@ and \texttt{getKeysForServiceId\_status} inject stub clients to check verdict-to
 malformed-response rejection, \texttt{kt\_log} checks the structured log format used by the screenshots,
 and the \texttt{canonical\_service\_id}, \texttt{display\_string}, and
 \texttt{pni\_silence} suites cover the ACI canonicalization, display-string preservation, and
-phone-number identifier (PNI) event-silence added with the canonical-identity fix.
+phone-number identifier (PNI) event-silence added with the ACI-conversion fix.
 \Cref{tab:tests-jest-wire} lists the suites and the properties each establishes.
 Beyond this harness, \num{13} embedded electron-mocha tests run in six suites under Signal
 Desktop's own test runner (\cref{tab:tests-embedded}). They pass realistic ACI strings through the
@@ -233,7 +233,7 @@ Suite & Tests & Properties established \\
 \texttt{cea} & 6 & continuous-mode agreement and the verdict trichotomy. The cross-implementation vectors are checked, fork alerts are routed to the warning path, and fork injection is scoped to the conversation \\
 \texttt{decoder\_validation} & 4 & every malformed search field and key-endpoint payload is rejected as \texttt{MalformedResponse}, with well-formed controls \\
 \texttt{kt\_log} & 4 & peer-id shortening, log-line format, and the verbose and demo gates \\
-\texttt{canonical\_service\_id} & 2 & the 36-byte UTF-8 and PNI-prefixed forms are rejected without truncation. Canonical labels satisfy symmetry \\
+\texttt{canonical\_service\_id} & 2 & the 36-byte UTF-8 and PNI-prefixed forms are rejected without truncation. Each party's own lookup label equals the other's peer lookup label, and both parties derive the same warning label \\
 \texttt{secret\_store} & 2 & the shared secret is order-independent and pair-dependent. The store prunes a forgotten peer \\
 \texttt{wire\_parity} & 1 & against the live Rust server: inclusion, proven non-inclusion, STH signature and tamper rejection, the VRF path, and windowed consistency \\
 \texttt{tree\_parity} & 1 & the twenty shared implementation files are byte-identical across the two trees \\

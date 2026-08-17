@@ -185,7 +185,7 @@ missing signed head, a failed proof, or a key mismatch causes verification to fa
 
 The key-upload path registers the client's global identity binding, while the peer-key-retrieval
 path verifies the fetched binding. Before these directory operations, Signal service-ID strings are
-converted to canonical 16-byte account identifiers. A background monitor first checks the client's
+converted to their 16-byte raw UUID representations. A background monitor first checks the client's
 own global VRF-derived identity entry. For each conversation, it then verifies append-only consistency, the
 client's own lookup slot, the shared warning slot, and the peer's lookup slot, emitting a green
 verdict only when all checks succeed and the global self-check is healthy. The warning slot is checked
@@ -289,7 +289,7 @@ root used for log-inclusion verification, preventing a valid proof from being pa
 unsigned or unrelated head.
 
 Second, registration and lookup initially used different encodings for Signal account identifiers.
-Converting both paths to the canonical 16-byte account identifier removed that mismatch. Another
+Converting both paths to the same 16-byte ACI representation removed that mismatch. Another
 race condition arose when an epoch was committed between reading a signed head and requesting a
 consistency proof. The client and auditor now request each proof using the size of the validated
 signed head so that a later commit cannot change the proof's upper bound.

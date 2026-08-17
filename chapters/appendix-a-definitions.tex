@@ -496,8 +496,8 @@ and then derives three 256-bit labels:
 \end{align*}
 Here, $\min$ and $\max$ use lexicographic byte ordering. Reversing the two party viewpoints swaps
 $\lblself$ and $\lblpeer$, while the canonical ordering produces the same $\lblwarn$ for both
-parties. The derivation uses HKDF-SHA256 (\cref{def:hkdf}). The implementation uses canonical
-16-byte account identifiers, satisfying the fixed-width requirement
+parties. The derivation uses HKDF-SHA256 (\cref{def:hkdf}). The implementation uses fixed-width 16-byte
+account-identifier representations, satisfying the fixed-width requirement
 (\cref{ssec:impl-verifier}).
 \end{definition}
 
