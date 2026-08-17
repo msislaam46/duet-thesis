@@ -56,8 +56,8 @@ configuration used for the lookup and warning mechanisms.
 % ----------------------------------------------------------------------------
 \section{Measurement Environment}\label{sec:bench-env}
 
-All reported values in this appendix were measured on the platform identified automatically by the harness
-and reported in \cref{tab:bench-env}.
+The timing and memory measurements were obtained on the platform identified automatically by the
+harness and reported in \cref{tab:bench-env}.
 
 \begin{table}[ht]
 \centering
@@ -214,7 +214,7 @@ rotation and epoch commit, the VRF in isolation, and lookup verification in the 
 
 \begin{table}[H]
 \centering
-\caption[M8--M11: single-thread rates and verification cost.]{M8--M11: operation rates and maintenance costs.}
+\caption[M8--M11: single-thread rates and verification cost.]{M8--M11: operation rates, maintenance, and verification costs.}
 \label{tab:bench-maint}
 \small
 \begin{tabular}{@{}L{6.2cm}lrr@{}}
@@ -354,16 +354,16 @@ after simulated continuous-mode chains of different depths, while
 \cref{tab:bench-m15-writes} gives the companion analytic write-count grid.
 \Cref{tab:bench-m16} reports the two reconstructed detection paths in the \texttt{duet} crate.
 
-M17 is functional and has no associated timing. \Cref{tab:bench-m17} maps each clean workflow to
-the test that asserts its expected verdict without a warning. The Signal Desktop runtime remains
+M17 is functional and has no associated timing. \Cref{tab:bench-m17} maps each listed clean
+workflow to the test that asserts its expected verdict without a warning. The Signal Desktop runtime remains
 outside the M16 and M17 measurements.
 
 \input{chapters/appendix-e-v2-tables}
 
 \begin{table}[ht]
 \centering
-\caption{M17 clean-workflow verdict coverage: each honest state and the test source that asserts a
-clean verdict without a warning.}
+\caption{M17 clean-workflow verdict coverage: each listed honest state and the test source that
+asserts a clean verdict without a warning.}
 \label{tab:bench-m17}
 \footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.4cm}>{\raggedright\arraybackslash}p{7.6cm}@{}}
@@ -445,12 +445,13 @@ a $W=720$ offline window~\cite{signal-kt-server}.
 
 \paragraph{Client-Verification Timing.}
 At $N=10^7$, CONIKS reports \SI{159}{\micro\second} for authentication-path verification and
-approximately \SI{400}{\micro\second} for signature verification, giving a derived total of
-approximately \SI{559}{\micro\second}. The source does not report VUF verification
+approximately \SI{400}{\micro\second} for signature verification. These reported components give a
+path-and-signature subtotal of approximately \SI{559}{\micro\second}. The source states that lookup
+verification also requires one VUF verification but does not report its time
 separately~\cite[Section~5.3]{melara2015coniks}. At the same directory size, DUET's median is
-\SI{139.2}{\micro\second} and includes VRF, prefix, log-inclusion, and signed-head verification.
-The implementations, hardware, and workloads differ, so these values provide published context and
-do not establish a controlled speed comparison.
+\SI{139.2}{\micro\second} and includes VRF, prefix, log-inclusion, and signed-head verification. The
+implementations, hardware, and workloads differ. Thus, these values provide published context and do
+not establish a controlled speed comparison.
 
 % ----------------------------------------------------------------------------
 \FloatBarrier
