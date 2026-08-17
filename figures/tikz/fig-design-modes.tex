@@ -45,12 +45,10 @@
   \draw[edge] (snd1) -- node[right,font=\tiny]{proven absent} (sndW);
   \draw[edge,green!55!black] (sndW) -- node[right,font=\tiny]{confirmed} (sndOK);
   \draw[edge] (sndW.east) -- (8.6,-4.35)
-    -- node[right,font=\tiny,pos=0.5,inner sep=2pt]{unconfirmed} (8.6,-7.35)
+    -- (8.6,-7.35)
     -- (sndRB.east);
   \draw[edge] (snd1.west) -| (4.55,-8.9)
-    -- node[above,font=\tiny,pos=0.45,fill=white,inner sep=1pt,yshift=1pt]
-       {otherwise}
-    (sndST.west);
+    -- (sndST.west);
 
   % receiver branch
   \node[font=\bfseries] (rcvH) at (12.3,-1.65) {Receiver};
