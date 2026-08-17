@@ -90,11 +90,11 @@ keys~\cite[Sections~2.1--2.4]{doubleratchet}.
 The shared secret derived by X3DH or PQXDH initializes the Double Ratchet. The construction combines
 a Diffie--Hellman ratchet, which mixes fresh Diffie--Hellman outputs into the root chain, with
 sending and receiving key-derivation chains that derive a new message key for each
-message~\cite[Sections~1 and 2.1--2.4]{doubleratchet}. This provides forward secrecy and
+message~\cite{doubleratchet}. This provides forward secrecy and
 post-compromise recovery. Learning the current chain state does not reveal earlier message keys.
 Post-compromise recovery occurs after a fresh Diffie--Hellman output unknown to the attacker enters
 the root chain, provided that the attacker no longer controls the
-session~\cite[Sections~2.1 and 8.2]{doubleratchet}. The active-adversary setting returns in
+session~\cite[Section~8.2]{doubleratchet}. The active-adversary setting returns in
 \cref{sec:bg-acka}. \Cref{fig:bg-ratchet} shows how the root, sending, and receiving chains
 interact.
 
@@ -105,9 +105,10 @@ interact.
 sending, and receiving chains, while the figure follows one sending direction. A fresh
 Diffie--Hellman output enters $\KDF_{RK}$, which produces the next root key and a chain key.
 Each $\KDF_{CK}$ step produces the next chain key and one message
-key~\cite[Sections~2.1--2.3]{doubleratchet}. Message keys do not derive later keys and may be
-retained temporarily for out-of-order delivery~\cite[Sections~2.2 and 2.6]{doubleratchet}. The
-labels $rk$, $ck$, and $mk$ denote root, chain, and message keys, respectively.}
+key. Message keys do not derive later keys and may be
+retained temporarily for out-of-order delivery. The
+labels $rk$, $ck$, and $mk$ denote root, chain, and message keys,
+respectively~\cite[Sections~2.1--2.6]{doubleratchet}.}
 \label{fig:bg-ratchet}
 \end{figure}
 
