@@ -243,9 +243,10 @@ inclusion and non-inclusion~\cite[Sections~3.3 and~12.2]{ietf-keytrans-protocol}
 
 \paragraph{Zero-Knowledge Sets.} A ZKS commits to a collection of label--value pairs and supports
 membership and non-membership proofs without revealing information about the remaining collection.
-In the VKD variants discussed here, this privacy guarantee is parameterized by an explicit leakage
-function. SEEMless's aZKS extends the static primitive with verifiable append-only updates and
-prevents an existing label from being modified or deleted~\cite[Section~3]{chase2019seemless}.
+These constructions define privacy relative to a leakage function that states what information the
+proofs may reveal beyond the query result. SEEMless's aZKS extends the static primitive with
+verifiable append-only updates and prevents an existing label from being modified or
+deleted~\cite[Sections~2--3]{chase2019seemless}.
 
 Parakeet's ordered ZKS (oZKS) additionally binds the order in which elements are inserted. Its
 compaction extension first marks eligible elements for deletion through tombstoning and later
