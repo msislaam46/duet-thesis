@@ -98,9 +98,8 @@ independent verification of the client proof checker would provide additional as
 
 Group messaging support would require epoch-scoped labels and a warning policy covering membership
 changes and every current device, potentially using domain-separated MLS exporter
-secrets~\cite[Section~8.5]{rfc9420}. Multi-device continuity could build on ELEKTRA-style device
-cross-signing, together with device-scoped labels, warning propagation, and reset
-handling~\cite[Sections~2.1 and 3]{len2023elektra}.
+secrets~\cite[Section~8.5]{rfc9420}. Multi-device continuity could build on ELEKTRA-style device cross-signing and reset
+handling~\cite{len2023elektra}, together with device-scoped labels and warning propagation.
 
 Stronger directory privacy is another research direction. OPRF-based identity blinding could
 conceal the raw lookup identity from the OPRF server~\cite[Sections~1 and 7.1]{rfc9497}. However,
