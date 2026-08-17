@@ -117,25 +117,25 @@ respectively~\cite[Sections~2.1--2.6]{doubleratchet}.}
 
 A continuous key agreement (CKA) models key exchange as a sequence of updates. The participants
 exchange new public key shares and derive a fresh symmetric key after each protocol
-message~\cite{dowling2023acka}. Signal's Double Ratchet is one of the ratcheting protocols
+message. Signal's Double Ratchet is one of the ratcheting protocols
 captured by this abstraction~\cite{dowling2023acka}.
 
 ACKA combines a CKA with Continuous Entity Authentication (CEA) and a secure log. For each update,
 CEA derives a label from the previous shared state and a fingerprint over the current public
 keying material. The sender appends the label and fingerprint to the log, while the receiver queries
-the expected label before accepting the update~\cite{dowling2023acka}. The
+the expected label before accepting the update. The
 log must be append-only and immutable, support label queries, and prove consistency between two
 views. ACKA leaves its implementation generic and notes that it could use a blockchain or another
 distributed-ledger protocol~\cite{dowling2023acka}.
 
 ACKA considers an active man-in-the-middle after compromise of the shared state and long-term
-authentication secrets~\cite{dowling2023acka}. Its security experiment also allows the
+authentication secrets. Its security experiment also allows the
 adversary to control the sender's randomness and inject forged update
 messages~\cite{dowling2023acka}.
 
 Three differences clarify how DUET extends this framework. First, ACKA uses its secure log as an
 additional channel that an active adversary cannot fully
-control~\cite{dowling2023acka}. In its composed construction, the receiver detects a
+control. In its composed construction, the receiver detects a
 forged update. A sender can also detect an attack when its expected label is already occupied, after
 which the paper suggests appropriate, likely out-of-band
 action~\cite{dowling2023acka}. The paper does not define a conversation-specific
