@@ -457,14 +457,17 @@ not establish a controlled speed comparison.
 \FloatBarrier
 \section{Reproducing Each Metric}\label{sec:bench-repro}
 
-\Cref{tab:bench-repro} maps every metric family to the Criterion benchmark group that times it and the
-CSV file/column that records the exact values, so any row above can be regenerated and located. The
+\Cref{tab:bench-repro} maps every metric family to the benchmark group, computation, or test that
+produces it and to the CSV source or test command that records it. Therefore, each reported row can
+be regenerated and located. The
 harness lives in \texttt{benches/kt\_bench.rs}. Run it via \texttt{run-benches.ps1} (the scale family
 M7 runs only with \texttt{-ScaleOnly} / \texttt{KT\_BENCH\_LARGE\_N=1}). Sizes are seed-deterministic
 and must reproduce byte-for-byte. Timing values may vary with the
 measurement environment.
 
-\medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The Criterion group and CSV names below match those in the committed benchmark results, so some differ from the terminology used in the thesis.
+\medskip\noindent Reader-facing metric names use the terminology of \cref{ch:eval}. The benchmark, test, and CSV
+names below match those in the committed results, so some differ from the terminology used in the
+thesis.
 The \texttt{windowed\_full\_client\_verify} measurement times VRF proof and label verification,
 value binding, prefix-root reconstruction, log inclusion, and STH signature verification. Result-to-head binding, configuration
 recomputation, head well-formedness, latest-state binding, and append-only-history verification
@@ -475,13 +478,13 @@ peer-key-retrieval integration point. It excludes X3DH/PQXDH, network transfer, 
 
 \begin{table}[ht]
 \centering
-\caption{Metric $\to$ Criterion group $\to$ CSV source (for reproducing the results).}
+\caption{Metric source and recorded result for reproducing each metric.}
 \label{tab:bench-repro}
 \setlength{\extrarowheight}{2pt}
 \footnotesize
 \begin{tabular}{@{}l l >{\raggedright\arraybackslash}p{8.8cm}@{}}
 \toprule
-Metric & Criterion group & CSV source \\
+Metric & Execution source & Result source \\
 \midrule
 M1  & (computed)                & \texttt{rust\_benchmark\_results.csv} (\texttt{M1}) \\
 M2  & \texttt{M2\_proof\_generation}   & \texttt{rust\_benchmark\_timings.csv} (\texttt{M2\_search\_gen}) \\
