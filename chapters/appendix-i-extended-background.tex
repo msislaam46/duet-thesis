@@ -193,7 +193,7 @@ $D=(d_0,\ldots,d_{n-1})$. Each record has a leaf hash
 $h_i=\Hleaf(d_i)=\Hash(\texttt{0x00}\concat d_i)$, while an internal node is
 $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. These prefixes separate leaf hashes from
 internal-node hashes and provide second-preimage resistance across the two node
-types~\cites[Section~2.1]{rfc6962}[Section~2.1.1]{rfc9162}. The recursively computed root
+types~\cite[Section~2.1.1]{rfc9162}. The recursively computed root
 $\MTH(D)$ is a single hash that commits to the ordered list.
 
 An inclusion proof for $d_i$ contains the additional tree nodes needed to reconstruct $\MTH(D)$

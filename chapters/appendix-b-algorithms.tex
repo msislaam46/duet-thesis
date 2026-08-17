@@ -38,7 +38,7 @@ Algorithm & Purpose \\
 \end{tabular}
 \end{table}
 
-\paragraph{Notation.} $\Hash(\cdot)$ is SHA-256. Tree hashing is domain-separated per RFC 6962/9162~\cite{rfc6962,rfc9162}: a
+\paragraph{Notation.} $\Hash(\cdot)$ is SHA-256. Tree hashing is domain-separated per RFC 6962~\cite[Section~2.1]{rfc6962}: a
 leaf hashes as $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and an internal node as
 $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. The operator $\concat$ denotes byte
 concatenation. Identities are canonical 16-byte account identifiers. Their fixed width makes the

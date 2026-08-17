@@ -41,22 +41,22 @@ substitution, whose full derivation and message sequence are in \cref{sec:ext-si
 
 \subsection{The Double Ratchet Protocol}\label{ssec:bg-ratchet}
 
-The Double Ratchet evolves a shared secret established by X3DH or PQXDH~\cite{pqxdh} into per-message
+The Double Ratchet evolves a shared secret established by X3DH or PQXDH into per-message
 keys and provides forward secrecy. Once the adversary becomes passive, the Double
-Ratchet can also provide post-compromise recovery~\cite{doubleratchet}. It does not re-authenticate the
+Ratchet can also provide post-compromise recovery~\cite{doubleratchet,pqxdh}. It does not re-authenticate the
 session-establishment keys, so authentication still depends on an authentic initial binding. \Cref{sec:ext-ratchet} explains the key-schedule details.
 
 \subsection{Safety Numbers and the Verification Gap}\label{ssec:bg-gap}
 
 To detect man-in-the-middle key substitution, Signal provides Safety Numbers for out-of-band
-comparison and an optional Automatic Key Verification (AKV)~\cite{signal-akv}. AKV checks the peer's
+comparison and an optional Automatic Key Verification (AKV). AKV checks the peer's
 identity-key binding against Signal's key-transparency service~\cite{signal-kt-server}, but requires
 Signal to have the contact's phone number. When AKV is unavailable, including for chats started with a username, Signal recommends
 manual Safety Number comparison. Its documented workflow returns the result to the verifying
-client and does not describe a way to warn the peer.
+client and does not describe a way to warn the peer~\cite{signal-akv}.
 
 Usability evidence also limits reliance on manual verification. Without key-comparison instructions,
-only 14\% of pair--application trials in one study~\cite[Sections~5 and~6.1]{vaziripour2017} succeeded, and only two of
+only 14\% of pair--application trials in one study~\cite[Sections~5, 6.1, and~6.3]{vaziripour2017} succeeded, and only two of
 twelve pairs completed the ceremony in any tested application. Instructions improved
 success, but even instructed users took an average of 3.2 minutes to
 find the ceremony and another 7.8 minutes to complete
@@ -73,15 +73,15 @@ a detected substitution to the peer instead of leaving the result local to the k
 \section{Secure Transparency Logs}\label{sec:bg-logs}
 
 Transparency logs commit to a signed, append-only sequence of
-states~\cite[Sections~2.1.4 and 4.10]{rfc9162}. Applied to a key directory, they let clients verify
-returned bindings and monitor later states for unexpected keys or an inconsistent
-history~\cite{melara2015coniks,chase2019seemless}.
+states~\cite{rfc9162}. Applied to a key directory, they let clients verify
+returned bindings and monitor their own key histories for unexpected key changes or
+inconsistencies~\cite{melara2015coniks,chase2019seemless}.
 
 \subsection{Commitments and Merkle Log Trees}\label{ssec:bg-merkle}
 
 A Merkle root commits to every leaf under a collision-resistant hash. An inclusion proof shows that a
 record belongs to the committed tree, while a consistency proof shows that a later tree preserves
-every entry in an earlier tree~\cites[Section~2.1]{rfc6962}[Sections~2.1.1--2.1.4]{rfc9162}.
+every entry in an earlier tree~\cite[Sections~2.1.1--2.1.4]{rfc9162}.
 Both proofs are logarithmic in the relevant tree size. Inclusion authenticates one record, while
 consistency establishes append-only growth. The construction, domain separation, and proof
 walkthrough are explained in \cref{sec:ext-merkle}.
