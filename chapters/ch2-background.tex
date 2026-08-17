@@ -49,21 +49,21 @@ session-establishment keys, so authentication still depends on an authentic init
 \subsection{Safety Numbers and the Verification Gap}\label{ssec:bg-gap}
 
 To detect man-in-the-middle key substitution, Signal provides Safety Numbers for out-of-band
-comparison and an optional Automatic Key Verification (AKV). AKV checks the peer's identity-key
-binding against Signal's key-transparency service, but requires Signal to have the contact's phone
-number~\cite{signal-akv,signal-kt-server}. When AKV is unavailable, including for chats started with a username, Signal recommends
+comparison and an optional Automatic Key Verification (AKV)~\cite{signal-akv}. AKV checks the peer's
+identity-key binding against Signal's key-transparency service~\cite{signal-kt-server}, but requires
+Signal to have the contact's phone number. When AKV is unavailable, including for chats started with a username, Signal recommends
 manual Safety Number comparison. Its documented workflow returns the result to the verifying
-client and does not describe a way to warn the peer~\cite{signal-akv}.
+client and does not describe a way to warn the peer.
 
 Usability evidence also limits reliance on manual verification. Without key-comparison instructions,
-only 14\% of pair--application trials in one study succeeded, and only two of twelve pairs completed
-the ceremony in any tested application~\cite[Section~5]{vaziripour2017}. Instructions improved
-success~\cite[Section~6.1]{vaziripour2017}, but even instructed users took an average of 3.2 minutes to
+only 14\% of pair--application trials in one study~\cite{vaziripour2017} succeeded, and only two of
+twelve pairs completed the ceremony in any tested application. Instructions improved
+success, but even instructed users took an average of 3.2 minutes to
 find the ceremony and another 7.8 minutes to complete
-it~\cite{vaziripour2017}. The supporting measurements are reported in
-\cref{sec:ext-usability}. MoDUSA authenticates evolving protocol state but retains a
-user-initiated comparison, while ACKA replaces that comparison with an assumed secure
-log~\cite{dowling2020nocompromise,dowling2023acka}.
+it. The supporting measurements are reported in
+\cref{sec:ext-usability}. MoDUSA~\cite{dowling2020nocompromise} authenticates evolving protocol state but retains a
+user-initiated comparison, while ACKA~\cite{dowling2023acka} replaces that comparison with an assumed secure
+log.
 
 These limitations lead to three requirements for DUET. It must detect coordinated substitution of
 session-establishment keys, avoid reliance on a rarely completed verification ceremony, and communicate
