@@ -46,10 +46,10 @@ process that replays declared transitions and compares signed-head views.}
 \section{DUET Directory and Cryptographic Core}\label{sec:impl-modules}
 
 Within the \texttt{duet} crate, the directory core combines a path-compressed sparse Merkle
-directory, an append-only log with RFC~9162 consistency proofs~\cite[Section~2.1.4]{rfc9162}, and signed tree heads based on
-the IETF KeyTrans model~\cite[Sections~3 and 11.2]{ietf-keytrans-protocol}. It also uses
+directory, an append-only log with RFC~9162 consistency proofs~\cite{rfc9162}, and signed tree heads based on
+the IETF KeyTrans model~\cite{ietf-keytrans-protocol}. It also uses
 ECVRF-EDWARDS25519-SHA512-TAI for global-label
-derivation~\cite[Section~5.5]{rfc9381}. The crate implements DUET's dual-index construction, ACKA's
+derivation~\cite{rfc9381}. The crate implements DUET's dual-index construction, ACKA's
 CEA construction~\cite[Section~5.1]{dowling2023acka}, the HTTP server, and the auditor process. The
 \texttt{sha2}, \texttt{hkdf}, \texttt{ed25519-dalek}, and \texttt{curve25519-dalek} crates provide
 the underlying hash, key-derivation, signing, and elliptic-curve operations. The \texttt{vrf} module
@@ -88,7 +88,7 @@ Module & Standards or design basis & Verification and test evidence \\
 \texttt{server} & IETF KeyTrans combined-tree and signed-head model~\cite[Sections~3.4 and~11.2]{ietf-keytrans-protocol}, with DUET's write-once raw-label policy and epoch deltas in \cref{alg:server} & signed-head verification, committed-state lookup, write-once rejection, and epoch-delta tests \\
 \texttt{auditor} & signed-head comparison and per-epoch transition audit in \cref{alg:auditor} & append-only and equivocation tests, with invalid deletion and modification rejected during transition replay \\
 \texttt{monitor} & warning persistence and deletion evidence in \cref{alg:detect} & persistence while committed and verifiable deletion evidence against the server's signed heads \\
-\texttt{cea} & ACKA's CEA construction~\cite[Section~5.1]{dowling2023acka}, instantiated with write-once directory registration, verified write confirmation, and state advance only on success in \cref{alg:cea} & cross-implementation vectors, rejection of occupied labels, and no state advance after \textsc{Fork} or \textsc{NotPosted} \\
+\texttt{cea} & ACKA's CEA construction~\cite[Section~5.1]{dowling2023acka}, instantiated with write-once directory registration, verified write confirmation, and state advance only on success (\cref{alg:cea}) & cross-implementation vectors, rejection of occupied labels, and no state advance after \textsc{Fork} or \textsc{NotPosted} \\
 \texttt{hook\_process\_\allowbreak prekey\_bundle} & documentation-only libsignal integration module, compiled with the crate but not invoked as an executable hook & marks where a production binding of the live X3DH secret could be inserted \\
 \bottomrule
 \end{tabular}
@@ -110,11 +110,11 @@ and independent of $N$.
 At an epoch commit, the server appends the current directory root to the log, clones the current
 tree as the committed snapshot, and signs the resulting head. Clients verify lookup responses against
 this signed state. The \texttt{dual\_index} module uses the \texttt{hkdf} crate with SHA-256 to
-implement the extract-and-expand derivations in \cref{ssec:design-labels}~\cite[Sections~2--3]{rfc5869}.
+implement the extract-and-expand derivations in \cref{ssec:design-labels}~\cite{rfc5869}.
 The two lookup directions use opposite service-identifier orders under the \texttt{lookup} context,
 while canonical identifier ordering under the \texttt{warning} context produces the shared warning
 label. The \texttt{vrf} module implements ECVRF-EDWARDS25519-SHA512-TAI directly with
-\texttt{curve25519-dalek} and \texttt{sha2}~\cite[Section~5.5]{rfc9381}, using the first 32 bytes of
+\texttt{curve25519-dalek} and \texttt{sha2}~\cite{rfc9381}, using the first 32 bytes of
 $\beta$ as the prefix-tree label. A drawback of cloning the tree is that its cost grows with the
 directory size. Further module and data-structure details are provided in
 Appendix~\ref{sec:apiref-engineering}.
@@ -283,7 +283,7 @@ Three areas required significant implementation changes. First, the client compo
 ECVRF implementation produced different outputs from the \texttt{duet} crate as their
 encode-to-curve steps differed. Both implementations were aligned with the
 ECVRF-EDWARDS25519-SHA512-TAI suite and checked against the RFC test
-vectors~\cite[Appendix~B.3]{rfc9381}. Each lookup response was also changed to carry a signed head
+vectors~\cite{rfc9381}. Each lookup response was also changed to carry a signed head
 obtained under the same server lock. The verifier checks that the signed head's root matches the
 root used for log-inclusion verification, preventing a valid proof from being paired with an
 unsigned or unrelated head.
