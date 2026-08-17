@@ -41,8 +41,8 @@ substitution, whose full derivation and message sequence are in \cref{sec:ext-si
 
 \subsection{The Double Ratchet Protocol}\label{ssec:bg-ratchet}
 
-The Double Ratchet evolves a shared secret established by X3DH or PQXDH into per-message keys and
-provides forward secrecy~\cite{doubleratchet,pqxdh}. Once the adversary becomes passive, the Double
+The Double Ratchet evolves a shared secret established by X3DH or PQXDH~\cite{pqxdh} into per-message
+keys and provides forward secrecy. Once the adversary becomes passive, the Double
 Ratchet can also provide post-compromise recovery~\cite{doubleratchet}. It does not re-authenticate the
 session-establishment keys, so authentication still depends on an authentic initial binding. \Cref{sec:ext-ratchet} explains the key-schedule details.
 
