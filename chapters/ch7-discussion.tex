@@ -36,8 +36,8 @@ applies only to retained conversations. Deleting a conversation stops its monito
 archiving it preserves monitoring. The prototype retains the signed-head checkpoint, peer-key pins,
 and per-label monitor state only while the application process is running. An application restart
 establishes a new trust-on-first-use baseline and cannot retrospectively detect a substitution
-introduced during the gap. The design also does not cover groups, MLS, Sender Keys, complete
-multi-device warning propagation, or compromised endpoints.
+introduced during the gap. The design also does not cover groups, Messaging Layer Security (MLS),
+Sender Keys, complete multi-device warning propagation, or compromised endpoints.
 
 For third-party auditing, transition validation assumes at least one honest auditor. G4 (Fork
 Detection) additionally requires signed heads obtained from independent vantage points. A client can
@@ -101,8 +101,9 @@ changes and every current device, potentially using domain-separated MLS exporte
 secrets~\cite[Section~8.5]{rfc9420}. Multi-device continuity could build on ELEKTRA-style device cross-signing and reset
 handling~\cite{len2023elektra}, together with device-scoped labels and warning propagation.
 
-Stronger directory privacy is another research direction. OPRF-based identity blinding could
-conceal the raw lookup identity from the OPRF server~\cite[Sections~1 and 7.1]{rfc9497}. However,
+Stronger directory privacy is another research direction. Identity blinding based on an oblivious
+pseudorandom function (OPRF) could conceal the raw lookup identity from the OPRF
+server~\cite[Sections~1 and~7.1]{rfc9497}. However,
 private retrieval and network anonymity would still be needed to hide the requested entry and the
 requester. The design would need to specify whether the OPRF role is separate or distributed.
 
