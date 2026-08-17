@@ -39,6 +39,18 @@
 \addbibresource{references.bib}
 \usepackage{pdflscape}
 \usepackage[hidelinks]{hyperref}
+% Never break a bibliography URL after a hyphen. biblatex's \biburlsetup
+% declares \UrlBigBreaks{\do\:\do\-}, so a URL such as
+% ".../signalapp/key-transparency-server/..." may split after "key-", where the
+% real hyphen is indistinguishable from a hyphenation hyphen and a reader
+% transcribing it by eye drops the character. Slashes and the other characters
+% in biblatex's \UrlBreaks still provide break points.
+\appto\biburlsetup{\def\UrlBigBreaks{\do\:}}
+% A few URLs are one long hyphenated slug with no slash to break at. Permit a
+% costly break between letters instead: no hyphen is inserted there, so the
+% reader concatenates the two halves without losing a character.
+\setcounter{biburllcpenalty}{9000}
+\setcounter{biburlucpenalty}{9000}
 \hypersetup{
   pdftitle={Efficiently Verifying Public Key Exchange in Secure Messaging Protocols. DUET: A Key Transparency Logging Scheme with Dual-Index Warnings and Windowed Consistency Proofs},
   pdfauthor={Mohammad Saiful Islam},
