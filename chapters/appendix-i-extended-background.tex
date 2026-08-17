@@ -298,8 +298,9 @@ approximately $2^{32}$ users requires a daily monitoring download below
 clients compare the provider's STR with one observed by an auditor to detect
 equivocation~\cite[Section~4.1.4]{melara2015coniks}.
 
-Three limitations of CONIKS are directly relevant to DUET. A returning client verifies the directory
-states published since its last accepted state~\cite{melara2015coniks}. Direct exchange of observed
+Three limitations of CONIKS are directly relevant to DUET. After missing several epochs, a returning
+client checks that its previously accepted inclusion proofs and STRs remain consistent with the
+newer proofs~\cite{melara2015coniks}. Direct exchange of observed
 STRs between clients remains future work~\cite[Section~4.1.4, footnote~5]{melara2015coniks}.
 Finally, CONIKS can expose an attack but cannot stop a provider that accepts the resulting public
 evidence~\cite[Section~2.1]{melara2015coniks}.
@@ -314,9 +315,10 @@ updates. Its cost depends mainly on the number of key updates. Markers are inser
 powers-of-two positions, giving $O(\log E)$ additional checks for an $E$-epoch
 history~\cite[Sections~4.2--4.3]{chase2019seemless}. The client checks whether the returned history
 agrees with its local record of key changes. Auditors verify update proofs between
-adjacent epochs~\cite[Section~4.3]{chase2019seemless}. The paper assumes agreement on the published
-commitment and suggests gossip or blockchain publication as possible
-mechanisms~\cite[Section~2.1]{chase2019seemless}.
+adjacent epochs~\cite[Section~4.3]{chase2019seemless}. The design requires clients to share a
+consistent view of each published commitment. The authors suggest publishing commitments on a
+blockchain or comparing them through client gossip as possible ways to meet this
+requirement~\cite[Section~2.1]{chase2019seemless}.
 
 \paragraph{Parakeet.}
 Parakeet addresses the storage growth of append-only history and the publication of consistent
