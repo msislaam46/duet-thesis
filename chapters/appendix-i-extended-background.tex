@@ -114,8 +114,8 @@ labels $rk$, $ck$, and $mk$ denote root, chain, and message keys, respectively.}
 % ============================================================================
 \section{ACKA and Continuous Authentication}\label{sec:ext-acka}
 
-A continuous key agreement (CKA) is a multi-stage key-exchange protocol in which participants
-continually exchange public key-shares and output a new symmetric key after each protocol
+A continuous key agreement (CKA) models key exchange as a sequence of updates. The participants
+exchange new public key shares and derive a fresh symmetric key after each protocol
 message~\cite{dowling2023acka}. Signal's Double Ratchet is one of the ratcheting protocols
 captured by this abstraction~\cite{dowling2023acka}.
 
@@ -205,7 +205,7 @@ $\lceil\log_2 n\rceil$ hash values.
 A consistency proof between an earlier tree of size $m$ and a later tree of size $n$ contains the
 nodes needed to verify that the first $m$ records are identical in both trees. Therefore, it
 establishes that the later tree is an append-only extension of the earlier tree. RFC~9162 bounds the
-proof by $\lceil\log_2 n\rceil+1$ nodes~\cite[Section~2.1.4]{rfc9162}.
+proof by $\lceil\log_2 n\rceil+1$ nodes~\cite[Section~2.1.4.1]{rfc9162}.
 \Cref{fig:bg-merkle} illustrates the inclusion proof for one record.
 
 \begin{figure}[H]
@@ -369,9 +369,9 @@ epoch proofs~\cite[Sections~3.2 and~4]{pusch2025prism}.
 
 \paragraph{Merkle\texorpdfstring{$^2$}{2}.}
 Merkle\textsuperscript{2} is a general transparency log system that the authors identify as
-applicable to public-key transparency~\cite[Sections~I and~XI]{hu2021merkle2}. It uses
-chronological Merkle trees in the outer layer, with a prefix tree corresponding to each internal
-node~\cite[Section~IV]{hu2021merkle2}. This structure gives $O(\log^2 n)$ append cost, while a data
+applicable to public-key transparency~\cite[Sections~I and~XI]{hu2021merkle2}. It nests two
+authenticated structures: an outer chronological Merkle tree and a prefix tree committed by each of
+its internal nodes~\cite[Section~IV]{hu2021merkle2}. This structure gives $O(\log^2 n)$ append cost, while a data
 owner downloads only $O(\log^2 n)$ data for monitoring throughout the system's
 lifetime~\cite[Table~I and Section~V]{hu2021merkle2}. The paper explains that VRF-derived indices
 can reduce identifier leakage~\cite[Section~VII-B]{hu2021merkle2}. However, VRF is not implemented

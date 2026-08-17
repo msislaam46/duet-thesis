@@ -41,7 +41,7 @@ Algorithm & Purpose \\
 \paragraph{Notation.} $\Hash(\cdot)$ is SHA-256. Tree hashing is domain-separated per RFC 6962~\cite[Section~2.1]{rfc6962}: a
 leaf hashes as $\Hleaf(x)=\Hash(\texttt{0x00}\concat x)$ and an internal node as
 $\Hnode(l,r)=\Hash(\texttt{0x01}\concat l\concat r)$. The operator $\concat$ denotes byte
-concatenation. Identities are canonical 16-byte account identifiers. Their fixed width makes the
+concatenation. Identities are represented as fixed-width 16-byte values. Their fixed width makes the
 $\mathit{id_{self}}\concat\mathit{id_{peer}}$ concatenation unambiguous without length prefixes
 (Algorithm~\ref{alg:dualindex}). Both the \texttt{duet} crate and client component enforce this
 requirement before label derivation.
@@ -209,7 +209,8 @@ commitment), and \textsf{Search} answers with the value plus the full proof chai
 \clearpage
 \paragraph{Dual-index labels and warnings (Algorithm~\ref{alg:dualindex}).} The per-conversation
 label layer of \cref{sec:design-dual}: from each conversation's shared secret, HKDF~\cite{rfc5869} derives the two
-party-specific lookup labels and the canonically ordered shared warning label. \textsf{WriteWarning}
+party-specific lookup labels and the shared warning label. The warning-label derivation orders the
+identities lexicographically. \textsf{WriteWarning}
 publishes a MAC-authenticated warning payload and trusts neither an apparent success nor a write-once
 conflict, confirming publication by a verified read-back. \textsf{CheckWarning} raises
 \textsc{Alert} on any proven non-empty slot.

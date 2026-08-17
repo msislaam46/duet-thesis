@@ -4,9 +4,9 @@ This glossary provides quick definitions of the acronyms and recurring terms use
 Formal cryptographic definitions appear in \cref{app:definitions}.
 
 \begin{description}
-\item[ACI] Account identifier: Signal's canonical account service identifier. The integration converts
-  an ACI string to its 16 raw UUID bytes before DUET uses those bytes as the VRF input and in
-  dual-index and CEA label derivation.
+\item[ACI] Account identifier: Signal's service identifier for an account. Before DUET uses an ACI
+  as the VRF input or in dual-index and CEA label derivation, the integration converts its string
+  form to 16 raw UUID bytes.
 \item[ACKA] Authenticated Continuous Key Agreement, the framework of Dowling and Hale whose abstract
   log component this work instantiates and measures (\cref{def:cka}).
 \item[AKD] Auditable Key Directory, Meta's deployed key-transparency design for
