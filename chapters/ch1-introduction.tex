@@ -8,9 +8,9 @@ intended recipient's authentic key, so a substituted binding can establish an en
 an attacker while the conversation still appears secure.
 
 Signal's traditional defence is a manual Safety Number comparison~\cite{safetynumbers} over an independent channel. The
-comparison is sound when completed, but one study found that only about 14\% of unguided
-pair--application trials succeeded and that just two of twelve pairs completed the ceremony in any
-tested application~\cite{vaziripour2017}. A one-off comparison also does not monitor later key
+comparison is sound when completed, but one study found that, without key-comparison
+instructions, only 14\% of pair--application trials succeeded and just two of twelve pairs
+completed the ceremony in any tested application~\cite{vaziripour2017}. A one-off comparison also does not monitor later key
 changes, so the ceremony must be repeated after every new identity binding.
 
 Key transparency commits public-key directory states to a verifiable, append-only history, and Signal
