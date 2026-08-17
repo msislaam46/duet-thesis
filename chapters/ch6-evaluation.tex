@@ -298,16 +298,16 @@ combined with proof-verified warning absence before commitment and transition au
 checks after commitment. A global VRF-bound identity comparison detects A3 when the directory is
 honest, while a predecessor cross-signature authenticates an A5 rotation. &
 The specified A1, A2, A3, and A5 cases produce their expected outcomes
-(\cref{tab:tests-adversarial}). Post-commit warning removal is covered by the transition audit and
-persistence tests (\cref{tab:tests-rust-system}), while the Signal Desktop warning path is exercised
-in \cref{tab:tests-embedded}. The A5 cross-signature check remains limited to the
-\texttt{duet} crate's adversarial suite. \\
+(\cref{tab:tests-adversarial}). Post-commit warning removal is covered by the transition-audit and
+persistence tests (\cref{tab:tests-rust-system}). The embedded tests summarized in
+\cref{tab:tests-embedded} cover the Signal Desktop warning path. The A5 cross-signature check
+remains limited to the \texttt{duet} crate's adversarial suite. \\
 
 G2: Consistency Across Offline Windows &
 Rewriting the committed history while a client is offline &
 One RFC~9162 consistency proof from the retained trusted head to the current signed
-head~\cite[Section~2.1.4]{rfc9162}. &
-The \texttt{duet} crate and live client-integration tests verify consistency across a missed window
+head~\cite{rfc9162}. &
+The \texttt{duet} crate tests and the live wire-parity test verify consistency across a missed window
 (\cref{tab:tests-rust-server,tab:tests-jest-wire}). M4 uses one proof containing \num{320} raw
 consistency-path hash bytes at $W=720$ (\cref{ssec:eval-catchup,tab:bench-m4}). \\
 
@@ -338,7 +338,7 @@ The functional results support the tested aspects of G1, G2, and G4 for the spec
 not constitute a formal proof of the requirements. For G3 (Directory Privacy), the RFC~9381 test
 vectors check ECVRF implementation conformance~\cite[Appendix~B.3]{rfc9381}. They do not measure
 resistance to offline enumeration, which depends on the VRF security
-assumption~\cite[Sections~1, 3.4, and 7.6]{rfc9381}.
+assumption~\cite{rfc9381}.
 
 The client-side results assume uncompromised endpoints. The A4 split-view equivocation fixture
 stages two validly signed views on the same test server to evaluate the signed-head comparison
