@@ -107,9 +107,8 @@ trust-on-first-use caveat of \cref{sec:threat-fair}, since a substitution that p
 pins the incorrect key.
 
 The closest related design, KTACA, uses anonymous client auditing to provide automatic
-detection~\cite{yadav2022fakekey}. Parakeet argues that anonymous lookups conflict
-with its requirement that only authenticated and permitted users may
-query~\cite{malvai2023parakeet-eprint}. DUET instead combines derived, pre-use unpredictable labels
+detection~\cite{yadav2022fakekey}. Parakeet rejects anonymous lookup because its privacy model
+limits queries to authenticated, authorised users~\cite{malvai2023parakeet-eprint}. DUET instead combines derived, pre-use unpredictable labels
 with peer monitoring and shared warnings, without requiring anonymity infrastructure.
 
 % ----------------------------------------------------------------------------

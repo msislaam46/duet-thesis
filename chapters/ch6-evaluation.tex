@@ -253,8 +253,8 @@ context and do not establish a controlled speed comparison.
 CONIKS already makes routine owner self-monitoring efficient by allowing a client to check only its
 own binding with a logarithmic proof. Under its stated model, daily monitoring requires less than
 20\,kB~\cite[Section~5.3 and Table~1]{melara2015coniks}. However, after missing several epochs, a
-returning client performs a series of checks until its previously verified inclusion proofs and
-signed tree roots are consistent with the more recent proofs~\cite{melara2015coniks}.
+returning client performs consecutive checks that link its previously verified inclusion proofs and
+signed tree roots to the newer history~\cite{melara2015coniks}.
 DUET's M4 experiment evaluates this returning-client case with one endpoint consistency proof.
 Since CONIKS does not publish a matched byte total for $W=720$, no direct catch-up byte ratio is
 reported in \cref{tab:eval-compare}.
