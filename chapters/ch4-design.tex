@@ -179,7 +179,7 @@ suppression and offline detection, including the compound signal for
 
 \subsection{Session and Continuous Authentication Modes}\label{ssec:design-modes}
 
-DUET supports two authentication granularities. Session mode authenticates the identity binding for a
+DUET supports two authentication modes. Session mode authenticates the identity binding for a
 conversation, while continuous mode uses ACKA's continuous entity authentication (CEA) to authenticate
 later public ratchet keys.
 
@@ -189,7 +189,7 @@ secret produces a new set of lookup and warning labels. The remaining handshake 
 separately, but they contribute to the shared secret from which the labels derive.
 \Cref{tab:design-x3dh-coverage} summarizes this coverage.
 
-\emph{Continuous mode} follows ACKA's CEA construction. At epoch $t$, each party derives a shared label
+\emph{Continuous mode} follows ACKA's CEA construction~\cite{dowling2023acka}. At epoch $t$, each party derives a shared label
 $L_t$ and a directional fingerprint $F_t$ from the current chained state and public ratchet key, then
 mixes the secret epoch input $I_t$ into the next state:
 \begin{equation}\label{eq:design-cea}
