@@ -395,7 +395,7 @@ $\lceil\log_2 n\rceil$ hashes, which also satisfies the bound.
 
 \begin{remark}[Scope of the contribution]
 The windowed proof is a standard RFC~9162 consistency proof between two distant heads, not a new
-cryptographic object~\cite[Section~2.1.4]{rfc9162}. DUET applies this proof to a returning client
+cryptographic object~\cite{rfc9162}. DUET applies this proof to a returning client
 that retains its last trusted head and combines it with a separate verified lookup of the warning
 slot. The M4 experiment compares this construction with the synthetic repeated-proof baseline
 defined in \cref{ssec:eval-catchup}, which models this implementation without windowing. However,
