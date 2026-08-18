@@ -365,13 +365,12 @@ PRISM changes the monitoring model by allowing each client to verify the complet
 It uses a zero-knowledge rollup in which a zero-knowledge virtual machine (zkVM) proves state
 transitions over a Jellyfish Merkle tree. The resulting epoch proofs are published through a
 data-availability layer, allowing light clients to verify the whole directory state instead of
-monitoring only their own entries~\cite[Sections~1 and~4]{pusch2025prism}. PRISM identifies the
-wider reliance of existing systems on external checks performed by users, gossiping clients,
-blockchains, auditors, or witness committees~\cite{pusch2025prism}. The paper presents the
-construction at a high level and leaves a complete protocol specification outside its
-scope~\cite{pusch2025prism}. Its construction relies on Celestia for ordered and
-globally available data and uses a designated sequencer/prover to batch operations and generate
-epoch proofs~\cite[Sections~3.2 and~4]{pusch2025prism}.
+monitoring only their own entries~\cite[Sections~1 and~4]{pusch2025prism}. PRISM argues that prior
+systems leave consistency checking to clients or additional infrastructure, including
+self-monitoring, peer exchange, public ledgers, and independent verifiers~\cite{pusch2025prism}. The
+article gives an architectural overview and does not specify the complete
+protocol~\cite{pusch2025prism}. PRISM uses several node roles and relies on Celestia to order and
+distribute its operations and proofs~\cite[Sections~3.2 and~4]{pusch2025prism}.
 
 \paragraph{Merkle\texorpdfstring{$^2$}{2}.}
 Merkle\textsuperscript{2} is a general transparency log system that the authors identify as

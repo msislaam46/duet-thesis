@@ -154,8 +154,8 @@ A comparison with ELEKTRA and PRISM clarifies this peer-warning gap. ELEKTRA rec
 reset by adding another \texttt{AddFirst} statement to the account's keychain. Contacts can observe
 this addition in a later query. The authors recommend a prominent user alert when such a reset
 appears~\cite[Section~2.2]{len2023elektra}. PRISM treats dependence on client gossip and third-party
-auditing as a broader limitation. As an additional gossip channel, it suggests carrying commitments
-inside encrypted messages~\cite{pusch2025prism}. Therefore, a warning about individual
+auditing as a broader limitation. It also notes that encrypted conversations could carry directory
+commitments, giving clients another way to compare their views~\cite{pusch2025prism}. Therefore, a warning about individual
 substituted keys remains distinct from both mechanisms.
 
 CONIKS is the main baseline for this thesis because it combines private lookup indices, signed tree
@@ -245,8 +245,7 @@ consistency.}
 \label{tab:bg-compare}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\setlength{\extrarowheight}{0pt}
-\renewcommand{\arraystretch}{0.88}
+\renewcommand{\arraystretch}{1.0}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{1.35cm}>{\raggedright\arraybackslash}p{2.15cm}>{\raggedright\arraybackslash}p{2.6cm}@{}}
 \toprule
 System & What it logs & Primary detection mechanism & In-band peer warning &
@@ -261,7 +260,7 @@ ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Reset
 OPTIKS~\cite{optiks2024} & identity key and device entries & self-monitoring (single proof, common case) & No &
   verify before old periods are deleted & audited directory updates, shared append-only bulletin-board view \\
 PRISM~\cite{pusch2025prism} & account keys & whole-directory verification & No &
-  full-history verification from the newest commitment and a constant-size proof & proof-verified state transitions, globally consistent data-availability layer \\
+  earlier epochs checked from the current commitment and a fixed-size proof & proof-verified state transitions, globally consistent data-availability layer \\
 WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & client lookup-proof verification & No & key-history retrieval unavailable in the cited version & public consistency proofs, WORM-retained audit publication \\
 Signal KT~\cite{signal-kt-server,signal-akv} & ACI $\to$ identity key; phone number and username hash $\to$ ACI & self-monitoring, audit interfaces, and optional AKV & No &
   Not specified & log consistency proofs, third-party auditor-signed heads \\
