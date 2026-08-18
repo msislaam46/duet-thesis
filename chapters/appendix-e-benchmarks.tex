@@ -371,11 +371,11 @@ asserts a clean verdict without a warning.}
 Honest state & Test source \\
 \midrule
 First registration, empty owner slot & \texttt{clean\_path\_coverage}:\newline
-\texttt{first\_registration\_\allowbreak empty\_owner\_slot\_is\_no\_alarm} \\
+\idt{first\_registration\_empty\_owner\_slot\_is\_no\_alarm} \\
 Repeated re-verification of a valid state & \texttt{clean\_path\_coverage}:\newline
-\texttt{repeated\_reverification\_\allowbreak of\_valid\_state\_is\_stable} \\
-Established session, expected key & \texttt{clean\_path\_coverage} (adversarial A0) \\
-Empty warning slot (proven absent) & \texttt{clean\_path\_coverage} (M16 clean-match) \\
+\idt{repeated\_reverification\_of\_valid\_state\_is\_stable} \\
+Established session, expected key & \texttt{clean\_path\_coverage} (also covered by adversarial A0) \\
+Empty warning slot (proven absent) & \texttt{clean\_path\_coverage} (also covered by M16 clean-match) \\
 Valid log growth + consistency proof & \texttt{auditor}:\newline \texttt{honest\_server\_audits\_clean\_across\_epochs} \\
 Multiple honest continuous-mode epochs & \texttt{cea}:\newline \texttt{honest\_parties\_agree\_each\_epoch} \\
 Consistent supplied comparison head & \texttt{auditor}:\newline \texttt{detect\_fork\_accepts\_consistent\_head} \\
