@@ -353,7 +353,7 @@ versions that are no longer current~\cite[Section~4]{chase2019seemless}. Parakee
 key-version and stale-version entries in a single oZKS backed by one Merkle Patricia
 trie~\cite[Sections~III-C--III-D]{malvai2023parakeet}. OPTIKS also uses a single tree, but
 establishes freshness by proving that the claimed version is present and that its successor is
-absent. The OPTIKS authors report that their design reduces storage and update work by about half
+absent. The OPTIKS authors report that this design reduces storage and update work by about half
 compared with SEEMless and Parakeet~\cite{optiks2024}. Once a client has verified the existing history of a key, a later check of
 an unchanged key requires only proof that no successor version
 exists~\cite[Section~5]{optiks2024}. Clients must therefore verify each period's history before the
