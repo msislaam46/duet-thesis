@@ -25,8 +25,8 @@ The seventeen metric families referenced throughout \cref{ch:eval} are as follow
   proof-generation latency as a function of $W$.
 \item[M5] Label derivation and one unverified warning-slot read, reported as a component
   measurement.
-\item[M6] Clean-session false-alarm count from the original deterministic experiment,
-  retained for reproducibility.
+\item[M6] Warning-slot occupancy rate across \num{1000} deterministic clean-session fixtures.
+  The recorded rate is zero.
 \item[M7] Proof-size and verification distributions, together with resident set size
   after build, over $1{,}000$ random lookups at $N=10^{6}$ and $N=10^{7}$.
 \item[M8] Per-operation lookup and update latency, from which a single-thread rate is derived.
@@ -90,6 +90,13 @@ on a host without them. This evaluation did not compare the two paths and theref
 quantify their performance difference. The timings below apply to the recorded configuration.
 Proof sizes are computed quantities and do not depend on the hardware.
 
+The sampling parameters are as follows. The manual timing CSV uses \num{2000} sequential iterations
+for every recorded operation except the M9 epoch commit, which uses \num{200}. The M7 experiment
+samples \num{1000} random lookups at each directory size. M14 uses \num{500} lookups per grid point
+for proof-size distributions and \num{1000} iterations for verification timings. M15 uses
+\num{1000} iterations per mode and ratchet depth, while M16 uses \num{2000}. These are descriptive
+statistics for the recorded run.
+
 % ----------------------------------------------------------------------------
 \section{Proof Sizes (M1) and Catch-Up Path Bytes (M4)}\label{sec:bench-sizes}
 
@@ -146,9 +153,6 @@ $W$ (epochs) & synthetic repeated-proof (bytes) & windowed (bytes) & Ratio \\
 \end{tabular}
 \end{table}
 
-M6 recorded zero warnings across \num{1000} clean deterministic sessions in the earlier clean-run
-experiment. M17 now provides the clean-workflow evidence used in \cref{ssec:eval-detection}.
-
 % ----------------------------------------------------------------------------
 \section{Latency, Operation Rates, and Maintenance (M2, M3, M5, M8--M12)}\label{sec:bench-timings}
 
@@ -156,11 +160,7 @@ The timing families are reported below one per table, each preceded by a short s
 measures: per-lookup generation and verification latency (\cref{tab:bench-latency}), label
 derivation and one unverified warning-slot read (\cref{tab:bench-detection}), operation rates and
 the maintenance operations
-(\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}). The manual timing CSV uses \num{2000} sequential iterations for every recorded operation except the
-M9 epoch commit, which uses \num{200}. The M7 experiment samples \num{1000} random lookups at each
-directory size. M14 uses \num{500} lookups per grid point for proof-size distributions and
-\num{1000} iterations for verification timings. M15 uses \num{1000} iterations per mode and
-ratchet depth, while M16 uses \num{2000}. These are descriptive statistics for the recorded run.
+(\cref{tab:bench-maint}), and the auditor's per-epoch cost (\cref{tab:bench-auditor}).
 
 \medskip\noindent\emph{Per-lookup latency (M2 generation, M3 verification): the server-side cost to
 produce a proof and the client-side cost to check it, broken into its pieces.}
@@ -370,10 +370,12 @@ asserts a clean verdict without a warning.}
 \toprule
 Honest state & Test source \\
 \midrule
-First registration, empty owner slot & \texttt{clean\_path\_coverage.rs} (new case) \\
-Repeated re-verification of a valid state & \texttt{clean\_path\_coverage.rs} (new case) \\
-Established session, expected key & \texttt{clean\_path\_coverage.rs} (adversarial A0) \\
-Empty warning slot (proven absent) & \texttt{clean\_path\_coverage.rs} (M16 clean-match) \\
+First registration, empty owner slot & \texttt{clean\_path\_coverage}:\newline
+\texttt{first\_registration\_\allowbreak empty\_owner\_slot\_is\_no\_alarm} \\
+Repeated re-verification of a valid state & \texttt{clean\_path\_coverage}:\newline
+\texttt{repeated\_reverification\_\allowbreak of\_valid\_state\_is\_stable} \\
+Established session, expected key & \texttt{clean\_path\_coverage} (adversarial A0) \\
+Empty warning slot (proven absent) & \texttt{clean\_path\_coverage} (M16 clean-match) \\
 Valid log growth + consistency proof & \texttt{auditor}:\newline \texttt{honest\_server\_audits\_clean\_across\_epochs} \\
 Multiple honest continuous-mode epochs & \texttt{cea}:\newline \texttt{honest\_parties\_agree\_each\_epoch} \\
 Consistent supplied comparison head & \texttt{auditor}:\newline \texttt{detect\_fork\_accepts\_consistent\_head} \\
