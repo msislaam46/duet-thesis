@@ -89,7 +89,6 @@ Module & Standards or design basis & Verification and test evidence \\
 \texttt{auditor} & signed-head comparison and per-epoch transition audit in \cref{alg:auditor} & append-only and equivocation tests, with invalid deletion and modification rejected during transition replay \\
 \texttt{monitor} & warning persistence and deletion evidence in \cref{alg:detect} & persistence while committed and verifiable deletion evidence against the server's signed heads \\
 \texttt{cea} & ACKA's CEA construction~\cite[Section~5.1]{dowling2023acka}, instantiated with write-once directory registration, verified write confirmation, and state advance only on success (\cref{alg:cea}) & cross-implementation vectors, rejection of occupied labels, and no state advance after \textsc{Fork} or \textsc{NotPosted} \\
-\texttt{hook\_process\_\allowbreak prekey\_bundle} & documentation-only libsignal integration module, compiled with the crate but not invoked as an executable hook & marks where a production binding of the live X3DH secret could be inserted \\
 \bottomrule
 \end{tabular}
 \end{table}

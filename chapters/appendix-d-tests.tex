@@ -172,7 +172,7 @@ Module & Test and property \\
 \texttt{auditor} & \idt{rejected\_transition\_does\_not\_poison\_the\_replica}: a rejected epoch leaves the replica byte-identical to its pre-epoch root \\
 \texttt{auditor} & \idt{audit\_rejects\_a\_primary\_head\_with\_an\_unexpected\_configuration}, \idt{detect\_fork\_rejects\_a\_comparison\_head\_with\_an\_unexpected\_configuration}: a configuration commitment that differs from its pinned value is refused \\
 \texttt{auditor} & \texttt{detect\_fork\_flags\_same\_epoch\_different\_root}: a second validly signed head at an observed epoch is flagged \textsc{Fork} with both heads as evidence \\
-\texttt{auditor} & \texttt{detect\_fork\_flags\_append\_only\_violations}: a smaller log at a later epoch, and a same-size different root, are forks from observed heads alone \\
+\texttt{auditor} & \texttt{detect\_fork\_rejects\_malformed\_growth\_claims}: signed comparison heads with impossible epoch and tree-size combinations are rejected as invalid \\
 \texttt{auditor} & \texttt{detect\_fork\_accepts\_consistent\_head}, \texttt{detect\_fork\_rejects\_unsigned\_head}, \texttt{audit\_rejects\_inadmissible\_inputs}: consistent heads raise no alarm, while an unsigned head and inadmissible inputs are refused \\
 \midrule
 \texttt{monitor} & \idt{persistence\_check\_passes\_while\_warning\_persists}, \idt{persistence\_check\_is\_indeterminate\_under\_a\_forged\_head}: the persistence check fails closed \\
