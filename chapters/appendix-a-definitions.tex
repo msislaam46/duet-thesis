@@ -169,8 +169,9 @@ $\Hleaf(\mathit{kind}\concat\ell\concat\mathit{value})$. For non-inclusion, it b
 default hash at the logical leaf position. It then applies the sibling hashes identified by the
 bitmap and accepts only when the reconstructed root equals $\prefroot{t}$. CONIKS uses Merkle
 prefix-tree proofs to authenticate presence and absence at an
-index~\cite[Section~3.2]{melara2015coniks}. The same draft specifies the corresponding inclusion and
-non-inclusion proof encodings~\cite[Sections~3.3 and~12.2]{ietf-keytrans-protocol}.
+index~\cite[Section~3.2]{melara2015coniks}. The IETF KeyTrans draft specifies the corresponding
+inclusion and non-inclusion proof
+encodings~\cite[Sections~3.3 and~12.2]{ietf-keytrans-protocol}.
 
 For a client-derived raw lookup, verification additionally requires
 $\pprefix.\mathit{label}$ to equal the label requested by the client. For a global lookup, it

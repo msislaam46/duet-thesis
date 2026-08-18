@@ -25,8 +25,8 @@ contributions of \cref{sec:intro-contributions}.
 \toprule
 RQ & Design claim & Mechanism & Test or scenario & Benchmark & Evidence \\
 \midrule
-RQ1 & each modelled substitution is detected.\newline After honest establishment, detection of A1
-or A5 also produces an in-band peer warning.\newline A3 is detected locally by the global
+RQ1 & each modelled substitution is detected.\newline After honest establishment, A1 produces an
+in-band peer warning. A5 integration remains partial.\newline A3 is detected locally by the global
 VRF-bound identity check when the directory is honest &
 A1: dual-index warning scheme (\cref{sec:design-dual}).\newline A2: compound warning-censorship
 signal and post-commit controls.\newline A3: global VRF-bound identity check, honest
@@ -106,8 +106,8 @@ Empirical & benchmark evaluation M1--M17 and the STRIDE/MITRE evaluation
 (\cref{ch:eval,app:security}) & detection reuses the existing lookup-proof format, while median full
 verification remains below \SI{150}{\micro\second} across the tested sizes
 (\cref{sec:eval-micro}). The adversarial suite produces the expected outcome for every specified
-detection scenario, using global VRF-bound identity comparison, the shared warning path, identity
-re-fetch, predecessor cross-signature verification, and supplied signed-head comparison
+detection scenario. For A5, crate cross-signature tests and Signal identity-re-fetch/shared-warning
+tests remain separate. They do not establish an integrated predecessor-authenticated warning path
 (\cref{sec:eval-security}) \\
 \bottomrule
 \end{tabularx}

@@ -142,7 +142,7 @@ non-inclusion proof establishes that the warning slot is empty.
 \Fn{\normalfont\textsf{RootFromProof}($\pprefix$)}{
   \lIf{$|\pprefix.\mathit{label}|\ne 32\ \vee\ |\pprefix.\mathit{bitmap}|\ne 32$}{\KwRet $\bot$ \tcp*[f]{malformed proof: reject before hashing}}
   \uIf{$\pprefix.\mathit{value}=\bot$}{$c\gets e$ \tcp*[f]{absence: leaf hash is the empty hash}}
-  \uElseIf{$\pprefix.\mathit{kind}\notin\{\textsc{mutable},\textsc{immutable}\}$}{\KwRet $\bot$ \tcp*[f]{present leaf with an out-of-domain kind}}
+  \uElseIf{$\pprefix.\mathit{kind}\notin\{\textnormal{\textsc{mutable}},\textnormal{\textsc{immutable}}\}$}{\KwRet $\bot$ \tcp*[f]{present leaf with an out-of-domain kind}}
   \Else{$c\gets\Hleaf(\pprefix.\mathit{kind}\concat\pprefix.\mathit{label}\concat\pprefix.\mathit{value})$ \tcp*[f]{kind authenticated by the root}}
   \For{$i\gets 0$ \KwTo $255$}{
     $s\gets$ next sibling from $\pprefix.\mathit{siblings}$ if $\pprefix.\mathit{bitmap}[i]$ set, else $e$\;
@@ -393,7 +393,7 @@ or stops the remaining conversation sweep.
     $\textsf{WindowedCatchUp}(\mathit{server})$ \tcp*{append-only and STH growth}
     $v\gets \textsf{VerifiedLookup}(\mathit{server},\lself)$ \tcp*{owner slot}
     \lIf{$v\ne\mathit{own\_pk}$}{\textbf{verdict} $\gets$ \textsc{Alert};\ \ $\textsf{TryPublish}(\mathit{server},\lwarn,\texttt{"lookup-replaced"},k_{\mathrm{mac}})$;\ \ \textbf{emit} \textbf{verdict};\ \ \textbf{continue}}
-    \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,k_{\mathrm{mac}})=\textsc{Alert}$}{\textbf{emit} \textsc{Alert};\ \ \textbf{continue} \tcp*[f]{warning slot, checked before peer absence}}
+    \lIf{$\textsf{CheckWarning}(\mathit{server},\lwarn,k_{\mathrm{mac}})=\textnormal{\textsc{Alert}}$}{\textbf{emit} \textsc{Alert};\ \ \textbf{continue} \tcp*[f]{warning slot, checked before peer absence}}
     $pk\gets \textsf{VerifiedLookup}(\mathit{server},\lpeer)$ \tcp*{peer slot ($pk=\bot$ is proven non-inclusion)}
     \uIf{$pk=\bot$}{
       \uIf{$\lpeer\in \mathit{seen}$}{\textbf{emit} \textsc{Alert};\ \ \textbf{continue} \tcp*{removal after prior presence}}
@@ -448,15 +448,15 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \ForEach{not-yet-audited epoch $e\le \mathit{sth_{new}}.\mathit{epoch}$ \emph{(including $e=0$)}}{
     $\mathit{delta}_e\gets \mathit{server}.\textsf{GetEpochDelta}(e,\mathit{sth_{new}}.\mathit{tree\_size})$\;
     \lIf{$\mathit{delta}_e = \bot$}{$\mathit{complete}\gets \textbf{false}$;\ \textbf{break} \tcp*[f]{fetch failure: retryable}}
-    \lIf{$\textsf{AuditTransition}(\mathit{candidate},e,\mathit{delta}_e,\mathit{sth_{new}}.\mathit{root},\mathit{sth_{new}}.\mathit{tree\_size})=\textsc{TransitionFailed}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
+    \lIf{$\textsf{AuditTransition}(\mathit{candidate},e,\mathit{delta}_e,\mathit{sth_{new}}.\mathit{root},\mathit{sth_{new}}.\mathit{tree\_size})=\textnormal{\textsc{TransitionFailed}}$}{\textbf{alarm};\ \KwRet \textsc{TransitionFailed}}
     $\mathit{cursor}\gets \mathit{cursor}+1$\;
   }
   \lIf{$\neg\,\mathit{complete}$}{\KwRet \textsc{Incomplete}}
   $\mathit{vb}\gets\textsf{DetectFork}(\mathit{server}.\textsf{GetComparisonHead}(),\mathit{sth_{new}},\mathit{server})$ \tcp*{comparison check only after complete replay}
-  \lIf{$\mathit{vb}=\textsc{Fork}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
-  \lIf{$\mathit{vb}=\textsc{ConsistencyUnverified}$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{hold, no fork}}
+  \lIf{$\mathit{vb}=\textnormal{\textsc{Fork}}$}{\textbf{alarm};\ \KwRet \textsc{Fork}}
+  \lIf{$\mathit{vb}=\textnormal{\textsc{ConsistencyUnverified}}$}{\textbf{alarm};\ \KwRet \textsc{ConsistencyUnverified} \tcp*[f]{hold, no fork}}
   $\mathit{replica}\gets \mathit{candidate}$;\ \ $\mathit{audited\_epochs}\gets \mathit{cursor}$;\ \ $\mathit{last\_sth}\gets \mathit{sth_{new}}$ \tcp*{advance the copy, cursor, and baseline together}
-  \lIf{$\mathit{vb}=\textsc{InvalidHead}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed, no split-view verdict}}
+  \lIf{$\mathit{vb}=\textnormal{\textsc{InvalidHead}}$}{\KwRet \textsc{ConsistentNoVantage} \tcp*[f]{committed, no split-view verdict}}
   \KwRet \textsc{Consistent}\;
 }
 \end{algorithm}
@@ -472,7 +472,7 @@ empty initially); audited-epoch cursor $\mathit{audited\_epochs}\gets0$; trusted
   \lIf{$\pincl$ does not prove leaf index $e$ with value $r_{e}$ included under $r_{\mathrm{head}}$ at tree size $\mathit{size}_{\mathrm{head}}$}{\KwRet \textsc{TransitionFailed}}
   \ForEach{operation $o\in \mathit{ops}_e$ \emph{in declared order}}{
     \uIf{$o=\textsf{Insert}(\ell,\mathit{kind},v)$}{\lIf{$\mathit{candidate}.\textsf{get}(\ell)\ne\bot$}{\KwRet \textsc{TransitionFailed}} \textbf{else} insert $(\ell,\mathit{kind},v)$\;}
-    \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$: \lIf{$\neg(\mathit{kind}=\textsc{mutable}\wedge \mathit{candidate}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{candidate}.\textsf{get}(\ell)=v_{\mathrm{old}})$}{\KwRet \textsc{TransitionFailed}} \textbf{else} set $\ell\mapsto v$\;}
+    \Else{$o=\textsf{Rotate}(\ell,\mathit{kind},v_{\mathrm{old}},v)$: \lIf{$\neg(\mathit{kind}=\textnormal{\textsc{mutable}}\wedge \mathit{candidate}.\textsf{kind}(\ell)=\mathit{kind}\wedge \mathit{candidate}.\textsf{get}(\ell)=v_{\mathrm{old}})$}{\KwRet \textsc{TransitionFailed}} \textbf{else} set $\ell\mapsto v$\;}
   }
   \lIf{$\mathit{candidate}.\textsf{root}()\ne r_{e}$}{\KwRet \textsc{TransitionFailed}}
   \KwRet \textsc{Pass}\;
@@ -556,7 +556,7 @@ advances only on a \textsc{Consistent} verdict and leaves its state unchanged on
   $v\gets \textsf{VerifiedCeaLookup}(\mathit{server},L_t)$ \tcp*{chain and read-only bidirectional anchor, no VRF, retried on \textsc{NotPosted} before concluding}
   \lIf{$v=\bot$}{\KwRet \textsc{NotPosted} \tcp*[f]{no advance}}
   \If{$v\ne F^{*}_t$}{
-    $\mathit{verdict}\gets\textsc{Fork}$\;
+    $\mathit{verdict}\gets\textnormal{\textsc{Fork}}$\;
     \textbf{try} $\textsf{WriteWarning}(\mathit{server},\lwarn,\texttt{"ratchet-fork"},k_{\mathrm{mac}})$ \textbf{catch}: report the failure separately\;
     \KwRet $\mathit{verdict}$ \tcp*{no advance, verdict independent of publication}
   }

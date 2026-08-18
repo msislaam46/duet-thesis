@@ -187,11 +187,12 @@ M3 full signed-head lookup verification (windowed baseline) & $10^4$ & 128.9 & 1
 \end{table}
 
 \medskip\noindent\emph{The M5 warning-slot component measures label derivation followed by one
-unverified warning-slot read in a clean state. It does not measure the complete detector. At
-$N=10^3$, \num{2000} iterations over \num{1000} sampled conversations give a median of
-\SI{1.6}{\micro\second} and a 95th percentile of \SI{2.0}{\micro\second}.
+unverified warning-slot read in a clean state. It does not measure the complete detector. With
+\num{1000} background directory entries and two lookup labels for each of \num{1000} sampled
+conversations, \num{2000} iterations give a median of \SI{1.6}{\micro\second} and a 95th percentile
+of \SI{2.0}{\micro\second}.
 \Cref{ssec:eval-detection} reports the proof-verified detector paths. Since M5 contains one
-directory size, it does not establish how this cost changes with $N$.}
+configuration, it does not establish how this cost changes with directory size.}
 
 \begin{table}[H]
 \centering
@@ -202,7 +203,7 @@ verified one- and two-lookup detection paths.}
 \small
 \begin{tabular}{@{}llrr@{}}
 \toprule
-Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
+Operation (baseline) & Background entries & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
 M5 warning-slot component, unverified (dual-index) & $10^3$ & 1.6 & 2.0 \\
 \bottomrule
@@ -504,7 +505,8 @@ M13 & \texttt{M13\_modes}              & \texttt{rust\_benchmark\_m13.csv} (writ
 M14 & \texttt{M14\_history\_depth}      & \texttt{rust\_benchmark\_m14.csv} \\
 M15 & \texttt{M15\_deep\_chain}         & \texttt{rust\_benchmark\_m15.csv} and \texttt{rust\_benchmark\_m15\_writes.csv} (write-count grid) \\
 M16 & \texttt{M16\_detector\_branches}  & \texttt{rust\_benchmark\_m16.csv} \\
-M17 & (test) & \texttt{cargo test -{}-test clean\_path\_coverage} (functional, no CSV) \\
+M17 & \texttt{cargo test} &
+functional outcomes listed in \cref{tab:bench-m17}; no CSV \\
 \bottomrule
 \end{tabular}
 \end{table}

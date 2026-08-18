@@ -67,7 +67,8 @@ coordinated substitution. Substituting only the signed pre-key causes Alice's si
 fail because she verifies $\spk{\B}$ under $\pkid{\B}$ and aborts on failure. Substituting only the
 one-time pre-key normally causes Alice and Bob to derive different secrets, so session establishment
 fails and impersonation does not succeed. Not using the one-time pre-key weakens initial forward
-secrecy but does not enable impersonation~\cite[Sections~3.3, 3.4, and 4.7]{x3dh}. \Cref{fig:bg-x3dh} shows the protocol sequence from
+secrecy but, absent any other key substitution, does not by itself enable
+impersonation~\cite[Sections~3.3, 3.4, and 4.7]{x3dh}. \Cref{fig:bg-x3dh} shows the protocol sequence from
 publication of Bob's pre-key bundle to Alice's initial message.
 
 \begin{figure}[H]
@@ -165,10 +166,11 @@ whereas the TLS case exposes one hour of data. The comparison assumes that the a
 undetected~\cite{dowling2023acka}.
 
 Manual comparison also introduces a usability cost. In the first phase of one study, pairs were
-asked to authenticate each other and ensure that no other party could read their messages, but were
+asked to authenticate each other and protect the confidentiality of their exchange, but were
 not instructed to compare encryption keys. Only two of twelve pairs succeeded in locating and
 completing the ceremony in at least one of WhatsApp, Viber, or Facebook Messenger. Across all
-pair--application trials, the success rate was 14\%~\cite[Section~5]{vaziripour2017}.
+pair--application trials, the success rate was
+14\%~\cite[Sections~4.1 and~5]{vaziripour2017}.
 Application-independent instructions about comparing encryption keys raised the overall success rate
 to 78\%, while Viber reached 96\%~\cite[Section~6.1 and Table~2]{vaziripour2017}. Even with these instructions,
 users took an average of 3.2 minutes to find the ceremony and a further 7.8 minutes to complete
@@ -334,11 +336,11 @@ the client monitoring its own binding~\cite{malvai2023parakeet}.
 
 \paragraph{ELEKTRA.}
 ELEKTRA extends the VKD abstraction to multiple devices. Each account is represented by a keychain
-containing device additions and revocations. Except for the first key and a full account reset, a
-keychain change must be authenticated by an existing unrevoked device
-key~\cite[Sections~1, 2.1, and~2.2]{len2023elektra}. Outside the first-key and full-reset cases, and
-assuming consistency of the directory, a malicious provider cannot add a fabricated device key
-without forging a device signature or compromising an existing device. Its \texttt{PCSUpdate}
+containing device additions and revocations. A keychain change must normally be authenticated by
+an existing unrevoked device key. The first key and a full account reset are
+exceptions~\cite[Sections~1, 2.1, and~2.2]{len2023elektra}. Assuming directory consistency, a
+malicious provider cannot add a fabricated device key in the other cases without forging a device
+signature or compromising an existing device. Its \texttt{PCSUpdate}
 operation uses a rotatable zero-knowledge set to rotate the server key and restore privacy after
 server-state compromise~\cite[Sections~1 and~3.1]{len2023elektra}.
 
