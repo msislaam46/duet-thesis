@@ -79,9 +79,7 @@ POST & \texttt{/admin/reset} & rebuild the server from its fixed seed with a fre
 \Cref{tab:apiref-hooks} maps the integration concepts of \cref{sec:impl-signal} to the
 corresponding prototype functions, and \cref{tab:apiref-events} maps the user-interface
 outcomes to their DOM event names. The live client attaches at key upload and peer-key retrieval. It
-records peer identities at the peer-key-retrieval point and during the periodic sweep. The
-pre-key-bundle row is a documentation-only integration sketch that marks where a production binding
-of the live X3DH secret would attach.
+records peer identities at the peer-key-retrieval point and during the periodic sweep.
 
 \begin{table}[ht]
 \centering
@@ -95,7 +93,6 @@ Lifecycle point & Prototype function & Layer \\
 key upload & \texttt{registerKeys} & TypeScript \\
 peer-key retrieval & \texttt{getKeysForServiceId} & TypeScript \\
 peer identity observation & \texttt{onPeerIdentityObserved} & TypeScript \\
-pre-key-bundle processing & \texttt{hook\_process\_prekey\_bundle} & Rust (libsignal) \\
 \bottomrule
 \end{tabular}
 \end{table}
