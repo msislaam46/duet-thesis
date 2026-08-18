@@ -15,7 +15,6 @@
   \foreach \x/\name/\id in {0/{Alice\\{\tiny(client + verifier)}}/A, 3.4/{Bob\\{\tiny(client + verifier)}}/B, 7.0/{Directory server}/S, 10.6/Auditor/U}{
     \node[hd] (\id) at (\x,0) {\name};
     \draw[dashed,black!45] (\x,-0.95) -- (\x,-6.3);}
-  \node[font=\scriptsize\itshape,text=black!55,anchor=west,fill=white,inner sep=1pt] at (-1.55,-0.65) {(a) normal operation};
   \draw[m] (0,-1.15) -- node[above,mlbl]{register Alice's key at $\ell^{\A}_{\mathsf{self}}$ and commit} (7.0,-1.15);
   \draw[m] (3.4,-1.68) -- node[above,mlbl]{register Bob's key at $\ell^{\B}_{\mathsf{self}}$ and commit} (7.0,-1.68);
   \draw[m] (3.4,-2.25) -- node[above,mlbl]{1. search own slot $\ell^{\B}_{\mathsf{self}}$} (7.0,-2.25);
@@ -27,6 +26,9 @@
   \node[gact,anchor=north] at (3.4,-5.35) {all three checks pass\\$\Rightarrow$ verified (green)};
   \draw[m] (10.6,-2.0) -- node[above,mlbl,font=\tiny]{poll STH $+$ delta} (7.0,-2.0);
   \node[act,anchor=north] at (10.6,-2.35) {replay transition:\\consistent};
+  % Drawn last: the first message label's white fill would otherwise overpaint
+  % the tail of this label, clipping the lower half of "operation".
+  \node[font=\scriptsize\itshape,text=black!55,anchor=west,fill=white,inner sep=1pt] at (-1.55,-0.65) {(a) normal operation};
 \end{tikzpicture}%
 }
 

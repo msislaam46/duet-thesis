@@ -196,8 +196,9 @@ Module & Test and property \\
 
 The \texttt{signal-desktop-kt} client verifier harness contains \num{93} Jest tests in thirteen
 suites: a live-server wire-parity suite, an in-process integration suite, a source-parity suite,
-and ten unit suites. The \emph{wire-parity} suite runs the full client verification chain against a
-\emph{live} DUET directory server over the network. A normal Jest run permits its single live test to
+and ten unit suites. The \emph{wire-parity} suite checks component-level interoperability for
+prefix-tree and log proofs, signed heads, VRF proofs, and consistency proofs against a \emph{live}
+DUET directory server over the network. A normal Jest run permits its single live test to
 return without assertions when the server is unavailable. The dedicated \texttt{npm run test:wire}
 command requires the server and fails if it cannot be reached. The \emph{source-parity} suite
 (\texttt{tree\_parity}) asserts that the shared verifier sources are byte-identical between the two
@@ -340,8 +341,9 @@ tampered, and wrong-key signatures. Auditor tests cover honest transitions, genu
 and rejection of a divergent head carrying an invalid signature.
 
 The \texttt{signal-desktop-kt} client verifier harness contains \num{93} Jest tests. Its opt-in
-wire-parity suite requires the running directory server and checks the complete client verification
-chain against live responses. The checked paths include multi-entry inclusion, proven
+wire-parity suite requires the running directory server and checks the listed verification
+components against live responses. It does not invoke the complete \texttt{RemoteKTClient}
+orchestration. The checked paths include multi-entry inclusion, proven
 non-inclusion, signed-head verification and tamper rejection, VRF verification, and windowed
 consistency. A normal Jest run does not by itself establish live wire parity. The \texttt{npm run
 test:wire} command requires the server and fails if it is unreachable. In addition,
