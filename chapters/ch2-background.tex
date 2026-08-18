@@ -30,8 +30,8 @@ full key-material notation and coverage.
 X3DH lets Alice establish a shared secret $\sharedS$ with an offline Bob by combining identity,
 ephemeral, signed-pre-key, and optional one-time-pre-key Diffie--Hellman terms~\cite[Sections~2.4 and 3.3]{x3dh}.
 The resulting secret initializes the Double Ratchet~\cite{doubleratchet} and is also the input from which DUET
-derives conversation labels. Alice verifies Bob's signed pre-key under the supplied identity key and
-aborts if that signature fails~\cite[Section~3.3]{x3dh}.
+derives conversation labels. Alice checks the signed pre-key against the supplied identity key and
+stops session establishment if the check fails~\cite[Section~3.3]{x3dh}.
 
 When Bob's genuine one-time pre-key is absent or withheld, an attacker that substitutes Bob's identity
 key and a signed pre-key valid under that identity can derive the resulting secret and impersonate
@@ -130,8 +130,8 @@ directories~\cite{melara2015coniks,chase2019seemless}. Zero-knowledge-set varian
 what proofs reveal beyond the queried binding. SEEMless uses an append-only ZKS (aZKS), Parakeet an
 ordered ZKS (oZKS), and ELEKTRA a rotatable ZKS
 (RZKS)~\cite{chase2019seemless,malvai2023parakeet,len2023elektra,chen2022rzks}.
-Merkle\textsuperscript{2} nests two authenticated structures: an outer chronological Merkle tree
-and a prefix tree committed by each of its internal nodes~\cite{hu2021merkle2}.
+Merkle\textsuperscript{2} associates each internal node of its chronological Merkle tree with a
+prefix-tree commitment~\cite{hu2021merkle2}.
 \Cref{sec:ext-vkd-blocks} explains the structural differences and terminology.
 
 \subsection{Academic and Deployed Systems}\label{ssec:bg-vkd-academic}
@@ -143,18 +143,19 @@ makes monitoring depend mainly on key
 updates~\cite[Sections~1--2 and 4.2]{chase2019seemless}. Parakeet combines history compaction with a
 witness quorum~\cite[Sections~IV--V]{malvai2023parakeet}, and ELEKTRA supports multi-device key
 histories and privacy recovery after server
-compromise~\cite[Sections~1, 2.1, and 3.1]{len2023elektra}. OPTIKS reduces the cost of monitoring an
-unchanged key to a single non-membership proof~\cite[Section~5]{optiks2024}. PRISM uses
+compromise~\cite[Sections~1, 2.1, and 3.1]{len2023elektra}. Once the existing key history has been
+verified, monitoring an unchanged key in OPTIKS requires only a non-membership check for the next
+version~\cite[Section~5]{optiks2024}. PRISM uses
 whole-directory verification~\cite[Sections~1 and 4]{pusch2025prism}. Across the surveyed designs,
 clients, auditors, or witness quorums perform verification, but none defines a conversation-specific
 peer-warning channel for an individual key substitution.
 
-A comparison with ELEKTRA and PRISM clarifies this peer-warning gap. A full account reset in
-ELEKTRA invokes \texttt{AddFirstKey}, which appends another \texttt{AddFirst} statement that
-contacts can detect when they query the keychain. The paper recommends that client applications
-show an urgent warning for this event~\cite[Section~2.2]{len2023elektra}. PRISM frames the wider problem as reliance on external checks such as client
-gossip and third-party auditing. It also identifies embedding commitments in encrypted messages as
-an additional gossip safeguard~\cite{pusch2025prism}. Therefore, a warning about individual
+A comparison with ELEKTRA and PRISM clarifies this peer-warning gap. ELEKTRA records a full account
+reset by adding another \texttt{AddFirst} statement to the account's keychain. Contacts can observe
+this addition in a later query. The authors recommend a prominent user alert when such a reset
+appears~\cite[Section~2.2]{len2023elektra}. PRISM treats dependence on client gossip and third-party
+auditing as a broader limitation. As an additional gossip channel, it suggests carrying commitments
+inside encrypted messages~\cite{pusch2025prism}. Therefore, a warning about individual
 substituted keys remains distinct from both mechanisms.
 
 CONIKS is the main baseline for this thesis because it combines private lookup indices, signed tree
@@ -162,8 +163,8 @@ roots, and client self-monitoring. A client monitors its own binding every epoch
 provider's signed tree root with one observed by an auditor to detect equivocation. CONIKS relies on
 auditors for this comparison, while direct exchange between clients remains future
 work~\cite[Sections~3.2--3.4 and~4.1.3--4.1.4, including footnote~5]{melara2015coniks}. A
-returning client that misses several epochs must also perform a series of checks to confirm that its
-last verified inclusion proofs and signed tree roots remain consistent with the recent
+When returning after several epochs, the client checks whether its earlier trusted inclusion
+evidence and signed tree roots agree with the newer
 proofs~\cite[Section~4.2]{melara2015coniks}. This missed-epoch procedure provides the baseline for
 DUET's windowed catch-up evaluation.
 
@@ -178,8 +179,8 @@ individual key substitution. Their mechanisms and limitations are examined in
 \cref{sec:ext-vkd-survey} and summarized in \cref{tab:bg-compare}.
 
 The surveyed systems also make different engineering choices. The WhatsApp whitepaper reports
-publicly verifiable audit proofs and states that key-history requests were not yet enabled in its
-clients~\cite{whatsapp2023whitepaper}. Signal's repository states that its
+publicly verifiable audit proofs. At the time of publication, WhatsApp clients could not request
+their key histories~\cite{whatsapp2023whitepaper}. Signal's repository states that its
 implementation uses the IETF protocol with application-specific modifications, and its verifier
 requires a fixed-length prefix copath~\cite{signal-kt-server}. ProtonKT combines client
 self-auditing and external auditing with Certificate Transparency. The Proton thesis also describes
@@ -216,8 +217,8 @@ $\CEAsec$ and the secure log satisfies $\Logsec$. It begins from
 a common initial state, corresponding to correctly assumed trust on first use or authenticated
 initial keying material. It then authenticates each subsequent CKA
 update in sequence through a CEA label and fingerprint. The
-construction presented in the paper provides one-sided detection, in which the receiver detects a
-forgery. Its secure-log interface supports consistency verification
+paper's construction gives the receiver, but not the sender, the stated forgery-detection
+guarantee. Its secure-log interface supports consistency verification
 between views. However, the paper does not define a third-party
 auditor for comparing those views. The formal CKA definition,
 adversary model, secure-log construction, and one-sided detection result are examined further in
@@ -244,7 +245,8 @@ consistency.}
 \label{tab:bg-compare}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.0}
+\setlength{\extrarowheight}{0pt}
+\renewcommand{\arraystretch}{0.88}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{1.35cm}>{\raggedright\arraybackslash}p{2.15cm}>{\raggedright\arraybackslash}p{2.6cm}@{}}
 \toprule
 System & What it logs & Primary detection mechanism & In-band peer warning &
@@ -259,8 +261,8 @@ ELEKTRA \cite{len2023elektra} & multi-device keychains & self-monitoring & Reset
 OPTIKS~\cite{optiks2024} & identity key and device entries & self-monitoring (single proof, common case) & No &
   verify before old periods are deleted & audited directory updates, shared append-only bulletin-board view \\
 PRISM~\cite{pusch2025prism} & account keys & whole-directory verification & No &
-  latest commitment and constant-size proof verify full history & proof-verified state transitions, globally consistent data-availability layer \\
-WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & client lookup-proof verification & No & key-history requests not yet enabled & public consistency proofs, WORM-retained audit publication \\
+  full-history verification from the newest commitment and a constant-size proof & proof-verified state transitions, globally consistent data-availability layer \\
+WhatsApp (AKD)~\cite{whatsapp2023whitepaper} & identity key & client lookup-proof verification & No & key-history retrieval unavailable in the cited version & public consistency proofs, WORM-retained audit publication \\
 Signal KT~\cite{signal-kt-server,signal-akv} & ACI $\to$ identity key; phone number and username hash $\to$ ACI & self-monitoring, audit interfaces, and optional AKV & No &
   Not specified & log consistency proofs, third-party auditor-signed heads \\
 Proton KT~\cite{goebel2023proton} & email address $\to$ Signed Key List (SKL) & self-audit and external audit & No &
@@ -292,8 +294,8 @@ reset~\cite{len2023elektra}. DUET therefore needs a conversation-specific warnin
 peer can retrieve after reconnecting.
 
 Second, a returning client that retains its last trusted head should verify the missed history
-efficiently. CONIKS catches up by performing a series of checks after missed
-epochs~\cite{melara2015coniks}. Thus, DUET should use one consistency proof from that
+efficiently. CONIKS handles the missed interval by validating the intervening evidence in
+sequence~\cite{melara2015coniks}. Thus, DUET should use one consistency proof from that
 trusted head to the current head to cover the complete missed window.
 
 Third, DUET should detect split-view equivocation. A locally verified proof shows that one response
