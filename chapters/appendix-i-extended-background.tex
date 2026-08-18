@@ -386,16 +386,17 @@ privacy~\cite[Section~VIII]{hu2021merkle2}.
 \subsection{Production VKDs and R\&D Projects}
 
 \paragraph{WhatsApp Key Transparency (AKD).}
-WhatsApp deploys an Auditable Key Directory at production scale, with signed directory roots and
-retained audit material for independent consistency
-checking~\cite{whatsapp2023whitepaper}. At the time of the whitepaper, WhatsApp clients did not yet
-support key-history requests~\cite{whatsapp2023whitepaper}. A failed automatic check directs the user to verify the
-session manually with the contact~\cite{whatsapp2023whitepaper}. The cited workflow
+WhatsApp uses an Auditable Key Directory for its messaging service, with signed directory roots
+and publicly retained transition proofs that allow external consistency
+checking~\cite{whatsapp2023whitepaper}. The whitepaper states that client-side key-history retrieval
+was planned but not yet available~\cite{whatsapp2023whitepaper}. If automated verification cannot
+confirm a session, the workflow falls back to direct verification with the
+contact~\cite{whatsapp2023whitepaper}. The cited workflow
 does not define the automatic in-band peer warning targeted by this thesis.
 
 \paragraph{Signal Key Transparency.}
-Signal's repository states that its implementation uses the IETF protocol with application-specific
-modifications and exposes Search, Monitor, and audit interfaces. The stored
+Signal adapts the IETF protocol to its application and provides client-facing
+\texttt{Search} and \texttt{Monitor} operations along with audit endpoints. The stored
 mappings associate an account identifier (ACI) with its identity key and associate a phone number or
 username hash with the ACI. The verifier requires a full 256-sibling prefix copath. At 32 bytes per
 sibling, this gives the fixed \num{8192}-byte copath used as a baseline in
@@ -405,9 +406,8 @@ sibling, this gives the fixed \num{8192}-byte copath used as a baseline in
 ProtonKT applies a verifiable directory to email and reuses Certificate Transparency to support
 consistency checking~\cite{goebel2023proton}. It supports owner and external auditing~\cite{goebel2023proton}.
 Its warning model notifies the key owner but not the communication
-partner~\cite{goebel2023proton}. The Proton thesis also describes the investigation
-of KT warnings as an open user-experience
-challenge~\cite{goebel2023proton}.
+partner~\cite{goebel2023proton}. The Proton analysis also treats the investigation of KT alerts as
+unresolved interface work~\cite{goebel2023proton}.
 
 \paragraph{Google KT and Apple CKV.}
 Google Key Transparency is an archived CONIKS-inspired implementation
