@@ -167,9 +167,10 @@ reproduction procedure.
 \section{Signal Desktop Integration}\label{sec:impl-signal}
 
 The Signal Desktop verifier checks responses from the DUET directory server and reports results
-through a conversation badge and banner. The badge starts grey (pending) and turns green only when
-verification succeeds and the account-wide self-check is healthy. If the server is unreachable, the
-badge remains pending and an amber availability banner appears. A proof failure, verified key
+through a conversation badge and banner. The badge starts grey (pending) and turns green after a
+proof-backed verified event. Within a background-monitor tick, a failed account-wide self-check
+suppresses green monitor events. If the server is unreachable, an amber availability banner appears
+and the badge remains unchanged. A proof failure, verified key
 mismatch, proof-verified warning-slot value, or fail-closed operational timeout produces a red
 badge and warning banner.
 
