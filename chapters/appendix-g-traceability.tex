@@ -103,8 +103,8 @@ process, and benchmark harness, together with the Signal Desktop client componen
 and client component, while the two-client demonstration exercises the integrated warning path
 (\cref{ssec:impl-demo}) \\
 Empirical & benchmark evaluation M1--M17 and the STRIDE/MITRE evaluation
-(\cref{ch:eval,app:security}) & detection reuses the existing lookup-proof format, while median full
-verification remains below \SI{160}{\micro\second} across the tested sizes
+(\cref{ch:eval,app:security}) & detection reuses the existing lookup-proof format, while median latency
+for the measured client-side lookup-verification chain remains below \SI{160}{\micro\second} across the tested sizes
 (\cref{sec:eval-micro}). The adversarial suite produces the expected outcome for every specified
 detection scenario. For A5, crate cross-signature tests and Signal identity-re-fetch/shared-warning
 tests remain separate. They do not establish an integrated predecessor-authenticated warning path
