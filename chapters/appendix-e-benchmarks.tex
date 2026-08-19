@@ -20,7 +20,7 @@ The seventeen metric families referenced throughout \cref{ch:eval} are as follow
 \item[M1] Lookup proof size in bytes and path length in hashes.
 \item[M2] Server-side latency for generating a lookup proof.
 \item[M3] Client-side lookup verification latency, reported as prefix-only, VRF-only,
-  and full signed-head lookup verification.
+  and the measured client-side lookup-verification chain.
 \item[M4] Synthetic repeated-proof and windowed catch-up proof bytes and
   proof-generation latency as a function of $W$.
 \item[M5] Label derivation and one unverified warning-slot read, reported as a component
@@ -180,8 +180,8 @@ M3 prefix verify (dual-index)        & $10^3$ & 25.8 & 27.2 \\
 M3 prefix verify (dual-index)        & $10^4$ & 25.8 & 26.0 \\
 M3 VRF verify (dual-index)           & $10^3$ & 80.5 & 96.7 \\
 M3 VRF verify (dual-index)           & $10^4$ & 80.6 & 96.1 \\
-M3 full signed-head lookup verification (windowed baseline) & $10^3$ & 135.1 & 160.4 \\
-M3 full signed-head lookup verification (windowed baseline) & $10^4$ & 134.8 & 157.7 \\
+M3 measured client-side lookup-verification chain (windowed baseline) & $10^3$ & 135.1 & 160.4 \\
+M3 measured client-side lookup-verification chain (windowed baseline) & $10^4$ & 134.8 & 157.7 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -289,7 +289,7 @@ Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
 Server full search (median / p95, \si{\micro\second}) & 119.1 / 134.8 & 137.6 / 2141.9\tnote{$\dagger$} \\
 Prefix verify (median / p95, \si{\micro\second}) & 25.9 / 26.1 & 25.9 / 31.0 \\
 VRF verify (median / p95, \si{\micro\second}) & 80.7 / 93.3 & 82.2 / 112.7 \\
-Full signed-head lookup verification (median / p95, \si{\micro\second}) & 134.6 / 147.2 & 152.8 / 178.0 \\
+Measured client-side lookup-verification chain (median / p95, \si{\micro\second}) & 134.6 / 147.2 & 152.8 / 178.0 \\
 Build time & 152.8\,s & 1{,}585.2\,s \\
 RSS after build & 2{,}815\,MiB & 23{,}325\,MiB \\
 \bottomrule
