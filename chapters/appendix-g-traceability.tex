@@ -36,13 +36,13 @@ A1, A2, A3, and A5 scenarios (\cref{tab:tests-adversarial}) and dual-index deriv
 M17 (clean workflows) & \cref{sec:eval-security}: the specified adversarial cases produce their expected outcomes.
 M17 asserts a clean verdict without a warning for every listed clean workflow \\
 RQ2 & detection does not enlarge an individual lookup proof. Across the tested large-directory
-sizes, median full verification changes from \SI{133.6}{\micro\second} at $N=10^6$ to
-\SI{139.2}{\micro\second} at $N=10^7$ &
+sizes, median lookup-verification latency changes from \SI{134.6}{\micro\second} at $N=10^6$ to
+\SI{152.8}{\micro\second} at $N=10^7$ &
 combined-tree verification chain (\cref{ssec:design-verify}) &
 prefix-tree, VRF, and Merkle-log tests (\cref{tab:tests-rust-prim,tab:tests-rust-server}) &
 M1--M3, M7, M11, M16 & \cref{sec:eval-micro,ssec:eval-scale}: median proof sizes are
 \num{817}\,B at $N=10^6$ and \num{945}\,B at $N=10^7$. M16 measures
-\SI{27.8}{\micro\second} and \SI{31.1}{\micro\second} for reconstructed mismatch and clean
+\SI{27.7}{\micro\second} and \SI{30.8}{\micro\second} for reconstructed mismatch and clean
 paths in the \texttt{duet} crate. The Signal Desktop path is not timed
 (\cref{ssec:eval-detection}) \\
 RQ3 & offline catch-up uses one consistency proof whose size is logarithmic in the endpoint log
@@ -104,7 +104,7 @@ and client component, while the two-client demonstration exercises the integrate
 (\cref{ssec:impl-demo}) \\
 Empirical & benchmark evaluation M1--M17 and the STRIDE/MITRE evaluation
 (\cref{ch:eval,app:security}) & detection reuses the existing lookup-proof format, while median full
-verification remains below \SI{150}{\micro\second} across the tested sizes
+verification remains below \SI{160}{\micro\second} across the tested sizes
 (\cref{sec:eval-micro}). The adversarial suite produces the expected outcome for every specified
 detection scenario. For A5, crate cross-signature tests and Signal identity-re-fetch/shared-warning
 tests remain separate. They do not establish an integrated predecessor-authenticated warning path

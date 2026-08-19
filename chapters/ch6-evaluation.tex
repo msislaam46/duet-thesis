@@ -64,23 +64,23 @@ The M14 history-depth experiment isolates the $32h_{\mathrm{log}}$ log-inclusion
 $N$ fixed while varying $E$. Across $E\in\{1,16,256,1024\}$, the corresponding values of
 $h_{\mathrm{log}}$ are \num{0}, \num{4}, \num{8}, and \num{10} sibling hashes. The log-inclusion
 path therefore adds \num{0}, \num{128}, \num{256}, and \num{320} bytes, matching
-$32h_{\mathrm{log}}$ in \cref{eq:eval-proofsize}. Median full verification remains below
-\SI{150}{\micro\second} throughout the grid, with a maximum of
-\SI{143.2}{\micro\second}. These results confirm the measured effect of increasing log history while
+$32h_{\mathrm{log}}$ in \cref{eq:eval-proofsize}. Median latency for the measured client-side
+lookup-verification chain remains below \SI{150}{\micro\second} throughout the grid, with a maximum of
+\SI{143.3}{\micro\second}. These results confirm the measured effect of increasing log history while
 the $32h$ prefix-copath term remains unchanged.
 
-Full client verification checks the VRF derivation, prefix proof, log-inclusion proof, and STH
-signature. Its median is \SI{128.7}{\micro\second} at $N=10^{3}$ in the manual harness. In the M7
+The measured client-side lookup-verification chain checks the VRF derivation, prefix proof,
+log-inclusion proof, and STH signature. Its median is \SI{135.1}{\micro\second} at $N=10^{3}$ in the manual harness. In the M7
 large-directory scale experiment (\cref{tab:bench-scale}), the median increases from
-\SI{133.6}{\micro\second} at $N=10^{6}$ to \SI{139.2}{\micro\second} at $N=10^{7}$. A tenfold
-increase in directory size therefore produces an increase of \SI{5.6}{\micro\second}, or 4.2
-percent, across these two measured sizes. Prefix-only verification changes from
-\SI{26.3}{\micro\second} to \SI{26.4}{\micro\second} over the same range and accounts for little of
-the full-verification increase. The benchmark does not isolate the cause of the remaining increase,
-and these two directory sizes do not establish an asymptotic trend.
+\SI{134.6}{\micro\second} at $N=10^{6}$ to \SI{152.8}{\micro\second} at $N=10^{7}$. A tenfold
+increase in directory size therefore produces an increase of \SI{18.2}{\micro\second}, or 13.5
+percent, across these two measured sizes. The prefix-only median is \SI{25.9}{\micro\second} at
+both sizes, so the benchmark does not attribute the additional cost to prefix verification. It
+does not isolate the cause of the increase either, and these two directory sizes do not establish
+an asymptotic trend.
 
-At $N=10^{7}$, server-side search has a median of \SI{441.7}{\micro\second} and a 95th percentile of
-\SI{4581.9}{\micro\second} (\cref{tab:bench-scale}). The cause of this tail remains unexplained. The
+At $N=10^{7}$, server-side search has a median of \SI{137.6}{\micro\second} and a 95th percentile of
+\SI{2141.9}{\micro\second} (\cref{tab:bench-scale}). The cause of this tail remains unexplained. The
 harness did not record operating-system paging activity and therefore cannot determine whether
 memory pressure caused it. The tail is reported as observed implementation behaviour without
 assigning an unmeasured cause.
@@ -116,8 +116,8 @@ serialization and transport.}
 The M16 detection-path experiment reconstructs two execution paths through the key-substitution
 detector in the \texttt{duet} crate at $N=10^{4}$. The mismatch path performs one verified
 owner-slot lookup and value comparison before returning, with a median of
-\SI{27.8}{\micro\second}. The clean path verifies owner-slot inclusion followed by warning-slot
-non-inclusion, with a median of \SI{31.1}{\micro\second}. These are local, in-process component
+\SI{27.7}{\micro\second}. The clean path verifies owner-slot inclusion followed by warning-slot
+non-inclusion, with a median of \SI{30.8}{\micro\second}. These are local, in-process component
 timings. They exclude the Signal Desktop client, HTTP transport, background polling, registration,
 and warning publication. Thus, they do not represent end-to-end detection latency.
 
@@ -133,24 +133,25 @@ workflows produce their expected clean verdicts, and none produces a warning, as
 
 The M7 large-directory scale experiment records directory-build time and resident set size after
 build. Building the $N=10^{7}$ directory takes approximately 26 minutes, with a resident set size
-of \SI{20.8}{\gibi\byte} after build. The single-process benchmark keeps the complete directory in
+of \SI{22.8}{\gibi\byte} after build. The single-process benchmark keeps the complete directory in
 memory. Therefore, its memory requirement is a major constraint for deployment at this scale.
 
 The M9 maintenance experiment measures key rotation and the epoch-commit path at
-$N\in\{10^3,10^4\}$. Key-rotation medians change from \SI{138.7}{\micro\second} to
-\SI{140.3}{\micro\second} across these sizes, but these two measurements do not establish
+$N\in\{10^3,10^4\}$. Key-rotation medians change from \SI{150.1}{\micro\second} to
+\SI{151.5}{\micro\second} across these sizes, but these two measurements do not establish
 independence from $N$. The measured path for epoch commit, which includes one fixed-key update,
-increases from \SI{451.0}{\micro\second} at $N=10^3$ to \SI{6.73}{\milli\second} at $N=10^4$.
+increases from \SI{487.2}{\micro\second} at $N=10^3$ to \SI{6.31}{\milli\second} at $N=10^4$.
 The implementation's full-tree cloning step is described in \cref{ssec:impl-core-state}. Although
-the benchmark does not isolate this step from the remaining commit work, the measured increase
-identifies it as a major maintenance constraint at larger $N$.
+the benchmark does not isolate the clone from the remaining commit work, the measured increase
+identifies the epoch-commit path, which includes the clone, as a major maintenance constraint
+at larger $N$.
 
 Finally, the M12 auditor experiment measures two local operations at $N=10^4$ and does not
 represent a complete networked audit. The first combines an STH signature check with the generation
 and verification of one consistency proof. The second measures fork detection after the auditor has
 stored one signed head and is given another validly signed head for the same epoch with a different
-root. Their medians are \SI{28.6}{\micro\second} and \SI{27.1}{\micro\second}, with 95th
-percentiles of \SI{34.7}{\micro\second} and \SI{33.1}{\micro\second}, respectively. Both
+root. Their medians are \SI{28.7}{\micro\second} and \SI{27.5}{\micro\second}, with 95th
+percentiles of \SI{28.9}{\micro\second} and \SI{33.5}{\micro\second}, respectively. Both
 measurements exclude network transfer, scheduling, persistent storage, and full transition replay.
 A further limitation is that the fork-check benchmark begins with one stored head, so it does not
 show how the cost changes as signed heads accumulate.
@@ -160,10 +161,10 @@ show how the cost changes as signed heads accumulate.
 The M13 mode experiment compares two local label-bound lookup paths at $N=10^4$. Session mode
 verifies a raw-label lookup proof and compares the returned identity-key value, while continuous
 mode verifies the same proof format and compares the returned CEA fingerprint. Their median costs
-are \SI{27.3}{\micro\second} and \SI{27.7}{\micro\second}, respectively. Both measurements
-include server-side proof generation. The \SI{0.4}{\micro\second} difference is within run-to-run
-variation. Thus, the measurements do not establish that either mode is faster, and equivalence was
-not tested.
+are \SI{27.3}{\micro\second} and \SI{27.6}{\micro\second}, respectively. Both measurements
+include server-side proof generation. The \SI{0.3}{\micro\second} difference is small relative to the
+measured medians, but these measurements do not establish that either mode is faster.
+Equivalence was not tested because no equivalence margin was defined.
 
 The directory-write count comparison in M13 assumes one continuous-mode write per modelled hourly
 epoch and one session-mode write every $R=720$ epochs, where $R$ is the assumed interval between
@@ -176,8 +177,8 @@ The M15 ratchet-depth experiment evolves independent simulated continuous-mode c
 $K\in\{1,10,100,720\}$ epochs and then measures verification of the final epoch. A session-mode raw
 lookup is timed on the same resulting directory, controlling for directory and log depth. Across
 the tested values of $K$, the continuous-mode medians range from
-\SI{27.1}{\micro\second} to \SI{27.5}{\micro\second}, while the session-mode medians range from
-\SI{27.0}{\micro\second} to \SI{27.5}{\micro\second}. These results show that final-state
+\SI{27.0}{\micro\second} to \SI{27.5}{\micro\second}, while the session-mode medians range from
+\SI{26.9}{\micro\second} to \SI{27.4}{\micro\second}. These results show that final-state
 verification remains stable across the tested ratchet depths. Note that the experiment does not
 measure the cost of replaying the preceding epochs.
 
@@ -214,8 +215,8 @@ serialized proof, signed head excluded &
 \num{8192}\,B fixed sibling copath\newline
 VRF proof and signed-head fields excluded \\
 
-Client verification &
-\SI{139.2}{\micro\second} median at $N=10^7$\newline
+Measured client-side lookup-verification chain &
+\SI{152.8}{\micro\second} median at $N=10^7$\newline
 VRF, prefix, log-inclusion, and signed-head verification &
 approximately \SI{559}{\micro\second} derived at $N=10^7$ from path and
 signature verification\newline
@@ -246,7 +247,7 @@ The timing comparison is less closely matched. CONIKS reports
 \SI{400}{\micro\second} for signature verification, giving a derived total of approximately
 \SI{559}{\micro\second}. The cost of verifying its private-index proof is not reported separately.
 DUET's
-\SI{139.2}{\micro\second} result includes VRF and signed-head verification, but it was measured with
+\SI{152.8}{\micro\second} result includes VRF and signed-head verification, but it was measured with
 a different implementation and on different hardware. Therefore, these values provide published
 context and do not establish a controlled speed comparison.
 

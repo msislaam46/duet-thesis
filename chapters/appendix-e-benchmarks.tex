@@ -20,7 +20,7 @@ The seventeen metric families referenced throughout \cref{ch:eval} are as follow
 \item[M1] Lookup proof size in bytes and path length in hashes.
 \item[M2] Server-side latency for generating a lookup proof.
 \item[M3] Client-side lookup verification latency, reported as prefix-only, VRF-only,
-  and full signed-head lookup verification.
+  and the measured client-side lookup-verification chain.
 \item[M4] Synthetic repeated-proof and windowed catch-up proof bytes and
   proof-generation latency as a function of $W$.
 \item[M5] Label derivation and one unverified warning-slot read, reported as a component
@@ -105,7 +105,7 @@ catch-up raw consistency-path hash bytes against the window in \cref{tab:bench-m
 
 The corresponding proof-generation timings were measured separately. At $W=720$, the windowed
 proof has a reported median generation time of \SI{0.3}{\micro\second}, compared with
-\SI{197.0}{\micro\second} for the synthetic repeated-proof baseline. Since the windowed value is
+\SI{184.9}{\micro\second} for the synthetic repeated-proof baseline. Since the windowed value is
 close to the timer resolution, the timing comparison is approximate. The primary result is the
 reduction from $W$ proofs to one, measured by the raw consistency-path hash bytes in
 \cref{tab:bench-m4}.
@@ -174,14 +174,14 @@ produce a proof and the client-side cost to check it, broken into its pieces.}
 \toprule
 Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
-M2 search generation (dual-index)    & $10^3$ & 111.2 & 136.7 \\
-M2 search generation (dual-index)    & $10^4$ & 111.6 & 130.8 \\
-M3 prefix verify (dual-index)        & $10^3$ & 25.9  & 26.2 \\
-M3 prefix verify (dual-index)        & $10^4$ & 25.9  & 26.0 \\
-M3 VRF verify (dual-index)           & $10^3$ & 75.0  & 92.0 \\
-M3 VRF verify (dual-index)           & $10^4$ & 75.0  & 90.9 \\
-M3 full signed-head lookup verification (windowed baseline) & $10^3$ & 128.7 & 155.8 \\
-M3 full signed-head lookup verification (windowed baseline) & $10^4$ & 128.9 & 146.3 \\
+M2 search generation (dual-index)    & $10^3$ & 123.8 & 152.0 \\
+M2 search generation (dual-index)    & $10^4$ & 124.1 & 139.5 \\
+M3 prefix verify (dual-index)        & $10^3$ & 25.8 & 27.2 \\
+M3 prefix verify (dual-index)        & $10^4$ & 25.8 & 26.0 \\
+M3 VRF verify (dual-index)           & $10^3$ & 80.5 & 96.7 \\
+M3 VRF verify (dual-index)           & $10^4$ & 80.6 & 96.1 \\
+M3 measured client-side lookup-verification chain (windowed baseline) & $10^3$ & 135.1 & 160.4 \\
+M3 measured client-side lookup-verification chain (windowed baseline) & $10^4$ & 134.8 & 157.7 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -222,23 +222,23 @@ rotation and epoch commit, the VRF in isolation, and lookup verification in the 
 \toprule
 Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
-M8 lookup latency used to derive the single-thread rate (dual-index) & $10^4$ & 111.9 & 137.2 \\
-M8 update latency used to derive the single-thread rate (dual-index) & $10^4$ & 139.8 & 166.0 \\
-M9 key rotation (dual-index)         & $10^3$ & 138.7 & 166.0 \\
-M9 key rotation (dual-index)         & $10^4$ & 140.3 & 163.0 \\
-M9 epoch commit (windowed)           & $10^3$ & 451.0 & 504.8 \\
-M9 epoch commit (windowed)           & $10^4$ & 6727.3 & 7504.7 \\
-M10 VRF prove (isolated)             &        & 110.0 & 115.3 \\
-M10 VRF verify (isolated)            &        & 73.5  & 76.8 \\
+M8 lookup latency used to derive the single-thread rate (dual-index) & $10^4$ & 124.1 & 144.2 \\
+M8 update latency used to derive the single-thread rate (dual-index) & $10^4$ & 151.6 & 175.7 \\
+M9 key rotation (dual-index)         & $10^3$ & 150.1 & 177.0 \\
+M9 key rotation (dual-index)         & $10^4$ & 151.5 & 169.6 \\
+M9 epoch commit (windowed)           & $10^3$ & 487.2 & 558.4 \\
+M9 epoch commit (windowed)           & $10^4$ & 6306.6 & 7209.5 \\
+M10 VRF prove (isolated)             &        & 118.9 & 122.3 \\
+M10 VRF verify (isolated)            &        & 75.1 & 78.3 \\
 M11 lookup-verification component (peer-key-retrieval proxy) & & \multicolumn{2}{l}{identical to M3 (\cref{ssec:eval-latency})} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-M8 latency-derived rates follow as $10^6 / \text{median}_{\mu s}$: approximately $8{,}940$
-lookups/s and $7{,}150$ updates/s, single-thread. Across the two tested directory sizes, the M9
-epoch-commit path increases from \SI{451.0}{\micro\second} at $N=10^3$ to
-\SI{6.73}{\milli\second} at $N=10^4$. These measurements do not establish a scaling law, and the
+M8 latency-derived rates follow as $10^6 / \text{median}_{\mu s}$: approximately $8{,}060$
+lookups/s and $6{,}600$ updates/s, single-thread. Across the two tested directory sizes, the M9
+epoch-commit path increases from \SI{487.2}{\micro\second} at $N=10^3$ to
+\SI{6.31}{\milli\second} at $N=10^4$. These measurements do not establish a scaling law, and the
 benchmark does not isolate the full-tree snapshot clone from the remaining commit work.
 \Cref{ssec:eval-scale} discusses the clone as a major implementation constraint.
 
@@ -259,8 +259,8 @@ complete deployed audit.}
 \toprule
 Operation (baseline) & $N$ & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
-M12 STH and consistency-proof operation (windowed) & $10^4$ & 28.6 & 34.7 \\
-M12 fork check (windowed)  & $10^4$ & 27.1 & 33.1 \\
+M12 STH and consistency-proof operation (windowed) & $10^4$ & 28.7 & 28.9 \\
+M12 fork check (windowed)  & $10^4$ & 27.5 & 33.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -286,19 +286,19 @@ Quantity & $N=10^6$ & $N=10^7$ \\
 \midrule
 Leaf depth (median / mean / max) & 20 / 20.28 / 24 & 24 / 23.57 / 27 \\
 Lookup proof bytes (median / max) & 817 / 945 & 945 / 1{,}041 \\
-Server full search (median / p95, \si{\micro\second}) & 132.7 / 148.8 & 441.7 / 4581.9\tnote{$\dagger$} \\
-Prefix verify (median / p95, \si{\micro\second}) & 26.3 / 26.6 & 26.4 / 30.6 \\
-VRF verify (median / p95, \si{\micro\second}) & 84.0 / 99.7 & 85.8 / 212.9 \\
-Full signed-head lookup verification (median / p95, \si{\micro\second}) & 133.6 / 161.1 & 139.2 / 171.1 \\
-Build time & 150.5\,s & 1{,}558.0\,s \\
-RSS after build & 2{,}810\,MiB & 21{,}309\,MiB \\
+Server full search (median / p95, \si{\micro\second}) & 119.1 / 134.8 & 137.6 / 2141.9\tnote{$\dagger$} \\
+Prefix verify (median / p95, \si{\micro\second}) & 25.9 / 26.1 & 25.9 / 31.0 \\
+VRF verify (median / p95, \si{\micro\second}) & 80.7 / 93.3 & 82.2 / 112.7 \\
+Measured client-side lookup-verification chain (median / p95, \si{\micro\second}) & 134.6 / 147.2 & 152.8 / 178.0 \\
+Build time & 152.8\,s & 1{,}585.2\,s \\
+RSS after build & 2{,}815\,MiB & 23{,}325\,MiB \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \footnotesize
 \item[$\dagger$] At $N=10^7$, the full-search 95th percentile is
-\SI{4581.9}{\micro\second}, compared with a median of
-\SI{441.7}{\micro\second}. The harness did not record page-fault, paging, or memory-pressure
+\SI{2141.9}{\micro\second}, compared with a median of
+\SI{137.6}{\micro\second}. The harness did not record page-fault, paging, or memory-pressure
 counters, so the cause of the tail is not established. The chapter therefore reports the observed
 tail without assigning a cause and uses the median for the published comparison.
 \end{tablenotes}
@@ -332,9 +332,9 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 \end{table}
 
 Per-check verification cost is $27.3\,\si{\micro\second}$ in session mode and
-$27.7\,\si{\micro\second}$ in continuous mode. Both medians include server-side proof generation.
-Their $0.4\,\si{\micro\second}$ difference is within run-to-run variation and does not establish
-that either mode is faster. Equivalence was not tested because no equivalence margin was defined.
+$27.6\,\si{\micro\second}$ in continuous mode. Both medians include server-side proof generation.
+Their $0.3\,\si{\micro\second}$ difference is small relative to the measured medians and does not
+establish that either mode is faster. Equivalence was not tested because no equivalence margin was defined.
 Both modes use the same label-bound proof verifier
 (\texttt{verify\_search\_result\_raw\_for}). The continuous-mode setup folds a simulated
 per-epoch ratchet secret distinct from the authenticated public ratchet key, corresponding to
@@ -452,7 +452,7 @@ approximately \SI{400}{\micro\second} for signature verification. These reported
 path-and-signature subtotal of approximately \SI{559}{\micro\second}. The source states that lookup
 verification also requires one VUF verification but does not report its time
 separately~\cite[Section~5.3]{melara2015coniks}. At the same directory size, DUET's median is
-\SI{139.2}{\micro\second} and includes VRF, prefix, log-inclusion, and signed-head verification. The
+\SI{152.8}{\micro\second} and includes VRF, prefix, log-inclusion, and signed-head verification. The
 implementations, hardware, and workloads differ. Thus, these values provide published context and do
 not establish a controlled speed comparison.
 
@@ -472,8 +472,8 @@ measurement environment.
 names below match those in the committed results, so some differ from the terminology used in the
 thesis.
 The \texttt{windowed\_full\_client\_verify} measurement times VRF proof and label verification,
-value binding, prefix-root reconstruction, log inclusion, and STH signature verification. Result-to-head binding, configuration
-recomputation, head well-formedness, latest-state binding, and append-only-history verification
+value binding, prefix-root reconstruction, log inclusion, and STH signature verification. Result-to-head binding, configuration-pin
+comparison and configuration recomputation, head well-formedness, latest-state binding, and append-only-history verification
 remain outside the timed body. Windowed catch-up proof generation is measured separately under M4. The M1 values stored under \texttt{dual\_index} measure the VRF-indexed \texttt{search\_by\_user\_id} lookup. \texttt{M8\_throughput} records per-operation latencies from which a
 single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures one signed-head lookup
 verification in the \texttt{duet} crate, corresponding to the verification performed at the

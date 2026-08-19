@@ -266,8 +266,8 @@ labels, warning payloads, and CEA state evolution. The opt-in wire-parity suite 
 verification code against signed heads, VRF outputs, prefix-tree and log-inclusion proofs, and
 consistency proofs returned by the directory server implemented in Rust.
 
-The adversarial suite covers the honest baseline (A0), the attack scenarios (A1--A5), and the
-endpoint-compromise boundary defined in \cref{sec:threat-scenarios}. These tests establish agreement
+The adversarial suite covers the honest baseline A0, the attack scenarios A1a, A1b and A2--A5,
+and the endpoint-compromise boundary X1 defined in \cref{sec:threat-scenarios}. These tests establish agreement
 and the expected behaviour for the specified inputs only, without establishing equivalence over
 every input. For A5 (malicious key rotation), predecessor cross-signature checking remains limited
 to the \texttt{duet} crate's adversarial suite. The Signal Desktop client instead uses identity
