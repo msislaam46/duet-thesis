@@ -143,8 +143,8 @@ trusted and current tree heads. One proof covers all missed epochs, and its size
 logarithmically with the endpoint log sizes.
 
 Benchmark results show that, at a matched directory size, DUET's lookup proof is comparable in size
-to the corresponding CONIKS proof. Median full client verification remains below
-\SI{160}{\micro\second} through ten million labels, and one short proof covers a 30-day offline
+to the corresponding CONIKS proof. Median latency for the measured client-side lookup-verification chain
+remains below \SI{160}{\micro\second} across the tested directory sizes up to ten million labels, and one short proof covers a 30-day offline
 period with hourly epochs. A two-client Signal Desktop prototype runs verification automatically in
 the background and raises key-substitution warnings in band. The prototype also demonstrates
 continuous authentication as simulated session state evolves. Furthermore, an auditor process

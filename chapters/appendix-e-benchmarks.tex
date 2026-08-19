@@ -332,9 +332,9 @@ $E$ (epochs) & Continuous writes & Session writes & Ratio \\
 \end{table}
 
 Per-check verification cost is $27.3\,\si{\micro\second}$ in session mode and
-$27.7\,\si{\micro\second}$ in continuous mode. Both medians include server-side proof generation.
-Their $0.4\,\si{\micro\second}$ difference is within run-to-run variation and does not establish
-that either mode is faster. Equivalence was not tested because no equivalence margin was defined.
+$27.6\,\si{\micro\second}$ in continuous mode. Both medians include server-side proof generation.
+Their $0.3\,\si{\micro\second}$ difference is small relative to the measured medians and does not
+establish that either mode is faster. Equivalence was not tested because no equivalence margin was defined.
 Both modes use the same label-bound proof verifier
 (\texttt{verify\_search\_result\_raw\_for}). The continuous-mode setup folds a simulated
 per-epoch ratchet secret distinct from the authenticated public ratchet key, corresponding to
@@ -472,8 +472,8 @@ measurement environment.
 names below match those in the committed results, so some differ from the terminology used in the
 thesis.
 The \texttt{windowed\_full\_client\_verify} measurement times VRF proof and label verification,
-value binding, prefix-root reconstruction, log inclusion, and STH signature verification. Result-to-head binding, configuration
-recomputation, head well-formedness, latest-state binding, and append-only-history verification
+value binding, prefix-root reconstruction, log inclusion, and STH signature verification. Result-to-head binding, configuration-pin
+comparison and configuration recomputation, head well-formedness, latest-state binding, and append-only-history verification
 remain outside the timed body. Windowed catch-up proof generation is measured separately under M4. The M1 values stored under \texttt{dual\_index} measure the VRF-indexed \texttt{search\_by\_user\_id} lookup. \texttt{M8\_throughput} records per-operation latencies from which a
 single-thread rate is derived. \texttt{M11\_handshake\_overhead} measures one signed-head lookup
 verification in the \texttt{duet} crate, corresponding to the verification performed at the

@@ -64,13 +64,13 @@ The M14 history-depth experiment isolates the $32h_{\mathrm{log}}$ log-inclusion
 $N$ fixed while varying $E$. Across $E\in\{1,16,256,1024\}$, the corresponding values of
 $h_{\mathrm{log}}$ are \num{0}, \num{4}, \num{8}, and \num{10} sibling hashes. The log-inclusion
 path therefore adds \num{0}, \num{128}, \num{256}, and \num{320} bytes, matching
-$32h_{\mathrm{log}}$ in \cref{eq:eval-proofsize}. Median full verification remains below
-\SI{150}{\micro\second} throughout the grid, with a maximum of
+$32h_{\mathrm{log}}$ in \cref{eq:eval-proofsize}. Median latency for the measured client-side
+lookup-verification chain remains below \SI{150}{\micro\second} throughout the grid, with a maximum of
 \SI{143.3}{\micro\second}. These results confirm the measured effect of increasing log history while
 the $32h$ prefix-copath term remains unchanged.
 
-Full client verification checks the VRF derivation, prefix proof, log-inclusion proof, and STH
-signature. Its median is \SI{135.1}{\micro\second} at $N=10^{3}$ in the manual harness. In the M7
+The measured client-side lookup-verification chain checks the VRF derivation, prefix proof,
+log-inclusion proof, and STH signature. Its median is \SI{135.1}{\micro\second} at $N=10^{3}$ in the manual harness. In the M7
 large-directory scale experiment (\cref{tab:bench-scale}), the median increases from
 \SI{134.6}{\micro\second} at $N=10^{6}$ to \SI{152.8}{\micro\second} at $N=10^{7}$. A tenfold
 increase in directory size therefore produces an increase of \SI{18.2}{\micro\second}, or 13.5
@@ -142,8 +142,9 @@ $N\in\{10^3,10^4\}$. Key-rotation medians change from \SI{150.1}{\micro\second} 
 independence from $N$. The measured path for epoch commit, which includes one fixed-key update,
 increases from \SI{487.2}{\micro\second} at $N=10^3$ to \SI{6.31}{\milli\second} at $N=10^4$.
 The implementation's full-tree cloning step is described in \cref{ssec:impl-core-state}. Although
-the benchmark does not isolate this step from the remaining commit work, the measured increase
-identifies it as a major maintenance constraint at larger $N$.
+the benchmark does not isolate the clone from the remaining commit work, the measured increase
+identifies the epoch-commit path, which includes the clone, as a major maintenance constraint
+at larger $N$.
 
 Finally, the M12 auditor experiment measures two local operations at $N=10^4$ and does not
 represent a complete networked audit. The first combines an STH signature check with the generation
@@ -160,10 +161,10 @@ show how the cost changes as signed heads accumulate.
 The M13 mode experiment compares two local label-bound lookup paths at $N=10^4$. Session mode
 verifies a raw-label lookup proof and compares the returned identity-key value, while continuous
 mode verifies the same proof format and compares the returned CEA fingerprint. Their median costs
-are \SI{27.3}{\micro\second} and \SI{27.7}{\micro\second}, respectively. Both measurements
-include server-side proof generation. The \SI{0.4}{\micro\second} difference is within run-to-run
-variation. Thus, the measurements do not establish that either mode is faster, and equivalence was
-not tested.
+are \SI{27.3}{\micro\second} and \SI{27.6}{\micro\second}, respectively. Both measurements
+include server-side proof generation. The \SI{0.3}{\micro\second} difference is small relative to the
+measured medians, but these measurements do not establish that either mode is faster.
+Equivalence was not tested because no equivalence margin was defined.
 
 The directory-write count comparison in M13 assumes one continuous-mode write per modelled hourly
 epoch and one session-mode write every $R=720$ epochs, where $R$ is the assumed interval between
