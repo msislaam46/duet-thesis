@@ -30,7 +30,7 @@ GET  & \texttt{/sth} & current signed tree head \\
 GET  & \texttt{/search} & verified lookup by label, returning value, prefix proof, log-inclusion proof, and the signed STH \\
 GET  & \texttt{/search-by-user-id} & lookup by user identifier, with the VRF proof attached \\
 GET  & \texttt{/consistency} & consistency proof between two log sizes (\texttt{from}, \texttt{to}) \\
-GET  & \texttt{/epoch} & current epoch number \\
+GET  & \texttt{/epoch} & the next epoch number to be committed, with the current log root and size \\
 GET  & \texttt{/log-root-at} & log root at a given tree size \\
 GET  & \texttt{/epoch-delta} & a committed epoch's declared update set and committed directory root, so that a networked auditor can replay the transition (\cref{alg:auditor}) \\
 GET  & \texttt{/vrf-public-key} & operator VRF public key \\
@@ -413,6 +413,13 @@ The auditor prints each verdict once and re-emits a line only when the verdict o
 The demonstration supplies the second head through \texttt{view=b} on the same server. A deployment
 would obtain that signed head from an independent source, following the third-party auditor role in
 the IETF KeyTrans protocol~\cite{ietf-keytrans-protocol}.
+The prototype auditor obtains its two pinned values, the signed-head verification key and the
+configuration commitment derived from it and the VRF public key, by fetching them from the service
+it is about to monitor, and pins whatever it first receives. This is a trust-on-first-use bootstrap
+of the auditor's own trust anchor and is distinct from the client-side initial identity binding
+discussed in \cref{sec:threat-fair}: an operator that equivocates from the first contact is pinned
+as honest. A deployment would supply both values out of band or under an authenticated channel, after
+which every check reported above applies unchanged.
 Independently of any auditor, the \texttt{monitor} module retains a writer-side persistence proof
 (the inclusion proof and signed tree head from the epoch in which a warning commits) as an available
 capability, so that a later removal yields a bundle verifying against the server's own signed heads.
