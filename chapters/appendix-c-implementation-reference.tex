@@ -417,8 +417,8 @@ The prototype auditor obtains its two pinned values, the signed-head verificatio
 configuration commitment derived from it and the VRF public key, by fetching them from the service
 it is about to monitor, and pins whatever it first receives. This is a trust-on-first-use bootstrap
 of the auditor's own trust anchor and is distinct from the client-side initial identity binding
-discussed in \cref{sec:threat-fair}: an operator that equivocates from the first contact is pinned
-as honest. A deployment would supply both values out of band or under an authenticated channel, after
+discussed in \cref{sec:threat-fair}. The auditor cannot independently determine whether its initial
+key, configuration commitment, and signed view match those presented to other observers. A deployment would supply both values out of band or under an authenticated channel, after
 which every check reported above applies unchanged.
 Independently of any auditor, the \texttt{monitor} module retains a writer-side persistence proof
 (the inclusion proof and signed tree head from the epoch in which a warning commits) as an available
