@@ -71,6 +71,15 @@
 \newtheorem{lemma}[definition]{Lemma}
 \newtheorem{theorem}[definition]{Theorem}
 \newtheorem{remark}[definition]{Remark}
+% Name each environment explicitly. They share the definition counter, so
+% without these cleveref can print "Definition" for a lemma reference, which is
+% what one build environment did. Verify the rendered text, not just the log.
+\crefname{lemma}{Lemma}{Lemmas}
+\Crefname{lemma}{Lemma}{Lemmas}
+\crefname{theorem}{Theorem}{Theorems}
+\Crefname{theorem}{Theorem}{Theorems}
+\crefname{remark}{Remark}{Remarks}
+\Crefname{remark}{Remark}{Remarks}
 
 % Every Definition gets an "intuition" lead-in:
 %   \begin{definition}[Merkle log tree]\label{def:log}
