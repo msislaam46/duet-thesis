@@ -14,15 +14,15 @@ grows by \num{32} bytes for each additional log sibling.}
 \toprule
 $N$ & $E$ & Log siblings & Proof bytes (median) & Full verify median / p95 (\si{\micro\second}) \\
 \midrule
-$10^{3}$ & 1 & 0 & 497 & 127.6 / 142.8 \\
- & 16 & 4 & 625 & 128.4 / 147.1 \\
- & 256 & 8 & 753 & 128.7 / 149.1 \\
- & 1024 & 10 & 817 & 129.3 / 147.3 \\
+$10^{3}$ & 1 & 0 & 497 & 143.3 / 165.0 \\
+ & 16 & 4 & 625 & 140.2 / 156.2 \\
+ & 256 & 8 & 753 & 140.5 / 156.1 \\
+ & 1024 & 10 & 817 & 140.8 / 156.3 \\
 \midrule
-$10^{4}$ & 1 & 0 & 625 & 127.9 / 144.7 \\
- & 16 & 4 & 753 & 128.4 / 151.1 \\
- & 256 & 8 & 881 & 128.6 / 146.5 \\
- & 1024 & 10 & 945 & 143.2 / 159.4 \\
+$10^{4}$ & 1 & 0 & 625 & 140.1 / 157.3 \\
+ & 16 & 4 & 753 & 140.2 / 155.7 \\
+ & 256 & 8 & 881 & 140.8 / 157.0 \\
+ & 1024 & 10 & 945 & 140.8 / 157.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -43,10 +43,10 @@ difference and is not interpreted as a separate mechanism cost. Times are in
 \toprule
 $K$ & CEA med.\,/\,p95 & Session med. & $\Delta$ & Log depth \\
 \midrule
-1 & 27.1 / 28.1 & 27.0 & 0.1 & 18 \\
-10 & 27.2 / 27.7 & 27.1 & 0.1 & 162 \\
-100 & 27.3 / 27.9 & 27.3 & 0.0 & 1{,}602 \\
-720 & 27.5 / 28.2 & 27.5 & 0.0 & 11{,}522 \\
+1 & 27.0 / 27.6 & 26.9 & 0.1 & 18 \\
+10 & 27.1 / 28.2 & 27.1 & 0.0 & 162 \\
+100 & 27.2 / 28.5 & 27.2 & 0.0 & 1{,}602 \\
+720 & 27.5 / 28.7 & 27.4 & 0.1 & 11{,}522 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -85,8 +85,8 @@ HTTP transport, background polling, registration, and warning publication.}
 \toprule
 Detection path (baseline: raw-label, no VRF) & Median (\si{\micro\second}) & p95 (\si{\micro\second}) \\
 \midrule
-Early return (owner mismatch): one verified lookup & 27.8 & 28.8 \\
-Clean match: verified owner inclusion + warning non-inclusion & 31.1 & 32.7 \\
+Early return (owner mismatch): one verified lookup & 27.7 & 28.4 \\
+Clean match: verified owner inclusion + warning non-inclusion & 30.8 & 31.7 \\
 \bottomrule
 \end{tabular}
 \end{table}
