@@ -135,7 +135,7 @@ $\ell^\A_{\mathsf{warn}} = \ell^\B_{\mathsf{warn}}$. The two parties therefore a
 directional lookup slots and the shared warning slot they both monitor. Since a signed head
 commits to one directory root, valid proofs under that head cannot bind the same directional lookup
 slot to two different keys, even if the conversation secret is known.
-\Cref{lem:dualindex-consistency} states this result, and \cref{def:g1-consistency} explains its role
+\hyperref[lem:dualindex-consistency]{Lemma~\ref*{lem:dualindex-consistency}} states this result, and \cref{def:g1-consistency} explains its role
 in the broader G1 key-substitution requirement.
 
 \paragraph{Pre-Use Unpredictability.} Before a conversation label is used, the operator does not
@@ -235,7 +235,7 @@ The bound in \cref{eq:design-proofsize} covers one consistency proof between the
 heads. The client accepts only when the current signed head is an append-only extension of the
 trusted head. The warning-slot lookup follows this consistency check as a separate verified lookup.
 It is not part of $\pcons(m,n)$ and does not alter its size bound.
-\Cref{lem:windowed-size} provides the proof sketch, and \cref{alg:client} gives the client procedure.
+\hyperref[lem:windowed-size]{Lemma~\ref*{lem:windowed-size}} provides the proof sketch, and \cref{alg:client} gives the client procedure.
 
 \begin{figure}[H]
 \centering
