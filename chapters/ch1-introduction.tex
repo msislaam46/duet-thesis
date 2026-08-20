@@ -57,7 +57,7 @@ The committed warning allows both parties to detect the substitution automatical
 distant-head consistency proof to offline monitoring. With a retained signed-head checkpoint, a client
 re-verifies missed history using one proof for the complete window. Its size is logarithmic in the
 endpoint log sizes, while the repeated-proof baseline grows with the number of missed epochs
-(\cref{sec:design-windowed}, \cref{lem:windowed-size}). A same-head consistency lemma (\cref{lem:dualindex-consistency}) establishes
+(\cref{sec:design-windowed}, \hyperref[lem:windowed-size]{Lemma~\ref*{lem:windowed-size}}). A same-head consistency lemma (\hyperref[lem:dualindex-consistency]{Lemma~\ref*{lem:dualindex-consistency}}) establishes
 that Alice's peer lookup and Bob's self-check cannot authenticate different values under one signed
 head. \Cref{ch:design} establishes these properties, and \cref{ch:eval} evaluates their costs.
 
